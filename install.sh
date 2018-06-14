@@ -28,6 +28,9 @@ if [ "$1" == "win" ]; then
     python get-pip.py
     pip install flask
     pip install flask-login
+    #make sure that flask and flask-login are also installed for the super user
+    sudo pip install flask
+    sudo pip install flask-login
     
     echo ""
     echo "[MATIEC COMPILER]"
@@ -94,6 +97,9 @@ elif [ "$1" == "linux" ]; then
     sudo apt-get install build-essential pkg-config bison flex autoconf automake libtool make git python2.7 python-pip sqlite3 cmake
     pip install flask
     pip install flask-login
+    #make sure that flask and flask-login are also installed for the super user
+    sudo pip install flask
+    sudo pip install flask-login
 
     echo ""
     echo "[MATIEC COMPILER]"
