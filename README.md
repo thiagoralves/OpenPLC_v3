@@ -13,12 +13,12 @@ cd OpenPLC_v3
 <br/>
 ./install.sh [platform]
 <br/>
-where [platform] can be
+where [platform] can be:
 <br/>
-**win** - Install OpenPLC on Windows over Cygwin
+win - Install OpenPLC on Windows over Cygwin
 <br/>
-**linux** - Install OpenPLC on a Debian-based Linux distribution
+linux - Install OpenPLC on a Debian-based Linux distribution
 <br/>
-**rpi** - Install OpenPLC on a Raspberry Pi
+rpi - Install OpenPLC on a Raspberry Pi
 <br/>
-**custom** - Skip all specific package installation and tries to install OpenPLC assuming your system already has all dependencies met. This option can be useful if you're trying to install OpenPLC on an unsuported Linux platform or had manually installed all the dependency packages before.
+custom - Skip all specific package installation and tries to install OpenPLC assuming your system already has all dependencies met. This option can be useful if you're trying to install OpenPLC on an unsuported Linux platform or had manually installed all the dependency packages before.
