@@ -92,6 +92,8 @@ elif [ "$1" == "linux" ]; then
     echo "Installing OpenPLC on Linux"
     sudo apt-get update
     sudo apt-get install build-essential pkg-config bison flex autoconf automake libtool make git python2.7 python-pip sqlite3 cmake
+    pip install flask
+    pip install flask-login
 
     echo ""
     echo "[MATIEC COMPILER]"
@@ -165,6 +167,8 @@ elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
     sudo apt-get update
     sudo apt-get install build-essential pkg-config bison flex autoconf automake libtool make git python2.7 python-pip sqlite3 cmake wiringpi
+    pip install flask
+    pip install flask-login
     
     echo ""
     echo "[MATIEC COMPILER]"
