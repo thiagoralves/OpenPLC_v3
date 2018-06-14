@@ -1,0 +1,290 @@
+(*
+ *  This file is part of matiec - a compiler for the programming
+ *  languages defined in IEC 61131-3
+ *
+ *  Copyright (C) 2011  Mario de Sousa (msousa@fe.up.pt)
+ *
+ * See COPYING and COPYING.LESSER files for copyright details.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+ * USA
+ *
+ * This code is made available on the understanding that it will not be
+ * used in safety-critical situations without a full and competent review.
+ *)
+
+(*
+ * An IEC 61131-3 compiler.
+ *
+ * Based on the
+ * FINAL DRAFT - IEC 61131-3, 2nd Ed. (2001-12-10)
+ *
+ *)
+
+(*
+ * This is part of the library conatining the functions
+ * and function blocks defined in the standard.
+ *
+ * Timer Function Blocks
+ * ---------------------
+ *
+ * NOTE: The timing diagrams in the comments (except the state variable) 
+ *       were taken from the IEC 61131-3 standard.
+ *)
+
+
+
+(****************************************************************
+
+                  TP - pulse timing - state machine
+
+
+            +--------+     ++ ++   +--------+
+       IN   |        |     || ||   |        |
+          --+        +-----++-++---+        +---------
+            t0       t1    t2 t3    t4       t5
+            +----+         +----+  +----+
+       Q    |    |         |    |  |    |
+          --+    +---------+    +--+    +-------------
+            t0   t0+PT    t2 t2+PT t4  t4+PT
+         PT      +---+          +       +---+
+          :     /    |         /|      /    |
+       ET :    /     |        / |     /     |
+          :   /      |       /  |    /      |
+          :  /       |      /   |   /       |
+          0-+        +-----+    +--+        +---------
+            t0       t1    t2      t4       t5
+
+
+        2        +---+          +       +---+
+STATE   1   +----+   |     +----|  +----+   | 
+        0 --+        +-----+    +--+        +---------
+
+
+****************************************************************)
+
+FUNCTION_BLOCK TP
+  VAR_INPUT
+    IN : BOOL;  (* first input parameter *)
+    PT : TIME;  (* second input parameter *)
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL := FALSE;  (* first output parameter *)
+    ET : TIME := T#0s;  (* second output parameter *)
+  END_VAR
+
+  VAR
+    STATE : SINT := 0;  (* internal state: 0-reset, 1-counting, 2-set *)
+    PREV_IN : BOOL := FALSE;
+    CURRENT_TIME, START_TIME : TIME;
+  END_VAR
+
+  {__SET_VAR(data__->,CURRENT_TIME,,__CURRENT_TIME)}
+
+  IF ((STATE = 0) AND NOT(PREV_IN) AND IN)   (* found rising edge on IN *)
+  THEN
+    (* start timer... *)
+    STATE := 1;
+    Q := TRUE;
+    START_TIME := CURRENT_TIME;
+
+  ELSIF (STATE = 1)
+  THEN
+    IF ((START_TIME + PT) <= CURRENT_TIME)
+    THEN
+      STATE := 2;
+      Q := FALSE;
+      ET := PT;
+    ELSE
+      ET := CURRENT_TIME - START_TIME;
+    END_IF;
+  END_IF;
+
+  IF ((STATE = 2) AND NOT(IN))
+  THEN
+    ET := T#0s;
+    STATE := 0;
+  END_IF;
+
+
+  PREV_IN := IN;
+
+END_FUNCTION_BLOCK
+
+
+
+
+(****************************************************************
+
+             TON - On-delay timing - state machine
+
+
+            +--------+        +---+   +--------+
+       IN   |        |        |   |   |        |
+          --+        +--------+   +---+        +-------------
+            t0       t1       t2  t3  t4       t5
+                 +---+                     +---+
+       Q         |   |                     |   |
+          -------+   +---------------------+   +-------------
+              t0+PT  t1                t4+PT   t5
+         PT      +---+                     +---+
+          :     /    |            +       /    |
+       ET :    /     |           /|      /     |
+          :   /      |          / |     /      |
+          :  /       |         /  |    /       |
+          0-+        +--------+   +---+        +-------------
+            t0       t1       t2  t3  t4       t5
+
+
+        2        +---+                     +---+
+STATE   1   +----+   |        +---+   +----+   |
+        0 --+        +--------+   +---+        +------
+
+
+****************************************************************)
+
+
+FUNCTION_BLOCK TON
+  VAR_INPUT
+    IN : BOOL;  (* first input parameter *)
+    PT : TIME;  (* second input parameter *)
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL := FALSE;  (* first output parameter *)
+    ET : TIME := T#0s;  (* second output parameter *)
+  END_VAR
+
+  VAR
+    STATE : SINT := 0;  (* internal state: 0-reset, 1-counting, 2-set *)
+    PREV_IN : BOOL := FALSE;
+    CURRENT_TIME, START_TIME : TIME;
+  END_VAR
+
+  {__SET_VAR(data__->,CURRENT_TIME,,__CURRENT_TIME)}
+
+  IF ((STATE = 0) AND NOT(PREV_IN) AND IN)   (* found rising edge on IN *)
+  THEN
+    (* start timer... *)
+    STATE := 1;
+    Q := FALSE;
+    START_TIME := CURRENT_TIME;
+
+  ELSE
+    (* STATE is 1 or 2 !! *)
+    IF (NOT(IN))
+    THEN
+      ET := T#0s;
+      Q := FALSE;
+      STATE := 0;
+
+    ELSIF (STATE = 1)
+    THEN
+      IF ((START_TIME + PT) <= CURRENT_TIME)
+      THEN
+        STATE := 2;
+        Q := TRUE;
+        ET := PT;
+      ELSE
+        ET := CURRENT_TIME - START_TIME;
+      END_IF;
+    END_IF;
+
+  END_IF;
+
+  PREV_IN := IN;
+
+END_FUNCTION_BLOCK
+
+
+
+
+
+(****************************************************************
+
+             TOF - Off-delay timing - state machine
+
+
+              +--------+        +---+   +--------+
+       IN     |        |        |   |   |        |
+           ---+        +--------+   +---+        +-----------
+              t0       t1       t2  t3  t4       t5
+              +-------------+   +---------------------+
+       Q      |             |   |                     |
+           ---+             +---+                     +------
+              t0          t1+PT t2                  t5+PT
+         PT                 +---+                     +------
+          :                /    |       +            /
+       ET :               /     |      /|           /
+          :              /      |     / |          /
+          :             /       |    /  |         /
+          0------------+        +---+   +--------+
+                       t1           t3           t5
+
+
+        2                   +---+                     +------
+STATE   1              +----+   |   +---+        +----+
+        0 -------------+        +---+   +--------+
+
+
+****************************************************************)
+
+FUNCTION_BLOCK TOF
+  VAR_INPUT
+    IN : BOOL;  (* first input parameter *)
+    PT : TIME;  (* second input parameter *)
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL := FALSE;  (* first output parameter *)
+    ET : TIME := T#0s;  (* second output parameter *)
+  END_VAR
+
+  VAR
+    STATE : SINT := 0;  (* internal state: 0-reset, 1-counting, 2-set *)
+    PREV_IN : BOOL := FALSE;
+    CURRENT_TIME, START_TIME : TIME;
+  END_VAR
+
+  {__SET_VAR(data__->,CURRENT_TIME,,__CURRENT_TIME)}
+
+  IF ((STATE = 0) AND PREV_IN AND NOT(IN))   (* found falling edge on IN *)
+  THEN
+    (* start timer... *)
+    STATE := 1;
+    START_TIME := CURRENT_TIME;
+
+  ELSE
+    (* STATE is 1 or 2 !! *)
+    IF (IN)
+    THEN
+      ET := T#0s;
+      STATE := 0;
+
+    ELSIF (STATE = 1)
+    THEN
+      IF ((START_TIME + PT) <= CURRENT_TIME)
+      THEN
+        STATE := 2;
+        ET := PT;
+      ELSE
+        ET := CURRENT_TIME - START_TIME;
+      END_IF;
+    END_IF;
+
+  END_IF;
+
+  Q := IN OR (STATE = 1);
+  PREV_IN := IN;
+
+END_FUNCTION_BLOCK
+

@@ -1,0 +1,129 @@
+PROGRAM GRAVEL  (* Gravel measurement and loading system *)
+ VAR_INPUT
+    OFF_PB         : BOOL ;
+    ON_PB          : BOOL ;
+    FILL_PB        : BOOL ;
+    SIREN_ACK      : BOOL ;
+    LOAD_PB        : BOOL ; (* Load truck from bin *)
+    JOG_PB         : BOOL ;
+    LAMP_TEST      : BOOL ;
+    TRUCK_ON_RAMP  : BOOL ; (* Optical sensor *)
+    SILO_EMPTY_LS  : BOOL ;
+    BIN_EMPTY_LS   : BOOL ;
+    SETPOINT       : BYTE ; (* 2-digit BCD *)
+ END_VAR
+ VAR_OUTPUT
+    CONTROL_LAMP    : BOOL ;
+    TRUCK_LAMP      : BOOL ;
+    SILO_EMPTY_LAMP : BOOL ;
+    CONVEYOR_LAMP   : BOOL ;
+    CONVEYOR_MOTOR  : BOOL ;
+    SILO_VALVE      : BOOL ;
+    BIN_VALVE       : BOOL ;
+    SIREN           : BOOL ;
+    BIN_LEVEL       : BYTE ;
+ END_VAR
+ VAR
+  BLINK_TIME : TIME; (* BLINK ON/OFF time *)
+  PULSE_TIME : TIME; (* LEVEL_CTR increment interval *)
+  RUNOUT_TIME: TIME; (* Conveyor running time after loading *)
+  RUN_IN_TIME: TIME; (* Conveyor running time before loading *)
+  SILENT_TIME: TIME; (* Siren silent time after SIREN_ACK *)
+  OK_TO_RUN  : BOOL; (* 1 = Conveyor is allowed to run *)
+  (* Function Blocks *)
+  BLINK: TON; (* Blinker OFF period timer / ON output *)
+  BLANK: TON; (* Blinker ON period timer / blanking pulse *)
+  PULSE: TON; (* LEVEL_CTR pulse interval timer *)
+  SIREN_FF: RS;
+  SILENCE_TMR: TP; (* Siren silent period timer *)
+ END_VAR
+ VAR RETAIN LEVEL_CTR : CTU ; END_VAR
+   (* Program body *)
+   (* Major operating states *)
+   INITIAL_STEP START : END_STEP
+   TRANSITION FROM START TO FILL_BIN
+      := FILL_PB & CONTROL.X ; END_TRANSITION
+   STEP FILL_BIN: SILO_VALVE(N); END_STEP
+   TRANSITION FROM FILL_BIN TO START
+      := NOT FILL_PB OR NOT CONTROL.X ; END_TRANSITION
+   TRANSITION FROM FILL_BIN TO LOAD_WAIT := LEVEL_CTR.Q ;
+   END_TRANSITION
+   STEP LOAD_WAIT : END_STEP
+   TRANSITION FROM LOAD_WAIT TO RUN_IN
+      := LOAD_PB & OK_TO_RUN ; END_TRANSITION
+   STEP RUN_IN : END_STEP
+   TRANSITION FROM RUN_IN TO LOAD_WAIT := NOT OK_TO_RUN ;
+   END_TRANSITION
+   TRANSITION FROM RUN_IN TO DUMP_BIN
+      := RUN_IN.T > RUN_IN_TIME;
+   END_TRANSITION
+   STEP DUMP_BIN: BIN_VALVE(N); END_STEP
+   TRANSITION FROM DUMP_BIN TO LOAD_WAIT := NOT OK_TO_RUN ;
+   END_TRANSITION
+   TRANSITION FROM DUMP_BIN TO RUNOUT := BIN_EMPTY_LS ;
+   END_TRANSITION
+   STEP RUNOUT : END_STEP
+   TRANSITION FROM RUNOUT TO LOAD_WAIT := NOT OK_TO_RUN ;
+   END_TRANSITION
+   TRANSITION FROM RUNOUT TO START
+      := RUNOUT.T >= RUNOUT_TIME ; END_TRANSITION
+(* Control state sequencing *)
+INITIAL_STEP CONTROL_OFF: END_STEP
+TRANSITION FROM CONTROL_OFF TO CONTROL
+     := ON_PB & NOT OFF_PB ; END_TRANSITION
+STEP CONTROL: CONTROL_ACTION(N); END_STEP
+ACTION CONTROL_ACTION:
+   BLINK(EN:=CONTROL.X & NOT BLANK.Q, PT := BLINK_TIME) ;
+   BLANK(EN:=BLINK.Q, PT := BLINK_TIME) ;
+   OK_TO_RUN := CONTROL.X & TRUCK_ON_RAMP ;
+   CONVEYOR_MOTOR :=
+     OK_TO_RUN & OR(JOG_PB, RUN_IN.X, DUMP_BIN.X, RUNOUT.X);   
+END_ACTION
+TRANSITION FROM CONTROL TO CONTROL_OFF := OFF_PB ;
+END_TRANSITION
+(* Monitor Logic *)
+INITIAL_STEP MONITOR: MONITOR_ACTION(N); END_STEP
+ACTION MONITOR_ACTION:
+  CONVEYOR_LAMP := CONVEYOR_MOTOR & BLINK.Q ;
+  CONTROL_LAMP := CONTROL.X OR LAMP_TEST ;
+  TRUCK_LAMP := TRUCK_ON_RAMP OR LAMP_TEST ;
+  SILO_EMPTY_LAMP := BLINK.Q & SILO_EMPTY_LS OR LAMP_TEST ;
+  SILENCE_TMR(IN:=SIREN_ACK, PT:=SILENT_TIME) ;
+  SIREN_FF(S:=SILO_EMPTY_LS, R1:=SILENCE_TMR.Q) ;
+  SIREN := SIREN_FF.Q1 ;
+  PULSE(IN:=FILL_BIN.X & NOT PULSE.Q, PT:=PULSE_TIME) ;
+  LEVEL_CTR(R := BIN_EMPTY_LS, CU := PULSE.Q,
+            PV := BCD_TO_INT(SETPOINT)) ;
+  BIN_LEVEL := INT_TO_BCD(LEVEL_CTR.CV) ;
+END_ACTION
+
+END_PROGRAM
+
+ CONFIGURATION GRAVEL_CONTROL
+   RESOURCE PROC1 ON PROC_TYPE_Y
+     PROGRAM G : GRAVEL
+      (* Inputs *)
+       (OFF_PB        := %I0.0 ,
+        ON_PB         := %I0.1 ,
+        FILL_PB       := %I0.2 ,
+        SIREN_ACK     := %I0.3 ,
+        LOAD_PB       := %I0.4 ,
+        JOG_PB        := %I0.5 ,
+        LAMP_TEST     := %I0.7 ,
+        TRUCK_ON_RAMP := %I1.4 ,
+        SILO_EMPTY_LS := %I1.5 ,
+        BIN_EMPTY_LS  := %I1.6 ,
+        SETPOINT      := %IB2  ,
+       (* Outputs *)
+        CONTROL_LAMP    => %Q4.0,
+        TRUCK_LAMP      => %Q4.2,
+        SILO_EMPTY_LAMP => %Q4.3,
+        CONVEYOR_LAMP   => %Q5.3,
+        CONVEYOR_MOTOR  => %Q5.4,
+        SILO_VALVE      => %Q5.5,
+        BIN_VALVE       => %Q5.6,
+        SIREN           => %Q5.7,
+        BIN_LEVEL       => %B6) ;
+   END_RESOURCE
+ END_CONFIGURATION
+

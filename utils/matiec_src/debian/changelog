@@ -1,0 +1,6 @@
+matiec (2009.0-%DATEVERSION%) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- edouard <edouard.tisserant@gmail.com>  Wed, 21 Nov 2007 17:01:50 +0100
+

@@ -1,0 +1,48 @@
+(* Test whether the keyword XXXX may be used as an identifier for:
+ * CONFIGURATION identifier
+ *
+ * The XXXX names in the following code are merely a placeholder.
+ * They will be replaced by several identifiers before actual testing
+ * of the compiler.
+ *)
+
+(* The identifiers that will replace the XXXX
+ * must be placed on a line starting with #
+ * All identifiers preceded by # are ignored!
+ * The identifier list must be placed inside an IEC 61131-3 comment.
+ *)
+(*
+#IL_operators ANDN CAL CALC CALCN CD CLK CU IN JMP JMPC JMPCN LD LDN ORN PT PV R R1 RET RETC RETCN S S1 ST STN XORN
+#SFC_qualifiers D DS L N P #R #S SD SL
+     NOTE: R and S are identical to IL operators!!
+#Task_initialisers PRIORITY SINGLE INTERVAL
+*)
+
+
+
+(* a helper program *)
+PROGRAM bar000
+VAR_INPUT
+  a_1 : BOOL;
+END_VAR
+VAR_OUTPUT
+  b_1 : BOOL;
+END_VAR
+  a_1 := TRUE;
+END_PROGRAM
+
+
+ (* using in program parameter *)
+CONFIGURATION XXXX
+ TASK fast(PRIORITY := 4);
+ PROGRAM foo WITH fast:
+       bar000(a_1 := TRUE);
+END_CONFIGURATION
+
+
+
+(* Checking whether the use of XXXX will confuse any other
+ * normal and correct IL or ST code.
+ *)
+{#include "basic_code.test" }
+

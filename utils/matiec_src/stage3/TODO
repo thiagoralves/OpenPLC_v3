@@ -1,0 +1,13 @@
+
+
+ Things that we must still check for in stage 3:
+
+
+1) Handling of CONSTANTs:
+
+ 1.a) "Any program organization unit attempts to modify the value of a variable that has been declared with the CONSTANT qualifier;"
+ 1.b) From table 16.a "The CONSTANT qualifier shall not be used in the declaration of function block instances as described in 2.5.2.1."
+
+
+
+

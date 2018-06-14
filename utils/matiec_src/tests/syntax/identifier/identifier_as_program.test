@@ -1,0 +1,66 @@
+(* Test whether the keyword XXXX may be used as an identifier for:
+ * Program identifier
+ *
+ * The XXXX names in the following code are merely a placeholder.
+ * They will be replaced by several identifiers before actual testing
+ * of the compiler.
+ *)
+
+(* The identifiers that will replace the XXXX
+ * must be placed on a line starting with #
+ * All identifiers preceded by # are ignored!
+ * The identifier list must be placed inside an IEC 61131-3 comment.
+ *)
+(* This file is specific for identifiers identical to IL operators.
+ *  See the note following the identifier list
+ *)
+(*
+#IL_operators ANDN CAL CALC CALCN CD CLK CU IN JMP JMPC JMPCN LD LDN ORN PT PV R R1 RET RETC RETCN S S1 ST STN XORN
+#SFC_qualifiers D DS L N P #R #S SD SL
+     NOTE: R and S are identical to IL operators!!
+#Task_initialisers PRIORITY SINGLE INTERVAL
+*)
+
+(* NOTE: The identifier as a variable test has some special cases.
+ *       Namely, when using IL operators as variable names.
+ *       Even though the syntax of the IL language would not result
+ *       in ambiguities in the above case, our parser does not currently
+ *       allow the use of variables (with names identical to IL
+ *       operators) within IL code.
+ *
+ *       The following test code must therefore consider two possibilities:
+ *        - if the identifier under test is an IL operator
+ *        - if the identifier under test is not an IL operator
+ *)
+
+
+
+
+
+
+PROGRAM XXXX
+VAR_INPUT
+  a_1 : BOOL;
+END_VAR
+  LD a_1
+END_PROGRAM
+
+
+
+
+
+CONFIGURATION config1
+ TASK fast(PRIORITY := 4);
+ PROGRAM P1 WITH fast:
+       XXXX(a_1 := TRUE);
+END_CONFIGURATION
+
+
+
+
+(* Checking whether the use of XXXX will confuse any other
+ * normal and correct IL or ST code.
+ *)
+{#include "basic_code.test" }
+
+

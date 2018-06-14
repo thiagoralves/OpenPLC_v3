@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{95903DB4-9DE7-4E41-B990-6995108A8495}</ProjectGuid>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <Keyword>ManagedCProj</Keyword>
+    <RootNamespace>CLRAdapter</RootNamespace>
+    <ProjectName>DNP3CLRAdapter</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CLRSupport>true</CLRSupport>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CLRSupport>true</CLRSupport>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CLRSupport>true</CLRSupport>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CLRSupport>true</CLRSupport>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\config\output_dir.props" />
+    <Import Project="..\..\config\opendnp3.props" />
+    <Import Project="..\..\config\ossl_debug_lib.props" />
+    <Import Project="..\..\config\openssl_lib32_dir.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\config\output_dir.props" />
+    <Import Project="..\..\config\opendnp3.props" />
+    <Import Project="..\..\config\ossl_debug_lib.props" />
+    <Import Project="..\..\config\openssl_lib64_dir.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\config\output_dir.props" />
+    <Import Project="..\..\config\opendnp3.props" />
+    <Import Project="..\..\config\ossl_release_lib.props" />
+    <Import Project="..\..\config\openssl_lib32_dir.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\config\output_dir.props" />
+    <Import Project="..\..\config\opendnp3.props" />
+    <Import Project="..\..\config\ossl_release_lib.props" />
+    <Import Project="..\..\config\openssl_lib64_dir.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;shell32.lib;legacy_stdio_definitions.lib;advapi32.lib;gdi32.lib;User32.lib;$(OPENDNP3_DIR)\lib\asiodnp3.lib;$(OPENDNP3_DIR)\lib\asiopal.lib;$(OPENDNP3_DIR)\lib\opendnp3.lib;$(OPENDNP3_DIR)\lib\openpal.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;shell32.lib;legacy_stdio_definitions.lib;advapi32.lib;gdi32.lib;User32.lib;$(OPENDNP3_DIR)\lib\asiodnp3.lib;$(OPENDNP3_DIR)\lib\asiopal.lib;$(OPENDNP3_DIR)\lib\opendnp3.lib;$(OPENDNP3_DIR)\lib\openpal.lib;$(OPENDNP3_DIR)\lib\osslcrypto.lib;$(OPENDNP3_DIR)\lib\secauth.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;shell32.lib;legacy_stdio_definitions.lib;advapi32.lib;gdi32.lib;User32.lib;$(OPENDNP3_DIR)\lib\asiodnp3.lib;$(OPENDNP3_DIR)\lib\asiopal.lib;$(OPENDNP3_DIR)\lib\opendnp3.lib;$(OPENDNP3_DIR)\lib\openpal.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;shell32.lib;legacy_stdio_definitions.lib;advapi32.lib;gdi32.lib;User32.lib;$(OPENDNP3_DIR)\lib\asiodnp3.lib;$(OPENDNP3_DIR)\lib\asiopal.lib;$(OPENDNP3_DIR)\lib\opendnp3.lib;$(OPENDNP3_DIR)\lib\openpal.lib;$(OPENDNP3_DIR)\lib\osslcrypto.lib;$(OPENDNP3_DIR)\lib\secauth.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="src\ChangeSetAdapter.h" />
+    <ClInclude Include="src\ChannelAdapter.h" />
+    <ClInclude Include="src\ChannelListenerAdapter.h" />
+    <ClInclude Include="src\CollectionAdapter.h" />
+    <ClInclude Include="src\CallbackAdapters.h" />
+    <ClInclude Include="src\CommandSetBuilder.h" />
+    <ClInclude Include="src\Conversions.h" />
+    <ClInclude Include="src\DNP3ManagerAdapter.h" />
+    <ClInclude Include="src\EventConverter.h" />
+    <ClInclude Include="src\ICommandHeaderWorkAround.h" />
+    <ClInclude Include="src\ListenCallbacksAdapter.h" />
+    <ClInclude Include="src\ListenerAdapter.h" />
+    <ClInclude Include="src\Lock.h" />
+    <ClInclude Include="src\LogAdapter.h" />
+    <ClInclude Include="src\MasterAdapter.h" />
+    <ClInclude Include="src\MasterApplicationAdapter.h" />
+    <ClInclude Include="src\MasterConversions.h" />
+    <ClInclude Include="src\MasterOperationsAdapter.h" />
+    <ClInclude Include="src\MasterScanAdapter.h" />
+    <ClInclude Include="src\MasterSessionAdapter.h" />
+    <ClInclude Include="src\OutstationAdapter.h" />
+    <ClInclude Include="src\OutstationApplicationAdapter.h" />
+    <ClInclude Include="src\OutstationCommandHandlerAdapter.h" />
+    <ClInclude Include="src\SessionAcceptorAdapter.h" />
+    <ClInclude Include="src\SOEHandlerAdapter.h" />
+    <ClInclude Include="src\TaskCallbackAdapter.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="src\CallbackAdapters.cpp" />
+    <ClCompile Include="src\ChangeSetAdapter.cpp" />
+    <ClCompile Include="src\ChannelAdapter.cpp" />
+    <ClCompile Include="src\CommandSetBuilder.cpp" />
+    <ClCompile Include="src\Conversions.cpp" />
+    <ClCompile Include="src\DNP3ManagerAdapter.cpp" />
+    <ClCompile Include="src\ListenCallbacksAdapter.cpp" />
+    <ClCompile Include="src\LogAdapter.cpp" />
+    <ClCompile Include="src\MasterAdapter.cpp" />
+    <ClCompile Include="src\MasterConversions.cpp" />
+    <ClCompile Include="src\MasterOperationsAdapter.cpp" />
+    <ClCompile Include="src\MasterSessionAdapter.cpp" />
+    <ClCompile Include="src\OutstationAdapter.cpp" />
+    <ClCompile Include="src\OutstationApplicationAdapter.cpp" />
+    <ClCompile Include="src\OutstationCommandHandlerAdapter.cpp" />
+    <ClCompile Include="src\SessionAcceptorAdapter.cpp" />
+    <ClCompile Include="src\SOEHandlerAdapter.cpp" />
+    <ClCompile Include="src\StdIOWorkaround.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="app.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="app.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CLRInterface\DNP3CLRInterface.csproj">
+      <Project>{5f06c7be-3107-4b3e-8559-e5e1bb4008b5}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

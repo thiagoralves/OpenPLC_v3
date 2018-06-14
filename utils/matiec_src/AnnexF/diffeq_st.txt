@@ -1,0 +1,30 @@
+ FUNCTION_BLOCK DIFFEQ
+   VAR_INPUT
+     RUN : BOOL ;             (* 1 = run, 0 = reset *)
+     XIN : REAL ;
+     A : ARRAY[1..] OF REAL ; (* Input coefficients *)
+     M : INT ;                (* Length of input history  *)
+     B : ARRAY[0..] OF REAL ; (* Output coefficients *)
+     N : INT ;                (* Length of output history *)        
+   END_VAR
+   VAR_OUTPUT XOUT : REAL := 0.0 ; END_VAR
+   VAR  (* NOTE : Manufacturer may specify other array sizes *)   
+     XI : ARRAY [0..128] OF REAL ; (* Input history  *)
+     XO : ARRAY [0..128] OF REAL ; (* Output history *)
+     I : INT ;
+   END_VAR
+   XO[0] := XOUT ; XI[0] := XIN ;
+   XOUT := B[0] * XIN ;
+   IF RUN THEN
+      FOR I := M TO 1 BY -1 DO
+          XOUT := XOUT + A[I] * XO[I] ; XO[I] := XO[I-1];
+      END_FOR;
+      FOR I := N TO 1 BY -1 DO
+          XOUT := XOUT + B[I] * XI[I] ; XI[I] := XI[I-1];
+      END_FOR;
+   ELSE
+      FOR I := 1 TO M DO XO[I] := 0.0; END_FOR;
+      FOR I := 1 TO N DO XI[I] := 0.0; END_FOR;
+   END_IF ;
+ END_FUNCTION_BLOCK
+

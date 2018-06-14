@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://www.plcopen.org/xml/tc6.xsd"
+         xmlns:xhtml="http://www.w3.org/1999/xhtml"
+         xsi:schemaLocation="http://www.plcopen.org/xml/tc6.xsd http://www.plcopen.org/xml/tc6.xsd">
+  <fileHeader contentDescription="This tests LD language"
+              companyName="Beremiz"
+              companyURL="www.beremiz.org"
+              productName="BREMIZ"
+              productRelease="1"
+              productVersion="1"
+              creationDateTime="2007-07-07 11:58:26"/>
+  <contentHeader name="LD_TEST">
+    <coordinateInfo>
+      <fbd>
+        <scaling y="0" x="0"/>
+      </fbd>
+      <ld>
+        <scaling y="0" x="0"/>
+      </ld>
+      <sfc>
+        <scaling y="0" x="0"/>
+      </sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="MAIN_TEST" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="QX1" address="%QX1">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="QX2" address="%QX2">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="QX3" address="%QX3">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="IX1" address="%IX1">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="IX2" address="%IX2">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="IX3" address="%IX3">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <LD>
+          </LD>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations>
+      <configuration name="STD_CONF">
+        <resource name="STD_RESSOURCE">
+          <task interval="00:00:00.100000" name="STD_TASK" priority="0"/>
+          <pouInstance type="MAIN_TEST" name="MAIN_INSTANCE"/>
+        </resource>
+      </configuration>
+    </configurations>
+  </instances>
+</project>

@@ -1,0 +1,149 @@
+(* Test whether the keyword XXXX may be used as an identifier for:
+ * FUNCTION declaration
+ *
+ * The XXXX names in the following code are merely a placeholder.
+ * They will be replaced by several identifiers before actual testing
+ * of the compiler.
+ *)
+
+(* The identifiers that will replace the XXXX
+ * must be placed on a line starting with #
+ * All identifiers preceded by # are ignored!
+ * The identifier list must be placed inside an IEC 61131-3 comment.
+ *)
+(* This file is specific for identifiers NOT identical to IL operators.
+ *  See the note following the identifier list
+ *)
+(*
+#IL_operators #ANDN #CAL #CALC #CALCN #CD #CLK #CU #IN #JMP #JMPC #JMPCN #LD #LDN #ORN 
+#IL_operators #PT #PV #R #R1 #RET #RETC #RETCN #S #S1 #ST #STN #XORN
+     NOTE: R and S are identical to IL operators!!
+#SFC_qualifiers D DS L N P #R #S SD SL   
+#Task_initialisers PRIORITY SINGLE INTERVAL
+*)
+
+(* NOTE: The identifier as a function test has some special cases.
+ *       Namely, when using IL operators as function names.
+ *       For example, if a function LD has been previoulsy defined,
+ *       The following IL code may be interpreted as either a 
+ *       function call or an IL operation
+ *         LD 10
+ *       Due to undefined situations as the above, our 
+ *       IEC compiler currently will always interpret IL operator identifiers.
+ *       inside IL code as an IL operator.
+ *       This means that calling, from IL code, of functions whose names
+ *       coincide with an IL operator is not possible.
+ *
+ *       The following test code must therefore consider two possibilities:
+ *        - if the identifier under test is an IL operator
+ *        - if the identifier under test is not an IL operator
+ *)
+
+
+
+(* The FUNCTION declaration *)
+
+function XXXX : int
+ var_input
+  a_1, b_1: int;
+ end_var
+  XXXX := a_1 + b_1;
+end_function
+
+
+
+(* Calling of the function from within ST code *)
+function foo : int
+ var
+  c_1, d_1 : int;
+  e_1, f_1 : int;
+ end_var
+  d_1 := XXXX(c_1, d_1);
+  d_1 := XXXX(10, 20);
+  c_1 := XXXX(20, 22);
+  c_1 := XXXX(b_1 := e_1, a_1 := f_1);
+  c_1 := XXXX (a_1 := e_1, b_1 := f_1);
+end_function
+
+
+
+(* Calling of the function from within IL code *)
+
+function bar000 : int
+ var
+  e_1, f_1 : int;
+ end_var
+  XXXX 10
+  LD 20
+  XXXX 30
+  XXXX 10, 20
+  XXXX (
+    b_1 := 10,
+    a_1 := 20
+   )
+  XXXX(
+    b_1 := 10,
+    a_1 := 20
+   )
+  XXXX (
+    b_1 := 10
+   )
+  XXXX(
+    b_1 := 10
+   )
+end_function
+
+
+
+(* Checking whether the use of XXXX will confuse the logic 
+ * used to determine if a POU body is in IL or ST language.
+ *)
+
+function bar001 : int
+ var
+  e_1, f_1 : int;
+ end_var
+  XXXX 10
+end_function
+
+
+function bar002 : int
+ var
+  e_1, f_1 : int;
+ end_var
+  XXXX 10, 20
+end_function
+
+
+function bar003 : int
+ var
+  e_1, f_1 : int;
+ end_var
+  XXXX(
+    b_1 := 10,
+    a_1 := 20
+   )
+end_function
+
+
+function bar004 : int
+ var
+  e_1, f_1 : int;
+ end_var
+  XXXX (
+    b_1 := 10,
+    a_1 := 20
+   )
+end_function
+
+
+
+
+
+
+(* Checking whether the use of XXXX will confuse any other
+ * normal and correct IL or ST code.
+ *)
+{#include "basic_code.test" }
+
+

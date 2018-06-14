@@ -1,0 +1,303 @@
+(* Test whether the keyword XXXX may be used as an identifier for:
+ * variable name/identifier
+ *
+ * The XXXX names in the following code are merely a placeholder.
+ * They will be replaced by several identifiers before actual testing
+ * of the compiler.
+ *)
+
+(* The identifiers that will replace the XXXX
+ * must be placed on a line starting with #
+ * All identifiers preceded by # are ignored!
+ * The identifier list must be placed inside an IEC 61131-3 comment.
+ *)
+(* This file is specific for identifiers NOT identical to IL operators.
+ *  See the note following the identifier list
+ *)
+(*
+#IL_operators #ANDN #CAL #CALC #CALCN #CD #CLK #CU #IN #JMP #JMPC #JMPCN #LD #LDN #ORN 
+#IL_operators #PT #PV #R #R1 #RET #RETC #RETCN #S #S1 #ST #STN #XORN
+     NOTE: R and S are identical to IL operators!!
+#SFC_qualifiers D DS L N P #R #S SD SL   
+#Task_initialisers PRIORITY SINGLE INTERVAL
+*)
+
+(* NOTE: The identifier as a variable test has some special cases.
+ *       Namely, when using IL operators as variable names.
+ *       Even though the syntax of the IL language would not result
+ *       in ambiguities in the above case, our parser does not currently
+ *       allow the use of variables (with names identical to IL
+ *       operators) within IL code.
+ *
+ *       The following test code must therefore consider two possibilities:
+ *        - if the identifier under test is an IL operator
+ *        - if the identifier under test is not an IL operator
+ *)
+
+
+
+(* A helper FUNCTION BLOCK declaration *)
+function_block foo_fb
+ var_input
+  a_1, b_1: int;
+ end_var
+ var_output
+  c_1, d_1: int;
+ end_var
+  c_1 := 10 + b_1;
+end_function_block
+
+
+(* A helper FUNCTION declaration *)
+function foo_f1 : int
+ var_input
+  a_1, b_1: int;
+ end_var
+ var_output
+  c_1, d_1: int;
+ end_var
+  c_1 := 10 + b_1;
+end_function
+
+(* Another helper FUNCTION declaration *)
+function foo_f2 : int
+ var_input
+  a_1, b_1: foo_fb;
+ end_var
+ var_output
+  c_1, d_1: int;
+ end_var
+  c_1 := 10;
+end_function
+
+(* Another helper FUNCTION declaration *)
+function bar01 : int
+ var_input
+  XXXX, a_1, b_1: int;
+ end_var
+ a_1 := 1;
+end_function
+
+(* Another helper FUNCTION_BLOCK declaration *)
+function_block bar91
+ var
+  e_1, f_1 : int;
+  XXXX : foo_fb;
+ end_var
+  e_1 := 0;
+end_function_block
+
+
+
+
+
+
+
+(* Using XXXX as a standard variable name in IL *)
+
+(* NOTE: Currently not supported for identifiers identical to IL operators.
+ *       We therefore have two versions of this file, one with the following code
+ *       commented out (used to test the identifiers that clash with IL operators)
+ *       and a second with the following code included (used to test identifiers
+ *       that do not clash with IL operators, such as PRIORITY, SINGLE, etc...)
+ *)
+
+
+
+function_block bar92
+ var
+  e_1, f_1 : int;
+  XXXX : bool;
+  fb : foo_fb;
+  fb2 : bar91;
+ end_var
+ (* IL operators that - acording to the standard - are not keywords *)
+ LD XXXX
+ LDN XXXX
+ ANDN XXXX
+ ORN XXXX
+ XORN XXXX
+ R XXXX
+ S XXXX
+ ST XXXX
+ STN XXXX
+
+ (* IL operators that - acording to the standard - are also keywords *)
+ AND XXXX
+ OR XXXX
+ XOR XXXX
+ NOT XXXX
+end_function_block
+
+
+function_block bar93
+ var
+  e_1, f_1 : int;
+  XXXX : int;
+ end_var
+
+ (* IL operators that - acording to the standard - are also keywords *)
+ ADD XXXX
+ SUB XXXX
+ MUL XXXX
+ DIV XXXX
+ MOD XXXX
+ GE XXXX
+ GT XXXX
+ LE XXXX
+ LT XXXX
+ EQ XXXX
+ NE XXXX
+
+ (* Calling function with input parameter named XXXX *)
+ bar01 (
+  XXXX := 10
+ )
+ bar01 (
+  a_1 := XXXX
+ )
+ bar01 (
+  XXXX := XXXX
+ )
+end_function_block
+
+
+
+
+(* a helper function block *)
+function_block bar94
+ var_input
+  e_1, f_1 : int;
+  XXXX : foo_fb;
+ end_var
+  e_1 := XXXX.c_1;
+end_function_block
+
+
+function_block bar95
+ var
+  e_1, f_1 : int;
+  XXXX : foo_fb;
+  fb_1 : bar93;
+ end_var
+ CAL XXXX(10)
+ CAL XXXX (e_1)
+ CAL XXXX (10, e_1, e_1, f_1)
+ CAL XXXX (
+    a_1 := 10,
+    b_1 := e_1,
+    c_1 => e_1,
+    d_1 => f_1
+   )
+ CAL XXXX (
+    a_1 := 10,
+    c_1 => e_1
+   )
+
+ CALC XXXX(10)
+ CALC XXXX (e_1)
+ CALC XXXX (10, e_1, e_1, f_1)
+ CALC XXXX (
+    a_1 := 10,
+    b_1 := e_1,
+    c_1 => e_1,
+    d_1 => f_1
+   )
+ CALC XXXX (
+    a_1 := 10,
+    c_1 => e_1
+   )
+
+ CALCN XXXX(10)
+ CALCN XXXX (e_1)
+ CALCN XXXX (10, e_1, e_1, f_1)
+ CALCN XXXX (
+    a_1 := 10,
+    b_1 := e_1,
+    c_1 => e_1,
+    d_1 => f_1
+   )
+ CALCN XXXX (
+    a_1 := 10,
+    c_1 => e_1
+   )
+
+ LD XXXX.a_1
+ ST XXXX.b_1
+ LD fb_1.XXXX
+ ST fb_1.XXXX
+ LD fb_1.XXXX.a_1
+ ST fb_1.XXXX.a_1
+
+ LD XXXX
+ foo_f2 XXXX, e_1, f_1
+ foo_f2 (
+    a_1 := XXXX,
+    b_1 := XXXX,
+    c_1 => e_1,
+    d_1 => f_1
+   )
+
+ (* Calling function with input parameter named XXXX *)
+ bar01 (
+  XXXX := 10
+ )
+ bar01 (
+  a_1 := XXXX.a_1
+ )
+ bar01 (
+  XXXX := XXXX.a_1
+ )
+end_function_block
+
+
+function_block bar96
+ var
+  e_1, f_1 : int;
+  XXXX : CTUD;
+ end_var
+ CU XXXX
+ CD XXXX
+ PV XXXX
+end_function_block
+
+
+function_block bar97
+ var
+  e_1, f_1 : int;
+  XXXX : R_TRIG;
+ end_var
+ CLK XXXX
+end_function_block
+
+
+
+function_block bar98
+ var
+  e_1, f_1 : int;
+  XXXX : TP;
+ end_var
+ IN XXXX
+ PT XXXX
+end_function_block
+
+
+
+function_block bar99
+ var
+  e_1, f_1 : int;
+  XXXX : SR;
+ end_var
+ R1 XXXX
+ S1 XXXX
+end_function_block
+
+
+
+
+
+(* Checking whether the use of XXXX will confuse any other
+ * normal and correct IL or ST code.
+ *)
+{#include "basic_code.test" }
+

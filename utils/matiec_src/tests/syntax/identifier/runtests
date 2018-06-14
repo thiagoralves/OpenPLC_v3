@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# assume no error to start with...
+error=0
+
+for ff in `ls *.test`
+do
+  for id in `cat $ff | grep "^#" | sed "s/#[^ ]*//g"`
+  do
+	sed s/XXXX/$id/g $ff > $ff"_"$id.iec
+	if `../../../iec2iec $ff"_"$id.iec -I ../../../lib > $ff"_"$id.out 2>$ff"_"$id.err`
+	#if `../../../iec2c $ff"_"$id.iec -I ../../../lib > $ff"_"$id.out 2>$ff"_"$id.err`
+		# TODO before deciding test is success [OK]
+		#       - test whether xxx.out has size <> 0
+		#       - test whether xxx.err has size == 0
+		#       - (?) test whether xxx.out2 is identical to xxx.out
+		#       - (?) test whether xxx.err2 has size == 0
+		#       - perhaps produce a [WARN] instead of [ERROR] in cases of (?)
+	  then echo "[ O K ]   " $ff "->" $id
+	  else echo "[ERROR]   " $ff "->" $id; error=1
+	fi
+#	../../../iec2iec $ff"_"$id.out -I ../../../lib > $ff"_"$id.out2 2>$ff"_"$id.err2
+  done
+done
+
+echo
+if `test $error = 1`
+  then echo "FAILURE -> At least one of the tests failed!"
+  else echo "SUCCESS -> All tests passed!"
+fi

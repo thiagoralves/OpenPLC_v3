@@ -1,0 +1,49 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.automatak.dnp3</groupId>
+    <artifactId>formatting</artifactId>
+    <version>1.1.0</version>
+    <packaging>pom</packaging>
+
+    <name>opendnp3</name>
+    <url>http://www.github.com/automatak/dnp3</url>
+    <description>This is a project only for header formatting, nothing more</description>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <header>APACHE_LICENSE_HEADER</header>
+                    <mapping>
+                      <h>SLASHSTAR_STYLE</h>
+                      <cpp>SLASHSTAR_STYLE</cpp>
+                    </mapping>
+                    <includes>
+                        <include>cpp/**/*.h</include>
+                        <include>cpp/**/*.cpp</include>
+                    </includes>
+                    <excludes>
+                        <exclude>cpp/libs/include/opendnp3/gen/*</exclude>                        
+                        <exclude>cpp/libs/src/opendnp3/gen/*</exclude>
+                        <exclude>cpp/libs/src/opendnp3/objects/*</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+
+

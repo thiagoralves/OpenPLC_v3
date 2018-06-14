@@ -1,0 +1,65 @@
+(* Test whether the keyword XXXX may be used as an identifier for:
+ * IL label name/identifier
+ *
+ * The XXXX names in the following code are merely a placeholder.
+ * They will be replaced by several identifiers before actual testing
+ * of the compiler.
+ *)
+
+(* The identifiers that will replace the XXXX
+ * must be placed on a line starting with #
+ * All identifiers preceded by # are ignored!
+ * The identifier list must be placed inside an IEC 61131-3 comment.
+ *)
+(*
+#IL_operators #ANDN #CAL #CALC #CALCN #CD #CLK #CU #IN #JMP #JMPC #JMPCN 
+#IL_operators #LD #LDN #ORN #PT #PV #R #R1 #RET #RETC #RETCN #S #S1 #ST #STN #XORN
+#SFC_qualifiers D DS L N P #R #S SD SL
+     NOTE: R and S are identical to IL operators!!
+#Task_initialisers PRIORITY SINGLE INTERVAL
+*)
+
+(* NOTE: Currently the matiec compiler does not yet support
+ *       the use of identifiers identical to IL operators
+ *       in IL code. In ther words, in IL code we cannot use 
+ *       identifiers identical to IL operators to identify variables,
+ *       functions, etc...
+ *       Identifiers identical to IL operators are therefore
+ *       commented out.
+ *)
+
+
+
+
+
+function foo : int
+ var
+  e, f : bool;
+ end_var
+
+ XXXX: R e
+  JMP XXXX
+end_function
+
+
+
+function bar : int
+ var
+  e, f : bool;
+ end_var
+
+  JMP XXXX
+ XXXX: R e
+end_function
+
+
+
+
+
+
+
+(* Checking whether the use of XXXX will confuse any other
+ * normal and correct IL or ST code.
+ *)
+{#include "basic_code.test" }
+

@@ -1,0 +1,791 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://www.plcopen.org/xml/tc6.xsd"
+         xmlns:xhtml="http://www.w3.org/1999/xhtml"
+         xsi:schemaLocation="http://www.plcopen.org/xml/tc6.xsd http://www.plcopen.org/xml/tc6.xsd">
+  <fileHeader contentDescription="This tests SFC language"
+              companyName="Beremiz"
+              companyURL="www.beremiz.org"
+              productName="BREMIZ"
+              productRelease="1"
+              productVersion="1"
+              creationDateTime="2007-07-07 11:58:26"/>
+  <contentHeader name="LD_TEST">
+    <coordinateInfo>
+      <fbd>
+        <scaling y="0" x="0"/>
+      </fbd>
+      <ld>
+        <scaling y="0" x="0"/>
+      </ld>
+      <sfc>
+        <scaling y="0" x="0"/>
+      </sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="MAIN_TEST" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="QX1" address="%QX1">
+              <type>
+                <BOOL/>
+              </type>
+              <initialValue>
+                <simpleValue value="FALSE"/>
+              </initialValue>
+            </variable>
+            <variable name="QX2" address="%QX2">
+              <type>
+                <BOOL/>
+              </type>
+              <initialValue>
+                <simpleValue value="TRUE"/>
+              </initialValue>
+            </variable>
+            <variable name="QX3" address="%QX3">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="IX1" address="%IX1">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="IX2" address="%IX2">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="IX3" address="%IX3">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+          </localVars>
+        </interface>
+        <actions>
+          <action name="ONSTEP1">
+            <body>
+              <ST>
+QX1 := TRUE;
+QX2 := TRUE;
+              </ST>
+            </body>
+          </action>
+        </actions>
+        <body>
+          <SFC>
+            <step localId="1" height="31" width="40" initialStep="true" name="GO">
+              <position y="26" x="70"/>
+              <connectionPointOut formalParameter="">
+                <relPosition y="31" x="20"/>
+              </connectionPointOut>
+            </step>
+            <transition localId="2" height="2" width="20">
+              <position y="82" x="80"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="1">
+                  <position y="82" x="90"/>
+                  <position y="57" x="90"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>IX1 = FALSE</ST>
+                </inline>
+              </condition>
+            </transition>
+            <step localId="3" height="27" width="50" initialStep="false" name="STEP1">
+              <position y="109" x="65"/>
+              <connectionPointIn>
+                <relPosition y="0" x="25"/>
+                <connection refLocalId="2">
+                  <position y="109" x="90"/>
+                  <position y="84" x="90"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="25"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="50"/>
+              </connectionPointOutAction>
+            </step>
+            <transition localId="4" height="2" width="20">
+              <position y="161" x="80"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="3">
+                  <position y="161" x="90"/>
+                  <position y="136" x="90"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>IX2 = TRUE</ST>
+                </inline>
+              </condition>
+            </transition>
+            <step localId="5" height="27" width="50" initialStep="false" name="STEP2">
+              <position y="188" x="65"/>
+              <connectionPointIn>
+                <relPosition y="0" x="25"/>
+                <connection refLocalId="4">
+                  <position y="188" x="90"/>
+                  <position y="163" x="90"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="25"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="50"/>
+              </connectionPointOutAction>
+            </step>
+            <selectionDivergence localId="6" height="1" width="840">
+              <position y="240" x="90"/>
+              <connectionPointIn>
+                <relPosition y="0" x="0"/>
+                <connection refLocalId="5">
+                  <position y="240" x="90"/>
+                  <position y="215" x="90"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="1" x="0"/>
+              </connectionPointOut>
+              <connectionPointOut formalParameter="">
+                <relPosition y="1" x="840"/>
+              </connectionPointOut>
+              <connectionPointOut formalParameter="">
+                <relPosition y="1" x="579"/>
+              </connectionPointOut>
+              <connectionPointOut formalParameter="">
+                <relPosition y="1" x="304"/>
+              </connectionPointOut>
+            </selectionDivergence>
+            <transition localId="7" height="2" width="20">
+              <position y="266" x="80"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="6">
+                  <position y="266" x="90"/>
+                  <position y="241" x="90"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>QX1 = FALSE AND QX2 = FALSE</ST>
+                </inline>
+              </condition>
+            </transition>
+            <step localId="8" height="27" width="40" initialStep="false" name="A1">
+              <position y="293" x="70"/>
+              <connectionPointIn>
+                <relPosition y="0" x="20"/>
+                <connection refLocalId="7">
+                  <position y="293" x="90"/>
+                  <position y="268" x="90"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="20"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="40"/>
+              </connectionPointOutAction>
+            </step>
+            <transition localId="9" height="2" width="20">
+              <position y="266" x="920"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="6">
+                  <position y="266" x="930"/>
+                  <position y="241" x="930"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>QX1 = TRUE AND QX2 = TRUE</ST>
+                </inline>
+              </condition>
+            </transition>
+            <transition localId="11" height="2" width="20">
+              <position y="266" x="659"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="6">
+                  <position y="266" x="669"/>
+                  <position y="241" x="669"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>QX1 = TRUE AND QX2 = FALSE</ST>
+                </inline>
+              </condition>
+            </transition>
+            <step localId="12" height="27" width="40" initialStep="false" name="A3">
+              <position y="293" x="649"/>
+              <connectionPointIn>
+                <relPosition y="0" x="20"/>
+                <connection refLocalId="11">
+                  <position y="293" x="669"/>
+                  <position y="268" x="669"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="20"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="40"/>
+              </connectionPointOutAction>
+            </step>
+            <simultaneousDivergence localId="19" height="3" width="486">
+              <position y="293" x="898"/>
+              <connectionPointIn>
+                <relPosition y="0" x="32"/>
+                <connection refLocalId="9">
+                  <position y="293" x="930"/>
+                  <position y="268" x="930"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="3" x="0"/>
+              </connectionPointOut>
+              <connectionPointOut formalParameter="">
+                <relPosition y="3" x="249"/>
+              </connectionPointOut>
+              <connectionPointOut formalParameter="">
+                <relPosition y="3" x="486"/>
+              </connectionPointOut>
+            </simultaneousDivergence>
+            <step localId="20" height="27" width="40" initialStep="false" name="D1">
+              <position y="325" x="878"/>
+              <connectionPointIn>
+                <relPosition y="0" x="20"/>
+                <connection refLocalId="19">
+                  <position y="325" x="898"/>
+                  <position y="296" x="898"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="20"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="40"/>
+              </connectionPointOutAction>
+            </step>
+            <step localId="21" height="27" width="40" initialStep="false" name="D2">
+              <position y="325" x="1127"/>
+              <connectionPointIn>
+                <relPosition y="0" x="20"/>
+                <connection refLocalId="19">
+                  <position y="325" x="1147"/>
+                  <position y="296" x="1147"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="20"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="40"/>
+              </connectionPointOutAction>
+            </step>
+            <step localId="22" height="27" width="40" initialStep="false" name="D3">
+              <position y="325" x="1364"/>
+              <connectionPointIn>
+                <relPosition y="0" x="20"/>
+                <connection refLocalId="19">
+                  <position y="325" x="1384"/>
+                  <position y="296" x="1384"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="20"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="40"/>
+              </connectionPointOutAction>
+            </step>
+            <transition localId="23" height="2" width="20">
+              <position y="377" x="888"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="20">
+                  <position y="377" x="898"/>
+                  <position y="352" x="898"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>NOT ( QX1 OR QX2 OR QX3 )</ST>
+                </inline>
+              </condition>
+            </transition>
+            <step localId="24" height="27" width="26" initialStep="false" name="E1">
+              <position y="404" x="885"/>
+              <connectionPointIn>
+                <relPosition y="0" x="13"/>
+                <connection refLocalId="23">
+                  <position y="404" x="898"/>
+                  <position y="379" x="898"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="13"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="26"/>
+              </connectionPointOutAction>
+            </step>
+            <transition localId="25" height="2" width="20">
+              <position y="377" x="1137"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="21">
+                  <position y="377" x="1147"/>
+                  <position y="352" x="1147"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>NOT ( QX1 OR QX2 OR QX3 )</ST>
+                </inline>
+              </condition>
+            </transition>
+            <step localId="26" height="27" width="26" initialStep="false" name="E2">
+              <position y="404" x="1134"/>
+              <connectionPointIn>
+                <relPosition y="0" x="13"/>
+                <connection refLocalId="25">
+                  <position y="404" x="1147"/>
+                  <position y="379" x="1147"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="13"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="26"/>
+              </connectionPointOutAction>
+            </step>
+            <transition localId="27" height="2" width="20">
+              <position y="377" x="1374"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="22">
+                  <position y="377" x="1384"/>
+                  <position y="352" x="1384"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>NOT ( QX1 OR QX2 OR QX3 )</ST>
+                </inline>
+              </condition>
+            </transition>
+            <step localId="28" height="27" width="26" initialStep="false" name="E3">
+              <position y="408" x="1371"/>
+              <connectionPointIn>
+                <relPosition y="0" x="13"/>
+                <connection refLocalId="27">
+                  <position y="408" x="1384"/>
+                  <position y="379" x="1384"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="13"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="26"/>
+              </connectionPointOutAction>
+            </step>
+            <simultaneousConvergence localId="29" height="3" width="486">
+              <position y="460" x="898"/>
+              <connectionPointIn>
+                <relPosition y="0" x="0"/>
+                <connection refLocalId="24">
+                  <position y="460" x="898"/>
+                  <position y="431" x="898"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointIn>
+                <relPosition y="0" x="249"/>
+                <connection refLocalId="26">
+                  <position y="460" x="1147"/>
+                  <position y="431" x="1147"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointIn>
+                <relPosition y="0" x="486"/>
+                <connection refLocalId="28">
+                  <position y="460" x="1384"/>
+                  <position y="435" x="1384"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="3" x="183"/>
+              </connectionPointOut>
+            </simultaneousConvergence>
+            <transition localId="30" height="2" width="20">
+              <position y="488" x="1071"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="29">
+                  <position y="488" x="1081"/>
+                  <position y="463" x="1081"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>QX1 AND QX2 AND QX3</ST>
+                </inline>
+              </condition>
+            </transition>
+            <jumpStep localId="33" height="13" width="12" targetName="GO">
+              <position y="515" x="1075"/>
+              <connectionPointIn>
+                <relPosition y="0" x="6"/>
+                <connection refLocalId="30">
+                  <position y="515" x="1081"/>
+                  <position y="490" x="1081"/>
+                </connection>
+              </connectionPointIn>
+            </jumpStep>
+            <actionBlock localId="34" height="30" width="100">
+              <position y="107" x="140"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="3">
+                  <position y="122" x="140"/>
+                  <position y="122" x="115"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <reference name="ONSTEP1"/>
+              </action>
+            </actionBlock>
+            <actionBlock localId="35" height="30" width="293">
+              <position y="186" x="140"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="5">
+                  <position y="201" x="140"/>
+                  <position y="201" x="115"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="P">
+                <inline>
+                  <ST>QX1 := QX2 XOR QX1; QX2 := NOT QX2;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+            <transition localId="36" height="2" width="20">
+              <position y="266" x="384"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="6">
+                  <position y="266" x="394"/>
+                  <position y="241" x="394"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>QX1 = FALSE AND QX2 = TRUE</ST>
+                </inline>
+              </condition>
+            </transition>
+            <step localId="37" height="27" width="40" initialStep="false" name="A2">
+              <position y="293" x="374"/>
+              <connectionPointIn>
+                <relPosition y="0" x="20"/>
+                <connection refLocalId="36">
+                  <position y="293" x="394"/>
+                  <position y="268" x="394"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut formalParameter="">
+                <relPosition y="27" x="20"/>
+              </connectionPointOut>
+              <connectionPointOutAction formalParameter="">
+                <relPosition y="13" x="40"/>
+              </connectionPointOutAction>
+            </step>
+            <transition localId="47" height="2" width="20">
+              <position y="345" x="80"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="8">
+                  <position y="345" x="90"/>
+                  <position y="320" x="90"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>IX1 = TRUE</ST>
+                </inline>
+              </condition>
+            </transition>
+            <transition localId="48" height="2" width="20">
+              <position y="345" x="659"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="12">
+                  <position y="345" x="669"/>
+                  <position y="320" x="669"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>IX1 = TRUE</ST>
+                </inline>
+              </condition>
+            </transition>
+            <transition localId="49" height="2" width="20">
+              <position y="345" x="384"/>
+              <connectionPointIn>
+                <relPosition y="0" x="10"/>
+                <connection refLocalId="37">
+                  <position y="345" x="394"/>
+                  <position y="320" x="394"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="2" x="10"/>
+              </connectionPointOut>
+              <condition>
+                <inline name="">
+                  <ST>IX1 = FALSE</ST>
+                </inline>
+              </condition>
+            </transition>
+            <selectionConvergence localId="50" height="1" width="579">
+              <position y="372" x="90"/>
+              <connectionPointIn>
+                <relPosition y="0" x="0"/>
+                <connection refLocalId="47">
+                  <position y="372" x="90"/>
+                  <position y="347" x="90"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointIn>
+                <relPosition y="0" x="579"/>
+                <connection refLocalId="48">
+                  <position y="372" x="669"/>
+                  <position y="347" x="669"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointIn>
+                <relPosition y="0" x="304"/>
+                <connection refLocalId="49">
+                  <position y="372" x="394"/>
+                  <position y="347" x="394"/>
+                </connection>
+              </connectionPointIn>
+              <connectionPointOut>
+                <relPosition y="1" x="0"/>
+              </connectionPointOut>
+            </selectionConvergence>
+            <jumpStep localId="53" height="13" width="12" targetName="STEP2">
+              <position y="398" x="84"/>
+              <connectionPointIn>
+                <relPosition y="0" x="6"/>
+                <connection refLocalId="50">
+                  <position y="398" x="90"/>
+                  <position y="373" x="90"/>
+                </connection>
+              </connectionPointIn>
+            </jumpStep>
+            <actionBlock localId="54" height="30" width="111">
+              <position y="291" x="135"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="8">
+                  <position y="306" x="135"/>
+                  <position y="306" x="110"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <inline>
+                  <ST>IX1 := TRUE;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+            <actionBlock localId="55" height="30" width="117">
+              <position y="291" x="439"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="37">
+                  <position y="306" x="439"/>
+                  <position y="306" x="414"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <inline>
+                  <ST>IX1 := FALSE;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+            <actionBlock localId="56" height="30" width="111">
+              <position y="291" x="714"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="12">
+                  <position y="306" x="714"/>
+                  <position y="306" x="689"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <inline>
+                  <ST>IX1 := TRUE;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+            <actionBlock localId="57" height="30" width="124">
+              <position y="323" x="943"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="20">
+                  <position y="338" x="943"/>
+                  <position y="338" x="918"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <inline>
+                  <ST>QX1 := FALSE;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+            <actionBlock localId="58" height="30" width="124">
+              <position y="323" x="1192"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="21">
+                  <position y="338" x="1192"/>
+                  <position y="338" x="1167"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <inline>
+                  <ST>QX2 := FALSE;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+            <actionBlock localId="59" height="30" width="124">
+              <position y="323" x="1429"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="22">
+                  <position y="338" x="1429"/>
+                  <position y="338" x="1404"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <inline>
+                  <ST>QX2 := FALSE;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+            <actionBlock localId="60" height="30" width="118">
+              <position y="402" x="936"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="24">
+                  <position y="417" x="936"/>
+                  <position y="417" x="911"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <inline>
+                  <ST>QX1 := TRUE;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+            <actionBlock localId="61" height="30" width="118">
+              <position y="402" x="1185"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="26">
+                  <position y="417" x="1185"/>
+                  <position y="417" x="1160"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <inline>
+                  <ST>QX2 := TRUE;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+            <actionBlock localId="62" height="30" width="118">
+              <position y="406" x="1422"/>
+              <connectionPointIn>
+                <relPosition y="15" x="0"/>
+                <connection refLocalId="28">
+                  <position y="421" x="1422"/>
+                  <position y="421" x="1397"/>
+                </connection>
+              </connectionPointIn>
+              <action qualifier="N">
+                <inline>
+                  <ST>QX3 := TRUE;</ST>
+                </inline>
+              </action>
+            </actionBlock>
+          </SFC>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations>
+      <configuration name="STD_CONF">
+        <resource name="STD_RESSOURCE">
+          <task interval="00:00:00.100000" name="STD_TASK" priority="0"/>
+          <pouInstance type="MAIN_TEST" name="MAIN_INSTANCE"/>
+        </resource>
+      </configuration>
+    </configurations>
+  </instances>
+</project>

@@ -1,0 +1,41 @@
+
+
+
+TYPE
+ enum_type00 : (enum_v1, XXXX, enum_v2) := XXXX;
+END_TYPE
+
+TYPE
+ enum_type01 : (XXXX, enum_v2) := XXXX;
+END_TYPE
+
+TYPE
+ enum_type02 : (enum_v1, XXXX) := XXXX;
+END_TYPE
+
+TYPE
+ enum_type03 : (XXXX) := XXXX;
+END_TYPE
+
+
+
+
+function foo : int
+ var_input
+  a_1, b_1: int;
+ end_var
+ var
+  c_1, d_1: enum_type00;
+(*
+  enum_v1 : enum_type00;
+*)
+ end_var
+  c_1 := enum_type00#XXXX;
+  c_1 := XXXX;
+  c_1 := enum_v1;
+(*
+  enum_v1 := enum_v1;
+*)
+end_function
+
+

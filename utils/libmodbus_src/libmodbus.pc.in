@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: modbus
+Description: Modbus library
+Version: @VERSION@
+Libs: -L${libdir} -lmodbus
+Cflags: -I${includedir}/modbus

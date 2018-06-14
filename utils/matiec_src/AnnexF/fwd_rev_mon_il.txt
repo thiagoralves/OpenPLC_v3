@@ -1,0 +1,77 @@
+FUNCTION_BLOCK FWD_REV_MON
+VAR_INPUT AUTO : BOOL ;(* Enable automated commands *)
+  ACK : BOOL ;         (* Acknowledge/cancel all alarms *)
+  AUTO_FWD : BOOL ;    (* Automated forward command *)
+  MAN_FWD : BOOL ;     (* Manual forward command *)
+  MAN_FWD_CHK : BOOL ; (* Negated MAN_FWD for debouncing *)
+  T_FWD_MAX : TIME ;  (* Maximum time from FWD_CMD to FWD_FDBK *)
+  FWD_FDBK : BOOL ;    (* Confirmation of FWD_CMD completion *)
+                       (*   by operative unit *)
+  AUTO_REV : BOOL ;    (* Automated reverse command *)
+  MAN_REV : BOOL ;     (* Manual reverse command *)
+  MAN_REV_CHK : BOOL ; (* Negated MAN_REV for debouncing *)
+  T_REV_MAX : TIME ;  (* Maximum time from REV_CMD to REV_FDBK *)  
+  REV_FDBK : BOOL ;    (* Confirmation of REV_CMD completion *)
+END_VAR                (*    by operative unit *)
+VAR_OUTPUT KLAXON : BOOL ;      (* Any alarm active *)
+  FWD_REV_ALRM : BOOL; (* Forward/reverse command conflict *)
+  FWD_CMD : BOOL ;     (* "Forward" command to operative unit *)
+  FWD_ALRM : BOOL ;    (* T_FWD_MAX expired without FWD_FDBK *)
+  REV_CMD : BOOL ;     (* "Reverse" command to operative unit *)
+  REV_ALRM : BOOL ;    (* T_REV_MAX expired without REV_FDBK *)
+END_VAR
+VAR FWD_MON : CMD_MONITOR; (* "Forward" command monitor *)
+  REV_MON : CMD_MONITOR;   (* "Reverse" command monitor *)
+  FWD_REV_FF : SR ;      (* Forward/Reverse contention latch *)
+END_VAR
+(* Function Block body *)
+LD	AUTO	(* Load common inputs *)
+ST	FWD_MON.AUTO_MODE	
+ST	REV_MON.AUTO_MODE	
+LD	ACK	
+ST	FWD_MON.ACK	
+ST	REV_MON.ACK	
+ST	FWD_REV_FF.R	
+LD	AUTO_FWD	(* Load inputs to FWD_MON *)
+ST	FWD_MON.AUTO_CMD	
+LD	MAN_FWD	
+ST	FWD_MON.MAN_CMD	
+LD	MAN_FWD_CHK	
+ST	FWD_MON.MAN_CMD_CHK	
+LD	T_FWD_MAX	
+ST	FWD_MON.T_CMD_MAX	
+LD	FWD_FDBK	
+ST	FWD_MON.FDBK	
+CAL	FWD_MON	(* Activate FWD_MON *)
+LD	AUTO_REV	(* Load inputs to REV_MON *)
+ST	REV_MON.AUTO_CMD	
+LD	MAN_REV	
+ST	REV_MON.MAN_CMD	
+LD	MAN_REV_CHK	
+ST	REV_MON.MAN_CMD_CHK	
+LD	T_REV_MAX	
+ST	REV_MON.T_CMD_MAX	
+LD	REV_FDBK	
+ST	REV_MON.FDBK	
+CAL	REV_MON	(* Activate REV_MON *)
+LD	FWD_MON.CMD	(* Check for contention *)
+AND	REV_MON.CMD	
+S1	FWD_REV_FF	(* Latch contention condition *)
+LD	FWD_REV_FF.Q	
+ST	FWD_REV_ALRM	(* Contention alarm *)
+LD	FWD_MON.CMD	(* "Forward" command and alarm *)
+ANDN	FWD_REV_ALRM	
+ST	FWD_CMD	
+LD	FWD_MON.ALRM	
+ST	FWD_ALRM	
+LD	REV_MON.CMD	(* "Reverse" command and alarm *)
+ANDN	FWD_REV_ALRM	
+ST	REV_CMD	
+LD	REV_MON.ALRM	
+ST	REV_ALRM	
+OR	FWD_ALRM	(* OR all alarms *)
+OR	FWD_REV_ALRM	
+ST	KLAXON	
+
+END_FUNCTION_BLOCK
+

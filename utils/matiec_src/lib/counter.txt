@@ -1,0 +1,460 @@
+(* Following taken directly from the IEC 61131.3 draft standard *)
+
+(*
+ * An IEC 61131-3 IL and ST compiler.
+ *
+ * Based on the
+ * FINAL DRAFT - IEC 61131-3, 2nd Ed. (2001-12-10)
+ *
+ *)
+
+
+(*
+ * This is part of the library conatining the functions
+ * and function blocks defined in the standard.
+ *
+ * Counter function blocks
+ * -----------------------
+ *)
+
+
+
+(******************)
+(*                *)
+(*    C  T  U     *)
+(*                *)
+(******************)
+
+
+FUNCTION_BLOCK CTU
+  VAR_INPUT
+    CU : BOOL;
+    R : BOOL;
+    PV : INT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : INT;
+  END_VAR
+  VAR
+    CU_T: R_TRIG;
+  END_VAR
+
+  CU_T(CU);
+  IF R THEN CV := 0 ;
+  ELSIF CU_T.Q AND (CV < PV)
+       THEN CV := CV+1;
+  END_IF ;
+  Q := (CV >= PV) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTU_DINT
+  VAR_INPUT
+    CU : BOOL;
+    R : BOOL;
+    PV : DINT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : DINT;
+  END_VAR
+  VAR
+    CU_T: R_TRIG;
+  END_VAR
+
+  CU_T(CU);
+  IF R THEN CV := 0 ;
+  ELSIF CU_T.Q AND (CV < PV)
+       THEN CV := CV+1;
+  END_IF ;
+  Q := (CV >= PV) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTU_LINT
+  VAR_INPUT
+    CU : BOOL;
+    R : BOOL;
+    PV : LINT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : LINT;
+  END_VAR
+  VAR
+    CU_T: R_TRIG;
+  END_VAR
+
+  CU_T(CU);
+  IF R THEN CV := 0 ;
+  ELSIF CU_T.Q AND (CV < PV)
+       THEN CV := CV+1;
+  END_IF ;
+  Q := (CV >= PV) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTU_UDINT
+  VAR_INPUT
+    CU : BOOL;
+    R : BOOL;
+    PV : UDINT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : UDINT;
+  END_VAR
+  VAR
+    CU_T: R_TRIG;
+  END_VAR
+
+  CU_T(CU);
+  IF R THEN CV := 0 ;
+  ELSIF CU_T.Q AND (CV < PV)
+       THEN CV := CV+1;
+  END_IF ;
+  Q := (CV >= PV) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTU_ULINT
+  VAR_INPUT
+    CU : BOOL;
+    R : BOOL;
+    PV : ULINT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : ULINT;
+  END_VAR
+  VAR
+    CU_T: R_TRIG;
+  END_VAR
+
+  CU_T(CU);
+  IF R THEN CV := 0 ;
+  ELSIF CU_T.Q AND (CV < PV)
+       THEN CV := CV+1;
+  END_IF ;
+  Q := (CV >= PV) ;
+END_FUNCTION_BLOCK
+
+
+
+
+
+
+
+(******************)
+(*                *)
+(*    C  T  D     *)
+(*                *)
+(******************)
+
+
+FUNCTION_BLOCK CTD
+  VAR_INPUT
+    CD : BOOL;
+    LD : BOOL;
+    PV : INT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : INT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  IF LD THEN CV := PV ;
+  ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+  END_IF ;
+  Q := (CV <= 0) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTD_DINT
+  VAR_INPUT
+    CD : BOOL;
+    LD : BOOL;
+    PV : DINT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : DINT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  IF LD THEN CV := PV ;
+  ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+  END_IF ;
+  Q := (CV <= 0) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTD_LINT
+  VAR_INPUT
+    CD : BOOL;
+    LD : BOOL;
+    PV : LINT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : LINT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  IF LD THEN CV := PV ;
+  ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+  END_IF ;
+  Q := (CV <= 0) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTD_UDINT
+  VAR_INPUT
+    CD : BOOL;
+    LD : BOOL;
+    PV : UDINT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : UDINT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  IF LD THEN CV := PV ;
+  ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+  END_IF ;
+  Q := (CV <= 0) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTD_ULINT
+  VAR_INPUT
+    CD : BOOL;
+    LD : BOOL;
+    PV : ULINT;
+  END_VAR
+  VAR_OUTPUT
+    Q : BOOL;
+    CV : ULINT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  IF LD THEN CV := PV ;
+  ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+  END_IF ;
+  Q := (CV <= 0) ;
+END_FUNCTION_BLOCK
+
+
+(********************)
+(*                  *)
+(*    C  T  U D     *)
+(*                  *)
+(********************)
+
+
+FUNCTION_BLOCK CTUD
+  VAR_INPUT
+    CU : BOOL;
+    CD : BOOL;
+    R  : BOOL;
+    LD : BOOL;
+    PV : INT;
+  END_VAR
+  VAR_OUTPUT
+    QU : BOOL;
+    QD : BOOL;
+    CV : INT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+    CU_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  CU_T(CU);
+
+  IF R THEN CV := 0 ;
+  ELSIF LD THEN CV := PV ;
+  ELSE
+    IF NOT (CU_T.Q AND CD_T.Q) THEN
+      IF CU_T.Q AND (CV < PV)
+      THEN CV := CV+1;
+      ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+      END_IF;
+    END_IF;
+  END_IF ;
+  QU := (CV >= PV) ;
+  QD := (CV <= 0) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTUD_DINT
+  VAR_INPUT
+    CU : BOOL;
+    CD : BOOL;
+    R  : BOOL;
+    LD : BOOL;
+    PV : DINT;
+  END_VAR
+  VAR_OUTPUT
+    QU : BOOL;
+    QD : BOOL;
+    CV : DINT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+    CU_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  CU_T(CU);
+
+  IF R THEN CV := 0 ;
+  ELSIF LD THEN CV := PV ;
+  ELSE
+    IF NOT (CU_T.Q AND CD_T.Q) THEN
+      IF CU_T.Q AND (CV < PV)
+      THEN CV := CV+1;
+      ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+      END_IF;
+    END_IF;
+  END_IF ;
+  QU := (CV >= PV) ;
+  QD := (CV <= 0) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTUD_LINT
+  VAR_INPUT
+    CU : BOOL;
+    CD : BOOL;
+    R  : BOOL;
+    LD : BOOL;
+    PV : LINT;
+  END_VAR
+  VAR_OUTPUT
+    QU : BOOL;
+    QD : BOOL;
+    CV : LINT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+    CU_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  CU_T(CU);
+
+  IF R THEN CV := 0 ;
+  ELSIF LD THEN CV := PV ;
+  ELSE
+    IF NOT (CU_T.Q AND CD_T.Q) THEN
+      IF CU_T.Q AND (CV < PV)
+      THEN CV := CV+1;
+      ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+      END_IF;
+    END_IF;
+  END_IF ;
+  QU := (CV >= PV) ;
+  QD := (CV <= 0) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTUD_UDINT
+  VAR_INPUT
+    CU : BOOL;
+    CD : BOOL;
+    R  : BOOL;
+    LD : BOOL;
+    PV : UDINT;
+  END_VAR
+  VAR_OUTPUT
+    QU : BOOL;
+    QD : BOOL;
+    CV : UDINT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+    CU_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  CU_T(CU);
+
+  IF R THEN CV := 0 ;
+  ELSIF LD THEN CV := PV ;
+  ELSE
+    IF NOT (CU_T.Q AND CD_T.Q) THEN
+      IF CU_T.Q AND (CV < PV)
+      THEN CV := CV+1;
+      ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+      END_IF;
+    END_IF;
+  END_IF ;
+  QU := (CV >= PV) ;
+  QD := (CV <= 0) ;
+END_FUNCTION_BLOCK
+
+
+FUNCTION_BLOCK CTUD_ULINT
+  VAR_INPUT
+    CU : BOOL;
+    CD : BOOL;
+    R  : BOOL;
+    LD : BOOL;
+    PV : ULINT;
+  END_VAR
+  VAR_OUTPUT
+    QU : BOOL;
+    QD : BOOL;
+    CV : ULINT;
+  END_VAR
+  VAR
+    CD_T: R_TRIG;
+    CU_T: R_TRIG;
+  END_VAR
+
+  CD_T(CD);
+  CU_T(CU);
+
+  IF R THEN CV := 0 ;
+  ELSIF LD THEN CV := PV ;
+  ELSE
+    IF NOT (CU_T.Q AND CD_T.Q) THEN
+      IF CU_T.Q AND (CV < PV)
+      THEN CV := CV+1;
+      ELSIF CD_T.Q AND (CV > 0)
+      THEN CV := CV-1;
+      END_IF;
+    END_IF;
+  END_IF ;
+  QU := (CV >= PV) ;
+  QD := (CV <= 0) ;
+END_FUNCTION_BLOCK

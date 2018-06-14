@@ -1,0 +1,57 @@
+################
+# IL operators #
+################
+# which are not simultaneously 
+#    - keywords (AND, OR, NOT, MOD, XOR), 
+#    - or standard funtion name (which by implication are also keywords)
+#               (AND, OR, NOT, MOD, XOR, as well as, GE, GT, LE, LT, EQ, NE, SUB, ADD, MUL, DIV) 
+#    - or standard function block name (which by implication are also keywords)
+#    - invalid identifier name (&, &N)
+ANDN
+CAL
+CALC
+CALCN
+CD
+CLK
+CU
+IN
+JMP
+JMPC
+JMPCN
+LD
+LDN
+ORN
+PT
+PV
+R
+R1
+RET
+RETC
+RETCN
+S
+S1
+ST
+STN
+XORN
+
+
+##################
+# SFC qualifiers #
+##################
+D
+DS
+L
+N
+P
+#R  -> also an IL operator
+#S  -> also an IL operator
+SD
+SL
+
+
+#####################
+# Task initialisers #
+#####################
+PRIORITY
+SINGLE
+INTERVAL

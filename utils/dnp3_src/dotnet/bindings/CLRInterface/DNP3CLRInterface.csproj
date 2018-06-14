@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{5F06C7BE-3107-4B3E-8559-E5E1BB4008B5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Automatak.DNP3.Interface</RootNamespace>
+    <AssemblyName>DNP3CLRInterface</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationIIN.cs" />
+    <Compile Include="BaseMeasurementTypes.cs" />
+    <Compile Include="ChangeSet.cs" />
+    <Compile Include="ChannelRetry.cs" />
+    <Compile Include="ChannelStatistics.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ClassAssignment.cs" />
+    <Compile Include="ClassField.cs" />
+    <Compile Include="CommandResultTypes.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="CommandSet.cs" />
+    <Compile Include="CommandTypes.cs" />
+    <Compile Include="config\DatabaseTemplate.cs" />
+    <Compile Include="config\OutstationConfig.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="config\OutstationParams.cs" />
+    <Compile Include="config\PointRecords.cs" />
+    <Compile Include="config\StaticTypeBitfield.cs" />
+    <Compile Include="Conversions.cs" />
+    <Compile Include="config\EventBufferConfig.cs" />
+    <Compile Include="DefaultListenCallbacks.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="gen\AnalogQuality.cs" />
+    <Compile Include="gen\AssignClassType.cs" />
+    <Compile Include="gen\BinaryOutputStatusQuality.cs" />
+    <Compile Include="gen\BinaryQuality.cs" />
+    <Compile Include="gen\ChannelState.cs" />
+    <Compile Include="gen\CommandPointState.cs" />
+    <Compile Include="gen\CommandStatus.cs" />
+    <Compile Include="gen\ControlCode.cs" />
+    <Compile Include="gen\CounterQuality.cs" />
+    <Compile Include="gen\DoubleBit.cs" />
+    <Compile Include="gen\DoubleBitBinaryQuality.cs" />
+    <Compile Include="gen\EventAnalogOutputStatusVariation.cs" />
+    <Compile Include="gen\EventAnalogVariation.cs" />
+    <Compile Include="gen\EventBinaryOutputStatusVariation.cs" />
+    <Compile Include="gen\EventBinaryVariation.cs" />
+    <Compile Include="gen\EventCounterVariation.cs" />
+    <Compile Include="gen\EventDoubleBinaryVariation.cs" />
+    <Compile Include="gen\EventFrozenCounterVariation.cs" />
+    <Compile Include="gen\EventMode.cs" />
+    <Compile Include="gen\FlowControl.cs" />
+    <Compile Include="gen\FunctionCode.cs" />
+    <Compile Include="gen\GroupVariation.cs" />
+    <Compile Include="gen\IINField.cs" />
+    <Compile Include="gen\IndexMode.cs" />
+    <Compile Include="gen\IntervalUnits.cs" />
+    <Compile Include="gen\KeyChangeMethod.cs" />
+    <Compile Include="gen\KeyWrapAlgorithm.cs" />
+    <Compile Include="gen\LinkFunction.cs" />
+    <Compile Include="gen\LinkStatus.cs" />
+    <Compile Include="gen\MasterTaskType.cs" />
+    <Compile Include="gen\OperateType.cs" />
+    <Compile Include="gen\Parity.cs" />
+    <Compile Include="gen\PointClass.cs" />
+    <Compile Include="gen\QualifierCode.cs" />
+    <Compile Include="gen\RestartMode.cs" />
+    <Compile Include="gen\RestartType.cs" />
+    <Compile Include="gen\StaticAnalogOutputStatusVariation.cs" />
+    <Compile Include="gen\StaticAnalogVariation.cs" />
+    <Compile Include="gen\StaticBinaryOutputStatusVariation.cs" />
+    <Compile Include="gen\StaticBinaryVariation.cs" />
+    <Compile Include="gen\StaticCounterVariation.cs" />
+    <Compile Include="gen\StaticDoubleBinaryVariation.cs" />
+    <Compile Include="gen\StaticFrozenCounterVariation.cs" />
+    <Compile Include="gen\StaticTimeAndIntervalVariation.cs" />
+    <Compile Include="gen\StaticTypeBitmask.cs" />
+    <Compile Include="gen\StopBits.cs" />
+    <Compile Include="gen\TaskCompletion.cs" />
+    <Compile Include="gen\TimestampMode.cs" />
+    <Compile Include="gen\TimeSyncMode.cs" />
+    <Compile Include="gen\UserOperation.cs" />
+    <Compile Include="gen\UserRole.cs" />
+    <Compile Include="Header.cs" />
+    <Compile Include="IChannel.cs" />
+    <Compile Include="IChannelListener.cs" />
+    <Compile Include="IChannelStatistics.cs" />
+    <Compile Include="ICommandHandler.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ICommandProcessor.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="IDatabase.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="IDNP3Manager.cs" />
+    <Compile Include="ILinkListener.cs" />
+    <Compile Include="IListenCallbacks.cs" />
+    <Compile Include="IListener.cs" />
+    <Compile Include="ILogHandler.cs" />
+    <Compile Include="IMaster.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="IMasterApplication.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="IMasterOperations.cs" />
+    <Compile Include="IMasterSession.cs" />
+    <Compile Include="IOutstationApplication.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="IPEndpoint.cs" />
+    <Compile Include="IQualityBitInfo.cs" />
+    <Compile Include="ISessionAcceptor.cs" />
+    <Compile Include="ISOEHandler.cs" />
+    <Compile Include="IOutstation.cs" />
+    <Compile Include="IStack.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="IStackStatistics.cs" />
+    <Compile Include="IMasterScan.cs" />
+    <Compile Include="config\LinkConfig.cs" />
+    <Compile Include="ITaskCallback.cs" />
+    <Compile Include="LinkHeader.cs" />
+    <Compile Include="LogLevels.cs" />
+    <Compile Include="config\MasterConfig.cs" />
+    <Compile Include="config\MasterStackConfig.cs" />
+    <Compile Include="MeasurementTypes.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NamespaceDoc.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="config\OutstationStackConfig.cs" />
+    <Compile Include="PrintingSOEHandler.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="config\SerialSettings.cs" />
+    <Compile Include="RestartResultType.cs" />
+    <Compile Include="SimpleCommandHandler.cs" />
+    <Compile Include="StackStatistics.cs" />
+    <Compile Include="TaskCompletionProxy.cs" />
+    <Compile Include="TaskConfig.cs" />
+    <Compile Include="TaskId.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="TaskInfo.cs" />
+    <Compile Include="TLSConfig.cs" />
+    <Compile Include="X509Info.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

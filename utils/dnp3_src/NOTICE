@@ -1,0 +1,19 @@
+=========================================================================
+==  NOTICE file corresponding to the section 4 d of                    ==
+==  the Apache License, Version 2.0,                                   ==
+==  in this case for the opendnp3                                      ==
+=========================================================================
+
+This product includes software developed by Green Energy Corp
+(http://www.greenenergycorp.com/) and Automatak LLC (https://wwww.automatak.com).
+
+Please read the LICENSE file present in the root directory of this
+distribution.
+
+Aside from contributions to the oepdnp3 distribution listed above, this repository
+also distributes the following 3rd party softare:
+
+https://github.com/philsquared/Catch (test only dependency)
+	
+Project requires, but specified as a git-submodule:
+ * ASIO (https://github.com/chriskohlhoff/asio) 1.10.6 or later 

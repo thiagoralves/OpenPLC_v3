@@ -1,0 +1,103 @@
+(* Test whether the keyword XXXX may be used as an identifier for:
+ * FUNCTION_BLOCK declaration
+ *
+ * The XXXX names in the following code are merely a placeholder.
+ * They will be replaced by several identifiers before actual testing
+ * of the compiler.
+ *)
+
+(* The identifiers that will replace the XXXX
+ * must be placed on a line starting with #
+ * All identifiers preceded by # are ignored!
+ * The identifier list must be placed inside an IEC 61131-3 comment.
+ *)
+(*
+#IL_operators ANDN CAL CALC CALCN CD CLK CU IN JMP JMPC JMPCN LD LDN ORN 
+#IL_operators PT PV R R1 RET RETC RETCN S S1 ST STN XORN
+     NOTE: R and S are identical to IL operators!!
+#SFC_qualifiers D DS L N P #R #S SD SL   
+#Task_initialisers PRIORITY SINGLE INTERVAL
+*)
+
+
+
+
+
+(* The FUNCTION BLOCK declaration *)
+function_block XXXX
+ var_input
+  a_1, b_1: int;
+ end_var
+ var_output
+  c_1, d_1: int;
+ end_var
+  c_1 := 10 + b_1;
+end_function_block
+
+
+(* Calling of the function block from within ST code *)
+
+function_block foo
+ var
+  e_1, f_1 : int;
+  fb : XXXX;
+ end_var
+  fb(10, 20);
+  fb (10, 20, e_1, f_1);
+  fb (a_1 := 10, b_1:=20, c_1=>e_1, d_1=>f_1);
+  fb(a_1 := 10, b_1:=20, c_1=>e_1, d_1=>f_1);
+  fb (c_1=>e_1, a_1:=20, d_1=>f_1);
+  f_1 := fb.c_1;
+  fb.a_1 := e_1;
+end_function_block
+
+
+
+(* Calling of the function block from within IL code *)
+function_block bar
+ var
+  e_1, f_1 : int;
+  fb : XXXX;
+ end_var
+  CAL fb
+  LD fb.a_1
+  ST fb.b_1
+  CAL fb (10)
+  CAL fb(30, 20, e_1, f_1)
+  CAL fb (
+    a_1 := 10,
+    c_1 => f_1
+   )
+  CAL fb(
+    a_1 := 10,
+    c_1 => f_1
+   )
+end_function_block
+
+
+
+(* Checking whether the use of XXXX will confuse any other
+ * normal and correct IL or ST code.
+ *)
+{#include "basic_code.test" }
+
+
+
+
+
+
+
+
+
+(*
+
+CONFIGURATION
+......
+using these XXXX identifiers within a configuration
+
+especially a task initialisation, as Priority, single and interval may clash here.
+(they shouldn't, but if the parser has an error, they will....)
+
+END_CONFIGURATION
+
+*)

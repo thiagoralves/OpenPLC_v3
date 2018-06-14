@@ -1,0 +1,685 @@
+(* This file includes normal standard ST and IL code.
+ * This code is then included into other tests, once
+ * possibly strange things have been defined.
+ *
+ * Including this normal code will test whether the strange
+ * things somehow breack the correct parsing and compiling
+ * of normal code.
+ *
+ * Code in this file must not use the XXXX identfier!
+ *)
+
+
+
+(***************************************************************************)
+(* Test if generic IL code is not affected by any previous declarations... *)
+(***************************************************************************)
+
+
+(* Test each IL operator *)
+(* Since our compiler needs to distinguish
+ * between IL and ST code, we place each IL
+ * operator in a distinct function, to test whether
+ * the use of that IL operator as the first IL
+ * instruction does not confuse the logic
+ * use to determine whether ST or IL is being parsed.
+ *)
+
+function bar0005 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ & 10
+end_function
+
+
+
+function bar0006 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ &N 10
+end_function
+
+
+
+function bar0007 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ ADD 10
+end_function
+
+
+
+function bar0008 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ AND TRUE
+end_function
+
+
+function bar0009 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ ANDN TRUE
+end_function
+
+
+function_block bar0010
+ var
+  e_1, f_1 : int;
+  tt : TP;
+ end_var
+ CAL tt
+end_function_block
+
+
+function_block bar0011
+ var
+  e_1, f_1 : int;
+  tt : TP;
+ end_var
+ CALC tt
+end_function_block
+
+
+function_block bar0012
+ var
+  e_1, f_1 : int;
+  tt : TP;
+ end_var
+ CALCN tt
+end_function_block
+
+
+function_block bar0013
+ var
+  e_1, f_1 : int;
+  tt : CTUD;
+ end_var
+ CU tt
+end_function_block
+
+
+function_block bar0014
+ var
+  e_1, f_1 : int;
+  tt : CTUD;
+ end_var
+ CD tt
+end_function_block
+
+
+function_block bar0015
+ var
+  e_1, f_1 : int;
+  tt : R_TRIG;
+ end_var
+ CLK tt
+end_function_block
+
+
+function bar0016 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ DIV e_1
+end_function
+
+
+function bar0017 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ EQ e_1
+end_function
+
+
+function bar0018 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ GE e_1
+end_function
+
+
+function bar0019 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ GT e_1
+end_function
+
+
+function_block bar0020
+ var
+  e_1, f_1 : int;
+  tt : TP;
+ end_var
+ IN tt
+end_function_block
+
+
+function bar0021 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ JMP ll
+ ll: LD FALSE
+end_function
+
+
+
+function bar0022 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ JMPC ll
+ ll: LD FALSE
+end_function
+
+
+function bar0023 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ JMPCN ll
+ ll: LD FALSE
+end_function
+
+
+
+function bar0024 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ LD TRUE
+end_function
+
+
+function bar0025 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ LDN TRUE
+end_function
+
+
+function bar0026 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ LE e_1
+end_function
+
+
+function bar0027 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ LT e_1
+end_function
+
+
+function bar0028 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ MOD e_1
+end_function
+
+
+function bar0029 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ MUL e_1
+end_function
+
+
+function bar0030 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ NE e_1
+end_function
+
+
+function bar0031 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ NOT TRUE
+end_function
+
+
+function bar0032 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ OR TRUE
+end_function
+
+
+function bar0033 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ ORN TRUE
+end_function
+
+
+function_block bar0034
+ var
+  e_1, f_1 : int;
+  tt : TP;
+ end_var
+ PT tt
+end_function_block
+
+
+function_block bar0035
+ var
+  e_1, f_1 : int;
+  tt : CTUD;
+ end_var
+ PV tt
+end_function_block
+
+
+function bar0036 : int
+ var
+  e_1, f_1 : bool;
+ end_var
+ R e_1     (* IL operand *)
+end_function
+
+
+function_block bar0037
+ var
+  e_1, f_1 : int;
+  tt : SR;
+ end_var
+ R tt     (* FB call *)
+end_function_block
+
+
+function_block bar0038
+ var
+  e_1, f_1 : int;
+  tt : SR;
+ end_var
+ R1 tt     (* FB call *)
+end_function_block
+
+
+function bar0039 : int
+ var
+  e_1, f_1 : bool;
+ end_var
+ RET
+end_function
+
+
+function bar0040 : int
+ var
+  e_1, f_1 : bool;
+ end_var
+ RETC
+end_function
+
+
+function bar0041 : int
+ var
+  e_1, f_1 : bool;
+ end_var
+ RETCN
+end_function
+
+
+function bar0042 : int
+ var
+  e_1, f_1 : bool;
+ end_var
+ S e_1
+end_function
+
+
+function_block bar0043
+ var
+  e_1, f_1 : int;
+  tt : SR;
+ end_var
+ S1 tt     (* FB call *)
+end_function_block
+
+
+function bar0044 : int
+ var
+  e_1, f_1 : bool;
+ end_var
+ ST e_1
+end_function
+
+
+function bar0045 : int
+ var
+  e_1, f_1 : bool;
+ end_var
+ STN e_1
+end_function
+
+
+function bar0046 : int
+ var
+  e_1, f_1 : int;
+ end_var
+ SUB e_1
+end_function
+
+
+function bar0047 : int
+ var
+  e_1, f_1 : bool;
+ end_var
+ XOR e_1
+end_function
+
+
+function bar0048 : int
+ var
+  e_1, f_1 : bool;
+ end_var
+ XORN e_1
+end_function
+
+
+
+
+
+
+
+
+
+(***************************************************************************)
+(* Test if generic ST code is not affected by any previous declarations... *)
+(***************************************************************************)
+
+(* A helper FUNCTION BLOCK declaration *)
+function_block bar1000
+ var_input
+  a_1, b_1: int;
+ end_var
+ var_output
+  c_1, d_1: int;
+ end_var
+  c_1 := 10 + b_1;
+end_function_block
+
+
+(* A FUNCTION declaration *)
+function bar1001 : int
+ var_input
+  a_1, b_1: int;
+ end_var
+ var_output
+  c_1, d_1: int;
+ end_var
+  c_1 := 10 + b_1;
+end_function
+
+
+(* Generic ST code *)
+
+function_block bar1002
+ var
+  e_1, f_1 : int;
+  g_1 : int;
+  fb : bar1000;
+ end_var
+  fb(g_1, 20);
+  fb (10, g_1, e_1, f_1);
+  fb (a_1 := g_1, b_1:=g_1, c_1=>g_1, d_1=>f_1);
+  fb(a_1 := 10, b_1:=20, c_1=>e_1, d_1=>g_1);
+  fb (c_1=>g_1, a_1:=20, d_1=>f_1);
+  g_1 := fb.c_1;
+  fb.a_1 := g_1 + g_1 * 2 * (g_1) / bar1001(g_1, 10, g_1, e_1) MOD g_1 MOD g_1 ** g_1;
+  IF (g_1 >= 10) THEN g_1 := 10; END_IF;
+  CASE (g_1 + 10) OF
+    10: g_1 := 10; 
+    10..20:g_1 := 20;
+    ELSE g_1 := 20;
+  END_CASE;
+  FOR g_1 := 10 TO 20 BY 2 DO
+    g_1 := g_1 + 1;
+  END_FOR;
+  FOR e_1 := g_1 TO 20 DO
+    g_1 := g_1 + 1;
+  END_FOR;
+  FOR e_1 := 10 TO g_1 BY 2 DO
+    g_1 := g_1 + 1;
+  END_FOR;
+  FOR e_1 := 10 TO g_1 DO
+    g_1 := g_1 + 1;
+  END_FOR;
+  FOR e_1 := 10 TO 20 BY g_1 DO
+    g_1 := g_1 + 1;
+  END_FOR;
+  WHILE (g_1 >= 10) DO 
+    g_1 := 10; 
+  END_WHILE;
+  REPEAT g_1 := 10; UNTIL (g_1 >= 10) END_REPEAT;
+end_function_block
+
+
+
+
+
+
+
+
+
+
+(****************************************************************************)
+(* Test if generic SFC code is not affected by any previous declarations... *)
+(****************************************************************************)
+
+PROGRAM bar2001
+  VAR
+    QX1 AT %QX1 : BOOL := 1;
+    QX2 AT %QX2 : BOOL := 0;
+    QX3 AT %QX3 : BOOL;
+    IX1 AT %IX1 : BOOL;
+    IX2 AT %IX2 : BOOL;
+    IX3 AT %IX3 : BOOL;
+  END_VAR
+  VAR
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  STEP STEP1:
+    ONSTEP1();
+  END_STEP
+
+  ACTION ONSTEP1:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+
+  TRANSITION (PRIORITY := 4) FROM STEP1 TO STEP2
+    := IX2 = TRUE;
+  END_TRANSITION
+
+  STEP STEP2:
+    INLINE1(D, T#1s);
+  END_STEP
+
+  ACTION INLINE1:
+    QX1 := QX2 XOR QX1; QX2 := NOT QX2;
+  END_ACTION
+
+  TRANSITION transition_id1 FROM STEP2 TO A1
+    := QX1 = FALSE AND QX2 = FALSE;
+  END_TRANSITION
+
+  STEP A1:
+    INLINE2(DS, T#1s);
+  END_STEP
+
+  ACTION INLINE2:
+    IX1 := TRUE;
+  END_ACTION
+
+  TRANSITION transition_id2 (PRIORITY := 3) FROM A1 TO STEP2
+    := IX1 = TRUE;
+  END_TRANSITION
+
+  TRANSITION FROM STEP2 TO (D1, D2, D3)
+    := QX1 = TRUE AND QX2 = TRUE;
+  END_TRANSITION
+
+  STEP D1:
+    INLINE5(L, T#1s);
+  END_STEP
+
+  ACTION INLINE5:
+    QX1 := FALSE;
+  END_ACTION
+
+  TRANSITION FROM D1 TO E1
+    := NOT ( QX1 OR QX2 OR QX3 );
+  END_TRANSITION
+
+  STEP E1:
+    INLINE8(N);
+  END_STEP
+
+  ACTION INLINE8:
+    QX1 := TRUE;
+  END_ACTION
+
+  TRANSITION FROM (E1, E2, E3) TO GO
+    := QX1 AND QX2 AND QX3;
+  END_TRANSITION
+
+  STEP D2:
+    INLINE6(P);
+  END_STEP
+
+  ACTION INLINE6:
+    QX2 := FALSE;
+  END_ACTION
+
+  TRANSITION FROM D2 TO E2
+    := NOT ( QX1 OR QX2 OR QX3 );
+  END_TRANSITION
+
+  STEP E2:
+    INLINE9(R);
+  END_STEP
+
+  ACTION INLINE9:
+    QX2 := TRUE;
+  END_ACTION
+
+  STEP D3:
+    INLINE7(S);
+  END_STEP
+
+  ACTION INLINE7:
+    QX2 := FALSE;
+  END_ACTION
+
+  TRANSITION FROM D3 TO E3
+    := NOT ( QX1 OR QX2 OR QX3 );
+  END_TRANSITION
+
+  STEP E3:
+    INLINE10(SD, T#1s);
+  END_STEP
+
+  ACTION INLINE10:
+    QX3 := TRUE;
+  END_ACTION
+
+  TRANSITION FROM STEP2 TO A3
+    := QX1 = TRUE AND QX2 = FALSE;
+  END_TRANSITION
+
+  STEP A3:
+    INLINE4(SL, T#1s);
+  END_STEP
+
+  ACTION INLINE4:
+    IX1 := TRUE;
+  END_ACTION
+
+  TRANSITION FROM A3 TO STEP2
+    := IX1 = TRUE;
+  END_TRANSITION
+
+  TRANSITION FROM STEP2 TO A2
+    := QX1 = FALSE AND QX2 = TRUE;
+  END_TRANSITION
+
+  STEP A2:
+    INLINE3(L, delta_1);
+  END_STEP
+
+  ACTION INLINE3:
+    IX1 := FALSE;
+  END_ACTION
+
+  TRANSITION FROM A2 TO STEP2
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  STEP A01:
+    INLINE01(L, delta_1, IX1, QX1);
+  END_STEP
+
+  ACTION INLINE01:
+    IX1 := FALSE;
+  END_ACTION
+
+  TRANSITION FROM STEP2 TO A01
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  STEP A02:
+    INLINE01(L, delta_1, IX1, QX1);
+    INLINE1 (L, delta_1, IX1, QX1);
+    INLINE2 (S);
+    INLINE3 ();
+  END_STEP
+
+  TRANSITION FROM STEP2 TO A02
+    := IX1 = FALSE;
+  END_TRANSITION
+END_PROGRAM
+
+
+
+
+
+
+(*********************************************************************************)
+(* Test if generic CONFIGURATION is not affected by any previous declarations... *)
+(*********************************************************************************)
+
+CONFIGURATION CONF0001
+  RESOURCE STD_RESSOURCE ON BEREMIZ
+    TASK STD_TASK(INTERVAL := t#100ms,PRIORITY := 0);
+    PROGRAM MAIN_INSTANCE : bar2001;
+  END_RESOURCE
+END_CONFIGURATION

@@ -1,0 +1,6 @@
+How to cross compile for Win32
+(you must have mingw installed)
+
+1) autoreconf -i
+2) ./configure
+3) make CXX=i686-w64-mingw32-g++

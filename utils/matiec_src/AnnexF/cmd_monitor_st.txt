@@ -1,0 +1,25 @@
+FUNCTION_BLOCK CMD_MONITOR
+ VAR_INPUT AUTO_CMD : BOOL ; (* Automated command *)
+          AUTO_MODE : BOOL ; (* AUTO_CMD enable *)
+            MAN_CMD : BOOL ; (* Manual Command *)
+        MAN_CMD_CHK : BOOL ; (* Negated MAN_CMD to debounce *)  
+          T_CMD_MAX : TIME ; (* Max time from CMD to FDBK *)
+               FDBK : BOOL ; (* Confirmation of CMD completion     
+                                by operative unit *)               
+                ACK : BOOL ; (* Acknowledge/cancel ALRM *)         
+ END_VAR
+ VAR_OUTPUT CMD : BOOL ;   (* Command to operative unit *)
+           ALRM : BOOL ;   (* T_CMD_MAX expired without FDBK *)
+ END_VAR
+ VAR CMD_TMR : TON ;    (* CMD-to-FDBK timer *)
+     ALRM_FF : SR ;     (* Note over-riding S input: *)
+ END_VAR                (* Command must be cancelled before
+                              "ACK" can cancel alarm *)
+ (* Function Block Body *)
+    CMD := AUTO_CMD & AUTO_MODE
+          OR MAN_CMD & NOT MAN_CMD_CHK & NOT AUTO_MODE ;
+    CMD_TMR (IN := CMD, PT := T_CMD_MAX);
+    ALRM_FF (S1 := CMD_TMR.Q & NOT FDBK, R := ACK);
+    ALRM := ALRM_FF.Q1;
+
+END_FUNCTION_BLOCK

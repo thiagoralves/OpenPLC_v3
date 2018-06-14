@@ -1,0 +1,611 @@
+(* Test whether the keyword XXXX may be used as an identifier for:
+ * STEP, ACTION and TRANSITION name/identifier
+ *
+ * The XXXX names in the following code are merely a placeholder.
+ * They will be replaced by several identifiers before actual testing
+ * of the compiler.
+ *)
+
+(* The identifiers that will replace the XXXX
+ * must be placed on a line starting with #
+ * All identifiers preceded by # are ignored!
+ * The identifier list must be placed inside an IEC 61131-3 comment.
+ *)
+(*
+#IL_operators ANDN CAL CALC CALCN CD CLK CU IN JMP JMPC JMPCN 
+#IL_operators LD LDN ORN PT PV R R1 RET RETC RETCN S S1 ST STN XORN
+#SFC_qualifiers D DS L N P #R #S SD SL
+     NOTE: R and S are identical to IL operators!!
+#Task_initialisers PRIORITY SINGLE INTERVAL
+*)
+
+
+
+(* Use of XXXX as a STEP identifier *)
+
+PROGRAM bar01
+  VAR
+    IX1 AT %IX1 : BOOL;
+    IX2 AT %IX2 : BOOL;
+    IX3 AT %IX3 : BOOL;
+  END_VAR
+
+  INITIAL_STEP XXXX:
+  END_STEP
+
+  STEP STEP1:
+  END_STEP
+
+  STEP STEP2:
+  END_STEP
+
+  TRANSITION FROM XXXX TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  TRANSITION FROM STEP1 TO XXXX
+    := IX1 = TRUE;
+  END_TRANSITION
+
+  TRANSITION (PRIORITY := 4) FROM XXXX TO STEP2
+    := IX2 = TRUE;
+  END_TRANSITION
+
+  TRANSITION (PRIORITY := 4) FROM STEP2 TO XXXX
+    := IX2 = TRUE;
+  END_TRANSITION
+
+  TRANSITION transition_id1 FROM STEP2 TO XXXX
+    := IX1 = FALSE AND IX3 = FALSE;
+  END_TRANSITION
+
+  TRANSITION transition_id2 FROM XXXX TO STEP2
+    := IX1 = FALSE AND IX3 = FALSE;
+  END_TRANSITION
+
+  TRANSITION transition_id3 (PRIORITY := 3) FROM XXXX TO STEP2
+    := IX3 = TRUE;
+  END_TRANSITION
+
+  TRANSITION transition_id4 (PRIORITY := 5) FROM STEP2 TO XXXX
+    := IX3 = TRUE;
+  END_TRANSITION
+
+  TRANSITION FROM (XXXX, STEP2) TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  TRANSITION FROM (STEP2, XXXX) TO STEP1
+    := IX2 = FALSE;
+  END_TRANSITION
+
+  TRANSITION FROM STEP1 TO (XXXX, STEP2)
+    := IX1 = TRUE;
+  END_TRANSITION
+
+  TRANSITION FROM STEP1 TO (STEP2, XXXX)
+    := IX2 = TRUE;
+  END_TRANSITION
+END_PROGRAM
+
+
+
+
+(* Use of XXXX as a TRANSITION identifier *)
+
+PROGRAM bar02
+  VAR
+    IX1 AT %IX1 : BOOL;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+  END_STEP
+
+  TRANSITION XXXX FROM GO TO STEP1
+    := IX1 = FALSE AND IX3 = FALSE;
+  END_TRANSITION
+END_PROGRAM
+
+
+
+
+PROGRAM bar03
+  VAR
+    IX1 AT %IX1 : BOOL;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+  END_STEP
+
+  TRANSITION XXXX (PRIORITY := 3) FROM GO TO STEP1
+    := IX3 = TRUE;
+  END_TRANSITION
+END_PROGRAM
+
+
+
+
+
+(* Use of XXXX as an ACTION identifier *)
+
+
+PROGRAM bar20
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+  STEP STEP1:
+    XXXX ();
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+PROGRAM bar21
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(N);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+PROGRAM bar22
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(P);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+
+PROGRAM bar23
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(R);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+
+
+
+PROGRAM bar24
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(S);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+
+
+PROGRAM bar25
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(D, T#1s);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+
+
+PROGRAM bar26
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(L, T#1s);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+PROGRAM bar27
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(DS, T#1s);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+
+
+PROGRAM bar28
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(SD, T#1s);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+
+
+PROGRAM bar29
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(SL, T#1s);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+
+
+PROGRAM bar30
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(L, delta_1);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+
+
+PROGRAM bar31
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    XXXX(L, delta_1, IX1, QX1);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+PROGRAM bar32
+  VAR
+    QX1 : BOOL := 1;
+    QX2 : BOOL := 0;
+    QX3 : BOOL;
+    IX1 : BOOL;
+    IX2 : BOOL;
+    IX3 : BOOL;
+    delta_1 : TIME := T#1s;
+  END_VAR
+
+  INITIAL_STEP GO:
+  END_STEP
+
+  STEP STEP1:
+    INLINE1 (); 
+    XXXX(L, delta_1, IX1, QX1);
+    INLINE2 (); 
+  END_STEP
+
+  STEP STEP2:
+    XXXX(L, delta_1, IX1, QX1);
+    INLINE1 (); 
+    INLINE2 (); 
+  END_STEP
+
+  STEP STEP3:
+    INLINE1 (); 
+    INLINE2 (); 
+    XXXX(L, delta_1, IX1, QX1);
+  END_STEP
+
+  TRANSITION FROM GO TO STEP1
+    := IX1 = FALSE;
+  END_TRANSITION
+
+  ACTION XXXX:
+    QX1 := TRUE;
+    QX2 := TRUE;
+  END_ACTION
+
+  ACTION INLINE1:
+    IX1 := TRUE;
+  END_ACTION
+
+  ACTION INLINE2:
+    IX1 := TRUE;
+  END_ACTION
+END_PROGRAM
+
+
+
+
+
+
+
+
+
+
+(* Checking whether the use of XXXX will confuse any other
+ * normal and correct IL or ST code.
+ *)
+{#include "basic_code.test" }
+

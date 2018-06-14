@@ -1,0 +1,67 @@
+
+
+
+PROGRAM foo
+VAR_INPUT
+  single, interval, priority : BOOL;
+END_VAR
+  LD single
+  LD interval
+  LD priority
+END_PROGRAM
+
+
+PROGRAM priority
+VAR_INPUT
+  bar : BOOL;
+END_VAR
+  LD bar
+END_PROGRAM
+
+
+PROGRAM single
+VAR_INPUT
+  bar : BOOL;
+END_VAR
+  LD bar
+END_PROGRAM
+
+
+PROGRAM interval
+VAR_INPUT
+  bar : BOOL;
+END_VAR
+  LD bar
+END_PROGRAM
+
+
+
+
+
+CONFIGURATION config1
+ TASK fast(PRIORITY := 4);
+ PROGRAM P1 WITH fast:
+       FOO(single := TRUE, interval := TRUE, priority := TRUE);
+END_CONFIGURATION
+
+
+CONFIGURATION config2
+ TASK fast(SINGLE := 3, PRIORITY := 4);
+ PROGRAM P1 WITH fast:
+       FOO(single := TRUE, interval := TRUE, priority := TRUE);
+END_CONFIGURATION
+
+
+CONFIGURATION config3
+ TASK fast(INTERVAL := T#1s, PRIORITY := 4);
+ PROGRAM P1 WITH fast:
+       FOO(single := TRUE, interval := TRUE, priority := TRUE);
+END_CONFIGURATION
+
+
+CONFIGURATION config4
+ TASK fast(SINGLE := 3, INTERVAL := T#1s, PRIORITY := 4);
+ PROGRAM P1 WITH fast:
+       FOO(single := TRUE, interval := TRUE, priority := TRUE);
+END_CONFIGURATION
+

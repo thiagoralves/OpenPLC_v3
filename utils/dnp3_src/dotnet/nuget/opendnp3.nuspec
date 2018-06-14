@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+    <metadata>
+        <id>opendnp3</id>
+        <version>$version$</version>
+        <title>opendnp3</title>
+        <authors>Adam Crain and contributors</authors>
+        <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+        <projectUrl>https://www.automatak.com/opendnp3</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>See the release notes for dependency info.</description>
+        <summary>Opendnp3 is the de facto reference implementation of IEEE-1815 (DNP3), a standards-based SCADA protocol.</summary>
+        <releaseNotes>
+This is an x86 mixed-mode package. If you need an x64 package, you can build one from source.
+
+It depends on:
+
+1) Visual Studio 2015 C++ runtime
+2) openssl (libeay32.dll/libssl32.ddl)
+        </releaseNotes>
+        <copyright>Green Energy Corp, Automatak LLC, and contributors</copyright>
+        <language>en-US</language>
+        <tags>dnp3 SCADA protocol</tags>
+    </metadata>
+	<files>
+	  <file src="..\bindings\CLRAdapter\Release\Win32\*.dll" target="lib\net45" />
+	  <file src="..\bindings\CLRAdapter\Release\Win32\*.pdb" target="lib\net45" />
+	</files>
+</package>

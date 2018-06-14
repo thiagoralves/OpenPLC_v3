@@ -1,0 +1,58 @@
+FUNCTION_BLOCK STACK_INT
+  VAR_INPUT PUSH, POP: BOOL R_EDGE; (* Basic stack operations *)
+            R1 : BOOL ;          (* Over-riding reset *)
+            IN : INT ;           (* Input to be pushed *)
+            N  : INT ;           (* Maximum depth after reset *)
+  END_VAR
+  VAR_OUTPUT EMPTY : BOOL := 1 ;     (* Stack empty *)
+             OFLO  : BOOL := 0 ;     (* Stack overflow *)
+             OUT   : INT  := 0 ;     (* Top of stack data *)
+  END_VAR
+  VAR STK : ARRAY[0..127] OF INT; (* Internal stack *)
+      NI : INT :=128  ;           (* Storage for N upon reset *)
+      PTR : INT := -1 ;           (* Stack pointer *)
+  END_VAR
+    (* Function Block body *)
+	LD	R1	(* Dispatch on operations *)
+	JMPC	RESET	
+	LD	POP	
+	ANDN	EMPTY	(* Don't pop empty stack *)
+	JMPC	POP_STK	
+	LD	PUSH	
+	ANDN	OFLO	(* Don't push overflowed stack *)
+	JMPC	PUSH_STK	
+	RET		(* Return if no operations active *)
+RESET:	LD	0	(* Stack reset operations *)
+	ST	OFLO	
+	LD	1	
+	ST   	EMPTY	
+	LD	-1	
+	ST 	PTR	
+	CAL	LIMIT(MN:=1,IN:=N,MX:=128)
+	ST	NI	
+	JMP	ZRO_OUT	
+POP_STK:	LD	0	
+	ST	OFLO	(* Popped stack is not overflowing *)
+	LD	PTR	
+	SUB	1	
+	ST	PTR	
+	LT	0	(* Empty when PTR < 0 *)
+	ST	EMPTY	
+	JMPC	ZRO_OUT	
+	LD	STK[PTR]	
+	JMP	SET_OUT	
+PUSH_STK:	LD	0	
+	ST	EMPTY	(* Pushed stack is not empty *)
+	LD	PTR	
+	ADD	1	
+	ST	PTR	
+	EQ	NI	(* Overflow when PTR = NI *)
+	ST	OFLO	
+	JMPC	ZRO_OUT	
+	LD	IN	
+	ST	STK[PTR]	(* Push IN onto STK *)
+	JMP	SET_OUT	
+ZRO_OUT:	LD	0	(* OUT=0 for EMPTY or OFLO *)
+SET_OUT:	ST 	OUT	
+
+  END_FUNCTION_BLOCK

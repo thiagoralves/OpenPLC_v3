@@ -1,0 +1,42 @@
+version: 2.0.{build}
+branches:
+  only:
+  - 2.0.x
+os: Visual Studio 2015
+configuration: Release
+platform: x86
+clone_folder: C:\projects\dnp3
+environment:
+  OSSL_LIB32_DIR: C:\OpenSSL-Win32\lib\VC
+  OPENDNP3_DIR: C:\projects\dnp3\build\lib
+install:
+- git describe --tags --exact-match & cmd /c exit 0
+- git submodule update --init --recursive
+build_script:
+- cmd: MKDIR build
+- cmd: CD build
+- cmd: MKDIR lib
+- cmd: cmake .. -DCMAKE_INSTALL_PREFIX=lib -DDNP3_TEST=ON -DDNP3_TLS=ON -DCMAKE_BUILD_TYPE=Release
+- cmd: msbuild opendnp3.sln /p:Configuration=Release /p:Platform=Win32
+- cmd: msbuild INSTALL.vcxproj /p:Configuration=Release /p:Platform=Win32
+- cmd: cd ..
+- cmd: msbuild dotnet\bindings.sln /p:Configuration=Release /p:Platform=Win32
+after_build:
+- ps: >-
+    if ($env:APPVEYOR_REPO_TAG -eq "true"){
+      nuget pack dotnet\nuget\opendnp3.nuspec -Version "$env:APPVEYOR_REPO_TAG_NAME"
+    }
+test_script:
+- cmd: c:\projects\dnp3\build\Release\testasiodnp3.exe
+- cmd: c:\projects\dnp3\build\Release\testasiopal.exe
+- cmd: c:\projects\dnp3\build\Release\testopendnp3.exe
+- cmd: c:\projects\dnp3\build\Release\testopenpal.exe
+artifacts:
+- path: '**\*.nupkg'
+  name: nuget
+deploy:
+  provider: NuGet
+  api_key:
+    secure: H7w8XBF6q0Gxyo1xKhywjZ4qrjfy3W87oGAAu30BIas1paWIE1UMvk6QM/3xzVE9
+  on:
+    appveyor_repo_tag: true  

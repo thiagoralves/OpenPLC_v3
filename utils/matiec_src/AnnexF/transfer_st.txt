@@ -1,0 +1,25 @@
+FUNCTION_BLOCK TRANSFER
+ VAR_INPUT
+   AUTO : BOOL ;     (* 1 - track X0, 0 - ramp or hold *)
+   XIN : REAL ;      (* Typically from PID Function Block *)
+   FAST_RATE, SLOW_RATE : REAL ; (* Up/down ramp slopes *)
+   FAST_UP, SLOW_UP, (* Typically pushbuttons *)
+   FAST_DOWN, SLOW_DOWN : BOOL;
+   CYCLE : TIME ;    (* Sampling period *)
+ END_VAR
+ VAR_OUTPUT XOUT : REAL ; END_VAR
+ VAR XFER_RAMP : INTEGRAL ;
+     RAMP_RATE : REAL ;
+ END_VAR
+ RAMP_RATE := 0.0 ;
+ IF NOT AUTO THEN
+  IF FAST_UP THEN RAMP_RATE := FAST_RATE; END_IF;
+  IF SLOW_UP THEN RAMP_RATE := RAMP_RATE + SLOW_RATE; END_IF;
+  IF FAST_DOWN THEN RAMP_RATE := RAMP_RATE - FAST_RATE; END_IF;
+  IF SLOW_DOWN THEN RAMP_RATE := RAMP_RATE - SLOW_RATE; END_IF;
+ END_IF ;
+ XFER_RAMP (RUN := 1, CYCLE := CYCLE, R1 := AUTO,
+            XIN := RAMP_RATE, X0 := XIN) ;
+ XOUT := XFER_RAMP.XOUT;
+END_FUNCTION_BLOCK
+

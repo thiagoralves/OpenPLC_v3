@@ -1,0 +1,12 @@
+Source: matiec
+Section: devel
+Priority: standard
+Maintainer: edouard <edouard.tisserant@gmail.com>
+Build-Depends: debhelper (>= 5), bison, flex
+Standards-Version: 3.7.2
+
+Package: matiec
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: The IEC to ANSI-C compiler
+ Compiles ST/IL/SFC code into ANSI-C code

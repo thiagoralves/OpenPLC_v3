@@ -1,0 +1,60 @@
+(* Test whether the keyword XXXX may be used as an identifier for:
+ * enumeration value
+ *
+ * The XXXX names in the following code are merely a placeholder.
+ * They will be replaced by several identifiers before actual testing
+ * of the compiler.
+ *)
+
+(* The identifiers that will replace the XXXX
+ * must be placed on a line starting with #
+ * All identifiers preceded by # are ignored!
+ * The identifier list must be placed inside an IEC 61131-3 comment.
+ *)
+(*
+#IL_operators ANDN CAL CALC CALCN CD CLK CU IN JMP JMPC JMPCN LD LDN ORN PT PV R R1 RET RETC RETCN S S1 ST STN XORN
+#SFC_qualifiers D DS L N P #R #S SD SL
+     NOTE: R and S are identical to IL operators!!
+#Task_initialisers PRIORITY SINGLE INTERVAL
+*)
+
+
+
+
+TYPE
+ enum_type00 : (enum_v1, XXXX, enum_v2) := XXXX;
+END_TYPE
+
+TYPE
+ enum_type01 : (XXXX, enum_v2) := XXXX;
+END_TYPE
+
+TYPE
+ enum_type02 : (enum_v1, XXXX) := XXXX;
+END_TYPE
+
+TYPE
+ enum_type03 : (XXXX) := XXXX;
+END_TYPE
+
+
+
+
+function foo : int
+ var_input
+  a_1, b_1: int;
+ end_var
+ var
+  c_1, d_1: enum_type00;
+ end_var
+  c_1 := enum_type00#XXXX;
+  c_1 := XXXX;
+end_function
+
+
+
+(* Checking whether the use of XXXX will confuse any other
+ * normal and correct IL or ST code.
+ *)
+{#include "basic_code.test" }
+

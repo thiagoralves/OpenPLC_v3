@@ -1,0 +1,35 @@
+(* Following taken directly from the IEC 61131.3 draft standard *)
+
+(*
+ * An IEC 61131-3 IL and ST compiler.
+ *
+ * Based on the
+ * FINAL DRAFT - IEC 61131-3, 2nd Ed. (2001-12-10)
+ *
+ *)
+
+
+(*
+ * This is part of the library conatining the functions
+ * and function blocks defined in the standard.
+ *
+ * Edge detection function blocks
+ * ------------------------------
+ *)
+
+FUNCTION_BLOCK R_TRIG
+     VAR_INPUT  CLK: BOOL; END_VAR
+     VAR_OUTPUT  Q: BOOL; END_VAR
+     VAR RETAIN M: BOOL; END_VAR
+Q := CLK AND NOT M;
+M := CLK;
+END_FUNCTION_BLOCK
+
+FUNCTION_BLOCK F_TRIG
+     VAR_INPUT  CLK: BOOL; END_VAR
+     VAR_OUTPUT   Q: BOOL; END_VAR
+     VAR RETAIN M: BOOL; END_VAR
+Q := NOT CLK AND NOT M;
+M := NOT CLK;
+END_FUNCTION_BLOCK
+
