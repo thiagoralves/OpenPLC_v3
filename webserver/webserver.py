@@ -802,14 +802,14 @@ def hardware():
                         <p><b>Hardware Layer Code Box</b><p>
                         <p>The Hardware Layer Code Box allows you to extend the functionality of the current driver by adding custom code to it, such as reading I2C, SPI and 1-Wire sensors, or controling port expanders to add more outputs to your hardware</p>
                         <textarea wrap="off" spellcheck="false" name="custom_layer_code" id="custom_layer_code">"""
-            with open('./core/custom_layer.cpp') as f: return_str += f.read()
+            with open('./core/custom_layer.h') as f: return_str += f.read()
             return_str += pages.hardware_tail
             
         else:
             hardware_layer = flask.request.form['hardware_layer']
             custom_layer_code = flask.request.form['custom_layer_code']
             with open('./active_program') as f: current_program = f.read()
-            with open('./core/custom_layer.cpp', 'w+') as f: f.write(custom_layer_code)
+            with open('./core/custom_layer.h', 'w+') as f: f.write(custom_layer_code)
             
             subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
             return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
@@ -826,7 +826,7 @@ def restore_custom_hardware():
         
         #Restore the original custom layer code
         with open('./core/custom_layer.original') as f: original_code = f.read()
-        with open('./core/custom_layer.cpp', 'w+') as f: f.write(original_code)
+        with open('./core/custom_layer.h', 'w+') as f: f.write(original_code)
         return flask.redirect(flask.url_for('hardware'))
         
 

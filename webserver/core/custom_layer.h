@@ -1,5 +1,3 @@
-#include "ladder.h"
-
 //-----------------------------------------------------------------------------
 // DISCLAIMER: EDDITING THIS FILE CAN BREAK YOUR OPENPLC RUNTIME! IF YOU DON'T
 // KNOW WHAT YOU'RE DOING, JUST DON'T DO IT. EDIT AT YOUR OWN RISK.

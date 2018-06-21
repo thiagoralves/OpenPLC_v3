@@ -93,7 +93,7 @@ void initializeHardware();
 void updateBuffersIn();
 void updateBuffersOut();
 
-//custom_layer.cpp
+//custom_layer.h
 void initCustomLayer();
 void updateCustomIn();
 void updateCustomOut();
@@ -105,7 +105,7 @@ extern int ignored_int_outputs[];
 //main.cpp
 void sleep_until(struct timespec *ts, int delay);
 void log(unsigned char *logmsg);
-bool pinNotPresent(int *ignored_vector, int pinNumber);
+bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber);
 extern uint8_t run_openplc;
 extern unsigned char log_buffer[1000000];
 extern int log_index;
