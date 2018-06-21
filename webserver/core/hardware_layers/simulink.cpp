@@ -38,6 +38,10 @@
 
 #include "ladder.h"
 
+#if !defined(ARRAY_SIZE)
+    #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#endif
+
 #define PORT        6668
 
 #define ANALOG_BUF_SIZE		8
@@ -127,18 +131,18 @@ void *exchangeData(void *arg)
 			pthread_mutex_lock(&bufferLock); //lock mutex
 			for (int i = 0; i < ANALOG_BUF_SIZE; i++)
 			{
-                if (pinNotPresent(ignored_int_inputs, i))
+                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
 				    if (int_input[i] != NULL) *int_input[i] = plc_data->analogIn[i];
 
-                if (pinNotPresent(ignored_int_outputs, i))
+                if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
     				if (int_output[i] != NULL) plc_data->analogOut[i] = *int_output[i];
 			}
 			for (int i = 0; i < DIGITAL_BUF_SIZE; i++)
 			{
-			    if (pinNotPresent(ignored_bool_inputs, i))
+			    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
     				if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = plc_data->digitalIn[i];
 				
-				if (pinNotPresent(ignored_bool_outputs, i))
+				if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
     				if (bool_output[i/8][i%8] != NULL) plc_data->digitalOut[i] = *bool_output[i/8][i%8];
 			}
 			pthread_mutex_unlock(&bufferLock); //unlock mutex

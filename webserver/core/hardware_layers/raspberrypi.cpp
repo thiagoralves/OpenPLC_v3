@@ -34,6 +34,10 @@
 
 #include "ladder.h"
 
+#if !defined(ARRAY_SIZE)
+    #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#endif
+
 #define MAX_INPUT 		14
 #define MAX_OUTPUT 		11
 #define MAX_ANALOG_OUT	1
@@ -69,7 +73,7 @@ void initializeHardware()
 	//set pins as input
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_inputs, i))
+	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
 	    {
 		    pinMode(inBufferPinMask[i], INPUT);
 		    if (i != 0 && i != 1) //pull down can't be enabled on the first two pins
@@ -82,14 +86,14 @@ void initializeHardware()
 	//set pins as output
 	for (int i = 0; i < MAX_OUTPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_outputs, i))
+	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
 	    	pinMode(outBufferPinMask[i], OUTPUT);
 	}
 
 	//set PWM pins as output
 	for (int i = 0; i < MAX_ANALOG_OUT; i++)
 	{
-	    if (pinNotPresent(ignored_int_outputs, i))
+	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
     		pinMode(analogOutBufferPinMask[i], PWM_OUTPUT);
 	}
 }
@@ -106,7 +110,7 @@ void updateBuffersIn()
 	//INPUT
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_inputs, i))
+	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
     		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = digitalRead(inBufferPinMask[i]);
 	}
 
@@ -125,14 +129,14 @@ void updateBuffersOut()
 	//OUTPUT
 	for (int i = 0; i < MAX_OUTPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_outputs, i))
+	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
     		if (bool_output[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
 	}
 
 	//ANALOG OUT (PWM)
 	for (int i = 0; i < MAX_ANALOG_OUT; i++)
 	{
-	    if (pinNotPresent(ignored_int_outputs, i))
+	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
     		if (int_output[i] != NULL) pwmWrite(analogOutBufferPinMask[i], (*int_output[i] / 64));
 	}
 

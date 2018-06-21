@@ -35,6 +35,10 @@
 
 #include "ladder.h"
 
+#if !defined(ARRAY_SIZE)
+    #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#endif
+
 #define DOUT_PINBASE		100
 #define ADC_PINBASE			65
 #define MAX_INPUT			13 //IO0 and IO1 are the same. The board doesn't have IO0
@@ -167,20 +171,20 @@ void initializeHardware()
 
 	for (int i = 0; i < MAX_OUTPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_outputs, i))
+	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
 		    pinMode(DOUT_PINBASE + i, OUTPUT);
 	}
 
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_inputs, i))
+	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
 	    {
 		    pinMode(inputPinMask[i], INPUT);
 		    pullUpDnControl(inputPinMask[i], PUD_UP);
 	    }
 	}
 
-    if (pinNotPresent(ignored_int_outputs, ANALOG_OUT_PIN))
+    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), ANALOG_OUT_PIN))
 	    pinMode(ANALOG_OUT_PIN, PWM_OUTPUT);
 
 	pthread_t ADCthread;
@@ -198,14 +202,14 @@ void updateBuffersIn()
 	pthread_mutex_lock(&bufferLock); //lock mutex
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_inputs, i))
+	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
     		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = !digitalRead(inputPinMask[i]); //printf("[IO%d]: %d | ", i, !digitalRead(inputPinMask[i]));
 	}
 
 	//printf("\nAnalog Inputs:");
 	for (int i = 0; i < 2; i++)
 	{
-	    if (pinNotPresent(ignored_int_inputs, i))
+	    if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
     		if (int_input[i] != NULL) *int_input[i] = mcp_adcRead(i); //printf("[AI%d]: %d | ", i, mcp_adcRead(i));
 	}
 	//printf("\n");
@@ -225,11 +229,11 @@ void updateBuffersOut()
 	//printf("\nDigital Outputs:\n");
 	for (int i = 0; i < MAX_OUTPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_outputs, i))
+	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
     		if (bool_output[i/8][i%8] != NULL) digitalWrite(DOUT_PINBASE + i, *bool_output[i/8][i%8]); //printf("[IO%d]: %d | ", i, digitalRead(DOUT_PINBASE + i));
 	}
 	
-	if (pinNotPresent(ignored_int_outputs, 0))
+	if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), 0))
 	    if(int_output[0] != NULL) pwmWrite(ANALOG_OUT_PIN, (*int_output[0] / 64));
 	
 	pthread_mutex_unlock(&bufferLock); //unlock mutex

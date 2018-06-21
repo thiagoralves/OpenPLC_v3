@@ -98,9 +98,9 @@ void *interactiveServerThread(void *arg)
 //-----------------------------------------------------------------------------
 // Verify if pin is present in one of the ignored vectors
 //-----------------------------------------------------------------------------
-bool pinNotPresent(int *ignored_vector, int pinNumber)
+bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
 {
-    for (int i = 0; i < (sizeof(ignored_vector)/sizeof(ignored_vector[0])); i++)
+    for (int i = 0; i < vector_size; i++)
     {
         if (ignored_vector[i] == pinNumber)
             return false;
