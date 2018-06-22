@@ -233,6 +233,8 @@ int main(int argc,char **argv)
     pthread_join(interactive_thread, NULL);
     printf("Disabling outputs\n");
     disableOutputs();
+    updateCustomOut();
+    updateBuffersOut();
     printf("Shutting down OpenPLC Runtime...\n");
     exit(0);
 }
