@@ -84,7 +84,7 @@ if [ "$1" == "win" ]; then
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
     ./autogen.sh
-    ./configure.sh
+    ./configure
     make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
@@ -177,7 +177,7 @@ elif [ "$1" == "linux" ]; then
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
     ./autogen.sh
-    ./configure.sh
+    ./configure
     sudo make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
@@ -271,7 +271,7 @@ elif [ "$1" == "rpi" ]; then
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
     ./autogen.sh
-    ./configure.sh
+    ./configure
     sudo make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
@@ -356,7 +356,7 @@ elif [ "$1" == "custom" ]; then
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
     ./autogen.sh
-    ./configure.sh
+    ./configure
     sudo make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
