@@ -164,6 +164,7 @@ int main(int argc,char **argv)
     //              HARDWARE INITIALIZATION
     //======================================================
     initializeHardware();
+    initializeMB();
     initCustomLayer();
     updateBuffersIn();
     updateCustomIn();
@@ -211,13 +212,17 @@ int main(int argc,char **argv)
 		//make sure the buffer pointers are correct and
 		//attached to the user variables
 		glueVars();
+        
+        querySlaveDevices(); //query data from all slave devices
 		
 		updateBuffersIn(); //read input image
 
 		pthread_mutex_lock(&bufferLock); //lock mutex
 		updateCustomIn();
+        updateBuffersIn_MB(); //update input image table with data from slave devices
 		config_run__(tick++); // execute plc program logic
 		updateCustomOut();
+        updateBuffersOut_MB(); //update slave devices with data from the output image table
 		pthread_mutex_unlock(&bufferLock); //unlock mutex
 
 		updateBuffersOut(); //write output image

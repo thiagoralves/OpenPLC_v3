@@ -1110,3 +1110,695 @@ hardware_tail = """</textarea>
     
     </script>
 </html>"""
+
+add_slave_devices_tail = """
+                        </select>
+                        <label for='dev_baud'><b>Baud Rate</b></label>
+                        <input type='text' id='dev_baud' name='device_baud' placeholder='19200'>
+                        <label for='dev_parity'><b>Parity</b></label>
+                        <select id='dev_parity' name='device_parity'>
+                            <option value='None'>None</option>
+                            <option value='Even'>Even</option>
+                            <option value='Odd'>Odd</option>
+                        </select>
+                        <label for='dev_data'><b>Data Bits</b></label>
+                        <input type='text' id='dev_data' name='device_data' placeholder='8'>
+                        <label for='dev_stop'><b>Stop Bits</b></label>
+                        <input type='text' id='dev_stop' name='device_stop' placeholder='1'>
+                        </div>
+                    </div>
+                    <div style="float:right; width:45%; height:730px">
+                        <p style='font-size:20px; margin-top:0px'><b>Discrete Inputs (%IX100.0)</b></p>
+                        <label for='di_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='di_start' name='di_start' placeholder='0'>
+                        <label for='di_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='di_size' name='di_size' placeholder='8'>
+                        
+                        <p style='font-size:20px'><b>Coils (%QX100.0)</b></p>
+                        <label for='do_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='do_start' name='do_start' placeholder='0'>
+                        <label for='do_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='do_size' name='do_size' placeholder='8'>
+                        
+                        <p style='font-size:20px'><b>Input Registers (%IW100)</b></p>
+                        <label for='ai_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='ai_start' name='ai_start' placeholder='0'>
+                        <label for='ai_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='ai_size' name='ai_size' placeholder='8'>
+                        
+                        <p style='font-size:20px'><b>Holding Registers - Read (%IW100)</b></p>
+                        <label for='aor_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='aor_start' name='aor_start' placeholder='0'>
+                        <label for='aor_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='aor_size' name='aor_size' placeholder='8'>
+                        
+                        <p style='font-size:20px'><b>Holding Registers - Write (%QW100)</b></p>
+                        <label for='aow_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='aow_start' name='aow_start' placeholder='0'>
+                        <label for='aow_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='aow_size' name='aow_size' placeholder='8'>
+                    </div>
+                    <br>
+                    <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value='Save device'></center>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>"""
+    
+add_devices_script = """
+    <script type="text/javascript">
+        window.onload = function()
+        {
+            setupPageContent()
+            LoadValuesFromDB()
+        }
+        
+        function turnElementOn(element)
+        {
+            element.readOnly = false
+            element.value = ""
+            element.style.backgroundColor = "white"
+            element.style.color = "black"
+        }
+        
+        function turnElementOff(element)
+        {
+            element.readOnly = true
+            element.style.backgroundColor = "#F8F8F8"
+            element.style.color = "#9C9C9C"
+        }
+        
+        function setupPageContent()
+        {
+            var dropmenu = document.getElementById('dev_protocol');
+            var tcpdiv = document.getElementById("tcp-stuff");
+            var rtudiv = document.getElementById("rtu-stuff");
+            
+            var devport = document.getElementById("dev_port");
+            var devid = document.getElementById("dev_id");
+            
+            var devbaud = document.getElementById("dev_baud");
+            var devparity = document.getElementById("dev_parity");
+            var devdata = document.getElementById("dev_data");
+            var devstop = document.getElementById("dev_stop");
+            
+            var distart = document.getElementById("di_start");
+            var disize = document.getElementById("di_size");
+            var dostart = document.getElementById("do_start");
+            var dosize = document.getElementById("do_size");
+            var aistart = document.getElementById("ai_start");
+            var aisize = document.getElementById("ai_size");
+            var aorstart = document.getElementById("aor_start");
+            var aorsize = document.getElementById("aor_size");
+            var aowstart = document.getElementById("aow_start");
+            var aowsize = document.getElementById("aow_size");
+            
+            if (dropmenu.options[dropmenu.selectedIndex].value=="TCP")
+            {
+                tcpdiv.style.display = "block"
+                rtudiv.style.display = "none"
+                
+                turnElementOn(devport)
+                turnElementOn(devid)
+                turnElementOn(distart)
+                turnElementOn(disize)
+                turnElementOn(dostart)
+                turnElementOn(dosize)
+                turnElementOn(aistart)
+                turnElementOn(aisize)
+                turnElementOn(aorstart)
+                turnElementOn(aorsize)
+                turnElementOn(aowstart)
+                turnElementOn(aowsize)
+            }
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="ESP32")
+            {
+                tcpdiv.style.display = "block"
+                rtudiv.style.display = "none"
+                
+                turnElementOff(devport)
+                devport.value = "502"
+                turnElementOff(devid)
+                devid.value = "0"
+                turnElementOff(distart)
+                distart.value = "0"
+                turnElementOff(disize)
+                disize.value = "8"
+                turnElementOff(dostart)
+                dostart.value = "0"
+                turnElementOff(dosize)
+                dosize.value = "8"
+                turnElementOff(aistart)
+                aistart.value = "0"
+                turnElementOff(aisize)
+                aisize.value = "1"
+                turnElementOff(aorstart)
+                aorstart.value = "0"
+                turnElementOff(aorsize)
+                aorsize.value = "0"
+                turnElementOff(aowstart)
+                aowstart.value = "0"
+                turnElementOff(aowsize)
+                aowsize.value = "1"
+            }
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="ESP8266")
+            {
+                tcpdiv.style.display = "block"
+                rtudiv.style.display = "none"
+                
+                turnElementOff(devport)
+                devport.value = "502"
+                turnElementOff(devid)
+                devid.value = "0"
+                turnElementOff(distart)
+                distart.value = "0"
+                turnElementOff(disize)
+                disize.value = "8"
+                turnElementOff(dostart)
+                dostart.value = "0"
+                turnElementOff(dosize)
+                dosize.value = "8"
+                turnElementOff(aistart)
+                aistart.value = "0"
+                turnElementOff(aisize)
+                aisize.value = "1"
+                turnElementOff(aorstart)
+                aorstart.value = "0"
+                turnElementOff(aorsize)
+                aorsize.value = "0"
+                turnElementOff(aowstart)
+                aowstart.value = "0"
+                turnElementOff(aowsize)
+                aowsize.value = "1"
+            }
+            
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="RTU") 
+            {
+                tcpdiv.style.display = "none"
+                rtudiv.style.display = "block"
+                
+                turnElementOn(devid)
+                turnElementOn(devbaud)
+                turnElementOn(devparity)
+                devparity.value = "None"
+                turnElementOn(devdata)
+                turnElementOn(devstop)
+                turnElementOn(distart)
+                turnElementOn(disize)
+                turnElementOn(dostart)
+                turnElementOn(dosize)
+                turnElementOn(aistart)
+                turnElementOn(aisize)
+                turnElementOn(aorstart)
+                turnElementOn(aorsize)
+                turnElementOn(aowstart)
+                turnElementOn(aowsize)
+            }
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="Uno")
+            {
+                tcpdiv.style.display = "none"
+                rtudiv.style.display = "block"
+                
+                turnElementOff(devid)
+                devid.value = "0"
+                turnElementOff(devbaud)
+                devbaud.value = "115200"
+                turnElementOff(devparity)
+                devparity.value = "None"
+                turnElementOff(devdata)
+                devdata.value = "8"
+                turnElementOff(devstop)
+                devstop.value = "1"
+                turnElementOff(distart)
+                distart.value = "0"
+                turnElementOff(disize)
+                disize.value = "5"
+                turnElementOff(dostart)
+                dostart.value = "0"
+                turnElementOff(dosize)
+                dosize.value = "4"
+                turnElementOff(aistart)
+                aistart.value = "0"
+                turnElementOff(aisize)
+                aisize.value = "6"
+                turnElementOff(aorstart)
+                aorstart.value = "0"
+                turnElementOff(aorsize)
+                aorsize.value = "0"
+                turnElementOff(aowstart)
+                aowstart.value = "0"
+                turnElementOff(aowsize)
+                aowsize.value = "3"
+            }
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="Mega")
+            {
+                tcpdiv.style.display = "none"
+                rtudiv.style.display = "block"
+                
+                turnElementOff(devid)
+                devid.value = "0"
+                turnElementOff(devbaud)
+                devbaud.value = "115200"
+                turnElementOff(devparity)
+                devparity.value = "None"
+                turnElementOff(devdata)
+                devdata.value = "8"
+                turnElementOff(devstop)
+                devstop.value = "1"
+                turnElementOff(distart)
+                distart.value = "0"
+                turnElementOff(disize)
+                disize.value = "24"
+                turnElementOff(dostart)
+                dostart.value = "0"
+                turnElementOff(dosize)
+                dosize.value = "16"
+                turnElementOff(aistart)
+                aistart.value = "0"
+                turnElementOff(aisize)
+                aisize.value = "16"
+                turnElementOff(aorstart)
+                aorstart.value = "0"
+                turnElementOff(aorsize)
+                aorsize.value = "0"
+                turnElementOff(aowstart)
+                aowstart.value = "0"
+                turnElementOff(aowsize)
+                aowsize.value = "12"
+            }
+        }
+        
+        document.getElementById('dev_protocol').onchange = function()
+        {
+            first_time_edit = false;
+            setupPageContent()
+        }
+        
+        function validateForm()
+        {
+            var devname = document.forms["uploadForm"]["dev_name"].value;
+            var devid = document.forms["uploadForm"]["dev_id"].value;
+            
+            var devip = document.forms["uploadForm"]["dev_ip"].value;
+            var devport = document.forms["uploadForm"]["dev_port"].value;
+            
+            var devbaud = document.forms["uploadForm"]["dev_baud"].value;
+            var devdata = document.forms["uploadForm"]["dev_data"].value;
+            var devstop = document.forms["uploadForm"]["dev_stop"].value;
+            
+            var distart = document.forms["uploadForm"]["di_start"].value;
+            var disize = document.forms["uploadForm"]["di_size"].value;
+            var dostart = document.forms["uploadForm"]["do_start"].value;
+            var dosize = document.forms["uploadForm"]["do_size"].value;
+            var aistart = document.forms["uploadForm"]["ai_start"].value;
+            var aisize = document.forms["uploadForm"]["ai_size"].value;
+            var aorstart = document.forms["uploadForm"]["aor_start"].value;
+            var aorsize = document.forms["uploadForm"]["aor_size"].value;
+            var aowstart = document.forms["uploadForm"]["aow_start"].value;
+            var aowsize = document.forms["uploadForm"]["aow_size"].value;
+            
+            
+            if (devname == "" || devid == "" || distart == "" || disize == "" || dostart == "" || dosize == "" || aistart == "" || aisize == "" || aorstart == "" || aorsize == "" || aowstart == "" || aowsize == "")
+            {
+                alert("Please fill out all the fields before saving!");
+                return false;
+            }
+            
+            var dropmenu = document.getElementById('dev_protocol');
+            var device_type = dropmenu.options[dropmenu.selectedIndex].value
+            if (device_type=="TCP" || device_type=="ESP32" || device_type=="ESP8266")
+            {
+                if (devip == "" || devport == "")
+                {
+                    alert("Please fill out all the fields before saving!");
+                    return false;
+                }
+            }
+            else
+            {
+                if (devbaud == "" || devdata == "" || devstop == "")
+                {
+                    alert("Please fill out all the fields before saving!");
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+                
+    </script>
+</html>"""
+
+edit_slave_devices_tail = """
+                        </select>
+                        <label for='dev_baud'><b>Baud Rate</b></label>
+                        <input type='text' id='dev_baud' name='device_baud' placeholder='19200'>
+                        <label for='dev_parity'><b>Parity</b></label>
+                        <select id='dev_parity' name='device_parity'>
+                            <option value='None'>None</option>
+                            <option value='Even'>Even</option>
+                            <option value='Odd'>Odd</option>
+                        </select>
+                        <label for='dev_data'><b>Data Bits</b></label>
+                        <input type='text' id='dev_data' name='device_data' placeholder='8'>
+                        <label for='dev_stop'><b>Stop Bits</b></label>
+                        <input type='text' id='dev_stop' name='device_stop' placeholder='1'>
+                        </div>
+                    </div>
+                    <div style="float:right; width:45%; height:730px">
+                        <p style='font-size:20px; margin-top:0px'><b>Discrete Inputs (%IX100.0)</b></p>
+                        <label for='di_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='di_start' name='di_start' placeholder='0'>
+                        <label for='di_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='di_size' name='di_size' placeholder='8'>
+                        
+                        <p style='font-size:20px'><b>Coils (%QX100.0)</b></p>
+                        <label for='do_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='do_start' name='do_start' placeholder='0'>
+                        <label for='do_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='do_size' name='do_size' placeholder='8'>
+                        
+                        <p style='font-size:20px'><b>Input Registers (%IW100)</b></p>
+                        <label for='ai_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='ai_start' name='ai_start' placeholder='0'>
+                        <label for='ai_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='ai_size' name='ai_size' placeholder='8'>
+                        
+                        <p style='font-size:20px'><b>Holding Registers - Read (%IW100)</b></p>
+                        <label for='aor_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='aor_start' name='aor_start' placeholder='0'>
+                        <label for='aor_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='aor_size' name='aor_size' placeholder='8'>
+                        
+                        <p style='font-size:20px'><b>Holding Registers - Write (%QW100)</b></p>
+                        <label for='aow_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='aow_start' name='aow_start' placeholder='0'>
+                        <label for='aow_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='aow_size' name='aow_size' placeholder='8'>
+                    </div>
+                    <br>
+                    <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value='Save device'><a href='delete-device?dev_id="""
+
+edit_devices_script = """
+    <script type="text/javascript">
+        window.onload = function()
+        {
+            setupPageContent()
+            LoadValuesFromDB()
+        }
+        
+        function turnElementOn(element)
+        {
+            element.readOnly = false
+            element.value = ""
+            element.style.backgroundColor = "white"
+            element.style.color = "black"
+        }
+        
+        function turnElementOff(element)
+        {
+            element.readOnly = true
+            element.style.backgroundColor = "#F8F8F8"
+            element.style.color = "#9C9C9C"
+        }
+        
+        function setupPageContent()
+        {
+            var dropmenu = document.getElementById('dev_protocol');
+            var tcpdiv = document.getElementById("tcp-stuff");
+            var rtudiv = document.getElementById("rtu-stuff");
+            
+            var devport = document.getElementById("dev_port");
+            var devid = document.getElementById("dev_id");
+            
+            var devbaud = document.getElementById("dev_baud");
+            var devparity = document.getElementById("dev_parity");
+            var devdata = document.getElementById("dev_data");
+            var devstop = document.getElementById("dev_stop");
+            
+            var distart = document.getElementById("di_start");
+            var disize = document.getElementById("di_size");
+            var dostart = document.getElementById("do_start");
+            var dosize = document.getElementById("do_size");
+            var aistart = document.getElementById("ai_start");
+            var aisize = document.getElementById("ai_size");
+            var aorstart = document.getElementById("aor_start");
+            var aorsize = document.getElementById("aor_size");
+            var aowstart = document.getElementById("aow_start");
+            var aowsize = document.getElementById("aow_size");
+            
+            if (dropmenu.options[dropmenu.selectedIndex].value=="TCP")
+            {
+                tcpdiv.style.display = "block"
+                rtudiv.style.display = "none"
+                
+                turnElementOn(devport)
+                turnElementOn(devid)
+                turnElementOn(distart)
+                turnElementOn(disize)
+                turnElementOn(dostart)
+                turnElementOn(dosize)
+                turnElementOn(aistart)
+                turnElementOn(aisize)
+                turnElementOn(aorstart)
+                turnElementOn(aorsize)
+                turnElementOn(aowstart)
+                turnElementOn(aowsize)
+            }
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="ESP32")
+            {
+                tcpdiv.style.display = "block"
+                rtudiv.style.display = "none"
+                
+                turnElementOff(devport)
+                devport.value = "502"
+                turnElementOff(devid)
+                devid.value = "0"
+                turnElementOff(distart)
+                distart.value = "0"
+                turnElementOff(disize)
+                disize.value = "8"
+                turnElementOff(dostart)
+                dostart.value = "0"
+                turnElementOff(dosize)
+                dosize.value = "8"
+                turnElementOff(aistart)
+                aistart.value = "0"
+                turnElementOff(aisize)
+                aisize.value = "1"
+                turnElementOff(aorstart)
+                aorstart.value = "0"
+                turnElementOff(aorsize)
+                aorsize.value = "0"
+                turnElementOff(aowstart)
+                aowstart.value = "0"
+                turnElementOff(aowsize)
+                aowsize.value = "1"
+            }
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="ESP8266")
+            {
+                tcpdiv.style.display = "block"
+                rtudiv.style.display = "none"
+                
+                turnElementOff(devport)
+                devport.value = "502"
+                turnElementOff(devid)
+                devid.value = "0"
+                turnElementOff(distart)
+                distart.value = "0"
+                turnElementOff(disize)
+                disize.value = "8"
+                turnElementOff(dostart)
+                dostart.value = "0"
+                turnElementOff(dosize)
+                dosize.value = "8"
+                turnElementOff(aistart)
+                aistart.value = "0"
+                turnElementOff(aisize)
+                aisize.value = "1"
+                turnElementOff(aorstart)
+                aorstart.value = "0"
+                turnElementOff(aorsize)
+                aorsize.value = "0"
+                turnElementOff(aowstart)
+                aowstart.value = "0"
+                turnElementOff(aowsize)
+                aowsize.value = "1"
+            }
+            
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="RTU") 
+            {
+                tcpdiv.style.display = "none"
+                rtudiv.style.display = "block"
+                
+                turnElementOn(devid)
+                turnElementOn(devbaud)
+                turnElementOn(devparity)
+                devparity.value = "None"
+                turnElementOn(devdata)
+                turnElementOn(devstop)
+                turnElementOn(distart)
+                turnElementOn(disize)
+                turnElementOn(dostart)
+                turnElementOn(dosize)
+                turnElementOn(aistart)
+                turnElementOn(aisize)
+                turnElementOn(aorstart)
+                turnElementOn(aorsize)
+                turnElementOn(aowstart)
+                turnElementOn(aowsize)
+            }
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="Uno")
+            {
+                tcpdiv.style.display = "none"
+                rtudiv.style.display = "block"
+                
+                turnElementOff(devid)
+                devid.value = "0"
+                turnElementOff(devbaud)
+                devbaud.value = "115200"
+                turnElementOff(devparity)
+                devparity.value = "None"
+                turnElementOff(devdata)
+                devdata.value = "8"
+                turnElementOff(devstop)
+                devstop.value = "1"
+                turnElementOff(distart)
+                distart.value = "0"
+                turnElementOff(disize)
+                disize.value = "5"
+                turnElementOff(dostart)
+                dostart.value = "0"
+                turnElementOff(dosize)
+                dosize.value = "4"
+                turnElementOff(aistart)
+                aistart.value = "0"
+                turnElementOff(aisize)
+                aisize.value = "6"
+                turnElementOff(aorstart)
+                aorstart.value = "0"
+                turnElementOff(aorsize)
+                aorsize.value = "0"
+                turnElementOff(aowstart)
+                aowstart.value = "0"
+                turnElementOff(aowsize)
+                aowsize.value = "3"
+            }
+            else if (dropmenu.options[dropmenu.selectedIndex].value=="Mega")
+            {
+                tcpdiv.style.display = "none"
+                rtudiv.style.display = "block"
+                
+                turnElementOff(devid)
+                devid.value = "0"
+                turnElementOff(devbaud)
+                devbaud.value = "115200"
+                turnElementOff(devparity)
+                devparity.value = "None"
+                turnElementOff(devdata)
+                devdata.value = "8"
+                turnElementOff(devstop)
+                devstop.value = "1"
+                turnElementOff(distart)
+                distart.value = "0"
+                turnElementOff(disize)
+                disize.value = "24"
+                turnElementOff(dostart)
+                dostart.value = "0"
+                turnElementOff(dosize)
+                dosize.value = "16"
+                turnElementOff(aistart)
+                aistart.value = "0"
+                turnElementOff(aisize)
+                aisize.value = "16"
+                turnElementOff(aorstart)
+                aorstart.value = "0"
+                turnElementOff(aorsize)
+                aorsize.value = "0"
+                turnElementOff(aowstart)
+                aowstart.value = "0"
+                turnElementOff(aowsize)
+                aowsize.value = "12"
+            }
+        }
+        
+        document.getElementById('dev_protocol').onchange = function()
+        {
+            setupPageContent()
+        }
+        
+        function validateForm()
+        {
+            var devname = document.forms["uploadForm"]["dev_name"].value;
+            var devid = document.forms["uploadForm"]["dev_id"].value;
+            
+            var devip = document.forms["uploadForm"]["dev_ip"].value;
+            var devport = document.forms["uploadForm"]["dev_port"].value;
+            
+            var devcport = document.forms["uploadForm"]["dev_cport"].value;
+            var devbaud = document.forms["uploadForm"]["dev_baud"].value;
+            var devdata = document.forms["uploadForm"]["dev_data"].value;
+            var devstop = document.forms["uploadForm"]["dev_stop"].value;
+            
+            var distart = document.forms["uploadForm"]["di_start"].value;
+            var disize = document.forms["uploadForm"]["di_size"].value;
+            var dostart = document.forms["uploadForm"]["do_start"].value;
+            var dosize = document.forms["uploadForm"]["do_size"].value;
+            var aistart = document.forms["uploadForm"]["ai_start"].value;
+            var aisize = document.forms["uploadForm"]["ai_size"].value;
+            var aorstart = document.forms["uploadForm"]["aor_start"].value;
+            var aorsize = document.forms["uploadForm"]["aor_size"].value;
+            var aowstart = document.forms["uploadForm"]["aow_start"].value;
+            var aowsize = document.forms["uploadForm"]["aow_size"].value;
+            
+            
+            if (devname == "" || devid == "" || distart == "" || disize == "" || dostart == "" || dosize == "" || aistart == "" || aisize == "" || aorstart == "" || aorsize == "" || aowstart == "" || aowsize == "")
+            {
+                alert("Please fill out all the fields before saving!");
+                return false;
+            }
+            
+            var dropmenu = document.getElementById('dev_protocol');
+            var device_type = dropmenu.options[dropmenu.selectedIndex].value
+            if (device_type=="TCP" || device_type=="ESP32" || device_type=="ESP8266")
+            {
+                if (devip == "" || devport == "")
+                {
+                    alert("Please fill out all the fields before saving!");
+                    return false;
+                }
+            }
+            else
+            {
+                if (devcport == "" || devbaud == "" || devdata == "" || devstop == "")
+                {
+                    alert("Please fill out all the fields before saving!");
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        function LoadValuesFromDB()
+        {
+            var devid = document.getElementById("dev_id");
+            var devip = document.getElementById("dev_ip");
+            var devport = document.getElementById("dev_port");
+            var devcport = document.getElementById("dev_cport");
+            var devbaud = document.getElementById("dev_baud");
+            var devparity = document.getElementById("dev_parity");
+            var devdata = document.getElementById("dev_data");
+            var devstop = document.getElementById("dev_stop");
+            
+            var distart = document.getElementById("di_start");
+            var disize = document.getElementById("di_size");
+            var dostart = document.getElementById("do_start");
+            var dosize = document.getElementById("do_size");
+            var aistart = document.getElementById("ai_start");
+            var aisize = document.getElementById("ai_size");
+            var aorstart = document.getElementById("aor_start");
+            var aorsize = document.getElementById("aor_size");
+            var aowstart = document.getElementById("aow_start");
+            var aowsize = document.getElementById("aow_size");"""

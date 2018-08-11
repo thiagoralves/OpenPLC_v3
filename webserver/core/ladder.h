@@ -127,6 +127,12 @@ extern time_t end_time;
 int processModbusMessage(unsigned char *buffer, int bufferSize);
 void mapUnusedIO();
 
+//modbus_master.cpp
+void initializeMB();
+void querySlaveDevices();
+void updateBuffersIn_MB();
+void updateBuffersOut_MB();
+
 //dnp3.cpp
 void dnp3StartServer(int port);
 

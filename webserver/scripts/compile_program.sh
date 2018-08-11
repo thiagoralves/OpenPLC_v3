@@ -51,7 +51,7 @@ if [ "$OPENPLC_PLATFORM" = "win" ]; then
     echo "Generating glueVars..."
     ./glue_generator
     echo "Compiling main program..."
-    g++ *.cpp *.o -o openplc -I ./lib -pthread -fpermissive -w
+    g++ *.cpp *.o -o openplc -I ./lib -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib -lmodbus -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
@@ -78,7 +78,7 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     echo "Generating glueVars..."
     ./glue_generator
     echo "Compiling main program..."
-    g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
@@ -105,7 +105,7 @@ elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     echo "Generating glueVars..."
     ./glue_generator
     echo "Compiling main program..."
-    g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -lrt -lwiringPi -lpthread -fpermissive -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"

@@ -2,6 +2,8 @@ import sqlite3
 from sqlite3 import Error
 import os
 import subprocess
+import platform
+import serial.tools.list_ports
 import random
 import datetime
 import time
@@ -54,6 +56,72 @@ def configure_runtime():
             print("error connecting to the database" + str(e))
     else:
         print("Error opening DB")
+
+
+def generate_mbconfig():
+    database = "openplc.db"
+    conn = create_connection(database)
+    if (conn != None):
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM Slave_dev")
+            row = cur.fetchone()
+            num_devices = int(row[0])
+            mbconfig = 'Num_Devices = "' + str(num_devices) + '"'
+            
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM Slave_dev")
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+            
+            device_counter = 0
+            for row in rows:
+                mbconfig += """
+# ------------
+#   DEVICE """
+                mbconfig += str(device_counter)
+                mbconfig += """
+# ------------
+"""
+                mbconfig += 'device' + str(device_counter) + '.name = "' + str(row[1]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.slave_id = "' + str(row[3]) + '"\n'
+                if (str(row[2]) == 'ESP32' or str(row[2]) == 'ESP8266' or str(row[2]) == 'TCP'):
+                    mbconfig += 'device' + str(device_counter) + '.protocol = "TCP"\n'
+                    mbconfig += 'device' + str(device_counter) + '.address = "' + str(row[9]) + '"\n'
+                else:
+                    mbconfig += 'device' + str(device_counter) + '.protocol = "RTU"\n'
+                    if (str(row[4]).startswith("COM")):
+                        port_name = "/dev/ttyS" + str(int(str(row[4]).split("COM")[1]) - 1)
+                    else:
+                        port_name = str(row[4])
+                    mbconfig += 'device' + str(device_counter) + '.address = "' + port_name + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.IP_Port = "' + str(row[10]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.RTU_Parity = "' + str(row[6]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
+                
+                mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.Coils_Start = "' + str(row[13]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.Coils_Size = "' + str(row[14]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.Input_Registers_Start = "' + str(row[15]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.Input_Registers_Size = "' + str(row[16]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Start = "' + str(row[17]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Size = "' + str(row[18]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
+                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
+                device_counter += 1
+                
+            with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
+            
+        except Error as e:
+            print("error connecting to the database" + str(e))
+    else:
+        print("Error opening DB")
+                
+
     
 def draw_top_div():
     global openplc_runtime
@@ -751,6 +819,441 @@ def compilation_logs():
         return openplc_runtime.compilation_status()
 
 
+@app.route('/modbus', methods=['GET', 'POST'])
+def modbus():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        return_str = pages.w3_style + pages.style + draw_top_div()
+        return_str += """
+            <div class='main'>
+                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
+                    <br>
+                    <br>
+                    <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
+                    <a href="programs" class="w3-bar-item w3-button"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
+                    <a href="modbus" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/modbus-icon-512x512.png" alt="Modbus" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Slave Devices</p></a>
+                    <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
+                    <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
+                    <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
+                    <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
+                    <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
+                    <br>
+                    <br>"""
+        return_str += draw_status()
+        return_str += """
+        </div>
+            <div style="margin-left:320px; margin-right:70px">
+                <div style="w3-container">
+                    <br>
+                    <h2>Slave Devices</h2>
+                    <p>List of Slave devices attached to OpenPLC.</p>
+                    <p><b>Attention:</b> Slave devices are attached to address 100 onward (i.e. %IX100.0, %IW100, %QX100.0, and %QW100)
+                    <table>
+                        <tr style='background-color: white'>
+                            <th>Device Name</th><th>Device Type</th><th>DI</th><th>DO</th><th>AI</th><th>AO</th>
+                        </tr>"""
+        database = "openplc.db"
+        conn = create_connection(database)
+        if (conn != None):
+            try:
+                cur = conn.cursor()
+                cur.execute("SELECT dev_id, dev_name, dev_type, di_size, coil_size, ir_size, hr_read_size, hr_write_size FROM Slave_dev")
+                rows = cur.fetchall()
+                cur.close()
+                conn.close()
+                
+                counter_di = 0
+                counter_do = 0
+                counter_ai = 0
+                counter_ao = 0
+                
+                for row in rows:
+                    return_str += "<tr onclick=\"document.location='modbus-edit-device?table_id=" + str(row[0]) + "'\">"
+                    
+                    #calculate di
+                    if (row[3] == 0):
+                        di = "-"
+                    else:
+                        di = "%IX" + str(100 + (counter_di/8)) + "." + str(counter_di%8) + " to "
+                        counter_di += row[3];
+                        di += "%IX" + str(100 + ((counter_di-1)/8)) + "." + str((counter_di-1)%8)
+                        
+                    #calculate do
+                    if (row[4] == 0):
+                        do = "-"
+                    else:
+                        do = "%QX" + str(100 + (counter_do/8)) + "." + str(counter_do%8) + " to "
+                        counter_do += row[4];
+                        do += "%QX" + str(100 + ((counter_do-1)/8)) + "." + str((counter_do-1)%8)
+                        
+                    #calculate ai
+                    if (row[5] + row[6] == 0):
+                        ai = "-"
+                    else:
+                        ai = "%IW" + str(100 + counter_ai) + " to "
+                        counter_ai += row[5]+row[6];
+                        ai += "%IW" + str(100 + (counter_ai-1))
+                        
+                    #calculate ao
+                    if (row[7] == 0):
+                        ao = "-"
+                    else:
+                        ao = "%QW" + str(100 + counter_ao) + " to "
+                        counter_ao += row[7];
+                        ao += "%QW" + str(100 + (counter_ao-1))
+                    
+                    
+                    return_str += "<td>" + str(row[1]) + "</td><td>" + str(row[2]) + "</td><td>" + di + "</td><td>" + do + "</td><td>" + ai + "</td><td>" + ao + "</td></tr>"
+                    
+                return_str += """
+                    </table>
+                    <br>
+                    <center><a href="add-modbus-device" class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Add new device</b></a></center>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>"""
+
+            except Error as e:
+                print("error connecting to the database" + str(e))
+                return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+        else:
+            return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+        
+        return return_str
+        
+
+@app.route('/add-modbus-device', methods=['GET', 'POST'])
+def add_modbus_device():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        if (flask.request.method == 'GET'):
+            return_str = pages.w3_style + pages.style + draw_top_div()
+            return_str += """
+                <div class='main'>
+                    <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
+                        <br>
+                        <br>
+                        <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
+                        <a href="programs" class="w3-bar-item w3-button"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
+                        <a href="modbus" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/modbus-icon-512x512.png" alt="Modbus" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Slave Devices</p></a>
+                        <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
+                        <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
+                        <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
+                        <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
+                        <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
+                        <br>
+                        <br>"""
+            return_str += draw_status()
+            return_str += """
+                </div>
+                <div style="margin-left:320px; margin-right:70px">
+                    <div style="w3-container">
+                        <br>
+                        <h2>Add new device</h2>
+                        <br>
+                        <div style="float:left; width:45%; height:730px">
+                        <form   id    = "uploadForm"
+                            enctype   =  "multipart/form-data"
+                            action    =  "add-modbus-device"
+                            method    =  "post"
+                            onsubmit  =  "return validateForm()">
+                            <label for='dev_name'><b>Device Name</b></label>
+                            <input type='text' id='dev_name' name='device_name' placeholder='My Device'>
+                            <label for='dev_protocol'><b>Device Type</b></label>
+                            <select id='dev_protocol' name='device_protocol'>
+                                <option selected='selected' value='Uno'>Arduino Uno</option>
+                                <option value='Mega'>Arduino Mega</option>
+                                <option value='ESP32'>ESP32</option>
+                                <option value='ESP8266'>ESP8266</option>
+                                <option value='TCP'>Generic Modbus TCP Device</option>
+                                <option value='RTU'>Generic Modbus RTU Device</option>
+                            </select>
+                            <label for='dev_id'><b>Slave ID</b></label>
+                            <input type='text' id='dev_id' name='device_id' placeholder='0'>
+                            <div id="tcp-stuff" style="display: none">
+                            <label for='dev_ip'><b>IP Address</b></label>
+                            <input type='text' id='dev_ip' name='device_ip' placeholder='192.168.0.1'>
+                            <label for='dev_port'><b>IP Port</b></label>
+                            <input type='text' id='dev_port' name='device_port' placeholder='502'>
+                            </div>
+                            <div id="rtu-stuff">
+                            <label for='dev_cport'><b>COM Port</b></label>
+                            <select id='dev_cport' name='device_cport'>"""
+                            
+            ports = [comport.device for comport in serial.tools.list_ports.comports()]
+            for port in ports:
+                if (platform.system().startswith("CYGWIN")):
+                    port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
+                else:
+                    port_name = port
+                return_str += "<option value='" + port_name + "'>" + port_name + "</option>"
+            
+            return_str += pages.add_slave_devices_tail + pages.add_devices_script
+            
+            return return_str
+            
+        elif (flask.request.method == 'POST'):
+            devname = flask.request.form['device_name']
+            devtype = flask.request.form['device_protocol']
+            devid = flask.request.form['device_id']
+            devip = flask.request.form['device_ip']
+            devport = flask.request.form['device_port']
+            devcport = flask.request.form['device_cport']
+            devbaud = flask.request.form['device_baud']
+            devparity = flask.request.form['device_parity']
+            devdata = flask.request.form['device_data']
+            devstop = flask.request.form['device_stop']
+            
+            di_start = flask.request.form['di_start']
+            di_size = flask.request.form['di_size']
+            do_start = flask.request.form['do_start']
+            do_size = flask.request.form['do_size']
+            ai_start = flask.request.form['ai_start']
+            ai_size = flask.request.form['ai_size']
+            aor_start = flask.request.form['aor_start']
+            aor_size = flask.request.form['aor_size']
+            aow_start = flask.request.form['aow_start']
+            aow_size = flask.request.form['aow_size']
+            
+            database = "openplc.db"
+            conn = create_connection(database)
+            if (conn != None):
+                try:
+                    cur = conn.cursor()
+                    cur.execute("INSERT INTO Slave_dev (dev_name, dev_type, slave_id, com_port, baud_rate, parity, data_bits, stop_bits, ip_address, ip_port, di_start, di_size, coil_start, coil_size, ir_start, ir_size, hr_read_start, hr_read_size, hr_write_start, hr_write_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                    
+                    generate_mbconfig()
+                    return flask.redirect(flask.url_for('modbus'))
+                    
+                except Error as e:
+                    print("error connecting to the database" + str(e))
+                    return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+            else:
+                return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+
+
+@app.route('/modbus-edit-device', methods=['GET', 'POST'])
+def modbus_edit_device():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        if (flask.request.method == 'GET'):
+            dev_id = flask.request.args.get('table_id')
+            return_str = pages.w3_style + pages.style + draw_top_div()
+            return_str += """
+                <div class='main'>
+                    <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
+                        <br>
+                        <br>
+                        <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
+                        <a href="programs" class="w3-bar-item w3-button"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
+                        <a href="modbus" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/modbus-icon-512x512.png" alt="Modbus" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Slave Devices</p></a>
+                        <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
+                        <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
+                        <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
+                        <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
+                        <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
+                        <br>
+                        <br>"""
+            return_str += draw_status()
+            return_str += """
+                </div>
+                <div style="margin-left:320px; margin-right:70px">
+                    <div style="w3-container">
+                        <br>
+                        <h2>Edit slave device</h2>
+                        <br>
+                        <div style="float:left; width:45%; height:730px">
+                        <form   id    = "uploadForm"
+                            enctype   =  "multipart/form-data"
+                            action    =  "modbus-edit-device"
+                            method    =  "post"
+                            onsubmit  =  "return validateForm()">"""
+                            
+            database = "openplc.db"
+            conn = create_connection(database)
+            if (conn != None):
+                try:
+                    cur = conn.cursor()
+                    cur.execute("SELECT * FROM Slave_dev WHERE dev_id = ?", (int(dev_id),))
+                    row = cur.fetchone()
+                    cur.close()
+                    conn.close()
+                    return_str += "<input type='hidden' value='" + dev_id + "' id='db_dev_id' name='db_dev_id'/>"
+                    return_str += "<label for='dev_name'><b>Device Name</b></label><input type='text' id='dev_name' name='device_name' placeholder='My Device' value='" + str(row[1]) + "'>"
+                    return_str += "<label for='dev_protocol'><b>Device Type</b></label><select id='dev_protocol' name='device_protocol'>"
+                    if (str(row[2]) == "Uno"):
+                        return_str += "<option selected='selected' value='Uno'>Arduino Uno</option>"
+                    else:
+                        return_str += "<option value='Uno'>Arduino Uno</option>"
+                    if (str(row[2]) == "Mega"):
+                        return_str += "<option selected='selected' value='Mega'>Arduino Mega</option>"
+                    else:
+                        return_str += "<option value='Mega'>Arduino Mega</option>"
+                    if (str(row[2]) == "ESP32"):
+                        return_str += "<option selected='selected' value='ESP32'>ESP32</option>"
+                    else:
+                        return_str += "<option value='ESP32'>ESP32</option>"
+                    if (str(row[2]) == "ESP8266"):
+                        return_str += "<option selected='selected' value='ESP8266'>ESP8266</option>"
+                    else:
+                        return_str += "<option value='ESP8266'>ESP8266</option>"
+                    if (str(row[2]) == "TCP"):
+                        return_str += "<option selected='selected' value='TCP'>Generic Modbus TCP Device</option>"
+                    else:
+                        return_str += "<option value='TCP'>Generic Modbus TCP Device</option>"
+                    if (str(row[2]) == "RTU"):
+                        return_str += "<option selected='selected' value='RTU'>Generic Modbus RTU Device</option></select>"
+                    else:
+                        return_str += "<option value='RTU'>Generic Modbus RTU Device</option></select>"
+                    return_str += "<label for='dev_id'><b>Slave ID</b></label><input type='text' id='dev_id' name='device_id' placeholder='0' value='" + str(row[3]) + "'>"
+                    return_str += "<div id=\"tcp-stuff\" style=\"display: none\"><label for='dev_ip'><b>IP Address</b></label><input type='text' id='dev_ip' name='device_ip' placeholder='192.168.0.1' value='" + str(row[9]) + "'>"
+                    return_str += "<label for='dev_port'><b>IP Port</b></label><input type='text' id='dev_port' name='device_port' placeholder='502' value='" + str(row[10]) + "'></div>"
+                    return_str += "<div id=\"rtu-stuff\"><label for='dev_cport'><b>COM Port</b></label><select id='dev_cport' name='device_cport'>"
+                    ports = [comport.device for comport in serial.tools.list_ports.comports()]
+                    for port in ports:
+                        if (platform.system().startswith("CYGWIN")):
+                            port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
+                        else:
+                            port_name = port
+                        if (str(row[4]) == port_name):
+                            return_str += "<option selected='selected' value'" + port_name + "'>" + port_name + "</option>"
+                        else:   
+                            return_str += "<option value='" + port_name + "'>" + port_name + "</option>"
+                    
+                    return_str += pages.edit_slave_devices_tail
+                    return_str += dev_id
+                    return_str += """' class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Delete device</b></a></center>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>"""
+                    return_str += pages.edit_devices_script
+                    return_str += 'devid.value = "' + str(row[3]) + '";'
+                    return_str += 'devcport.value = "' + str(row[4]) + '";'
+                    return_str += 'devbaud.value = "' + str(row[5]) + '";'
+                    return_str += 'devparity.value = "' + str(row[6]) + '";'
+                    return_str += 'devdata.value = "' + str(row[7]) + '";'
+                    return_str += 'devstop.value = "' + str(row[8]) + '";'
+                    return_str += 'devip.value = "' + str(row[9]) + '";'
+                    return_str += 'devport.value = "' + str(row[10]) + '";'
+                    return_str += 'distart.value = "' + str(row[11]) + '";'
+                    return_str += 'disize.value = "' + str(row[12]) + '";'
+                    return_str += 'dostart.value = "' + str(row[13]) + '";'
+                    return_str += 'dosize.value = "' + str(row[14]) + '";'
+                    return_str += 'aistart.value = "' + str(row[15]) + '";'
+                    return_str += 'aisize.value = "' + str(row[16]) + '";'
+                    return_str += 'aorstart.value = "' + str(row[17]) + '";'
+                    return_str += 'aorsize.value = "' + str(row[18]) + '";'
+                    return_str += 'aowstart.value = "' + str(row[19]) + '";'
+                    return_str += 'aowsize.value = "' + str(row[20]) + '";}</script></html>'
+                    
+                except Error as e:
+                    print("error connecting to the database" + str(e))
+                    return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+            else:
+                return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+            
+            return return_str
+            
+        elif (flask.request.method == 'POST'):
+            devid_db = flask.request.form['db_dev_id']
+            devname = flask.request.form['device_name']
+            devtype = flask.request.form['device_protocol']
+            devid = flask.request.form['device_id']
+            devip = flask.request.form['device_ip']
+            devport = flask.request.form['device_port']
+            devcport = flask.request.form['device_cport']
+            devbaud = flask.request.form['device_baud']
+            devparity = flask.request.form['device_parity']
+            devdata = flask.request.form['device_data']
+            devstop = flask.request.form['device_stop']
+            
+            di_start = flask.request.form['di_start']
+            di_size = flask.request.form['di_size']
+            do_start = flask.request.form['do_start']
+            do_size = flask.request.form['do_size']
+            ai_start = flask.request.form['ai_start']
+            ai_size = flask.request.form['ai_size']
+            aor_start = flask.request.form['aor_start']
+            aor_size = flask.request.form['aor_size']
+            aow_start = flask.request.form['aow_start']
+            aow_size = flask.request.form['aow_size']
+            
+            database = "openplc.db"
+            conn = create_connection(database)
+            if (conn != None):
+                try:
+                    cur = conn.cursor()
+                    cur.execute("UPDATE Slave_dev SET dev_name = ?, dev_type = ?, slave_id = ?, com_port = ?, baud_rate = ?, parity = ?, data_bits = ?, stop_bits = ?, ip_address = ?, ip_port = ?, di_start = ?, di_size = ?, coil_start = ?, coil_size = ?, ir_start = ?, ir_size = ?, hr_read_start = ?, hr_read_size = ?, hr_write_start = ?, hr_write_size = ? WHERE dev_id = ?", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, int(devid_db)))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                    
+                    generate_mbconfig()
+                    return flask.redirect(flask.url_for('modbus'))
+                    
+                except Error as e:
+                    print("error connecting to the database" + str(e))
+                    return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+            else:
+                return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+
+
+@app.route('/delete-device', methods=['GET', 'POST'])
+def delete_device():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        devid_db = flask.request.args.get('dev_id')
+        database = "openplc.db"
+        conn = create_connection(database)
+        if (conn != None):
+            try:
+                cur = conn.cursor()
+                cur.execute("DELETE FROM Slave_dev WHERE dev_id = ?", (int(devid_db),))
+                conn.commit()
+                cur.close()
+                conn.close()
+                generate_mbconfig()
+                return flask.redirect(flask.url_for('modbus'))
+            except Error as e:
+                print("error connecting to the database" + str(e))
+                return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+        else:
+            return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+
+            
+@app.route('/monitoring', methods=['GET', 'POST'])
+def monitoring():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        return_str = draw_blank_page()
+        return_str += """
+                    <h2>Monitoring</h2>
+                    <p>This feature is not available yet! Check back later...<p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>"""
+        return return_str
+            
+            
 @app.route('/hardware', methods=['GET', 'POST'])
 def hardware():
     if (flask_login.current_user.is_authenticated == False):

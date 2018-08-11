@@ -28,6 +28,7 @@ if [ "$1" == "win" ]; then
     python get-pip.py
     pip install flask
     pip install flask-login
+    pip install pyserial
     
     echo ""
     echo "[MATIEC COMPILER]"
@@ -80,6 +81,19 @@ if [ "$1" == "win" ]; then
     cd ../..
     
     echo ""
+    echo "[LIBMODBUS]"
+    cd utils/libmodbus_src
+    ./autogen
+    ./configure
+    make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing Libmodbus"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+    
+    echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
     ./change_hardware_layer.sh blank
@@ -94,9 +108,11 @@ elif [ "$1" == "linux" ]; then
     sudo apt-get install build-essential pkg-config bison flex autoconf automake libtool make git python2.7 python-pip sqlite3 cmake
     pip install flask
     pip install flask-login
-    #make sure that flask and flask-login are also installed for the super user
+    pip install pyserial
+    #make sure that packages are also installed for the super user
     sudo pip install flask
     sudo pip install flask-login
+    sudo pip install pyserial
 
     echo ""
     echo "[MATIEC COMPILER]"
@@ -155,6 +171,20 @@ elif [ "$1" == "linux" ]; then
     echo "removing swapfile..."
     sudo swapoff swapfile
     sudo rm -f ./swapfile
+    cd ../..
+    
+    echo ""
+    echo "[LIBMODBUS]"
+    cd utils/libmodbus_src
+    ./autogen
+    ./configure
+    sudo make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing Libmodbus"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    sudo ldconfig
     cd ../..
     
     echo ""
@@ -172,9 +202,11 @@ elif [ "$1" == "rpi" ]; then
     sudo apt-get install build-essential pkg-config bison flex autoconf automake libtool make git python2.7 python-pip sqlite3 cmake wiringpi
     pip install flask
     pip install flask-login
-    #make sure that flask and flask-login are also installed for the super user
+    pip install pyserial
+    #make sure that packages are also installed for the super user
     sudo pip install flask
     sudo pip install flask-login
+    sudo pip install pyserial
     
     echo ""
     echo "[MATIEC COMPILER]"
@@ -236,12 +268,111 @@ elif [ "$1" == "rpi" ]; then
     cd ../..
     
     echo ""
+    echo "[LIBMODBUS]"
+    cd utils/libmodbus_src
+    ./autogen
+    ./configure
+    sudo make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing Libmodbus"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    sudo ldconfig
+    cd ../..
+    
+    echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
     cp ./start_openplc.sh ../../
     
+
+
+elif [ "$1" == "custom" ]; then
+    echo "Installing OpenPLC on Custom Platform"
+    
+    echo ""
+    echo "[MATIEC COMPILER]"
+    cd utils/matiec_src
+    autoreconf -i
+    ./configure
+    make
+    cp ./iec2c ../../webserver/
+    if [ $? -ne 0 ]; then
+        echo "Error compiling MatIEC"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+
+    echo ""
+    echo "[ST OPTIMIZER]"
+    cd utils/st_optimizer_src
+    g++ st_optimizer.cpp -o st_optimizer
+    cp ./st_optimizer ../../webserver/
+    if [ $? -ne 0 ]; then
+        echo "Error compiling ST Optimizer"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+    
+    echo ""
+    echo "[GLUE GENERATOR]"
+    cd utils/glue_generator_src
+    g++ glue_generator.cpp -o glue_generator
+    cp ./glue_generator ../../webserver/core
+    if [ $? -ne 0 ]; then
+        echo "Error compiling Glue Generator"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+    
+    echo ""
+    echo "[OPEN DNP3]"
+    cd utils/dnp3_src
+    echo "creating swapfile..."
+    sudo dd if=/dev/zero of=swapfile bs=1M count=1000
+    sudo mkswap swapfile
+    sudo swapon swapfile
+    cmake ../dnp3_src
+    make
+    sudo make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing OpenDNP3"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    sudo ldconfig
+    echo "removing swapfile..."
+    sudo swapoff swapfile
+    sudo rm -f ./swapfile
+    cd ../..
+    
+    echo ""
+    echo "[LIBMODBUS]"
+    cd utils/libmodbus_src
+    ./autogen
+    ./configure
+    sudo make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing Libmodbus"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    sudo ldconfig
+    cd ../..
+    
+    echo ""
+    echo "[FINALIZING]"
+    cd webserver/scripts
+    ./change_hardware_layer.sh blank_linux
+    ./compile_program.sh blank_program.st
+    cp ./start_openplc.sh ../../
+
 
 else
     echo ""
