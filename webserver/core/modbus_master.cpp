@@ -504,8 +504,8 @@ void updateBuffersOut_MB()
 
 	for (int i = 0; i < MAX_MB_IO; i++)
 	{
-		if (bool_output[i/8][i%8] != NULL) bool_output_buf[i] = *bool_output[i/8][i%8];
-		if (int_output[i] != NULL) int_output_buf[i] = *int_output[i];
+		if (bool_output[100+(i/8)][i%8] != NULL) bool_output_buf[i] = *bool_output[100+(i/8)][i%8];
+		if (int_output[100+i] != NULL) int_output_buf[i] = *int_output[100+i];
 	}
 
 	pthread_mutex_unlock(&ioLock);
