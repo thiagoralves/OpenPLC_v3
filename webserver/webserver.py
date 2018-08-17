@@ -595,50 +595,13 @@ def dashboard():
 @app.route('/programs', methods=['GET', 'POST'])
 @login_required
 def programs():
-    #if (flask_login.current_user.is_authenticated == False):
-    #    return flask.redirect(flask.url_for('login'))
-    #else:
+
     if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
 
-    list_all = request.args.get('list_all') == '1'
-
-    return_str = pages.w3_style + pages.style + draw_top_div()
-    return_str += """
-        <div class='main'>
-            <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-                <br>
-                <br>
-                <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-                <a href="programs" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Programs</p></a>
-                <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
-                <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-                <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-                <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
-                <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-                <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-                <br>
-                <br>"""
-    return_str += draw_status()
-    return_str += """
-    </div>
-        <div style="margin-left:320px; margin-right:70px">
-            <div style="w3-container">
-                <br>
-                <h2>Programs</h2>
-                <p>Here you can upload a new program to OpenPLC or revert back to a previous uploaded program shown on the table.</p>
-                <table>
-                    <tr style='background-color: white'>
-                        <th>Program Name</th><th>File</th><th>Date Uploaded</th>
-                    </tr>"""
-    #database = "openplc.db"
-    #conn = create_connection(database)
-    #if (conn != None):
-    #    try:
-    #       cur = conn.cursor()
     ctx = make_context("programs")
 
-
+    list_all = request.args.get('list_all') == '1'
     sql = 'SELECT Prog_ID, Name, File, Date_upload FROM Programs ORDER BY Date_upload DESC '
     if not list_all:
         sql += " limit 20"
@@ -650,6 +613,7 @@ def programs():
 
 
 @app.route('/reload-program', methods=['GET', 'POST'])
+@login_required
 def reload_program():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
