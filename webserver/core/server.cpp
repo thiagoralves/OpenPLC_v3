@@ -150,6 +150,7 @@ int waitForClient(int socket_fd)
             SetSocketBlockingEnabled(client_fd, true);
             break;
         }
+        sleepms(100);
     }
 
     return client_fd;

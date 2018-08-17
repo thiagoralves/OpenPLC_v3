@@ -63,6 +63,18 @@ void sleep_until(struct timespec *ts, int delay)
 }
 
 //-----------------------------------------------------------------------------
+// Helper function - Makes the running thread sleep for the ammount of time
+// in milliseconds
+//-----------------------------------------------------------------------------
+void sleepms(int milliseconds)
+{
+	struct timespec ts;
+	ts.tv_sec = milliseconds / 1000;
+	ts.tv_nsec = (milliseconds % 1000) * 1000000;
+	nanosleep(&ts, NULL);
+}
+
+//-----------------------------------------------------------------------------
 // Helper function - Logs messages and print them on the console
 //-----------------------------------------------------------------------------
 void log(unsigned char *logmsg)
