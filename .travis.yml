@@ -1,5 +1,17 @@
 language: cpp
 
+os:
+  - linux
+
+branches:
+  only:
+    - master
+    - pedro
+
+
+install:
+   git clone -b pedro git://github.com/pedromorgan/OpenPLC_v3
+
 script:
   - install.sh
 
