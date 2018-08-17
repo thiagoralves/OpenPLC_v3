@@ -8,10 +8,12 @@ sudo: required
 branches:
   only:
     - master
+    - develop
     - pedro
 
 
 script:
-  - ./install.sh linux
+ - sudo pip install --upgrade pip'
+ - ./install.sh linux
 
 
