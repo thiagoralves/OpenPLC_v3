@@ -999,27 +999,27 @@ def add_modbus_device():
             return return_str
             
         elif (flask.request.method == 'POST'):
-            devname = flask.request.form['device_name']
-            devtype = flask.request.form['device_protocol']
-            devid = flask.request.form['device_id']
-            devip = flask.request.form['device_ip']
-            devport = flask.request.form['device_port']
-            devcport = flask.request.form['device_cport']
-            devbaud = flask.request.form['device_baud']
-            devparity = flask.request.form['device_parity']
-            devdata = flask.request.form['device_data']
-            devstop = flask.request.form['device_stop']
+            devname = flask.request.form.get('device_name')
+            devtype = flask.request.form.get('device_protocol')
+            devid = flask.request.form.get('device_id')
+            devip = flask.request.form.get('device_ip')
+            devport = flask.request.form.get('device_port')
+            devcport = flask.request.form.get('device_cport')
+            devbaud = flask.request.form.get('device_baud')
+            devparity = flask.request.form.get('device_parity')
+            devdata = flask.request.form.get('device_data')
+            devstop = flask.request.form.get('device_stop')
             
-            di_start = flask.request.form['di_start']
-            di_size = flask.request.form['di_size']
-            do_start = flask.request.form['do_start']
-            do_size = flask.request.form['do_size']
-            ai_start = flask.request.form['ai_start']
-            ai_size = flask.request.form['ai_size']
-            aor_start = flask.request.form['aor_start']
-            aor_size = flask.request.form['aor_size']
-            aow_start = flask.request.form['aow_start']
-            aow_size = flask.request.form['aow_size']
+            di_start = flask.request.form.get('di_start')
+            di_size = flask.request.form.get('di_size')
+            do_start = flask.request.form.get('do_start')
+            do_size = flask.request.form.get('do_size')
+            ai_start = flask.request.form.get('ai_start')
+            ai_size = flask.request.form.get('ai_size')
+            aor_start = flask.request.form.get('aor_start')
+            aor_size = flask.request.form.get('aor_size')
+            aow_start = flask.request.form.get('aow_start')
+            aow_size = flask.request.form.get('aow_size')
             
             database = "openplc.db"
             conn = create_connection(database)
@@ -1168,28 +1168,28 @@ def modbus_edit_device():
             return return_str
             
         elif (flask.request.method == 'POST'):
-            devid_db = flask.request.form['db_dev_id']
-            devname = flask.request.form['device_name']
-            devtype = flask.request.form['device_protocol']
-            devid = flask.request.form['device_id']
-            devip = flask.request.form['device_ip']
-            devport = flask.request.form['device_port']
-            devcport = flask.request.form['device_cport']
-            devbaud = flask.request.form['device_baud']
-            devparity = flask.request.form['device_parity']
-            devdata = flask.request.form['device_data']
-            devstop = flask.request.form['device_stop']
+            devid_db = flask.request.form.get('db_dev_id')
+            devname = flask.request.form.get('device_name')
+            devtype = flask.request.form.get('device_protocol')
+            devid = flask.request.form.get('device_id')
+            devip = flask.request.form.get('device_ip')
+            devport = flask.request.form.get('device_port')
+            devcport = flask.request.form.get('device_cport')
+            devbaud = flask.request.form.get('device_baud')
+            devparity = flask.request.form.get('device_parity')
+            devdata = flask.request.form.get('device_data')
+            devstop = flask.request.form.get('device_stop')
             
-            di_start = flask.request.form['di_start']
-            di_size = flask.request.form['di_size']
-            do_start = flask.request.form['do_start']
-            do_size = flask.request.form['do_size']
-            ai_start = flask.request.form['ai_start']
-            ai_size = flask.request.form['ai_size']
-            aor_start = flask.request.form['aor_start']
-            aor_size = flask.request.form['aor_size']
-            aow_start = flask.request.form['aow_start']
-            aow_size = flask.request.form['aow_size']
+            di_start = flask.request.form.get('di_start')
+            di_size = flask.request.form.get('di_size')
+            do_start = flask.request.form.get('do_start')
+            do_size = flask.request.form.get('do_size')
+            ai_start = flask.request.form.get('ai_start')
+            ai_size = flask.request.form.get('ai_size')
+            aor_start = flask.request.form.get('aor_start')
+            aor_size = flask.request.form.get('aor_size')
+            aow_start = flask.request.form.get('aow_start')
+            aow_size = flask.request.form.get('aow_size')
             
             database = "openplc.db"
             conn = create_connection(database)
