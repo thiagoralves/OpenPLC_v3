@@ -1,9 +1,12 @@
-language: cpp
 
 os:
   - linux
-
+dist: trusty
 sudo: required
+
+
+language: cpp
+
 
 branches:
   only:

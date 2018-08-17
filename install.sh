@@ -106,9 +106,12 @@ elif [ "$1" == "linux" ]; then
     echo "Installing OpenPLC on Linux"
     sudo apt-get update
     sudo apt-get install build-essential pkg-config bison flex autoconf automake libtool make git python2.7 python-pip sqlite3 cmake
-    pip install flask
-    pip install flask-login
-    pip install pyserial
+
+    # @pedro commented out for testing
+    #pip install flask
+    #pip install flask-login
+    #pip install pyserial
+
     #make sure that packages are also installed for the super user
     sudo pip install flask
     sudo pip install flask-login
