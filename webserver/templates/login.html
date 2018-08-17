@@ -1,0 +1,21 @@
+
+{% extends "BASE.html" %}
+
+{% block content %}
+
+<div class='login-page'>
+  <div class='form'>
+    <form action='login' method='POST' class='login-form'>
+        <h3 style="font-family:'Roboto', sans-serif; font-size:24px; color:#1F1F1F; padding:0px 0px 0px 0px; margin: 0px 0px 40px 0px"><center><b>Welcome to OpenPLC</b></center></h3>
+
+        <h3 style="font-family:'Roboto', sans-serif; font-size:14px; color:#1F1F1F; padding:0px 0px 0px 0px; margin: 0px 0px 40px 0px"><center>Use your credentials to login</center></h3>
+        <input type='text' name='username' id='username' placeholder='username'/>
+        <input type='password' name='password' id='password' placeholder='password'/>
+        <br><br><br>
+        <button>login</button>
+    </form>
+  </div>
+</div>
+
+
+{% endblock content %}
