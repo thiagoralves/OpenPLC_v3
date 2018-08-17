@@ -18,8 +18,7 @@ from flask_login import current_user, login_required
 
 
 
-
-#= wsgi app -----------------
+#=== wsgi app
 app = flask.Flask(__name__)
 
 # This causes cookies to loose between restarts in dev
@@ -27,7 +26,7 @@ app.secret_key = "43259ternrjetktrp" #str(os.urandom(16))
 
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-#= Login -----------------
+#=== Login
 login_manager = flask_login.LoginManager()
 login_manager.login_view = "/login"
 login_manager.init_app(app)
@@ -36,7 +35,7 @@ class User(flask_login.UserMixin):
     pass
 
 
-#= Runtime -----------------
+#=== Runtime
 openplc_runtime = openplc.Runtime()
 
 def configure_runtime():
@@ -509,42 +508,9 @@ def login():
             flask_login.login_user(user, remember=True, fresh=True)
             print "login ok"
             return flask.redirect(flask.url_for('dashboard'))
-        """
-        database = "openplc.db"
-        conn = create_connection(database)
-        if conn:
-            try:
-                cur = conn.cursor()
-                cur.execute("SELECT username, password, name, pict_file FROM Users")
-                rows = cur.fetchall()
-                cur.close()
-                conn.close()
 
-                for row in rows:
-                    if row[0] == username:
-                        if row[1] == password:
-                            user = User()
-                            user.id = row[0]
-                            user.name = row[2]
-                            user.pict_file = str(row[3])
-                            flask_login.login_user(user, remember=True, fresh=True)
-                            print "login ok"
-                            return flask.redirect(flask.url_for('dashboard'))
-                    #else:
-                    #    return pages.login_head + pages.bad_login_body
-                    print "TODO" , "error"
-                        
-                return pages.login_head + pages.bad_login_body
-                    
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return 'Error opening DB'
-        else:
-            return 'Error opening DB'
-        """
     return render_template("login.html", c=ctx)
 
-    #return pages.login_head + pages.bad_login_body
 
 
 @app.route('/start_plc')
@@ -850,110 +816,66 @@ def compilation_logs():
 
 
 @app.route('/modbus', methods=['GET', 'POST'])
+@login_required
 def modbus():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        return_str = pages.w3_style + pages.style + draw_top_div()
-        return_str += """
-            <div class='main'>
-                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-                    <br>
-                    <br>
-                    <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-                    <a href="programs" class="w3-bar-item w3-button"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
-                    <a href="modbus" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/modbus-icon-512x512.png" alt="Modbus" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Slave Devices</p></a>
-                    <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-                    <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-                    <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
-                    <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-                    <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-                    <br>
-                    <br>"""
-        return_str += draw_status()
-        return_str += """
-        </div>
-            <div style="margin-left:320px; margin-right:70px">
-                <div style="w3-container">
-                    <br>
-                    <h2>Slave Devices</h2>
-                    <p>List of Slave devices attached to OpenPLC.</p>
-                    <p><b>Attention:</b> Slave devices are attached to address 100 onward (i.e. %IX100.0, %IW100, %QX100.0, and %QW100)
-                    <table>
-                        <tr style='background-color: white'>
-                            <th>Device Name</th><th>Device Type</th><th>DI</th><th>DO</th><th>AI</th><th>AO</th>
-                        </tr>"""
-        database = "openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("SELECT dev_id, dev_name, dev_type, di_size, coil_size, ir_size, hr_read_size, hr_write_size FROM Slave_dev")
-                rows = cur.fetchall()
-                cur.close()
-                conn.close()
-                
-                counter_di = 0
-                counter_do = 0
-                counter_ai = 0
-                counter_ao = 0
-                
-                for row in rows:
-                    return_str += "<tr onclick=\"document.location='modbus-edit-device?table_id=" + str(row[0]) + "'\">"
-                    
-                    #calculate di
-                    if (row[3] == 0):
-                        di = "-"
-                    else:
-                        di = "%IX" + str(100 + (counter_di/8)) + "." + str(counter_di%8) + " to "
-                        counter_di += row[3];
-                        di += "%IX" + str(100 + ((counter_di-1)/8)) + "." + str((counter_di-1)%8)
-                        
-                    #calculate do
-                    if (row[4] == 0):
-                        do = "-"
-                    else:
-                        do = "%QX" + str(100 + (counter_do/8)) + "." + str(counter_do%8) + " to "
-                        counter_do += row[4];
-                        do += "%QX" + str(100 + ((counter_do-1)/8)) + "." + str((counter_do-1)%8)
-                        
-                    #calculate ai
-                    if (row[5] + row[6] == 0):
-                        ai = "-"
-                    else:
-                        ai = "%IW" + str(100 + counter_ai) + " to "
-                        counter_ai += row[5]+row[6];
-                        ai += "%IW" + str(100 + (counter_ai-1))
-                        
-                    #calculate ao
-                    if (row[7] == 0):
-                        ao = "-"
-                    else:
-                        ao = "%QW" + str(100 + counter_ao) + " to "
-                        counter_ao += row[7];
-                        ao += "%QW" + str(100 + (counter_ao-1))
-                    
-                    
-                    return_str += "<td>" + str(row[1]) + "</td><td>" + str(row[2]) + "</td><td>" + di + "</td><td>" + do + "</td><td>" + ai + "</td><td>" + ao + "</td></tr>"
-                    
-                return_str += """
-                    </table>
-                    <br>
-                    <center><a href="add-modbus-device" class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Add new device</b></a></center>
-                </div>
-            </div>
-        </div>
-    </body>
-</html>"""
 
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        else:
-            return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-        
-        return return_str
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+
+        ctx = make_context("modbus")
+
+
+        sql = "SELECT dev_id, dev_name, dev_type, di_size, coil_size, ir_size, hr_read_size, hr_write_size FROM Slave_dev"
+        rows, ctx.error = db_query(sql)
+
+        counter_di = 0
+        counter_do = 0
+        counter_ai = 0
+        counter_ao = 0
+
+        ctx.devices = []
+
+        for row in rows:
+            #return_str += "<tr onclick=\"document.location='modbus-edit-device?table_id=" + str(row[0]) + "'\">"
+
+
+            #calculate di
+            if (row[3] == 0):
+                di = "-"
+            else:
+                di = "%IX" + str(100 + (counter_di/8)) + "." + str(counter_di%8) + " to "
+                counter_di += row[3];
+                di += "%IX" + str(100 + ((counter_di-1)/8)) + "." + str((counter_di-1)%8)
+
+            #calculate do
+            if (row[4] == 0):
+                do = "-"
+            else:
+                do = "%QX" + str(100 + (counter_do/8)) + "." + str(counter_do%8) + " to "
+                counter_do += row[4];
+                do += "%QX" + str(100 + ((counter_do-1)/8)) + "." + str((counter_do-1)%8)
+
+            #calculate ai
+            if (row[5] + row[6] == 0):
+                ai = "-"
+            else:
+                ai = "%IW" + str(100 + counter_ai) + " to "
+                counter_ai += row[5]+row[6];
+                ai += "%IW" + str(100 + (counter_ai-1))
+
+            #calculate ao
+            if (row[7] == 0):
+                ao = "-"
+            else:
+                ao = "%QW" + str(100 + counter_ao) + " to "
+                counter_ao += row[7];
+                ao += "%QW" + str(100 + (counter_ao-1))
+
+
+            ctx.devices.append( [str(row[1]), str(row[2]), di, do, ai,ao ])
+            #return_str += "<td>" + str(row[1]) + "</td><td>" + str(row[2]) + "</td><td>" + di + "</td><td>" + do + "</td><td>" + ai + "</td><td>" + ao + "</td></tr>"
+
+
+        return render_template("modbus.html", c=ctx)
         
 
 @app.route('/add-modbus-device', methods=['GET', 'POST'])
@@ -1028,7 +950,7 @@ def add_modbus_device():
             
             return return_str
             
-        elif (flask.request.method == 'POST'):
+        elif flask.request.method == 'POST':
             devname = flask.request.form['device_name']
             devtype = flask.request.form['device_protocol']
             devid = flask.request.form['device_id']
