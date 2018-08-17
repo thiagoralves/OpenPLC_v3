@@ -30,35 +30,35 @@
 
 #include "ladder.h"
 
-#define MAX_DISCRETE_INPUT 		800
-#define MAX_COILS 				800
-#define MAX_HOLD_REGS 			8192
-#define MAX_INP_REGS			1024
+#define MAX_DISCRETE_INPUT              8192
+#define MAX_COILS                       8192
+#define MAX_HOLD_REGS                   8192
+#define MAX_INP_REGS                    1024
 
-#define MIN_16B_RANGE			1024
-#define MAX_16B_RANGE			2047
-#define MIN_32B_RANGE			2048
-#define MAX_32B_RANGE			4095
-#define MIN_64B_RANGE			4096
-#define MAX_64B_RANGE			8191
+#define MIN_16B_RANGE                   1024
+#define MAX_16B_RANGE                   2047
+#define MIN_32B_RANGE                   2048
+#define MAX_32B_RANGE                   4095
+#define MIN_64B_RANGE                   4096
+#define MAX_64B_RANGE                   8191
 
-#define MB_FC_NONE							0
-#define MB_FC_READ_COILS					1
-#define MB_FC_READ_INPUTS					2
-#define MB_FC_READ_HOLDING_REGISTERS		3
-#define MB_FC_READ_INPUT_REGISTERS			4
-#define MB_FC_WRITE_COIL					5
-#define MB_FC_WRITE_REGISTER				6
-#define MB_FC_WRITE_MULTIPLE_COILS			15
-#define MB_FC_WRITE_MULTIPLE_REGISTERS		16
-#define MB_FC_ERROR							255
+#define MB_FC_NONE                      0
+#define MB_FC_READ_COILS                1
+#define MB_FC_READ_INPUTS               2
+#define MB_FC_READ_HOLDING_REGISTERS    3
+#define MB_FC_READ_INPUT_REGISTERS      4
+#define MB_FC_WRITE_COIL                5
+#define MB_FC_WRITE_REGISTER            6
+#define MB_FC_WRITE_MULTIPLE_COILS      15
+#define MB_FC_WRITE_MULTIPLE_REGISTERS  16
+#define MB_FC_ERROR                     255
 
-#define ERR_NONE							0
-#define ERR_ILLEGAL_FUNCTION				1
-#define ERR_ILLEGAL_DATA_ADDRESS			2
-#define ERR_ILLEGAL_DATA_VALUE				3
-#define ERR_SLAVE_DEVICE_FAILURE			4
-#define ERR_SLAVE_DEVICE_BUSY				6
+#define ERR_NONE                        0
+#define ERR_ILLEGAL_FUNCTION            1
+#define ERR_ILLEGAL_DATA_ADDRESS        2
+#define ERR_ILLEGAL_DATA_VALUE          3
+#define ERR_SLAVE_DEVICE_FAILURE        4
+#define ERR_SLAVE_DEVICE_BUSY           6
 
 
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
