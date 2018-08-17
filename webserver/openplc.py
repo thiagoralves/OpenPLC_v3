@@ -66,31 +66,38 @@ class NonBlockingStreamReader:
 
 class UnexpectedEndOfStream(Exception): pass
 
-class runtime:
+class RStatus:
+    STOPPED = "Stopped"
+    RUNNING = "Running"
+    COMPILING = "Compiling"
+
+class Runtime:
+
     project_file = ""
     project_name = ""
     project_description = ""
-    runtime_status = "Stopped"
+    runtime_status = RStatus.STOPPED
+
     
     def start_runtime(self):
-        if (self.status() == "Stopped"):
+        if self.status() == RStatus.STOPPED:
             a = subprocess.Popen(['./core/openplc'])
-            self.runtime_status = "Running"
+            self.runtime_status = RStatus.RUNNING
     
     def stop_runtime(self):
-        if (self.status() == "Running"):
+        if self.status() == RStatus.RUNNING:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
                 s.send('quit()\n')
                 data = s.recv(1000)
                 s.close()
-                self.runtime_status = "Stopped"
+                self.runtime_status = RStatus.STOPPED
             except socket.error as serr:
                 print("Failed to stop the runtime. Error: " + str(serr))
     
     def compile_program(self, st_file):
-        if (self.status() == "Running"):
+        if self.status() == "Running":
             self.stop_runtime()
             
         self.is_compiling = True
@@ -110,27 +117,30 @@ class runtime:
         return compilation_status_str
     
     def status(self):
-        if ('compilation_object' in globals()):
-            if (compilation_object.end_of_stream == False):
-                return "Compiling"
+        if 'compilation_object' in globals():
+            if compilation_object.end_of_stream == False:
+                return RStatus.COMPILING
         
         #If it is running, make sure that it really is running
-        if (self.runtime_status == "Running"):
+        if self.runtime_status == RStatus.RUNNING:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
                 s.send('exec_time()\n')
                 data = s.recv(10000)
                 s.close()
-                self.runtime_status = "Running"
+                self.runtime_status = RStatus.RUNNING
             except socket.error as serr:
                 print("OpenPLC Runtime is not running. Error: " + str(serr))
-                self.runtime_status = "Stopped"
+                self.runtime_status = RStatus.STOPPED
         
         return self.runtime_status
+
+    def is_running(self):
+        return self.runtime_status == RStatus.RUNNING
     
     def start_modbus(self, port_num):
-        if (self.status() == "Running"):
+        if self.status() == RStatus.RUNNING:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
@@ -141,7 +151,7 @@ class runtime:
                 print("Error connecting to OpenPLC runtime")
                 
     def stop_modbus(self):
-        if (self.status() == "Running"):
+        if self.status() == RStatus.RUNNING:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
@@ -152,7 +162,7 @@ class runtime:
                 print("Error connecting to OpenPLC runtime")
 
     def start_dnp3(self, port_num):
-        if (self.status() == "Running"):
+        if self.status() == RStatus.RUNNING:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
@@ -163,7 +173,7 @@ class runtime:
                 print("Error connecting to OpenPLC runtime")
         
     def stop_dnp3(self):
-        if (self.status() == "Running"):
+        if self.status() == RStatus.RUNNING:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
@@ -174,7 +184,7 @@ class runtime:
                 print("Error connecting to OpenPLC runtime")
     
     def logs(self):
-        if (self.status() == "Running"):
+        if self.status() == RStatus.RUNNING:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
@@ -190,7 +200,7 @@ class runtime:
             return "OpenPLC Runtime is not running"
         
     def exec_time(self):
-        if (self.status() == "Running"):
+        if self.status() == RStatus.RUNNING:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))

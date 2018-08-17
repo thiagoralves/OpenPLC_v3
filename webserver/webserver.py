@@ -17,15 +17,17 @@ import flask_login
 from flask_login import current_user, login_required
 
 
-openplc_runtime = openplc.runtime()
 
-#= wsgi app
+
+#= wsgi app -----------------
 app = flask.Flask(__name__)
+
 # This causes cookies to loose between restarts in dev
 app.secret_key = "43259ternrjetktrp" #str(os.urandom(16))
+
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-#= Login
+#= Login -----------------
 login_manager = flask_login.LoginManager()
 login_manager.login_view = "/login"
 login_manager.init_app(app)
@@ -34,6 +36,8 @@ class User(flask_login.UserMixin):
     pass
 
 
+#= Runtime -----------------
+openplc_runtime = openplc.Runtime()
 
 def configure_runtime():
     global openplc_runtime
@@ -437,6 +441,36 @@ def before_request():
     app.permanent_session_lifetime = datetime.timedelta(minutes=59)
     flask.session.modified = True
 """
+
+
+#= -------- Template Stuff ---------
+Nav = [
+    {"label": "Dashboard", "page": "dashboard", "icon": "home-icon-64x64.png"},
+    {"label": "Programs", "page": "programs", "icon": "programs-icon-64x64.png"},
+    {"label": "Modbus", "page": "modbus", "icon": "modbus-icon-512x512.png"},
+    {"label": "Monitoring", "page": "monitoring", "icon": "monitoring-icon-64x64.png"},
+    {"label": "Hardware", "page": "hardware", "icon": "hardware-icon-980x974.png"},
+    {"label": "Users", "page": "users", "icon": "users-icon-64x64.png"},
+    {"label": "Settings", "page": "settings", "icon": "settings-icon-64x64.png"},
+    {"label": "Logout", "page": "logout", "icon": "logout-icon-64x64.png"},
+]
+@app.context_processor
+def inject_template_vars():
+    return dict(nav=Nav, runtime=openplc_runtime)
+
+class TemplateContext(object):
+    pass
+
+def make_context(page, **kwargs):
+    c = TemplateContext()
+    c.error = None
+    c.page = page
+    #{"error": None, "page": page}
+    #c.update(kwargs)
+    return c
+
+
+
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -545,75 +579,13 @@ def runtime_logs():
         return openplc_runtime.logs()
 
 
-Nav = [
-    {"label": "Dashboard", "page": "dashboard", "icon": "home-icon-64x64.png"},
-    {"label": "Programs", "page": "programs", "icon": "programs-icon-64x64.png"},
-    {"label": "Modbus", "page": "modbus", "icon": "modbus-icon-512x512.png"},
-    {"label": "Monitoring", "page": "monitoring", "icon": "monitoring-icon-64x64.png"},
-    {"label": "Hardware", "page": "hardware", "icon": "hardware-icon-980x974.png"},
-    {"label": "Users", "page": "users", "icon": "users-icon-64x64.png"},
-    {"label": "Settings", "page": "settings", "icon": "settings-icon-64x64.png"},
-    {"label": "Logout", "page": "logout", "icon": "logout-icon-64x64.png"},
-]
-@app.context_processor
-def inject_user():
-    return dict(nav=Nav)
 
-class TemplateContext(object):
-    pass
-
-def make_context(page, **kwargs):
-    c = TemplateContext()
-    c.error = None
-    c.page = page
-    #{"error": None, "page": page}
-    #c.update(kwargs)
-    return c
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    global openplc_runtime
-    #if not current_user.is_authenticated:
-    #    print "not logged in , dashboard"
-    #    return redirect(url_for('login'))
-    print "LOGGEED IN"
-    if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-    return_str = pages.w3_style + pages.dashboard_head + draw_top_div()
-    return_str += """
-        <div class='main'>
-            <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-                <br>
-                <br>
-                <a href='dashboard' class='w3-bar-item w3-button' style='background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px'><img src='/static/home-icon-64x64.png' alt='Dashboard' style='width:47px;height:39px;padding:7px 15px 0px 0px;float:left'><img src='/static/arrow.png' style='width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Dashboard</p></a>
-                <a href='programs' class='w3-bar-item w3-button'><img src='/static/programs-icon-64x64.png' alt='Programs' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
-                <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
-                <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-                <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-                <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
-                <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-                <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-                <br>
-                <br>"""
-    return_str += draw_status()
-    return_str += """
-    </div>
-            <div style='margin-left:320px'>
-                <div style='w3-container'>
-                    <br>
-                    <h2>Dashboard</h2>
-                    <p style='font-family:'Roboto', sans-serif; font-size:16px'><b>Status: """
-    if (openplc_runtime.status() == "Running"):
-        return_str += "<font color = '#02CC07'>Running</font></b></p>"
-    else:
-        return_str += "<font color = 'Red'>Stopped</font></b></p>"
-
-    return_str += "<p style='font-family:'Roboto', sans-serif; font-size:16px'><b>Program:</b> " + openplc_runtime.project_name + "</p>"
-    return_str += "<p style='font-family:'Roboto', sans-serif; font-size:16px'><b>Description:</b> " + openplc_runtime.project_description + "</p>"
-    return_str += "<p style='font-family:'Roboto', sans-serif; font-size:16px'><b>File:</b> " + openplc_runtime.project_file + "</p>"
-    return_str += "<p style='font-family:'Roboto', sans-serif; font-size:16px'><b>Runtime:</b> " + openplc_runtime.exec_time() + "</p>"
-
-    return_str += pages.dashboard_tail
+    #global openplc_runtime
+    #if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
     ctx = make_context(page="dashboard")
 
@@ -669,55 +641,12 @@ def programs():
 
     sql = 'SELECT Prog_ID, Name, File, Date_upload FROM Programs ORDER BY Date_upload DESC '
     if not list_all:
-        sql += " linit 20"
+        sql += " limit 20"
 
-    """ 
-    if (list_all == True):
-        cur.execute("SELECT Prog_ID, Name, File, Date_upload FROM Programs ORDER BY Date_upload DESC")
-    else:
-        cur.execute("SELECT Prog_ID, Name, File, Date_upload FROM Programs ORDER BY Date_upload DESC LIMIT 10")
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-    """
+
     ctx.programs, ctx.error = db_query(sql)
 
-    """
-        # TODO
-
-
-            for row in rows:
-                return_str += "<tr onclick=\"document.location='reload-program?table_id=" + str(row[0]) + "'\">"
-                return_str += "<td>" + str(row[1]) + "</td><td>" + str(row[2]) + "</td><td>" + time.strftime('%b %d, %Y - %I:%M%p', time.localtime(row[3])) + "</td></tr>"
-    """
-    return_str += """
-                            </table>
-                            <a href="programs?list_all=1" style="text-align:right; float:right; color:black; font-weight:bold;">List all programs</a>
-                            <br>
-                            <br>
-                            <h2>Upload Program</h2>
-                            <form   id    = "uploadForm"
-                                enctype   =  "multipart/form-data"
-                                action    =  "upload-program"
-                                method    =  "post">
-                                <br>
-                                <input type="file" name="file" id="file" class="inputfile" accept=".st">
-                                <input type="submit" value="Upload Program" name="submit">
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </body>
-        </html>
-    """
     return render_template("programs.html", c=ctx)
-            #except Error as e:
-            #    print("error connecting to the database" + str(e))
-            #    return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        #else:
-        # #   return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-        #
-        #return return_str
 
 
 @app.route('/reload-program', methods=['GET', 'POST'])

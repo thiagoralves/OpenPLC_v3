@@ -1,9 +1,36 @@
 
 {% extends "BASE.html" %}
 
+{% set title = "Programs" %}
+
+
+
 {% block content %}
 
-Dash
+<p>Here you can upload a new program to OpenPLC or revert back to a previous uploaded program shown on the table.</p>
 
+<table>
+    <thead>
+        <tr style='background-color: white'>
+            <th>Program Name</th><th>File</th><th>Date Uploaded</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in c.programs %}
+          <tr onclick="document.location='reload-program?table_id={{row[0]}}'">
+                <td>{{row[1]}}</td>
+                <td>{{row[2]}}</td>
+                <td>{{row[3]}}"</td>
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="programs?list_all=1" style="text-align:right; float:right; color:black; font-weight:bold;">List all programs</a>
 
+{# TODO error check before submiting for file #}
+ <h2>Upload Program</h2>
+<form   id="uploadForm" action="/upload-program" method="post">
+    <input type="file" name="file" id="file" class="inputfile" accept=".st">
+    <input type="submit" value="Upload Program" name="submit">
+</form>
 {% endblock content %}

@@ -324,3 +324,13 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+.Stopped {
+    color: red;
+}
+.Running {
+    color: green;
+}
+.Compiling {
+    color: blue;
+}
