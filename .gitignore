@@ -1,0 +1,7 @@
+*.pyc
+
+
+# editors
+
+.idea/
+
