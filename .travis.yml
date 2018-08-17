@@ -10,6 +10,6 @@ branches:
 
 
 script:
-  - sh ./install.sh linux
+  - ./install.sh linux
 
 
