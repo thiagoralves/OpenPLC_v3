@@ -18,15 +18,17 @@
     <tbody>
         {% for row in c.programs %}
           <tr ddonclick="document.location='reload-program?table_id={{row[0]}}'">
-                <td>{{row[1]}}</td>
-                <td>{{row[2]}}</td>
-                <td>{{row[3]}}"</td>
-                <td width="10"><a class="btn btn-success" href="/program/reload">Reload</a></td>
+                <td>{{row.name}}</td>
+                <td>{{row.file}}</td>
+                <td>{{row.date_upload}}</td>
+                <td width="10"><a class="btn btn-success" href="/program/{{row.prog_id}}/reload">Reload</a></td>
           </tr>
         {% endfor %}
     </tbody>
 </table>
 <a href="/programs?list_all=1" ssstyle="text-align:right; float:right; color:black; font-weight:bold;">List all programs</a>
+
+
 
 {# TODO error check before submiting for file #}
  <h2>Upload Program</h2>

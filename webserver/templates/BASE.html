@@ -28,11 +28,11 @@
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="topbar">
-        <ul class="navbar-nav mr-auto">
 
-            <li class="nav-item">
-                <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
-            </li>
+
+        <ul class="navbar-nav ml-auto">
+
+
 
              <li class="nav-item dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true">Project</a>
@@ -42,7 +42,13 @@
                     <a href="https://github.com/thiagoralves/OpenPLC_v3" target="github" class="dropdown-item">GitHub project</a>
                 </div>
              </li>
+
+              <li class="nav-item">
+                 <a class="nav-link" href="/"><i class="fa fa-user"></i> {{current_user.username}}</a>
+            </li>
+
         </ul>
+
      </div>
 </nav>
 

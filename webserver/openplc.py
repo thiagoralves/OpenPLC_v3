@@ -100,7 +100,7 @@ class Runtime:
         if self.status() == "Running":
             self.stop_runtime()
             
-        #self.is_compiling = True
+        #self.is_compiling = True ?? is this used asked @pedro, clashed with function
         global compilation_status_str
         global compilation_object
         compilation_status_str = ""
@@ -121,7 +121,7 @@ class Runtime:
             if compilation_object.end_of_stream == False:
                 return RStatus.COMPILING
         
-        #If it is running, make sure that it really is running
+        # If it is running, make sure that it really is running
         if self.runtime_status == RStatus.RUNNING:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -140,7 +140,7 @@ class Runtime:
         return self.runtime_status == RStatus.RUNNING
 
     def is_compiling(self):
-        return True
+        #return True
         return self.runtime_status == RStatus.COMPILING
     
     def start_modbus(self, port_num):

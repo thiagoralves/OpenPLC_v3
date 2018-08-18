@@ -26,16 +26,34 @@ app.secret_key = "43259ternrjetktrp" #str(os.urandom(16))
 
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-#=== Login
+#------------------------------------------------
+#  Login + Security
+
 login_manager = flask_login.LoginManager()
-login_manager.login_view = "/login"
+login_manager.login_view = "/login" # FIXME
 login_manager.init_app(app)
 
 class User(flask_login.UserMixin):
     pass
 
+@login_manager.user_loader
+def user_loader(username):
+    sql = "SELECT user_id, username, password, name, pict_file FROM Users "
+    sql += ' where username=? '
+    row, err = db_query(sql, (username,), single=True)
+    if err:
+        print(err)
+        return None
 
-#=== Runtime
+    user = User()
+    user.id = row["user_id"]
+    user.username = row["username"]
+    user.name = row["name"]
+    user.pict_file = str(row["pict_file"])
+    return user
+
+#------------------------------------------------
+#  Runtime
 openplc_runtime = openplc.Runtime()
 
 def configure_runtime():
@@ -128,70 +146,8 @@ def generate_mbconfig():
         f.write(mbconfig)
             
 
-                
-
-    
-def draw_top_div():
-    global openplc_runtime
-    top_div = ("<div class='top'>"
-    "<img src='/static/openplc_logo.gif' alt='OpenPLC' style='width:111px;height:45px;padding:5px 0px 0px 10px;float:left'>")
-    
-    if (openplc_runtime.status() == "Running"):
-        top_div += "<h3 style='font-family:\"Roboto\", sans-serif; font-size:18px; color:white; padding:13px 111px 0px 0px; margin: 0px 0px 0px 0px'><center><span style='color: #02EE07'>Running: </span>" + openplc_runtime.project_name + "</center></h3>"
-    elif (openplc_runtime.status() == "Compiling"):
-        top_div += "<h3 style='font-family:\"Roboto\", sans-serif; font-size:18px; color:white; padding:13px 111px 0px 0px; margin: 0px 0px 0px 0px'><center><span style='color: Yellow'>Compiling: </span>" + openplc_runtime.project_name + "</center></h3>"
-    else:
-        top_div += "<h3 style='font-family:\"Roboto\", sans-serif; font-size:18px; color:white; padding:13px 111px 0px 0px; margin: 0px 0px 0px 0px'><center><span style='color: Red'>Stopped: </span>" + openplc_runtime.project_name + "</center></h3>"
-    
-    top_div += "<div class='user'><img src='"
-    top_div += "/static/default-user.png"
-    """
-    if (flask_login.current_user.pict_file == "None"):
-        top_div += "/static/default-user.png"
-    else:
-        top_div += flask_login.current_user.pict_file
-    """
-    top_div += "' alt='User' style='width:50px;height:45px;padding:5px 5px 0px 5px;float:right'>"
-    #top_div += "<h3 style='font-family:\"Roboto\", sans-serif; font-size:18px; color:white; padding:13px 0px 0px 0px; margin: 0px 0px 0px 0px'>" + current_user.name + "</h3>"
-    top_div += "</div></div>"
-    
-    return top_div    
 
 
-def draw_status():
-    global openplc_runtime
-    status_str = ""
-    if (openplc_runtime.status() == "Running"):
-        status_str = "<center><h3 style='font-family:\"Roboto\", sans-serif; font-size:18px; color:white; padding:0px 0px 0px 0px;'>Status: <i>Running</i></span></center></h3>"
-        status_str += "<a href='stop_plc' class='button' style='width: 210px; height: 53px; margin: 0px 20px 0px 20px;'><b>Stop PLC</b></a>"
-    else:
-        status_str = "<center><h3 style='font-family:\"Roboto\", sans-serif; font-size:18px; color:white; padding:0px 0px 0px 0px;'>Status: <i>Stopped</i></span></center></h3>"
-        status_str += "<a href='start_plc' class='button' style='width: 210px; height: 53px; margin: 0px 20px 0px 20px;'><b>Start PLC</b></a>"
-    
-    return status_str    
-
-
-def draw_blank_page():
-    return_str = pages.w3_style + pages.dashboard_head + draw_top_div() + """
-            <div class='main'>
-                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-                    <br>
-                    <br>
-                    <div class="w3-bar-item"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></div>
-                    <div class="w3-bar-item"><img src='/static/programs-icon-64x64.png' alt='Programs' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></div>
-                    <div class="w3-bar-item"><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></div>
-                    <div class="w3-bar-item"><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></div>
-                    <div class="w3-bar-item"><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></div>
-                    <div class="w3-bar-item"><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></div>
-                    <div class="w3-bar-item"><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></div>
-                    <div class="w3-bar-item"><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></div>
-                    <br>
-                    <br>
-                </div>
-                <div style="margin-left:320px; margin-right:70px">
-                <div style="w3-container">
-                    <br>"""
-    return return_str
     
 def draw_compiling_page():
     return_str = draw_blank_page()
@@ -320,25 +276,35 @@ loading logs...
 
 DB_FILE = "openplc.db"
 
-def db_query(sql, args=(), single=False):
+def db_query(sql, args=(), single=False, as_list=False):
 
     conn = db_connection()
     if not conn:
         return None, "Cannot connect db"
     try:
         cur = conn.cursor()
-        #cur.execute("SELECT username, password, name, pict_file FROM Users")
+
         cur.execute(sql, args)
         rows = cur.fetchall()
         cur.close()
         conn.close()
+
+        ## This is a workaround until schema changes maybe, converts to dict
+        col_names = [c[0].lower() for c in cur.description]
+        row_dict = []
+        for ridx, row in enumerate(rows):
+            d = {}
+            for cidx, cn in enumerate(col_names):
+                d[cn] = row[cidx]
+            row_dict.append(d)
+
         if not single:
-            return rows, None
+            return rows if as_list else row_dict, None
         if len(rows) == 0:
             return None
         if len(rows) > 1:
             return None, "More than one row"
-        return rows[0], None
+        return rows[0] if as_list else row_dict[0], None
         """
         for row in rows:
             if (row[0] == username):
@@ -353,51 +319,9 @@ def db_query(sql, args=(), single=False):
         print("error connecting to the database" + str(e))
         return None, str(e)
     
-@login_manager.user_loader
-def user_loader(username):
-    print "#########user_loader", username
-    #(int(user_id),)
-    sql = "SELECT username, password, name, pict_file FROM Users "
-    sql += ' where username=? '
-    rows, err = db_query(sql, (username,) )
-    print "========", rows, err
-    if err:
-        print(err)
-        return None
-    row = rows[0]
-    user = User()
-    user.id = row[0]
-    user.name = row[2]
-    user.pict_file = str(row[3])
-    return user
 
-    """
-    database = "openplc.db"
-    conn = create_connection(database)
-    if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT username, password, name, pict_file FROM Users")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
 
-            for row in rows:
-                if (row[0] == username):
-                    user = User()
-                    user.id = row[0]
-                    user.name = row[2]
-                    user.pict_file = str(row[3])
-                    return user
-            return
-    """
-    """
-        except Error as e:
-            print("error connecting to the database" + str(e))
-            return
-    else:
-        return
-    """
+
 """
 @login_manager.request_loader
 def request_loader(request):
@@ -578,9 +502,9 @@ def programs():
     return render_template("programs.html", c=ctx)
 
 
-@app.route('/program/reload', methods=['GET', 'POST'])
+@app.route('/program/<int:prog_id>/reload', methods=['GET', 'POST'])
 @login_required
-def program_reload():
+def program_reload(prog_id):
 
     if openplc_runtime.is_compiling():
         return draw_compiling_page()
@@ -776,11 +700,8 @@ def upload_program_action():
         
 
 @app.route('/compile-program', methods=['GET', 'POST'])
+@login_required
 def compile_program():
-    global openplc_runtime
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         st_file = flask.request.args.get('file')
         
@@ -1125,7 +1046,7 @@ def modbus_edit_device():
 
 @app.route('/modbus/{dev_id}/delete', methods=['GET', 'POST'])
 @login_required
-def h_delete_device(dev_id):
+def device_delete(dev_id):
 
     if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
     #devid_db = flask.request.args.get('dev_id')
@@ -1232,70 +1153,17 @@ def restore_custom_hardware():
         
 
 @app.route('/users')
+@login_required
 def users():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
+
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        return_str = pages.w3_style + pages.style + draw_top_div()
-        return_str += """
-            <div class='main'>
-                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-                    <br>
-                    <br>
-                    <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-                    <a href='programs' class='w3-bar-item w3-button'><img src='/static/programs-icon-64x64.png' alt='Programs' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
-                    <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
-                    <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-                    <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-                    <a href="users" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/users-icon-64x64.png" alt="Users" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Users</p></a>
-                    <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-                    <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-                    <br>
-                    <br>"""
-        return_str += draw_status()
-        return_str += """
-            </div>
-            <div style="margin-left:320px; margin-right:70px">
-                <div style="w3-container">
-                    <br>
-                    <h2>Users</h2>
-                    <br>
-                    <table>
-                        <tr style='background-color: white'>
-                            <th>Full Name</th><th>Username</th><th>Email</th>
-                        </tr>"""
-        
-        database = "openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("SELECT user_id, name, username, email FROM Users")
-                rows = cur.fetchall()
-                cur.close()
-                conn.close()
-                
-                for row in rows:
-                    return_str += "<tr onclick=\"document.location='edit-user?table_id=" + str(row[0]) + "'\">"
-                    return_str += "<td>" + str(row[1]) + "</td><td>" + str(row[2]) + "</td><td>" + str(row[3]) + "</td></tr>"
-                
-                return_str += """
-                </table>
-                    <br>
-                    <center><a href="add-user" class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Add new user</b></a></center>
-                </div>
-            </div>
-        </div>
-    </body>
-</html>"""
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        else:
-            return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-        
-        return return_str
+
+        ctx = make_context("users")
+
+        sql = "SELECT user_id, name, username, email FROM Users order by username asc"
+        ctx.users, ctx.error = db_query(sql)
+
+        return render_template("users.html", c=ctx)
 
 
 @app.route('/add-user', methods=['GET', 'POST'])
@@ -1361,134 +1229,34 @@ def add_user():
                 return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
 
 
-@app.route('/edit-user', methods=['GET', 'POST'])
-def edit_user():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        if (flask.request.method == 'GET'):
-            user_id = flask.request.args.get('table_id')
-            return_str = pages.w3_style + pages.style + draw_top_div()
-            return_str += """
-                <div class='main'>
-                    <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-                        <br>
-                        <br>
-                        <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-                        <a href='programs' class='w3-bar-item w3-button'><img src='/static/programs-icon-64x64.png' alt='Programs' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
-                        <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
-                        <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-                        <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-                        <a href="users" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/users-icon-64x64.png" alt="Users" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Users</p></a>
-                        <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-                        <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-                        <br>
-                        <br>"""
-            return_str += draw_status()
-            return_str += """
-                </div>
-                <div style="margin-left:320px; margin-right:70px">
-                    <div style="w3-container">
-                        <br>
-                        <h2>Edit User</h2>
-                        <br>
-                        <form   id    = "uploadForm"
-                            enctype   =  "multipart/form-data"
-                            action    =  "edit-user"
-                            method    =  "post"
-                            onsubmit  =  "return validateForm()">"""
-                        
-            database = "openplc.db"
-            conn = create_connection(database)
-            if (conn != None):
-                try:
-                    cur = conn.cursor()
-                    cur.execute("SELECT * FROM Users WHERE user_id = ?", (int(user_id),))
-                    row = cur.fetchone()
-                    cur.close()
-                    conn.close()
-                    return_str += "<input type='hidden' value='" + user_id + "' id='user_id' name='user_id'/>" 
-                    return_str += "<label for='full_name'><b>Name</b></label><input type='text' id='full_name' name='full_name' value='" + str(row[1]) + "'>"
-                    return_str += "<label for='user_name'><b>Username</b></label><input type='text' id='user_name' name='user_name' value='" + str(row[2]) + "'>"
-                    return_str += "<label for='user_email'><b>Email</b></label><input type='text' id='user_email' name='user_email' value='" + str(row[3]) + "'>"
-                    return_str += """
-                            <label for='user_password'><b>Password</b></label>
-                            <input type='password' id='user_password' name='user_password' value='mypasswordishere'>
-                            <label for='uploadForm'><b>Picture</b></label>
-                            <br>
-                            <br>
-                            <input type="file" name="file" id="file" class="inputfile" accept="image/*">
-                            <br>
-                            <br>
-                            <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value='Save changes'><a href='delete-user?user_id="""
-                    return_str += user_id
-                    return_str += """' class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Delete user</b></a></center>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </body>
-    <script>
-        function validateForm()
-        {
-            var username = document.forms["uploadForm"]["user_name"].value;
-            var password = document.forms["uploadForm"]["user_password"].value;
-            if (username == "" || password == "")
-            {
-                alert("Username and Password cannot be blank");
-                return false;
-            }
-            return true;
-        }
-    </script>
-</html>"""
-                except Error as e:
-                    print("error connecting to the database" + str(e))
-                    return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-            else:
-                return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-            
-            return return_str
-            
-        elif (flask.request.method == 'POST'):
-            user_id = flask.request.form['user_id']
-            name = flask.request.form['full_name']
-            username = flask.request.form['user_name']
-            email = flask.request.form['user_email']
-            password = flask.request.form['user_password']
-            form_has_picture = True
-            if ('file' not in flask.request.files):
-                form_has_picture = False
-            
-            database = "openplc.db"
-            conn = create_connection(database)
-            if (conn != None):
-                try:
-                    cur = conn.cursor()
-                    if (password != "mypasswordishere"):
-                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ?, password = ? WHERE user_id = ?", (name, username, email, password, int(user_id)))
-                    else:
-                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ? WHERE user_id = ?", (name, username, email, int(user_id)))
-                    conn.commit()
-                    if (form_has_picture):
-                        pict_file = flask.request.files['file']
-                        if (pict_file.filename != ''):
-                            file_extension = pict_file.filename.split('.')
-                            filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
-                            pict_file.save(os.path.join('static', filename))
-                            cur.execute("UPDATE Users SET pict_file = ? WHERE user_id = ?", ("/static/"+filename, int(user_id)))
-                            conn.commit()
-                    cur.close()
-                    conn.close()
-                    return flask.redirect(flask.url_for('users'))
-                    
-                except Error as e:
-                    print("error connecting to the database" + str(e))
-                    return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-            else:
-                return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+@app.route('/user/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+def user_edit(user_id):
 
+
+    if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+
+    ctx = make_context("users")
+
+
+
+    if request.method == 'POST':
+
+
+        user_id = flask.request.form['user_id']
+        name = flask.request.form['full_name']
+        username = flask.request.form['user_name']
+        email = flask.request.form['user_email']
+        password = flask.request.form['user_password']
+
+        return redirect(url_for('users'))
+
+
+
+    sql = "SELECT * FROM Users WHERE user_id = ?"
+    ctx.user, ctx.error = db_query(sql, (str(user_id)), single=True)
+
+    return render_template("user_edit.html", c=ctx)
 
 @app.route('/delete-user', methods=['GET', 'POST'])
 def delete_user():

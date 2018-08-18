@@ -1,0 +1,32 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "User" %}
+
+
+
+{% block content %}
+
+<form action="/user/add" method="post">
+    <div class="form-group">
+        <label for='user_name'><b>Login ID</b></label>
+        <input type='text' id='user_name' name='user_name' placeholder='username'>
+    </div>
+
+    <div class="form-group">
+        <label for='full_name'><b>Name</b></label>
+        <input type='text' id='full_name' name='full_name' placeholder='eg Jane Smith'>
+    </div>
+    <div class="form-group">
+        <label for='user_email'><b>Email</b></label>
+        <input type='text' id='user_email' name='user_email' placeholder='your@email.com'>
+    </div>
+    <div class="form-group">
+        <label for='user_password'><b>Password</b></label>
+        <input type='password' id='user_password' name='user_password' placeholder='password'>
+    </div>
+
+    <input type="submit" class="button" value='Save user' class="btn btn-success">
+</form>
+
+{% endblock content %}

@@ -1,0 +1,27 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "Users" %}
+
+{% block content %}
+
+<table class="table table-bordered table-hover">
+    <thead class="thead-light">
+        <tr style='background-color: white'>
+            <th>Login</th><th>Full Name</th><th>Email</th><th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in c.users %}
+          <tr>
+                <td>{{row.username}}</td>
+                <td>{{row.name}}</td>
+                <td>{{row.email}}</td>
+                <td width="10"><a class="btn btn-success" href="/user/{{row.user_id}}/edit">Edit</a></td>
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock content %}
+
