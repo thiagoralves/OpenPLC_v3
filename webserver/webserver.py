@@ -73,66 +73,58 @@ def configure_runtime():
 
 
 def generate_mbconfig():
-    conn = db_connection()
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT COUNT(*) FROM Slave_dev")
-            row = cur.fetchone()
-            num_devices = int(row[0])
-            mbconfig = 'Num_Devices = "' + str(num_devices) + '"'
-            
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM Slave_dev")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-            
-            device_counter = 0
-            for row in rows:
-                mbconfig += """
+
+    rows, err = db_query("SELECT * FROM Slave_dev")
+    if err:
+        print "errr=", err
+        #TODO
+        return err
+
+    #mbconfig = 'Num_Devices = "' + str(num_devices) + '"'
+    mbconfig = 'Num_Devices = "%s"' % len(rows)
+
+    for device_counter, row in enumerate(rows):
+        mbconfig += """
 # ------------
 #   DEVICE """
-                mbconfig += str(device_counter)
-                mbconfig += """
+        mbconfig += str(device_counter)
+        mbconfig += """
 # ------------
 """
-                mbconfig += 'device' + str(device_counter) + '.name = "' + str(row[1]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.slave_id = "' + str(row[3]) + '"\n'
-                if (str(row[2]) == 'ESP32' or str(row[2]) == 'ESP8266' or str(row[2]) == 'TCP'):
-                    mbconfig += 'device' + str(device_counter) + '.protocol = "TCP"\n'
-                    mbconfig += 'device' + str(device_counter) + '.address = "' + str(row[9]) + '"\n'
-                else:
-                    mbconfig += 'device' + str(device_counter) + '.protocol = "RTU"\n'
-                    if (str(row[4]).startswith("COM")):
-                        port_name = "/dev/ttyS" + str(int(str(row[4]).split("COM")[1]) - 1)
-                    else:
-                        port_name = str(row[4])
-                    mbconfig += 'device' + str(device_counter) + '.address = "' + port_name + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.IP_Port = "' + str(row[10]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Parity = "' + str(row[6]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
-                
-                mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Coils_Start = "' + str(row[13]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Coils_Size = "' + str(row[14]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Input_Registers_Start = "' + str(row[15]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Input_Registers_Size = "' + str(row[16]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Start = "' + str(row[17]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Size = "' + str(row[18]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
-                device_counter += 1
-                
-            with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
+        mbconfig += 'device' + str(device_counter) + '.name = "' + str(row[1]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.slave_id = "' + str(row[3]) + '"\n'
+        if (str(row[2]) == 'ESP32' or str(row[2]) == 'ESP8266' or str(row[2]) == 'TCP'):
+            mbconfig += 'device' + str(device_counter) + '.protocol = "TCP"\n'
+            mbconfig += 'device' + str(device_counter) + '.address = "' + str(row[9]) + '"\n'
+        else:
+            mbconfig += 'device' + str(device_counter) + '.protocol = "RTU"\n'
+            if (str(row[4]).startswith("COM")):
+                port_name = "/dev/ttyS" + str(int(str(row[4]).split("COM")[1]) - 1)
+            else:
+                port_name = str(row[4])
+            mbconfig += 'device' + str(device_counter) + '.address = "' + port_name + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.IP_Port = "' + str(row[10]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.RTU_Parity = "' + str(row[6]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
+
+        mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.Coils_Start = "' + str(row[13]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.Coils_Size = "' + str(row[14]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.Input_Registers_Start = "' + str(row[15]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.Input_Registers_Size = "' + str(row[16]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Start = "' + str(row[17]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Size = "' + str(row[18]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
+        mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
+        device_counter += 1
+
+    with open('./mbconfig.cfg', 'w+') as f:
+        f.write(mbconfig)
             
-        except Error as e:
-            print("error connecting to the database" + str(e))
-    else:
-        print("Error opening DB")
+
                 
 
     
@@ -909,7 +901,7 @@ def modbus_add_device():
         aow_size = flask.request.form.get('aow_size')
 
 
-        conn = create_connection(database)
+        conn = db_connection()
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -922,7 +914,7 @@ def modbus_add_device():
                 conn.close()
 
                 generate_mbconfig()
-                return flask.redirect(flask.url_for('modbus'))
+                return redirect(url_for('modbus'))
 
             except Error as e:
                 print("error connecting to the database" + str(e))
