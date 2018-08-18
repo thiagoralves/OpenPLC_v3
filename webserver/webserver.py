@@ -41,35 +41,30 @@ openplc_runtime = openplc.Runtime()
 def configure_runtime():
     global openplc_runtime
 
-    conn = db_connection()
-    if (conn != None):
-        try:
-            print("Openning database")
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM Settings")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
+    rows, err = db_query("SELECT * FROM Settings")
+    if err:
+        print(err)
+        # TODO error handling
+        return
 
-            for row in rows:
-                if (row[0] == "Modbus_port"):
-                    if (row[1] != "disabled"):
-                        print("Enabling Modbus on port " + str(int(row[1])))
-                        openplc_runtime.start_modbus(int(row[1]))
-                    else:
-                        print("Disabling Modbus")
-                        openplc_runtime.stop_modbus()
-                elif (row[0] == "Dnp3_port"):
-                    if (row[1] != "disabled"):
-                        print("Enabling DNP3 on port " + str(int(row[1])))
-                        openplc_runtime.start_dnp3(int(row[1]))
-                    else:
-                        print("Disabling DNP3")
-                        openplc_runtime.stop_dnp3()
-        except Error as e:
-            print("error connecting to the database" + str(e))
-    else:
-        print("Error opening DB")
+    for row in rows:
+
+        if row[0] == "Modbus_port":
+            if row[1] != "disabled":
+                print("Enabling Modbus on port " + str(int(row[1])))
+                openplc_runtime.start_modbus(int(row[1]))
+            else:
+                print("Disabling Modbus")
+                openplc_runtime.stop_modbus()
+
+        elif row[0] == "Dnp3_port":
+            if row[1] != "disabled":
+                print("Enabling DNP3 on port " + str(int(row[1])))
+                openplc_runtime.start_dnp3(int(row[1]))
+            else:
+                print("Disabling DNP3")
+                openplc_runtime.stop_dnp3()
+
 
 DEVICE_PROTOCOLS = [
     {'protocol': 'Uno', 'label': 'Arduino Uno'},
@@ -444,6 +439,8 @@ def before_request():
 
 
 #= -------- Template Stuff ---------
+
+# site navigation; Note selected is passed a {{c.page}}
 Nav = [
     {"label": "Dashboard", "page": "dashboard", "icon": "home-icon-64x64.png"},
     {"label": "Programs", "page": "programs", "icon": "programs-icon-64x64.png"},
@@ -456,6 +453,7 @@ Nav = [
 ]
 @app.context_processor
 def inject_template_vars():
+    # Puts the runtime and navigation into template vars
     return dict(nav=Nav, runtime=openplc_runtime)
 
 class TemplateContext(object):
@@ -470,19 +468,17 @@ def make_context(page, **kwargs):
     return c
 
 
-
+#= -------- Handlers ---------
 @app.route('/')
-def h_index():
+def index():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-    return redirect(flask.url_for('login'))
-
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
-def h_login():
+def login():
 
     if current_user.is_authenticated:
-        print "@@@ LOGIN = authenticated"
         return redirect(url_for('dashboard'))
 
     ctx = dict(error=None)
@@ -494,7 +490,6 @@ def h_login():
         sql = "SELECT username, password, name, pict_file FROM Users"
         sql += " where username=? and password=? "
         row, err = db_query(sql, (username, password), True)
-        print "#######LOGIN=", row, err
         if err:
             ctx.error = err
 
@@ -507,7 +502,6 @@ def h_login():
             user.name = row[2]
             user.pict_file = str(row[3])
             flask_login.login_user(user, remember=True, fresh=True)
-            print "login ok"
             return flask.redirect(flask.url_for('dashboard'))
 
     return render_template("login.html", c=ctx)
@@ -515,26 +509,22 @@ def h_login():
 
 
 @app.route('/start_plc')
+@login_required
 def start_plc():
     global openplc_runtime
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        openplc_runtime.start_runtime()
-        time.sleep(1)
-        configure_runtime()
-        return flask.redirect(flask.url_for('dashboard'))
+    openplc_runtime.start_runtime()
+    time.sleep(1)
+    configure_runtime()
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/stop_plc')
+@login_required
 def stop_plc():
     global openplc_runtime
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        openplc_runtime.stop_runtime()
-        time.sleep(1)
-        return flask.redirect(flask.url_for('dashboard'))
+    openplc_runtime.stop_runtime()
+    time.sleep(1)
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/runtime_logs')
@@ -1143,7 +1133,7 @@ def h_delete_device(dev_id):
             
 @app.route('/monitoring', methods=['GET', 'POST'])
 @login_required
-def h_monitoring():
+def monitoring():
 
     if openplc_runtime.is_compiling():
         return draw_compiling_page()
@@ -1155,7 +1145,7 @@ def h_monitoring():
             
 @app.route('/hardware', methods=['GET', 'POST'])
 @login_required
-def h_hardware():
+def hardware():
 
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         if (flask.request.method == 'GET'):
@@ -1646,7 +1636,7 @@ def settings():
 @app.route('/logout')
 def logout():
     flask_login.logout_user()
-    return flask.redirect(flask.url_for('login'))
+    return redirect(url_for('login'))
 
 
 @login_manager.unauthorized_handler
