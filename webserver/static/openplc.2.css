@@ -1,0 +1,56 @@
+/*
+Error: Invalid CSS after "10px": expected expression (e.g. 1px, bold), was ";"
+        on line 3 of webserver/static/openplc.2.sass
+
+1: 
+2: spacer {
+3:     margin-top: 10px;
+4: }
+5: 
+6: body {
+7:     background-color: #3D3D3D;
+8: }
+
+Backtrace:
+webserver/static/openplc.2.sass:3
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/scss/parser.rb:1278:in `expected'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/script/lexer.rb:231:in `expected!'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/script/parser.rb:762:in `assert_done'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/script/parser.rb:69:in `parse'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/script/parser.rb:228:in `parse'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/script.rb:27:in `parse'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:1177:in `parse_script'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:749:in `parse_property'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:708:in `parse_property_or_rule'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:667:in `parse_line'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:540:in `build_tree'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:559:in `block in append_children'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:558:in `each'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:558:in `append_children'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:549:in `block in build_tree'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:542:in `each'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:542:in `build_tree'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:559:in `block in append_children'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:558:in `each'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:558:in `append_children'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:417:in `_to_tree'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/engine.rb:290:in `render'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/plugin/compiler.rb:464:in `update_stylesheet'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/plugin/compiler.rb:215:in `block in update_stylesheets'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/plugin/compiler.rb:209:in `each'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/plugin/compiler.rb:209:in `update_stylesheets'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/plugin/compiler.rb:443:in `on_file_changed'
+/var/lib/gems/2.3.0/gems/sass-3.5.3/lib/sass/plugin/compiler.rb:320:in `block in watch'
+/var/lib/gems/2.3.0/gems/sass-listen-4.0.0/lib/sass-listen/event/config.rb:23:in `call'
+/var/lib/gems/2.3.0/gems/sass-listen-4.0.0/lib/sass-listen/event/processor.rb:115:in `_process_changes'
+/var/lib/gems/2.3.0/gems/sass-listen-4.0.0/lib/sass-listen/event/processor.rb:19:in `block in loop_for'
+/var/lib/gems/2.3.0/gems/sass-listen-4.0.0/lib/sass-listen/event/processor.rb:15:in `loop'
+/var/lib/gems/2.3.0/gems/sass-listen-4.0.0/lib/sass-listen/event/processor.rb:15:in `loop_for'
+/var/lib/gems/2.3.0/gems/sass-listen-4.0.0/lib/sass-listen/event/loop.rb:84:in `_wait_for_changes'
+/var/lib/gems/2.3.0/gems/sass-listen-4.0.0/lib/sass-listen/event/loop.rb:42:in `block in setup'
+/var/lib/gems/2.3.0/gems/sass-listen-4.0.0/lib/sass-listen/internals/thread_pool.rb:6:in `block in add'
+*/
+body:before {
+  white-space: pre;
+  font-family: monospace;
+  content: "Error: Invalid CSS after \"10px\": expected expression (e.g. 1px, bold), was \";\"\A         on line 3 of webserver/static/openplc.2.sass\A \A 1: \A 2: spacer {\A 3:     margin-top: 10px;\A 4: }\A 5: \A 6: body {\A 7:     background-color: #3D3D3D;\A 8: }"; }

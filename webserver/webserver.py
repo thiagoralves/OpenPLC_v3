@@ -441,15 +441,16 @@ def before_request():
 #= -------- Template Stuff ---------
 
 # site navigation; Note selected is passed a {{c.page}}
+# see https://fontawesome.bootstrapcheatsheets.com/ for icons
 Nav = [
-    {"label": "Dashboard", "page": "dashboard", "icon": "home-icon-64x64.png"},
-    {"label": "Programs", "page": "programs", "icon": "programs-icon-64x64.png"},
-    {"label": "Modbus", "page": "modbus", "icon": "modbus-icon-512x512.png"},
-    {"label": "Monitoring", "page": "monitoring", "icon": "monitoring-icon-64x64.png"},
-    {"label": "Hardware", "page": "hardware", "icon": "hardware-icon-980x974.png"},
-    {"label": "Users", "page": "users", "icon": "users-icon-64x64.png"},
-    {"label": "Settings", "page": "settings", "icon": "settings-icon-64x64.png"},
-    {"label": "Logout", "page": "logout", "icon": "logout-icon-64x64.png"},
+    {"label": "Dashboard", "page": "dashboard", "icon": "fa-home"},
+    {"label": "Programs", "page": "programs", "icon": "fa-braille"},
+    {"label": "Slave Devices", "page": "modbus", "icon": "fa-sitemap"},
+    {"label": "Monitoring", "page": "monitoring", "icon": "fa-signal"},
+    {"label": "Hardware", "page": "hardware", "icon": "fa-microchip"},
+    {"label": "Users", "page": "users", "icon": "fa-users"},
+    {"label": "Settings", "page": "settings", "icon": "fa-cog"},
+    {"label": "Logout", "page": "logout", "icon": "fa-sign-out"},
 ]
 @app.context_processor
 def inject_template_vars():
@@ -927,9 +928,10 @@ def modbus_add_device():
 
         #= ports for  serial devices
         ctx.ports = []
+        is_cygwin = platform.system().startswith("CYGWIN")
         ports = [comport.device for comport in serial.tools.list_ports.comports()]
         for port in ports:
-            if platform.system().startswith("CYGWIN"):
+            if is_cygwin:
                 port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
             else:
                 port_name = port

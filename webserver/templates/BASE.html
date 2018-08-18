@@ -10,56 +10,64 @@
     <title>{{title}} | OpenPLC</title>
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="/static/openplc.1.css">
+
+
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/font-awesome-4.7.0/css/font-awesome.min.css">
+
+    {<link rel="stylesheet" href="/static/openplc.2.css">}
 
 </head>
 <body>
 
 
-{# --------------- Page Top + Toolbar #}
-<div class='top'>
-    <img src='/static/openplc_logo.gif' alt='OpenPLC' style="width:101px;height:40px;padding:5px 0px 0px 10px;float:left;">
-    <h3 style="font-family:'Roboto', sans-serif; font-size:18px; color:white; padding:13px 111px 0px 0px; margin: 0px 0px 0px 0px"><center>OpenPLC Webserver</center></h3>
-</div>
+{# --------------- Page Top + bar #}
+<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+    <a class="navbar-brand" href="/"><img src='/static/openplc_logo.gif' height="30" alt='OpenPLC'></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+          </li>
+        </ul>
+     </div>
+</nav>
 
 
 {# ------------------------- main body #}
-<div class='main'>
+<div class="container-fluid">
 
-     {# --- Navigation #}
-     <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-            <br>
-            <br>
-            {% for n in nav %}
-            <a href="/{{n.page}}" class="w3-bar-item w3-button"
-            {% if n.page == c.page %} style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px" {%endif%}
-            ><img src="/static/{{n.icon}}" alt="{{n.label}}" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left">
-            {% if n.page == c.page %}<img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right">{%endif%}
-                <p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>{{n.label}}</p></a>
+    <div class="row">
+        <div class="col-md-3">
 
-            {% endfor %}
+            {# --- Navigation #}
+           <ul class="nav nav-pills flex-column">
+                {% for n in nav -%}
+                <li class="nav-item">
 
-            <br>
-            <br>
-     </div>
+                    <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"><i class="fa {{n.icon}}"></i> {{n.label}}</a>
+                </li>
+                {%- endfor %}
+            </ul>
 
-    {# --- Content #}
-    <div style="margin-left:320px; margin-right:70px">
-            <div style="w3-container">
-                <h2>{{title}}</h2>
-                {% block content %}## content##{% endblock content %}
+        </div>
+        <div class="col-md-9">
+            <h2>{{title}}</h2>
+            {% block content %}## content##{% endblock content %}
+        </div>
 
-            </div>
     </div>
-
-
 </div>
 
+<footer>
 <hr>
-    <pre>
-        {#
-{{current_user.is_authenticated}}
-{{current_user.name}} #}
-        </pre>
+</footer>
+
+
+<script src="/static/bootstrap.min.js"></script>
+
 </body>
 </html>
