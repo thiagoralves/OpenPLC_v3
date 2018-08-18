@@ -23,15 +23,25 @@
 
 {# --------------- Page Top + bar #}
 <nav class="navbar navbar-expand-md navbar-dark bg-dark">
-    <a class="navbar-brand" href="/"><img src='/static/openplc_logo.gif' height="30" alt='OpenPLC'></a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <a class="navbar-brand" href="/"><img src='/static/openplc_logo.gif' height="40" alt='OpenPLC'></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topbar" aria-controls="topbar" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+    <div class="collapse navbar-collapse" id="topbar">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
-            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-          </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+            </li>
+
+             <li class="nav-item dropdown">
+                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true">Project</a>
+                <div class="dropdown-menu">
+                    <a href="http://www.openplcproject.com/" target="homesweethome" class="dropdown-item">openplcproject.com</a>
+                    <a href="https://openplc.discussion.community/" target="forum" class="dropdown-item">Forums</a>
+                    <a href="https://github.com/thiagoralves/OpenPLC_v3" target="github" class="dropdown-item">GitHub project</a>
+                </div>
+             </li>
         </ul>
      </div>
 </nav>
