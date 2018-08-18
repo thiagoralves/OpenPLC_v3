@@ -138,6 +138,9 @@ class Runtime:
 
     def is_running(self):
         return self.runtime_status == RStatus.RUNNING
+
+    def is_compiling(self):
+        return self.runtime_status == RStatus.COMPILING
     
     def start_modbus(self, port_num):
         if self.status() == RStatus.RUNNING:

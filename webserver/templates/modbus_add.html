@@ -7,5 +7,80 @@
 
 {% block content %}
 
+<div style="float:left; width:45%; height:730px">
 
+<form id="uploadForm" action="/modbus/add" method="post" onsubmit="return validateForm()">
+
+    <label for='dev_name'><b>Device Name</b></label>
+    <input type='text' id='dev_name' name='device_name' placeholder='My Device'>
+
+    <label for='dev_protocol'><b>Device Type</b></label>
+    <select id='dev_protocol' name='device_protocol'>
+        {% for dp in c.device_protocols %}
+            <option {% if dp.protocol == 1 %} selected='selected'{%endif%} value='{{dp.protocol}}'>{{dp.label}}</option>
+        {% endfor %}
+    </select>
+
+    <label for='dev_id'><b>Slave ID</b></label>
+    <input type='text' id='dev_id' name='device_id' placeholder='0'>
+
+    <div id="tcp-stuff" style="display: none">
+        <label for='dev_ip'><b>IP Address</b></label>
+        <input type='text' id='dev_ip' name='device_ip' placeholder='192.168.0.1'>
+        <label for='dev_port'><b>IP Port</b></label>
+        <input type='text' id='dev_port' name='device_port' placeholder='502'>
+    </div>
+    <div id="rtu-stuff">
+        <label for='dev_cport'><b>COM Port</b></label>
+        <select id='dev_cport' name='device_cport'>
+
+        </select>
+                        <label for='dev_baud'><b>Baud Rate</b></label>
+                        <input type='text' id='dev_baud' name='device_baud' placeholder='19200'>
+                        <label for='dev_parity'><b>Parity</b></label>
+                        <select id='dev_parity' name='device_parity'>
+                            <option value='None'>None</option>
+                            <option value='Even'>Even</option>
+                            <option value='Odd'>Odd</option>
+                        </select>
+                        <label for='dev_data'><b>Data Bits</b></label>
+                        <input type='text' id='dev_data' name='device_data' placeholder='8'>
+                        <label for='dev_stop'><b>Stop Bits</b></label>
+                        <input type='text' id='dev_stop' name='device_stop' placeholder='1'>
+                        </div>
+                    </div>
+                    <div style="float:right; width:45%; height:730px">
+                        <p style='font-size:20px; margin-top:0px'><b>Discrete Inputs (%IX100.0)</b></p>
+                        <label for='di_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='di_start' name='di_start' placeholder='0'>
+                        <label for='di_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='di_size' name='di_size' placeholder='8'>
+
+                        <p style='font-size:20px'><b>Coils (%QX100.0)</b></p>
+                        <label for='do_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='do_start' name='do_start' placeholder='0'>
+                        <label for='do_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='do_size' name='do_size' placeholder='8'>
+
+                        <p style='font-size:20px'><b>Input Registers (%IW100)</b></p>
+                        <label for='ai_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='ai_start' name='ai_start' placeholder='0'>
+                        <label for='ai_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='ai_size' name='ai_size' placeholder='8'>
+
+                        <p style='font-size:20px'><b>Holding Registers - Read (%IW100)</b></p>
+                        <label for='aor_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='aor_start' name='aor_start' placeholder='0'>
+                        <label for='aor_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='aor_size' name='aor_size' placeholder='8'>
+
+                        <p style='font-size:20px'><b>Holding Registers - Write (%QW100)</b></p>
+                        <label for='aow_start'><b>Start Address:</b></label>
+                        <input type='text' style='width: 20%' id='aow_start' name='aow_start' placeholder='0'>
+                        <label for='aow_size' style='padding-left:20px'><b>Size:</b></label>
+                        <input type='text' style='width: 20%' id='aow_size' name='aow_size' placeholder='8'>
+                    </div>
+                    <br>
+                    <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value='Save device'></center>
+                    </form>
 {% endblock content %}
