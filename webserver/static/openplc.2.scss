@@ -1,5 +1,7 @@
 
+@import 'mixins';
 
+$body_bg: #343A40;
 
 .spacer {
     margin-top: 10px;
@@ -7,9 +9,10 @@
 
 
 body {
-    background-color: #686C70;
+    background-color: $body_bg;
 }
 
+// Main Nav on left
 #mainmav {
     background-color: #343A40;
 
@@ -34,10 +37,11 @@ body {
     background-color: white;
     margin: 0;
     padding: 0;
+    min-height: 800px;
 }
 
 .content_wrapper h1 {
-    background-color: #eeeeee;
+    @include horizontal_gradient(#eeeeee, $body_bg, 80%);
     font-size: 1.7em;
     color: #444444;
     margin: 0;
@@ -48,3 +52,5 @@ body {
 .content {
     margin: 10px;
 }
+
+

@@ -1,8 +1,11 @@
+/*****************************************************/
+/** Mixins                                          **/
+/*****************************************************/
 .spacer {
   margin-top: 10px; }
 
 body {
-  background-color: #686C70; }
+  background-color: #343A40; }
 
 #mainmav {
   background-color: #343A40; }
@@ -19,10 +22,26 @@ body {
 .content_wrapper {
   background-color: white;
   margin: 0;
-  padding: 0; }
+  padding: 0;
+  min-height: 800px; }
 
 .content_wrapper h1 {
+  /* fallback/image non-cover color */
   background-color: #eeeeee;
+  /* Firefox 3.6+ */
+  background-image: -moz-linear-gradient(left, #eeeeee 0%, #343A40 80%);
+  /* Safari 4+, Chrome 1+ */
+  background-image: -webkit-gradient(linear, left top, right top, color-stop(0%, #eeeeee), color-stop(80%, #343A40));
+  /* Safari 5.1+, Chrome 10+ */
+  background-image: -webkit-linear-gradient(left, #eeeeee 0%, #343A40 80%);
+  /* Opera 11.10+ */
+  background-image: -o-linear-gradient(left, #eeeeee 0%, #343A40 80%);
+  /* IE10+ */
+  background: -ms-linear-gradient(left, #eeeeee 0%, #343A40 80%);
+  /* Standard */
+  background: linear-gradient(to right, #eeeeee 0%, #343A40 80%);
+  /* IE6-9 */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$from', endColorstr='$to',GradientType=1 );
   font-size: 1.7em;
   color: #444444;
   margin: 0;

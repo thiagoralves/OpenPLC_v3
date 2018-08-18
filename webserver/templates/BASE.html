@@ -53,12 +53,12 @@
     <div class="row">
         <div class="col-md-3">
 
-            {# --- Navigation #}
+            {# --- Main Navigation #}
            <ul class="nav nav-pills flex-column" id="mainmav">
                 {% for n in nav -%}
                 <li class="nav-item">
 
-                    <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"><i class="fa {{n.icon}}"></i> {{n.label}}</a>
+                    <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"><i class="fa {{n.icon}}"></i>&nbsp;{{n.label}}</a>
                 </li>
                 {%- endfor %}
             </ul>
@@ -76,7 +76,7 @@
 <hr>
 </footer>
 
-
+<script src="/static/jquery-3.2.1.slim.min.js"></script>
 <script src="/static/bootstrap.min.js"></script>
 
 </body>
