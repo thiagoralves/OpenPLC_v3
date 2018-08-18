@@ -9,28 +9,35 @@
 
 <p>Here you can upload a new program to OpenPLC or revert back to a previous uploaded program shown on the table.</p>
 
-<table>
-    <thead>
+<table class="table table-bordered table-hover">
+    <thead class="thead-light">
         <tr style='background-color: white'>
-            <th>Program Name</th><th>File</th><th>Date Uploaded</th>
+            <th>Program Name</th><th>File</th><th>Date Uploaded</th><th>&nbsp;</th>
         </tr>
     </thead>
     <tbody>
         {% for row in c.programs %}
-          <tr onclick="document.location='reload-program?table_id={{row[0]}}'">
+          <tr ddonclick="document.location='reload-program?table_id={{row[0]}}'">
                 <td>{{row[1]}}</td>
                 <td>{{row[2]}}</td>
                 <td>{{row[3]}}"</td>
+                <td width="10"><a class="btn btn-success" href="/program/reload">Reload</a></td>
           </tr>
         {% endfor %}
     </tbody>
 </table>
-<a href="programs?list_all=1" style="text-align:right; float:right; color:black; font-weight:bold;">List all programs</a>
+<a href="/programs?list_all=1" ssstyle="text-align:right; float:right; color:black; font-weight:bold;">List all programs</a>
 
 {# TODO error check before submiting for file #}
  <h2>Upload Program</h2>
-<form   id="uploadForm" action="/upload-program" method="post">
-    <input type="file" name="file" id="file" class="inputfile" accept=".st">
-    <input type="submit" value="Upload Program" name="submit">
+<form id="uploadForm" action="/program/upload" method="post">
+     <div class="form-group">
+            <input type="file" ssclass="custom-file-input" id="file" accept=".st" required>
+            <label class="custom-file-label" for="file">Choose <b>.st</b> file to upload</label>
+     </div>
+    <div class="form-group">
+        <input type="submit" value="Upload" name="submit" class="btn btn-success">
+    </div>
+
 </form>
 {% endblock content %}

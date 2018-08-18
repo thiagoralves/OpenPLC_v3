@@ -100,7 +100,7 @@ class Runtime:
         if self.status() == "Running":
             self.stop_runtime()
             
-        self.is_compiling = True
+        #self.is_compiling = True
         global compilation_status_str
         global compilation_object
         compilation_status_str = ""
@@ -140,6 +140,7 @@ class Runtime:
         return self.runtime_status == RStatus.RUNNING
 
     def is_compiling(self):
+        return True
         return self.runtime_status == RStatus.COMPILING
     
     def start_modbus(self, port_num):

@@ -48,24 +48,24 @@
 
 
 {# ------------------------- main body #}
-<div class="container-fluid spacer">
+<div class="sscontainer-fluid spacer">
 
-    <div class="row">
+    <div class="row no-gutters">
         <div class="col-md-3">
 
             {# --- Main Navigation #}
            <ul class="nav nav-pills flex-column" id="mainmav">
                 {% for n in nav -%}
                 <li class="nav-item">
-
-                    <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"><i class="fa {{n.icon}}"></i>&nbsp;{{n.label}}</a>
+                    <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"
+                         ><i class="fa {{n.icon}}"></i>&nbsp;{{n.label}}</a>
                 </li>
                 {%- endfor %}
             </ul>
 
         </div>
         <div class="col-md-9 content_wrapper">
-            <h1>{{title}}</h1>
+            <h1><i class="fa {{c.icon}}"></i>&nbsp;{{title}}</h1>
             <div class="content">{% block content %}## content##{% endblock content %}</div>
         </div>
 
