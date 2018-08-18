@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/font-awesome-4.7.0/css/font-awesome.min.css">
 
-    {<link rel="stylesheet" href="/static/openplc.2.css">}
+    <link rel="stylesheet" href="/static/openplc.2.css">
 
 </head>
 <body>
@@ -38,13 +38,13 @@
 
 
 {# ------------------------- main body #}
-<div class="container-fluid">
+<div class="container-fluid spacer">
 
     <div class="row">
         <div class="col-md-3">
 
             {# --- Navigation #}
-           <ul class="nav nav-pills flex-column">
+           <ul class="nav nav-pills flex-column" id="mainmav">
                 {% for n in nav -%}
                 <li class="nav-item">
 
@@ -54,9 +54,9 @@
             </ul>
 
         </div>
-        <div class="col-md-9">
-            <h2>{{title}}</h2>
-            {% block content %}## content##{% endblock content %}
+        <div class="col-md-9 content_wrapper">
+            <h1>{{title}}</h1>
+            <div class="content">{% block content %}## content##{% endblock content %}</div>
         </div>
 
     </div>

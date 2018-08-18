@@ -1,9 +1,50 @@
 
-spacer {
+
+
+.spacer {
     margin-top: 10px;
 }
 
+
 body {
-    background-color: #3D3D3D;
+    background-color: #686C70;
 }
 
+#mainmav {
+    background-color: #343A40;
+
+    li a {
+        color: white;
+        font-weight: bold;
+        font-size: 1.2em;
+        border-radius: 0;
+    }
+
+    li a:hover {
+        background-color: #BE2929;
+    }
+
+    li a.active {
+        background-color: #E02222;
+    }
+
+}
+
+.content_wrapper {
+    background-color: white;
+    margin: 0;
+    padding: 0;
+}
+
+.content_wrapper h1 {
+    background-color: #eeeeee;
+    font-size: 1.7em;
+    color: #444444;
+    margin: 0;
+    padding: 3px 5px;
+
+}
+
+.content {
+    margin: 10px;
+}
