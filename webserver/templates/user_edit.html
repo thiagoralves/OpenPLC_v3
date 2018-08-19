@@ -4,29 +4,30 @@
 {% set title = "User" %}
 
 
-
 {% block content %}
 
-<form action="/user/add" method="post">
-    <div class="form-group">
-        <label for='user_name'><b>Login ID</b></label>
-        <input type='text' id='user_name' name='user_name' placeholder='username'>
-    </div>
+<div class="let_me_in">
+    <form action="/user/add" method="post">
+        <div class="form-group">
+            <label for='username'><b>Login ID</b></label>
+            <input type='text' id='username' name='username' placeholder='username'>
+        </div>
 
-    <div class="form-group">
-        <label for='full_name'><b>Name</b></label>
-        <input type='text' id='full_name' name='full_name' placeholder='eg Jane Smith'>
-    </div>
-    <div class="form-group">
-        <label for='user_email'><b>Email</b></label>
-        <input type='text' id='user_email' name='user_email' placeholder='your@email.com'>
-    </div>
-    <div class="form-group">
-        <label for='user_password'><b>Password</b></label>
-        <input type='password' id='user_password' name='user_password' placeholder='password'>
-    </div>
-
-    <input type="submit" class="button" value='Save user' class="btn btn-success">
-</form>
-
+        <div class="form-group">
+            <label for='name'><b>Name</b></label>
+            <input type='text' id='name' name='oplc_name' placeholder='eg Nungu SmithAno'>
+        </div>
+        <div class="form-group">
+            <label for='email'><b>Email</b></label>
+            <input type='text' id='email' name='oplc_email' placeholder='mypi@rhubarb.ky'>
+        </div>
+        <div class="form-group">
+            <label for="x_secret_combo_of_characters"><b>Password</b></label>
+            <input type='text' id='x_secret_combo_of_characters' name='xpasswd' placeholder='password'>
+        </div>
+        <div class="form-group">
+            <input type="submit" class="button" value='Save user' class="btn btn-success">
+        </div>
+    </form>
+</div>
 {% endblock content %}

@@ -29,10 +29,7 @@
     </button>
     <div class="collapse navbar-collapse" id="topbar">
 
-
         <ul class="navbar-nav ml-auto">
-
-
 
              <li class="nav-item dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true">Project</a>
@@ -42,10 +39,11 @@
                     <a href="https://github.com/thiagoralves/OpenPLC_v3" target="github" class="dropdown-item">GitHub project</a>
                 </div>
              </li>
-
+            {% if current_user.is_authenticated %}
               <li class="nav-item">
                  <a class="nav-link" href="/"><i class="fa fa-user"></i> {{current_user.username}}</a>
             </li>
+            {% endif %}
 
         </ul>
 
@@ -60,7 +58,8 @@
         <div class="col-md-3">
 
             {# --- Main Navigation #}
-           <ul class="nav nav-pills flex-column" id="mainmav">
+            {% if current_user.is_authenticated %}
+            <ul class="nav nav-pills flex-column" id="mainmav">
                 {% for n in nav -%}
                 <li class="nav-item">
                     <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"
@@ -68,6 +67,7 @@
                 </li>
                 {%- endfor %}
             </ul>
+            {% endif %}
 
         </div>
         <div class="col-md-9 content_wrapper">

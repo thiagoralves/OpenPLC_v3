@@ -14,7 +14,7 @@
     <tbody>
         {% for row in c.users %}
           <tr>
-                <td>{{row.username}}</td>
+              <td><i class="fa fa-user"></i>&nbsp;<b>{{row.username}}</b></td>
                 <td>{{row.name}}</td>
                 <td>{{row.email}}</td>
                 <td width="10"><a class="btn btn-success" href="/user/{{row.user_id}}/edit">Edit</a></td>

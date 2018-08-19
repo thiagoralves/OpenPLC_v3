@@ -1,22 +1,30 @@
 
 {% extends "BASE.html" %}
 
-{% set title = "Login" %}
+{% set title = "System Login" %}
 
 {% block content %}
 
-<div class='login-page'>
-  <div class='form'>
-    <form action='login' method='POST' class='login-form'>
-        <h3 style="font-family:'Roboto', sans-serif; font-size:24px; color:#1F1F1F; padding:0px 0px 0px 0px; margin: 0px 0px 40px 0px"><center><b>Welcome to OpenPLC</b></center></h3>
+<p>
+OpenPLC, the first fully open source Programable Logic Controller ;-)
 
-        <h3 style="font-family:'Roboto', sans-serif; font-size:14px; color:#1F1F1F; padding:0px 0px 0px 0px; margin: 0px 0px 40px 0px"><center>Use your credentials to login</center></h3>
-        <input type='text' name='username' id='username' placeholder='username'/>
-        <input type='password' name='password' id='password' placeholder='password'/>
-        <br><br><br>
-        <button>login</button>
-    </form>
-  </div>
+</p>
+
+<div style="max-width: 300px">
+<form action='login' method='POST'>
+
+    <div class="form-group">
+        <label for="oplc_username">Login User</label>
+        <input type='text' name='oplc_username' id='oplc_username' placeholder='fred' class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="oplc_secret">Password</label>
+        <input type='password' name='oplc_secret' id='oplc_secret' placeholder='4onflour'  class="form-control">
+    </div>
+    <div class="form-group">
+        <input class="btn btn-success" type="submit" value="Login">
+    </div>
+</form>
 </div>
 
 {% endblock content %}

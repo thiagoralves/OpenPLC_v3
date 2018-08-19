@@ -1,5 +1,4 @@
-import sqlite3
-from sqlite3 import Error
+
 import os
 import subprocess
 import platform
@@ -7,8 +6,8 @@ import serial.tools.list_ports
 import random
 import datetime
 import time
-import pages
-import openplc
+import sqlite3
+from sqlite3 import Error
 
 import flask
 from flask import redirect, request, render_template, url_for
@@ -17,8 +16,14 @@ import flask_login
 from flask_login import current_user, login_required
 
 
+import pages
+import openplc
 
-#=== wsgi app
+
+
+
+#------------------------------------------------
+# Flask app
 app = flask.Flask(__name__)
 
 # This causes cookies to loose between restarts in dev
@@ -38,7 +43,8 @@ class User(flask_login.UserMixin):
 
 @login_manager.user_loader
 def user_loader(username):
-    sql = "SELECT user_id, username, password, name, pict_file FROM Users "
+    """Get user details for flask admin"""
+    sql = "SELECT user_id, username, name, pict_file FROM Users "
     sql += ' where username=? '
     row, err = db_query(sql, (username,), single=True)
     if err:
@@ -52,8 +58,14 @@ def user_loader(username):
     user.pict_file = str(row["pict_file"])
     return user
 
+
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    return 'Unauthorized'
+
+
 #------------------------------------------------
-#  Runtime
+#  OpenPLC Runtime.magic
 openplc_runtime = openplc.Runtime()
 
 def configure_runtime():
@@ -274,10 +286,22 @@ loading logs...
 </html>"""
     return return_str
 
+#-------------------------------------------
+# Database stuff
+
+# TODO = schema creation etc and alternate path
 DB_FILE = "openplc.db"
 
 def db_query(sql, args=(), single=False, as_list=False):
+    """ Opens db, execute query, close then return results.
+    This is one function atmo, as issues with multithread app.. (sigh!)
 
+    :param sql: str with sql and :params placeholders
+    :param args: dict with arg values
+    :param single: return only one row
+    :param as_list: True returns a row in a list, otherwise a dict
+    :return: rows/row, err
+    """
     conn = db_connection()
     if not conn:
         return None, "Cannot connect db"
@@ -300,21 +324,15 @@ def db_query(sql, args=(), single=False, as_list=False):
 
         if not single:
             return rows if as_list else row_dict, None
+
         if len(rows) == 0:
             return None
+
         if len(rows) > 1:
             return None, "More than one row"
+
         return rows[0] if as_list else row_dict[0], None
-        """
-        for row in rows:
-            if (row[0] == username):
-                user = User()
-                user.id = row[0]
-                user.name = row[2]
-                user.pict_file = str(row[3])
-                return user
-        return
-        """
+
     except Error as e:
         print("error connecting to the database" + str(e))
         return None, str(e)
@@ -411,18 +429,20 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
 
+    # This is login page.. so if auth.. goto dash else recus and login and dash and login and dash and+++
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
 
     ctx = dict(error=None)
 
     if request.method == "POST":
-        username = request.form['username']
-        password = request.form['password']
+        # we use <> paswword to avoid caching..
+        username = request.form['oplc_username']
+        password = request.form['oplc_password']
 
-        sql = "SELECT username, password, name, pict_file FROM Users"
+        sql = "SELECT user_id, username, password, name, pict_file FROM Users"
         sql += " where username=? and password=? "
-        row, err = db_query(sql, (username, password), True)
+        row, err = db_query(sql, (username, password), single=True)
         if err:
             ctx.error = err
 
@@ -430,9 +450,10 @@ def login():
             ctx.error = "Incorrect User or Password "
 
         else:
-            user = User()
-            user.id = row[0]
-            user.name = row[2]
+            user = User(row)
+            user.id = row['user_id']
+            user.username = row['username']
+            user.name = row['name']
             user.pict_file = str(row[3])
             flask_login.login_user(user, remember=True, fresh=True)
             return flask.redirect(flask.url_for('dashboard'))
@@ -440,10 +461,26 @@ def login():
     return render_template("login.html", c=ctx)
 
 
+@app.route('/logout')
+def logout():
+    flask_login.logout_user()
+    return redirect(url_for('login'))
 
-@app.route('/start_plc')
+
+@app.route('/dashboard')
 @login_required
-def start_plc():
+def dashboard():
+    #global openplc_runtime
+    #if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+
+    ctx = make_context(page="dashboard")
+
+    return render_template("dashboard.html", c=ctx)
+
+
+@app.route('/plc/start')
+@login_required
+def plc_start():
     global openplc_runtime
     openplc_runtime.start_runtime()
     time.sleep(1)
@@ -469,17 +506,6 @@ def runtime_logs():
         return openplc_runtime.logs()
 
 
-
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    #global openplc_runtime
-    #if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-
-    ctx = make_context(page="dashboard")
-
-    return render_template("dashboard.html", c=ctx)
 
 
 @app.route('/programs', methods=['GET', 'POST'])
@@ -1243,11 +1269,13 @@ def user_edit(user_id):
     if request.method == 'POST':
 
 
-        user_id = flask.request.form['user_id']
-        name = flask.request.form['full_name']
-        username = flask.request.form['user_name']
-        email = flask.request.form['user_email']
-        password = flask.request.form['user_password']
+        user_id = flask.request.form.get('user_id')
+        name = flask.request.form('name')
+        username = flask.request.form['username']
+        email = flask.request.form['email']
+        xpass = flask.request.form['xpass']
+
+
 
         return redirect(url_for('users'))
 
@@ -1411,15 +1439,7 @@ def settings():
                 return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
         
 
-@app.route('/logout')
-def logout():
-    flask_login.logout_user()
-    return redirect(url_for('login'))
 
-
-@login_manager.unauthorized_handler
-def unauthorized_handler():
-    return 'Unauthorized'
     
 #----------------------------------------------------------------------------
 #Creates a connection with the SQLite database.
