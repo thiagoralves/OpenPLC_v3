@@ -350,11 +350,15 @@ void querySlaveDevices()
                                                         mb_devices[i].discrete_inputs.num_regs, tempBuff);
                 if (return_val == -1)
                 {
+                    if (mb_devices[i].protocol != MB_RTU)
+                    {
+                        modbus_close(mb_devices[i].mb_ctx);
+                        mb_devices[i].isConnected = false;
+                    }
+                    
                     sprintf(log_msg, "Modbus Read Discrete Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
                     log(log_msg);
-                    modbus_close(mb_devices[i].mb_ctx);
                     bool_input_index += (mb_devices[i].discrete_inputs.num_regs);
-                    mb_devices[i].isConnected = false;
                 }
                 else
                 {
@@ -387,8 +391,14 @@ void querySlaveDevices()
                 int return_val = modbus_write_bits(mb_devices[i].mb_ctx, mb_devices[i].coils.start_address, mb_devices[i].coils.num_regs, tempBuff);
                 if (return_val == -1)
                 {
-                    modbus_close(mb_devices[i].mb_ctx);
-                    mb_devices[i].isConnected = false;
+                    if (mb_devices[i].protocol != MB_RTU)
+                    {
+                        modbus_close(mb_devices[i].mb_ctx);
+                        mb_devices[i].isConnected = false;
+                    }
+
+                    sprintf(log_msg, "Modbus Write Coils failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
+                    log(log_msg);
                 }
                 
                 free(tempBuff);
@@ -403,11 +413,15 @@ void querySlaveDevices()
                                                                 mb_devices[i].input_registers.num_regs, tempBuff);
                 if (return_val == -1)
                 {
-                    sprintf(log_msg, "Modbus Read Discrete Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
+                    if (mb_devices[i].protocol != MB_RTU)
+                    {
+                        modbus_close(mb_devices[i].mb_ctx);
+                        mb_devices[i].isConnected = false;
+                    }
+                    
+                    sprintf(log_msg, "Modbus Read Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
                     log(log_msg);
-                    modbus_close(mb_devices[i].mb_ctx);
                     bool_input_index += (mb_devices[i].discrete_inputs.num_regs);
-                    mb_devices[i].isConnected = false;
                 }
                 else
                 {
@@ -441,8 +455,14 @@ void querySlaveDevices()
                                                         mb_devices[i].holding_registers.num_regs, tempBuff);
                 if (return_val == -1)
                 {
-                    modbus_close(mb_devices[i].mb_ctx);
-                    mb_devices[i].isConnected = false;
+                    if (mb_devices[i].protocol != MB_RTU)
+                    {
+                        modbus_close(mb_devices[i].mb_ctx);
+                        mb_devices[i].isConnected = false;
+                    }
+                    
+                    sprintf(log_msg, "Modbus Write Holding Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
+                    log(log_msg);
                 }
                 
                 free(tempBuff);
