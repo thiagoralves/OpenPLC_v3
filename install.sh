@@ -188,6 +188,30 @@ elif [ "$1" == "linux" ]; then
     cd ../..
     
     echo ""
+    echo "[OPENPLC SERVICE]"
+    WORKING_DIR=$(pwd)
+    echo -e "[Unit]\n\
+Description=OpenPLC Service\n\
+After=network.target\n\
+\n\
+[Service]\n\
+Type=simple\n\
+Restart=always\n\
+RestartSec=1\n\
+User=root\n\
+Group=root\n\
+WorkingDirectory=$WORKING_DIR\n\
+ExecStart=$WORKING_DIR/start_openplc.sh\n\
+\n\
+[Install]\n\
+WantedBy=multi-user.target" >> openplc.service
+    sudo cp -rf ./openplc.service /lib/systemd/system/
+    rm -rf openplc.service
+    echo "Enabling OpenPLC Service..."
+    sudo systemctl daemon-reload
+    sudo systemctl enable openplc
+
+    echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
@@ -281,6 +305,30 @@ elif [ "$1" == "rpi" ]; then
     sudo ldconfig
     cd ../..
     
+    echo ""
+    echo "[OPENPLC SERVICE]"
+    WORKING_DIR=$(pwd)
+    echo -e "[Unit]\n\
+Description=OpenPLC Service\n\
+After=network.target\n\
+\n\
+[Service]\n\
+Type=simple\n\
+Restart=always\n\
+RestartSec=1\n\
+User=root\n\
+Group=root\n\
+WorkingDirectory=$WORKING_DIR\n\
+ExecStart=$WORKING_DIR/start_openplc.sh\n\
+\n\
+[Install]\n\
+WantedBy=multi-user.target" >> openplc.service
+    sudo cp -rf ./openplc.service /lib/systemd/system/
+    rm -rf openplc.service
+    echo "Enabling OpenPLC Service..."
+    sudo systemctl daemon-reload
+    sudo systemctl enable openplc
+
     echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
@@ -390,6 +438,3 @@ else
     echo ""
     exit 1
 fi
-
-
-
