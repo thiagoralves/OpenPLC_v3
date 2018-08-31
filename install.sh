@@ -110,9 +110,9 @@ elif [ "$1" == "linux" ]; then
     pip install flask-login
     pip install pyserial
     #make sure that packages are also installed for the super user
-    sudo pip install flask
-    sudo pip install flask-login
-    sudo pip install pyserial
+    sudo -H pip install flask
+    sudo -H pip install flask-login
+    sudo -H pip install pyserial
 
     echo ""
     echo "[MATIEC COMPILER]"
@@ -204,9 +204,9 @@ elif [ "$1" == "rpi" ]; then
     pip install flask-login
     pip install pyserial
     #make sure that packages are also installed for the super user
-    sudo pip install flask
-    sudo pip install flask-login
-    sudo pip install pyserial
+    sudo -H pip install flask
+    sudo -H pip install flask-login
+    sudo -H pip install pyserial
     
     echo ""
     echo "[MATIEC COMPILER]"
