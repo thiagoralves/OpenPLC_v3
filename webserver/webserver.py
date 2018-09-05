@@ -9,6 +9,7 @@ import datetime
 import time
 import pages
 import openplc
+import sys
 
 import flask 
 import flask_login
@@ -1780,6 +1781,9 @@ if __name__ == '__main__':
     file = open("active_program", "r")
     st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
+    
+    reload(sys)
+    sys.setdefaultencoding('UTF8')
     
     database = "openplc.db"
     conn = create_connection(database)
