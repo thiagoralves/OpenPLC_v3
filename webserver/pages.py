@@ -862,14 +862,7 @@ settings_head = """
                 <br>"""
                 
 settings_tail = """
-                        <br>
-                        <br>
-                        <br>
-                        <label class="container">
-                            <b>Load OpenPLC on boot</b>
-                            <input id="auto_run" type="checkbox">
-                            <span class="checkmark"></span>
-                        </label>
+                        <input type='hidden' value='false' id='auto_run_text' name='auto_run_text'/>
                         <br>
                         <br>
                         <br>
@@ -892,6 +885,8 @@ settings_tail = """
             var modbus_text = document.getElementById('modbus_server_port');
             var dnp3_checkbox = document.getElementById('dnp3_server');
             var dnp3_text = document.getElementById('dnp3_server_port');
+            var auto_run_checkbox = document.getElementById('auto_run');
+            var auto_run_text = document.getElementById('auto_run_text');
             
             if (modbus_checkbox.checked == true)
             {
@@ -910,6 +905,15 @@ settings_tail = """
             {
                 dnp3_text.disabled = true;
             }
+            
+            if (auto_run_checkbox.checked == true)
+            {
+                auto_run_text.value = 'true';
+            }
+            else
+            {
+                auto_run_text.value = 'false';
+            }
         }
 
         document.getElementById('modbus_server').onchange = function()
@@ -918,6 +922,11 @@ settings_tail = """
         }
         
         document.getElementById('dnp3_server').onchange = function()
+        {
+            setupCheckboxes();
+        }
+        
+        document.getElementById('auto_run').onchange = function()
         {
             setupCheckboxes();
         }
