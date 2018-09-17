@@ -1665,6 +1665,8 @@ def settings():
                             modbus_port = str(row[1])
                         elif (row[0] == "Dnp3_port"):
                             dnp3_port = str(row[1])
+                        elif (row[0] == "Start_run_mode"):
+                            start_run = str(row[1])
                     
                     if (modbus_port == 'disabled'):
                         return_str += """
@@ -1702,6 +1704,25 @@ def settings():
                         </label>
                         <label for='dnp3_server_port'><b>DNP3 Server Port</b></label>
                         <input type='text' id='dnp3_server_port' name='dnp3_server_port' value='""" + dnp3_port + "'>"
+                    
+                    return_str += """
+                        <br>
+                        <br>
+                        <br>
+                        <label class="container">
+                            <b>Start OpenPLC in RUN mode</b>"""
+                            
+                    if (start_run == 'false'):
+                        return_str += """
+                            <input id="auto_run" type="checkbox">
+                            <span class="checkmark"></span>
+                        </label>"""
+                    else:
+                        return_str += """
+                            <input id="auto_run" type="checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>"""
+                    
                     return_str += pages.settings_tail
                     
                 except Error as e:
@@ -1714,6 +1735,7 @@ def settings():
         elif (flask.request.method == 'POST'):
             modbus_port = flask.request.form.get('modbus_server_port')
             dnp3_port = flask.request.form.get('dnp3_server_port')
+            start_run = flask.request.form.get('auto_run_text')
             
             database = "openplc.db"
             conn = create_connection(database)
@@ -1732,6 +1754,13 @@ def settings():
                         conn.commit()
                     else:
                         cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Dnp3_port'", (str(dnp3_port),))
+                        conn.commit()
+                        
+                    if (start_run == 'true'):
+                        cur.execute("UPDATE Settings SET Value = 'true' WHERE Key = 'Start_run_mode'")
+                        conn.commit()
+                    else:
+                        cur.execute("UPDATE Settings SET Value = 'false' WHERE Key = 'Start_run_mode'")
                         conn.commit()
                         
                     cur.close()
@@ -1796,8 +1825,21 @@ if __name__ == '__main__':
             openplc_runtime.project_name = str(row[1])
             openplc_runtime.project_description = str(row[2])
             openplc_runtime.project_file = str(row[3])
+            
+            cur.execute("SELECT * FROM Settings")
+            rows = cur.fetchall()
             cur.close()
             conn.close()
+            
+            for row in rows:
+                if (row[0] == "Start_run_mode"):
+                    start_run = str(row[1])
+                    
+            if (start_run == 'true'):
+                print("Initializing OpenPLC in RUN mode...")
+                openplc_runtime.start_runtime()
+                time.sleep(1)
+                configure_runtime()
             
             app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
         
