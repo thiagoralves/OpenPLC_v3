@@ -280,7 +280,7 @@ void parseConfig()
     else
     {
         unsigned char log_msg[1000];
-        sprintf(log_msg, "Error opening mbconfig.cfg file\n");
+        sprintf(log_msg, "Skipping configuration of Slave Devices (mbconfig.cfg file not found)\n");
         log(log_msg);
     }
 
