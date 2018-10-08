@@ -1289,6 +1289,8 @@ def hardware():
             else: return_str += "<option value='pixtend'>PiXtend</option>"
             if (current_driver == "pixtend_2s"): return_str += "<option selected='selected' value='pixtend_2s'>PiXtend 2s</option>"
             else: return_str += "<option value='pixtend_2s'>PiXtend 2s</option>"
+            if (current_driver == "pixtend_2l"): return_str += "<option selected='selected' value='pixtend_2l'>PiXtend 2l</option>"
+            else: return_str += "<option value='pixtend_2l'>PiXtend 2l</option>"  
             if (current_driver == "rpi"): return_str += "<option selected='selected' value='rpi'>Raspberry Pi</option>"
             else: return_str += "<option value='rpi'>Raspberry Pi</option>"
             if (current_driver == "rpi_old"): return_str += "<option selected='selected' value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"

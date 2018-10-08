@@ -44,6 +44,13 @@ elif [ "$1" == "pixtend_2s" ]; then
     echo "Setting Platform"
     echo rpi > ../scripts/openplc_platform
     echo pixtend_2s > ../scripts/openplc_driver
+    
+elif [ "$1" == "pixtend_2l" ]; then
+    echo "Activating PiXtend 2L driver"
+    cp ./hardware_layers/pixtend2l.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo rpi > ../scripts/openplc_platform
+    echo pixtend_2l > ../scripts/openplc_driver  
 
 elif [ "$1" == "rpi" ]; then
     echo "Activating Raspberry Pi driver"
