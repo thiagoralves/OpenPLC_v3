@@ -1285,6 +1285,8 @@ def hardware():
             else: return_str += "<option value='blank_linux'>Blank with DNP3 (Linux only)</option>"
             if (current_driver == "fischertechnik"): return_str += "<option selected='selected' value='fischertechnik'>Fischertechnik</option>"
             else: return_str += "<option value='fischertechnik'>Fischertechnik</option>"
+            if (current_driver == "neuron"): return_str += "<option selected='selected' value='neuron'>Neuron</option>"
+            else: return_str += "<option value='neuron'>Neuron</option>"
             if (current_driver == "pixtend"): return_str += "<option selected='selected' value='pixtend'>PiXtend</option>"
             else: return_str += "<option value='pixtend'>PiXtend</option>"
             if (current_driver == "pixtend_2s"): return_str += "<option selected='selected' value='pixtend_2s'>PiXtend 2s</option>"
