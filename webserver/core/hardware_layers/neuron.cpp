@@ -146,6 +146,27 @@ void searchForIO()
             }
         }
     }
+
+    /* look for digital outputs (relay) */
+    strcpy(path_fmt, "/sys/devices/platform/unipi_plc/io_group%d/ro_%d_%02d/ro_value");
+    for (int group = 1; group < 10; group++)
+    {
+        for (int major = 1; major < 10; major++)
+        {
+            for (int minor = 1; minor < 10; minor++)
+            {
+                sprintf(path, path_fmt, group, major, minor);
+                char *command = "read";
+                if (requestSYSFS(path, command) >= 0)
+                {
+                    /* valid I/O. Add to the list */
+                    strcpy(digital_outputs[index], path);                
+                    index++;
+                    digital_outputs[index][0] = '\0';
+                }
+            }
+        }
+    }
     
     /* look for analog inputs */
     strcpy(path_fmt, "/sys/devices/platform/unipi_plc/io_group%d/ai_%d_%d/in_voltage0_raw");
