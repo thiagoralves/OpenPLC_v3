@@ -35,7 +35,7 @@ elif [ "$1" == "neuron" ]; then
     echo "Activating Neuron driver"
     cp ./hardware_layers/neuron.cpp ./hardware_layer.cpp
     echo "Setting Platform"
-    echo rpi > ../scripts/openplc_platform
+    echo linux > ../scripts/openplc_platform
     echo neuron > ../scripts/openplc_driver
 
 elif [ "$1" == "pixtend" ]; then
