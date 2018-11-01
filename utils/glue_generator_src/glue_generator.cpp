@@ -65,6 +65,9 @@ IEC_UINT *int_memory[BUFFER_SIZE];\r\n\
 IEC_DINT *dint_memory[BUFFER_SIZE];\r\n\
 IEC_LINT *lint_memory[BUFFER_SIZE];\r\n\
 \r\n\
+//Special Functions\r\n\
+IEC_LINT *special_functions[BUFFER_SIZE];\r\n\
+\r\n\
 \r\n\
 #define __LOCATED_VAR(type, name, ...) type __##name;\r\n\
 #include \"LOCATED_VARIABLES.h\"\r\n\
@@ -215,7 +218,10 @@ void glueVar(char *varName, char *varType)
 				glueVars << "\tdint_memory[" << pos1 << "] = (IEC_DINT *)" << varName << ";\r\n";
 				break;
 			case 'L':
-				glueVars << "\tlint_memory[" << pos1 << "] = (IEC_LINT *)" << varName << ";\r\n";
+				if (pos1 > 1023)
+					glueVars << "\tspecial_functions[" << (pos1-1024) << "] = (IEC_LINT *)" << varName << ";\r\n";
+				else
+					glueVars << "\tlint_memory[" << pos1 << "] = (IEC_LINT *)" << varName << ";\r\n";
 				break;
 		}
 	}
