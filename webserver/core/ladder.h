@@ -70,6 +70,9 @@ extern IEC_UINT *int_memory[BUFFER_SIZE];
 extern IEC_DINT *dint_memory[BUFFER_SIZE];
 extern IEC_LINT *lint_memory[BUFFER_SIZE];
 
+//Special Functions
+extern IEC_LINT *special_functions[BUFFER_SIZE];
+
 //lock for the buffer
 extern pthread_mutex_t bufferLock;
 
@@ -110,6 +113,7 @@ bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber);
 extern uint8_t run_openplc;
 extern unsigned char log_buffer[1000000];
 extern int log_index;
+void handleSpecialFunctions();
 
 //server.cpp
 void startServer(int port);

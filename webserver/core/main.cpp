@@ -39,6 +39,8 @@ extern int opterr;
 //extern int common_ticktime__;
 IEC_BOOL __DEBUG;
 
+IEC_LINT cycle_counter = 0;
+
 static int tick = 0;
 pthread_mutex_t bufferLock; //mutex for the internal buffers
 pthread_mutex_t logLock; //mutex for the internal log
@@ -148,6 +150,31 @@ void disableOutputs()
     }
 }
 
+//-----------------------------------------------------------------------------
+// Special Functions
+//-----------------------------------------------------------------------------
+void handleSpecialFunctions()
+{
+    //current time
+    struct tm *current_time;
+    time_t rawtime;
+    
+    tzset();
+    time(&rawtime);
+    current_time = localtime(&rawtime);
+    
+    rawtime = rawtime - timezone;
+    if (current_time->tm_isdst > 0) rawtime = rawtime + 3600;
+        
+    if (special_functions[0] != NULL) *special_functions[0] = rawtime;
+    
+    //number of cycles
+    cycle_counter++;
+    if (special_functions[1] != NULL) *special_functions[1] = cycle_counter;
+
+    //insert other special functions below
+}
+
 int main(int argc,char **argv)
 {
     unsigned char log_msg[1000];
@@ -232,6 +259,7 @@ int main(int argc,char **argv)
 		pthread_mutex_lock(&bufferLock); //lock mutex
 		updateCustomIn();
         updateBuffersIn_MB(); //update input image table with data from slave devices
+        handleSpecialFunctions();
 		config_run__(tick++); // execute plc program logic
 		updateCustomOut();
         updateBuffersOut_MB(); //update slave devices with data from the output image table
