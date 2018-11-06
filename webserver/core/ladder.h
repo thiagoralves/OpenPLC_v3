@@ -125,6 +125,7 @@ bool SetSocketBlockingEnabled(int fd, bool blocking);
 void startInteractiveServer(int port);
 extern bool run_modbus;
 extern bool run_dnp3;
+extern bool run_opcua;
 extern time_t start_time;
 extern time_t end_time;
 
@@ -140,6 +141,9 @@ void updateBuffersOut_MB();
 
 //dnp3.cpp
 void dnp3StartServer(int port);
+
+//opcua.cpp
+void opcuaStartServer(int port);
 
 //persistent_storage.cpp
 void *persistentStorage(void *args);
