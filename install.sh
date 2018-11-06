@@ -80,7 +80,12 @@ if [ "$1" == "win" ]; then
         exit 1
     fi
     cd ../..
-    
+
+    echo ""
+    echo "[OPC UA]"
+    sudo apt-get install -y python-pip python-dev
+    pip install opcua
+
     echo ""
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
@@ -187,6 +192,11 @@ elif [ "$1" == "linux" ]; then
     fi
     sudo ldconfig
     cd ../..
+
+    echo ""
+    echo "[OPC UA]"
+    sudo apt-get install -y python-pip python-dev
+    pip install opcua
     
     echo ""
     echo "[OPENPLC SERVICE]"
@@ -291,6 +301,11 @@ elif [ "$1" == "rpi" ]; then
     sudo swapoff swapfile
     sudo rm -f ./swapfile
     cd ../..
+
+    echo ""
+    echo "[OPC UA]"
+    sudo apt-get install -y python-pip python-dev
+    pip install opcua
     
     echo ""
     echo "[LIBMODBUS]"
@@ -409,6 +424,11 @@ elif [ "$1" == "neuron" ]; then
     sudo swapoff swapfile
     sudo rm -f ./swapfile
     cd ../..
+
+    echo ""
+    echo "[OPC UA]"
+    sudo apt-get install -y python-pip python-dev
+    pip install opcua
     
     echo ""
     echo "[LIBMODBUS]"
@@ -527,6 +547,11 @@ elif [ "$1" == "custom" ]; then
     sudo swapoff swapfile
     sudo rm -f ./swapfile
     cd ../..
+
+    echo ""
+    echo "[OPC UA]"
+    sudo apt-get install -y python-pip python-dev
+    pip install opcua
     
     echo ""
     echo "[LIBMODBUS]"
