@@ -862,7 +862,6 @@ settings_head = """
                 <br>"""
                 
 settings_tail = """
-                        <input type='hidden' value='false' id='auto_run_text' name='auto_run_text'/>
                         <br>
                         <br>
                         <br>

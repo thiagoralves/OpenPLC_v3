@@ -69,6 +69,21 @@ def generate_mbconfig():
             row = cur.fetchone()
             num_devices = int(row[0])
             mbconfig = 'Num_Devices = "' + str(num_devices) + '"'
+            cur.close()
+            
+            cur=conn.cursor()
+            cur.execute("SELECT * FROM Settings")
+            rows = cur.fetchall()
+            cur.close()
+                    
+            for row in rows:
+                if (row[0] == "Slave_polling"):
+                    slave_polling = str(row[1])
+                elif (row[0] == "Slave_timeout"):
+                    slave_timeout = str(row[1])
+                    
+            mbconfig += '\nPolling_Period = "' + slave_polling + '"'
+            mbconfig += '\nTimeout = "' + slave_timeout + '"'
             
             cur = conn.cursor()
             cur.execute("SELECT * FROM Slave_dev")
@@ -1671,6 +1686,10 @@ def settings():
                             dnp3_port = str(row[1])
                         elif (row[0] == "Start_run_mode"):
                             start_run = str(row[1])
+                        elif (row[0] == "Slave_polling"):
+                            slave_polling = str(row[1])
+                        elif (row[0] == "Slave_timeout"):
+                            slave_timeout = str(row[1])
                     
                     if (modbus_port == 'disabled'):
                         return_str += """
@@ -1720,12 +1739,30 @@ def settings():
                         return_str += """
                             <input id="auto_run" type="checkbox">
                             <span class="checkmark"></span>
-                        </label>"""
+                        </label>
+                        <input type='hidden' value='false' id='auto_run_text' name='auto_run_text'/>"""
                     else:
                         return_str += """
                             <input id="auto_run" type="checkbox" checked>
                             <span class="checkmark"></span>
-                        </label>"""
+                        </label>
+                        <input type='hidden' value='true' id='auto_run_text' name='auto_run_text'/>"""
+                    
+                    return_str += """
+                        <br>
+                        <br>
+                        <br>
+                        <h2>Slave Devices</h2>
+                        <br>
+                        <label for='slave_polling_period'><b>Polling Period (ms)</b></label>
+                        <input type='text' id='slave_polling_period' name='slave_polling_period' value='""" + slave_polling + "'>"
+                    
+                    return_str += """
+                        <br>
+                        <br>
+                        <br>
+                        <label for='slave_timeout'><b>Timeout (ms)</b></label>
+                        <input type='text' id='slave_timeout' name='slave_timeout' value='""" + slave_timeout + "'>"
                     
                     return_str += pages.settings_tail
                     
@@ -1740,6 +1777,8 @@ def settings():
             modbus_port = flask.request.form.get('modbus_server_port')
             dnp3_port = flask.request.form.get('dnp3_server_port')
             start_run = flask.request.form.get('auto_run_text')
+            slave_polling = flask.request.form.get('slave_polling_period')
+            slave_timeout = flask.request.form.get('slave_timeout')
             
             database = "openplc.db"
             conn = create_connection(database)
@@ -1767,9 +1806,16 @@ def settings():
                         cur.execute("UPDATE Settings SET Value = 'false' WHERE Key = 'Start_run_mode'")
                         conn.commit()
                         
+                    cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Slave_polling'", (str(slave_polling),))
+                    conn.commit()
+                    
+                    cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Slave_timeout'", (str(slave_timeout),))
+                    conn.commit()
+                    
                     cur.close()
                     conn.close()
                     configure_runtime()
+                    generate_mbconfig()
                     return flask.redirect(flask.url_for('dashboard'))
                     
                 except Error as e:
