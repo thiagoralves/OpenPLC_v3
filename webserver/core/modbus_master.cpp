@@ -31,6 +31,7 @@
 #include <modbus.h>
 #include <errno.h>
 #include <string.h>
+#include <pthread.h>
 
 #include <iostream>
 #include <fstream>
@@ -80,6 +81,8 @@ struct MB_device
 
 struct MB_device *mb_devices;
 uint8_t num_devices;
+uint16_t polling_period = 100;
+uint16_t timeout = 1000;
 
 //-----------------------------------------------------------------------------
 // Finds the data between the separators on the line provided
@@ -165,6 +168,18 @@ void parseConfig()
 					num_devices = atoi(temp_buffer);
 					mb_devices = (struct MB_device *)malloc(num_devices*sizeof(struct MB_device));
 				}
+                else if (!strncmp(line_str, "Polling_Period", 14))
+				{
+                    char temp_buffer[10];
+					getData(line_str, temp_buffer, '"', '"');
+					polling_period = atoi(temp_buffer);
+                }
+                else if (!strncmp(line_str, "Timeout", 7))
+				{
+                    char temp_buffer[10];
+					getData(line_str, temp_buffer, '"', '"');
+					timeout = atoi(temp_buffer);
+                }
 
 				else if (!strncmp(line_str, "device", 6))
 				{
@@ -222,7 +237,7 @@ void parseConfig()
 					}
 					else if (!strncmp(functionType, "RTU_Stop_Bits", 13))
 					{
-						char temp_buffer[6];
+						char temp_buffer[20];
 						getData(line_str, temp_buffer, '"', '"');
 						mb_devices[deviceNumber].rtu_stop_bit = atoi(temp_buffer);
 					}
@@ -323,203 +338,228 @@ void parseConfig()
 	//*/
 }
 
-void querySlaveDevices()
+
+//-----------------------------------------------------------------------------
+// Thread to poll each slave device
+//-----------------------------------------------------------------------------
+void *querySlaveDevices(void *arg)
 {
-    unsigned char log_msg[1000];
-    
-    uint16_t bool_input_index = 0;
-    uint16_t bool_output_index = 0;
-    uint16_t int_input_index = 0;
-    uint16_t int_output_index = 0;
-
-    for (int i = 0; i < num_devices; i++)
+    while (run_openplc)
     {
-        //Verify if device is connected
-        if (!mb_devices[i].isConnected)
-        {
-            sprintf(log_msg, "Device %s is disconnected. Attempting to reconnect...\n", mb_devices[i].dev_name);
-            log(log_msg);
-            if (modbus_connect(mb_devices[i].mb_ctx) == -1)
-            {
-                sprintf(log_msg, "Connection failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                log(log_msg);
-                
-                // Because this device is not connected, we skip those input registers
-                bool_input_index += (mb_devices[i].discrete_inputs.num_regs);
-                int_input_index += (mb_devices[i].input_registers.num_regs);
-                int_input_index += (mb_devices[i].holding_read_registers.num_regs);
-                bool_output_index += (mb_devices[i].coils.num_regs);
-                int_output_index += (mb_devices[i].holding_registers.num_regs);
-            }
-            else
-            {
-                sprintf(log_msg, "Connected to MB device %s\n", mb_devices[i].dev_name);
-                log(log_msg);
-                mb_devices[i].isConnected = true;
-            }
-        }
+        unsigned char log_msg[1000];
+        
+        uint16_t bool_input_index = 0;
+        uint16_t bool_output_index = 0;
+        uint16_t int_input_index = 0;
+        uint16_t int_output_index = 0;
 
-        if (mb_devices[i].isConnected)
+        for (int i = 0; i < num_devices; i++)
         {
-            //Read discrete inputs
-            if (mb_devices[i].discrete_inputs.num_regs != 0)
+            //Verify if device is connected
+            if (!mb_devices[i].isConnected)
             {
-                uint8_t *tempBuff;
-                tempBuff = (uint8_t *)malloc(mb_devices[i].discrete_inputs.num_regs);
-                int return_val = modbus_read_input_bits(mb_devices[i].mb_ctx, mb_devices[i].discrete_inputs.start_address,
-                                                        mb_devices[i].discrete_inputs.num_regs, tempBuff);
-                if (return_val == -1)
+                sprintf(log_msg, "Device %s is disconnected. Attempting to reconnect...\n", mb_devices[i].dev_name);
+                log(log_msg);
+                if (modbus_connect(mb_devices[i].mb_ctx) == -1)
                 {
-                    if (mb_devices[i].protocol != MB_RTU)
-                    {
-                        modbus_close(mb_devices[i].mb_ctx);
-                        mb_devices[i].isConnected = false;
-                    }
-                    
-                    sprintf(log_msg, "Modbus Read Discrete Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
+                    sprintf(log_msg, "Connection failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
                     log(log_msg);
+                    
+                    if (special_functions[2] != NULL) *special_functions[2]++;
+                    
+                    // Because this device is not connected, we skip those input registers
                     bool_input_index += (mb_devices[i].discrete_inputs.num_regs);
-                }
-                else
-                {
-                    pthread_mutex_lock(&ioLock);
-                    for (int j = 0; j < return_val; j++)
-                    {
-                        bool_input_buf[bool_input_index] = tempBuff[j];
-                        bool_input_index++;
-                    }
-                    pthread_mutex_unlock(&ioLock);
-                }
-
-                free(tempBuff);
-            }
-
-            //Write coils
-            if (mb_devices[i].coils.num_regs != 0)
-            {
-                uint8_t *tempBuff;
-                tempBuff = (uint8_t *)malloc(mb_devices[i].coils.num_regs);
-
-                pthread_mutex_lock(&ioLock);
-                for (int j = 0; j < mb_devices[i].coils.num_regs; j++)
-                {
-                    tempBuff[j] = bool_output_buf[bool_output_index];
-                    bool_output_index++;
-                }
-                pthread_mutex_unlock(&ioLock);
-
-                int return_val = modbus_write_bits(mb_devices[i].mb_ctx, mb_devices[i].coils.start_address, mb_devices[i].coils.num_regs, tempBuff);
-                if (return_val == -1)
-                {
-                    if (mb_devices[i].protocol != MB_RTU)
-                    {
-                        modbus_close(mb_devices[i].mb_ctx);
-                        mb_devices[i].isConnected = false;
-                    }
-
-                    sprintf(log_msg, "Modbus Write Coils failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                    log(log_msg);
-                }
-                
-                free(tempBuff);
-            }
-
-            //Read input registers
-            if (mb_devices[i].input_registers.num_regs != 0)
-            {
-                uint16_t *tempBuff;
-                tempBuff = (uint16_t *)malloc(2*mb_devices[i].input_registers.num_regs);
-                int return_val = modbus_read_input_registers(	mb_devices[i].mb_ctx, mb_devices[i].input_registers.start_address,
-                                                                mb_devices[i].input_registers.num_regs, tempBuff);
-                if (return_val == -1)
-                {
-                    if (mb_devices[i].protocol != MB_RTU)
-                    {
-                        modbus_close(mb_devices[i].mb_ctx);
-                        mb_devices[i].isConnected = false;
-                    }
-                    
-                    sprintf(log_msg, "Modbus Read Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                    log(log_msg);
-					int_input_index += (mb_devices[i].input_registers.num_regs);
-                }
-                else
-                {
-                    pthread_mutex_lock(&ioLock);
-                    for (int j = 0; j < return_val; j++)
-                    {
-                        int_input_buf[int_input_index] = tempBuff[j];
-                        int_input_index++;
-                    }
-                    pthread_mutex_unlock(&ioLock);
-                }
-
-                free(tempBuff);
-            }
-
-            //Read holding registers
-            if (mb_devices[i].holding_read_registers.num_regs != 0)
-            {
-                uint16_t *tempBuff;
-                tempBuff = (uint16_t *)malloc(2*mb_devices[i].holding_read_registers.num_regs);
-                int return_val = modbus_read_registers(mb_devices[i].mb_ctx, mb_devices[i].holding_read_registers.start_address,
-                                                       mb_devices[i].holding_read_registers.num_regs, tempBuff);
-                if (return_val == -1)
-                {
-                    if (mb_devices[i].protocol != MB_RTU)
-                    {
-                        modbus_close(mb_devices[i].mb_ctx);
-                        mb_devices[i].isConnected = false;
-                    }
-                    sprintf(log_msg, "Modbus Read Holding Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                    log(log_msg);
+                    int_input_index += (mb_devices[i].input_registers.num_regs);
                     int_input_index += (mb_devices[i].holding_read_registers.num_regs);
+                    bool_output_index += (mb_devices[i].coils.num_regs);
+                    int_output_index += (mb_devices[i].holding_registers.num_regs);
                 }
                 else
                 {
-                    pthread_mutex_lock(&ioLock);
-                    for (int j = 0; j < return_val; j++)
-                    {
-                        int_input_buf[int_input_index] = tempBuff[j];
-                        int_input_index++;
-                    }
-                    pthread_mutex_unlock(&ioLock);
+                    sprintf(log_msg, "Connected to MB device %s\n", mb_devices[i].dev_name);
+                    log(log_msg);
+                    mb_devices[i].isConnected = true;
                 }
-
-                free(tempBuff);
             }
 
-            //Write holding registers
-            if (mb_devices[i].holding_registers.num_regs != 0)
+            if (mb_devices[i].isConnected)
             {
-                uint16_t *tempBuff;
-                tempBuff = (uint16_t *)malloc(2*mb_devices[i].holding_registers.num_regs);
+                struct timespec ts;
+                ts.tv_sec = 0;
+                ts.tv_nsec = (1000*1000*1000*28)/mb_devices[i].rtu_baud;
 
-                pthread_mutex_lock(&ioLock);
-                for (int j = 0; j < mb_devices[i].holding_registers.num_regs; j++)
+                //Read discrete inputs
+                if (mb_devices[i].discrete_inputs.num_regs != 0)
                 {
-                    tempBuff[j] = int_output_buf[int_output_index];
-                    int_output_index++;
-                }
-                pthread_mutex_unlock(&ioLock);
-
-                int return_val = modbus_write_registers(mb_devices[i].mb_ctx, mb_devices[i].holding_registers.start_address,
-                                                        mb_devices[i].holding_registers.num_regs, tempBuff);
-                if (return_val == -1)
-                {
-                    if (mb_devices[i].protocol != MB_RTU)
+                    uint8_t *tempBuff;
+                    tempBuff = (uint8_t *)malloc(mb_devices[i].discrete_inputs.num_regs);
+                    nanosleep(&ts, NULL); 
+                    int return_val = modbus_read_input_bits(mb_devices[i].mb_ctx, mb_devices[i].discrete_inputs.start_address,
+                                                            mb_devices[i].discrete_inputs.num_regs, tempBuff);
+                    if (return_val == -1)
                     {
-                        modbus_close(mb_devices[i].mb_ctx);
-                        mb_devices[i].isConnected = false;
+                        if (mb_devices[i].protocol != MB_RTU)
+                        {
+                            modbus_close(mb_devices[i].mb_ctx);
+                            mb_devices[i].isConnected = false;
+                        }
+                        
+                        sprintf(log_msg, "Modbus Read Discrete Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
+                        log(log_msg);
+                        bool_input_index += (mb_devices[i].discrete_inputs.num_regs);
+                        if (special_functions[2] != NULL) *special_functions[2]++;
+                    }
+                    else
+                    {
+                        pthread_mutex_lock(&ioLock);
+                        for (int j = 0; j < return_val; j++)
+                        {
+                            bool_input_buf[bool_input_index] = tempBuff[j];
+                            bool_input_index++;
+                        }
+                        pthread_mutex_unlock(&ioLock);
+                    }
+
+                    free(tempBuff);
+                }
+
+                //Write coils
+                if (mb_devices[i].coils.num_regs != 0)
+                {
+                    uint8_t *tempBuff;
+                    tempBuff = (uint8_t *)malloc(mb_devices[i].coils.num_regs);
+
+                    pthread_mutex_lock(&ioLock);
+                    for (int j = 0; j < mb_devices[i].coils.num_regs; j++)
+                    {
+                        tempBuff[j] = bool_output_buf[bool_output_index];
+                        bool_output_index++;
+                    }
+                    pthread_mutex_unlock(&ioLock);
+
+                    nanosleep(&ts, NULL); 
+                    int return_val = modbus_write_bits(mb_devices[i].mb_ctx, mb_devices[i].coils.start_address, mb_devices[i].coils.num_regs, tempBuff);
+                    if (return_val == -1)
+                    {
+                        if (mb_devices[i].protocol != MB_RTU)
+                        {
+                            modbus_close(mb_devices[i].mb_ctx);
+                            mb_devices[i].isConnected = false;
+                        }
+
+                        sprintf(log_msg, "Modbus Write Coils failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
+                        log(log_msg);
+                        if (special_functions[2] != NULL) *special_functions[2]++;
                     }
                     
-                    sprintf(log_msg, "Modbus Write Holding Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                    log(log_msg);
+                    free(tempBuff);
                 }
-                
-                free(tempBuff);
+
+                //Read input registers
+                if (mb_devices[i].input_registers.num_regs != 0)
+                {
+                    uint16_t *tempBuff;
+                    tempBuff = (uint16_t *)malloc(2*mb_devices[i].input_registers.num_regs);
+                    nanosleep(&ts, NULL); 
+                    int return_val = modbus_read_input_registers(	mb_devices[i].mb_ctx, mb_devices[i].input_registers.start_address,
+                                                                    mb_devices[i].input_registers.num_regs-1, tempBuff);
+                    if (return_val == -1)
+                    {
+                        if (mb_devices[i].protocol != MB_RTU)
+                        {
+                            modbus_close(mb_devices[i].mb_ctx);
+                            mb_devices[i].isConnected = false;
+                        }
+                        
+                        sprintf(log_msg, "Modbus Read Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
+                        log(log_msg);
+                        int_input_index += (mb_devices[i].input_registers.num_regs);
+                        if (special_functions[2] != NULL) *special_functions[2]++;
+                    }
+                    else
+                    {
+                        pthread_mutex_lock(&ioLock);
+                        for (int j = 0; j < return_val; j++)
+                        {
+                            int_input_buf[int_input_index] = tempBuff[j];
+                            int_input_index++;
+                        }
+                        int_input_index++;
+                        pthread_mutex_unlock(&ioLock);
+                    }
+
+                    free(tempBuff);
+                }
+
+                //Read holding registers
+                if (mb_devices[i].holding_read_registers.num_regs != 0)
+                {
+                    uint16_t *tempBuff;
+                    tempBuff = (uint16_t *)malloc(2*mb_devices[i].holding_read_registers.num_regs);
+                    nanosleep(&ts, NULL); 
+                    int return_val = modbus_read_registers(mb_devices[i].mb_ctx, mb_devices[i].holding_read_registers.start_address,
+                                                           mb_devices[i].holding_read_registers.num_regs, tempBuff);
+                    if (return_val == -1)
+                    {
+                        if (mb_devices[i].protocol != MB_RTU)
+                        {
+                            modbus_close(mb_devices[i].mb_ctx);
+                            mb_devices[i].isConnected = false;
+                        }
+                        sprintf(log_msg, "Modbus Read Holding Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
+                        log(log_msg);
+                        int_input_index += (mb_devices[i].holding_read_registers.num_regs);
+                        if (special_functions[2] != NULL) *special_functions[2]++;
+                    }
+                    else
+                    {
+                        pthread_mutex_lock(&ioLock);
+                        for (int j = 0; j < return_val; j++)
+                        {
+                            int_input_buf[int_input_index] = tempBuff[j];
+                            int_input_index++;
+                        }
+                        pthread_mutex_unlock(&ioLock);
+                    }
+
+                    free(tempBuff);
+                }
+
+                //Write holding registers
+                if (mb_devices[i].holding_registers.num_regs != 0)
+                {
+                    uint16_t *tempBuff;
+                    tempBuff = (uint16_t *)malloc(2*mb_devices[i].holding_registers.num_regs);
+
+                    pthread_mutex_lock(&ioLock);
+                    for (int j = 0; j < mb_devices[i].holding_registers.num_regs; j++)
+                    {
+                        tempBuff[j] = int_output_buf[int_output_index];
+                        int_output_index++;
+                    }
+                    pthread_mutex_unlock(&ioLock);
+
+                    nanosleep(&ts, NULL); 
+                    int return_val = modbus_write_registers(mb_devices[i].mb_ctx, mb_devices[i].holding_registers.start_address,
+                                                            mb_devices[i].holding_registers.num_regs, tempBuff);
+                    if (return_val == -1)
+                    {
+                        if (mb_devices[i].protocol != MB_RTU)
+                        {
+                            modbus_close(mb_devices[i].mb_ctx);
+                            mb_devices[i].isConnected = false;
+                        }
+                        
+                        sprintf(log_msg, "Modbus Write Holding Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
+                        log(log_msg);
+                        if (special_functions[2] != NULL) *special_functions[2]++;
+                    }
+                    
+                    free(tempBuff);
+                }
             }
         }
+        sleepms(polling_period);
     }
 }
 
@@ -543,9 +583,28 @@ void initializeMB()
 													mb_devices[i].rtu_parity, mb_devices[i].rtu_data_bit,
 													mb_devices[i].rtu_stop_bit);
 		}
-
+        
+        //slave id
 		modbus_set_slave(mb_devices[i].mb_ctx, mb_devices[i].dev_id);
+        
+        //timeout
+        uint32_t to_sec = timeout / 1000;
+        uint32_t to_usec = (timeout % 1000) * 1000;
+        modbus_set_response_timeout(mb_devices[i].mb_ctx, to_sec, to_usec);
 	}
+    
+    //Initialize comm error counter
+    if (special_functions[2] != NULL) *special_functions[2] = 0;
+    
+    if (num_devices > 0)
+    {
+        pthread_t thread;
+        int ret = pthread_create(&thread, NULL, querySlaveDevices, NULL);
+        if (ret==0) 
+        {
+            pthread_detach(thread);
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------

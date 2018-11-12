@@ -155,7 +155,7 @@ void disableOutputs()
 //-----------------------------------------------------------------------------
 void handleSpecialFunctions()
 {
-    //current time
+    //current time [%ML1024]
     struct tm *current_time;
     time_t rawtime;
     
@@ -168,9 +168,12 @@ void handleSpecialFunctions()
         
     if (special_functions[0] != NULL) *special_functions[0] = rawtime;
     
-    //number of cycles
+    //number of cycles [%ML1025]
     cycle_counter++;
     if (special_functions[1] != NULL) *special_functions[1] = cycle_counter;
+    
+    //comm error counter [%ML1026]
+    /* Implemented in modbus_master.cpp */
 
     //insert other special functions below
 }
@@ -252,8 +255,6 @@ int main(int argc,char **argv)
 		//attached to the user variables
 		glueVars();
         
-        querySlaveDevices(); //query data from all slave devices
-		
 		updateBuffersIn(); //read input image
 
 		pthread_mutex_lock(&bufferLock); //lock mutex

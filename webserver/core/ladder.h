@@ -134,7 +134,7 @@ void mapUnusedIO();
 
 //modbus_master.cpp
 void initializeMB();
-void querySlaveDevices();
+void *querySlaveDevices(void *arg);
 void updateBuffersIn_MB();
 void updateBuffersOut_MB();
 
