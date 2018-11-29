@@ -29,8 +29,8 @@
 #include "ladder.h"
 
 //some modbus defines
-#define MAX_DISCRETE_INPUT 		800
-#define MAX_COILS 				800
+#define MAX_DISCRETE_INPUT      8192
+#define MAX_COILS               8192
 #define MAX_HOLD_REGS 			8192
 #define MAX_INP_REGS			1024
 
