@@ -532,7 +532,7 @@ elif [ "$1" == "custom" ]; then
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
     ./autogen.sh
-    ./configure
+    ./configure --prefix=/usr
     sudo make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
