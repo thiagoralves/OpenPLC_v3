@@ -514,7 +514,7 @@ elif [ "$1" == "custom" ]; then
     sudo dd if=/dev/zero of=swapfile bs=1M count=1000
     sudo mkswap swapfile
     sudo swapon swapfile
-    cmake ../dnp3_src
+    cmake ../dnp3_src -DFULL=ON -DCMAKE_INSTALL_PREFIX=/usr
     make
     sudo make install
     if [ $? -ne 0 ]; then
