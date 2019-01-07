@@ -462,7 +462,7 @@ void *querySlaveDevices(void *arg)
                     tempBuff = (uint16_t *)malloc(2*mb_devices[i].input_registers.num_regs);
                     nanosleep(&ts, NULL); 
                     int return_val = modbus_read_input_registers(	mb_devices[i].mb_ctx, mb_devices[i].input_registers.start_address,
-                                                                    mb_devices[i].input_registers.num_regs-1, tempBuff);
+                                                                    mb_devices[i].input_registers.num_regs, tempBuff);
                     if (return_val == -1)
                     {
                         if (mb_devices[i].protocol != MB_RTU)
