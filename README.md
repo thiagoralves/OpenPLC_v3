@@ -4,21 +4,22 @@ The OpenPLC Project consists of three sub-projects:
 1. [Runtime](https://github.com/thiagoralves/OpenPLC_v3)
 2. [Programming editor](http://www.openplcproject.com/plcopen-editor)
 3. [HMI builder](http://www.openplcproject.com/reference-installing-scadabr)
-<br/>
+
 To install:
-<br/>
+```bash
 git clone https://github.com/thiagoralves/OpenPLC_v3.git
-<br/>
 cd OpenPLC_v3
-<br/>
 ./install.sh [platform]
-<br/>
-where [platform] can be:
-<br/>
-win - Install OpenPLC on Windows over Cygwin
-<br/>
-linux - Install OpenPLC on a Debian-based Linux distribution
-<br/>
-rpi - Install OpenPLC on a Raspberry Pi
-<br/>
-custom - Skip all specific package installation and tries to install OpenPLC assuming your system already has all dependencies met. This option can be useful if you're trying to install OpenPLC on an unsuported Linux platform or had manually installed all the dependency packages before.
+```
+
+Where `[platform]` can be:
+
+`win` - Install OpenPLC on Windows over Cygwin
+
+`linux` - Install OpenPLC on a Debian-based Linux distribution
+
+`docker` - Used by the `Dockerfile` (i.e. doesn't invoke `sudo`)
+
+`rpi` - Install OpenPLC on a Raspberry Pi
+
+`custom` - Skip all specific package installation and tries to install OpenPLC assuming your system already has all dependencies met. This option can be useful if you're trying to install OpenPLC on an unsuported Linux platform or had manually installed all the dependency packages before.
