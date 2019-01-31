@@ -6,6 +6,7 @@ if [ $# -eq 0 ]; then
     echo "Usage: ./install.sh [platform]   where [platform] can be"
     echo "  win           Install OpenPLC on Windows over Cygwin"
     echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
+    echo "  docker        Install OpenPLC in a Docker container"
     echo "  rpi           Install OpenPLC on a Raspberry Pi"
     echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
     echo "  custom        Skip all specific package installation and tries to install"
@@ -22,7 +23,7 @@ if [ "$1" == "win" ]; then
     cp ./utils/apt-cyg/apt-cyg ./
     cp ./utils/apt-cyg/wget.exe /bin
     install apt-cyg /bin
-    apt-cyg install lynx 
+    apt-cyg install lynx
     rm -f /bin/wget.exe
     apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3
     lynx -source https://bootstrap.pypa.io/get-pip.py > get-pip.py
@@ -30,7 +31,7 @@ if [ "$1" == "win" ]; then
     pip install flask
     pip install flask-login
     pip install pyserial
-    
+
     echo ""
     echo "[MATIEC COMPILER]"
     cp ./utils/matiec_src/bin_win32/*.* ./webserver/
@@ -39,7 +40,7 @@ if [ "$1" == "win" ]; then
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    
+
     echo ""
     echo "[ST OPTIMIZER]"
     cd utils/st_optimizer_src
@@ -51,7 +52,7 @@ if [ "$1" == "win" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[GLUE GENERATOR]"
     cd utils/glue_generator_src
@@ -63,7 +64,7 @@ if [ "$1" == "win" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[OPEN DNP3]"
     cd webserver/core
@@ -80,7 +81,7 @@ if [ "$1" == "win" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
@@ -93,14 +94,14 @@ if [ "$1" == "win" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
     ./change_hardware_layer.sh blank
     ./compile_program.sh blank_program.st
     cp ./start_openplc.sh ../../
-    
+
 
 
 elif [ "$1" == "linux" ]; then
@@ -140,7 +141,7 @@ elif [ "$1" == "linux" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[GLUE GENERATOR]"
     cd utils/glue_generator_src
@@ -152,7 +153,7 @@ elif [ "$1" == "linux" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[OPEN DNP3]"
     cd utils/dnp3_src
@@ -173,7 +174,7 @@ elif [ "$1" == "linux" ]; then
     sudo swapoff swapfile
     sudo rm -f ./swapfile
     cd ../..
-    
+
     echo ""
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
@@ -187,7 +188,7 @@ elif [ "$1" == "linux" ]; then
     fi
     sudo ldconfig
     cd ../..
-    
+
     echo ""
     echo "[OPENPLC SERVICE]"
     WORKING_DIR=$(pwd)
@@ -218,21 +219,11 @@ WantedBy=multi-user.target" >> openplc.service
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
     cp ./start_openplc.sh ../../
-    
-    
 
-elif [ "$1" == "rpi" ]; then
-    echo "Installing OpenPLC on Raspberry Pi"
-    sudo apt-get update
-    sudo apt-get install build-essential pkg-config bison flex autoconf automake libtool make git python2.7 python-pip sqlite3 cmake wiringpi
-    pip install flask
-    pip install flask-login
-    pip install pyserial
-    #make sure that packages are also installed for the super user
-    sudo -H pip install flask
-    sudo -H pip install flask-login
-    sudo -H pip install pyserial
-    
+
+elif [ "$1" == "docker" ]; then
+    echo "Installing OpenPLC on Linux inside Docker"
+
     echo ""
     echo "[MATIEC COMPILER]"
     cd utils/matiec_src
@@ -258,7 +249,7 @@ elif [ "$1" == "rpi" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[GLUE GENERATOR]"
     cd utils/glue_generator_src
@@ -270,7 +261,99 @@ elif [ "$1" == "rpi" ]; then
         exit 1
     fi
     cd ../..
-    
+
+    echo ""
+    echo "[OPEN DNP3]"
+    cd utils/dnp3_src
+    echo "creating swapfile..."
+      dd if=/dev/zero of=swapfile bs=1M count=1000
+      mkswap swapfile
+      swapon swapfile
+    cmake ../dnp3_src
+    make
+      make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing OpenDNP3"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+      ldconfig
+    echo "removing swapfile..."
+      swapoff swapfile
+      rm -f ./swapfile
+    cd ../..
+
+    echo ""
+    echo "[LIBMODBUS]"
+    cd utils/libmodbus_src
+    ./autogen.sh
+    ./configure
+      make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing Libmodbus"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+      ldconfig
+    cd ../..
+
+    echo ""
+    echo "[FINALIZING]"
+    cd webserver/scripts
+    ./change_hardware_layer.sh blank_linux
+    ./compile_program.sh blank_program.st
+    cp ./start_openplc.sh ../../
+
+elif [ "$1" == "rpi" ]; then
+    echo "Installing OpenPLC on Raspberry Pi"
+    sudo apt-get update
+    sudo apt-get install build-essential pkg-config bison flex autoconf automake libtool make git python2.7 python-pip sqlite3 cmake wiringpi
+    pip install flask
+    pip install flask-login
+    pip install pyserial
+    #make sure that packages are also installed for the super user
+    sudo -H pip install flask
+    sudo -H pip install flask-login
+    sudo -H pip install pyserial
+
+    echo ""
+    echo "[MATIEC COMPILER]"
+    cd utils/matiec_src
+    autoreconf -i
+    ./configure
+    make
+    cp ./iec2c ../../webserver/
+    if [ $? -ne 0 ]; then
+        echo "Error compiling MatIEC"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+
+    echo ""
+    echo "[ST OPTIMIZER]"
+    cd utils/st_optimizer_src
+    g++ st_optimizer.cpp -o st_optimizer
+    cp ./st_optimizer ../../webserver/
+    if [ $? -ne 0 ]; then
+        echo "Error compiling ST Optimizer"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+
+    echo ""
+    echo "[GLUE GENERATOR]"
+    cd utils/glue_generator_src
+    g++ glue_generator.cpp -o glue_generator
+    cp ./glue_generator ../../webserver/core
+    if [ $? -ne 0 ]; then
+        echo "Error compiling Glue Generator"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+
     echo ""
     echo "[OPEN DNP3]"
     cd utils/dnp3_src
@@ -291,7 +374,7 @@ elif [ "$1" == "rpi" ]; then
     sudo swapoff swapfile
     sudo rm -f ./swapfile
     cd ../..
-    
+
     echo ""
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
@@ -305,7 +388,7 @@ elif [ "$1" == "rpi" ]; then
     fi
     sudo ldconfig
     cd ../..
-    
+
     echo ""
     echo "[OPENPLC SERVICE]"
     WORKING_DIR=$(pwd)
@@ -376,7 +459,7 @@ elif [ "$1" == "neuron" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[GLUE GENERATOR]"
     cd utils/glue_generator_src
@@ -388,7 +471,7 @@ elif [ "$1" == "neuron" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[OPEN DNP3]"
     cd utils/dnp3_src
@@ -409,7 +492,7 @@ elif [ "$1" == "neuron" ]; then
     sudo swapoff swapfile
     sudo rm -f ./swapfile
     cd ../..
-    
+
     echo ""
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
@@ -423,16 +506,16 @@ elif [ "$1" == "neuron" ]; then
     fi
     sudo ldconfig
     cd ../..
-    
+
     echo ""
-    echo "[DISABLING UNIPI SERVICES]" 
+    echo "[DISABLING UNIPI SERVICES]"
     sudo systemctl stop neuronhost.service
     sudo systemctl disable neuronhost.service
     sudo systemctl stop neurontcp.service
     sudo systemctl disable neurontcp.service
     sudo systemctl stop evok.service
     sudo systemctl disable evok.service
-    
+
     echo ""
     echo "[OPENPLC SERVICE]"
     WORKING_DIR=$(pwd)
@@ -468,7 +551,7 @@ WantedBy=multi-user.target" >> openplc.service
 
 elif [ "$1" == "custom" ]; then
     echo "Installing OpenPLC on Custom Platform"
-    
+
     echo ""
     echo "[MATIEC COMPILER]"
     cd utils/matiec_src
@@ -494,7 +577,7 @@ elif [ "$1" == "custom" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[GLUE GENERATOR]"
     cd utils/glue_generator_src
@@ -506,7 +589,7 @@ elif [ "$1" == "custom" ]; then
         exit 1
     fi
     cd ../..
-    
+
     echo ""
     echo "[OPEN DNP3]"
     cd utils/dnp3_src
@@ -527,7 +610,7 @@ elif [ "$1" == "custom" ]; then
     sudo swapoff swapfile
     sudo rm -f ./swapfile
     cd ../..
-    
+
     echo ""
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
@@ -541,7 +624,7 @@ elif [ "$1" == "custom" ]; then
     fi
     sudo ldconfig
     cd ../..
-    
+
     echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
