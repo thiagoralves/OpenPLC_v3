@@ -37,6 +37,6 @@ docker build -t openplc:v3 .
 _Devices can be passed to the `docker` daemon using the `-v` flag (e.g. `-v /dev/ttyACM0:/dev/ttyACM0`)_
 
 ```bash
-docker run -it --rm -p 8080:8080 openplc:v3
+docker run -it --rm --privileged -p 8080:8080 openplc:v3
 ```
 
