@@ -252,6 +252,7 @@ elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
     
     linux_install_deps sudo
+    sudo apt-get install wiringpi
     
     install_py_deps
     install_py_deps sudo 
