@@ -270,6 +270,16 @@ elif [ "$1" == "rpi" ]; then
 
 elif [ "$1" == "neuron" ]; then
     echo "Installing OpenPLC on UniPi Neuron PLC"
+    
+    echo ""
+    echo "[DISABLING UNIPI SERVICES]"
+    sudo systemctl stop neuronhost.service
+    sudo systemctl disable neuronhost.service
+    sudo systemctl stop neurontcp.service
+    sudo systemctl disable neurontcp.service
+    sudo systemctl stop evok.service
+    sudo systemctl disable evok.service
+
     linux_install_deps sudo
     
     install_py_deps
