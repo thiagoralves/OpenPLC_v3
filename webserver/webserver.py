@@ -158,43 +158,46 @@ def generate_mbconfig():
     #mbconfig = 'Num_Devices = "' + str(num_devices) + '"'
     mbconfig = 'Num_Devices = "%s"' % len(rows)
 
-    for device_counter, row in enumerate(rows):
+    for device_counter_int, row in enumerate(rows):
+
+        device_idx = str(device_counter_int)
+
         mbconfig += """
 # ------------
 #   DEVICE """
-        mbconfig += str(device_counter)
+        mbconfig += device_idx
         mbconfig += """
 # ------------
 """
-        mbconfig += 'device' + str(device_counter) + '.name = "' + str(row[1]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.slave_id = "' + str(row[3]) + '"\n'
+        mbconfig += 'device' + device_idx + '.name = "' + str(row[1]) + '"\n'
+        mbconfig += 'device' + device_idx + '.slave_id = "' + str(row[3]) + '"\n'
         if (str(row[2]) == 'ESP32' or str(row[2]) == 'ESP8266' or str(row[2]) == 'TCP'):
-            mbconfig += 'device' + str(device_counter) + '.protocol = "TCP"\n'
-            mbconfig += 'device' + str(device_counter) + '.address = "' + str(row[9]) + '"\n'
+            mbconfig += 'device' + device_idx + '.protocol = "TCP"\n'
+            mbconfig += 'device' + device_idx + '.address = "' + str(row[9]) + '"\n'
         else:
-            mbconfig += 'device' + str(device_counter) + '.protocol = "RTU"\n'
+            mbconfig += 'device' + device_idx + '.protocol = "RTU"\n'
             if (str(row[4]).startswith("COM")):
                 port_name = "/dev/ttyS" + str(int(str(row[4]).split("COM")[1]) - 1)
             else:
                 port_name = str(row[4])
-            mbconfig += 'device' + str(device_counter) + '.address = "' + port_name + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.IP_Port = "' + str(row[10]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.RTU_Parity = "' + str(row[6]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
+            mbconfig += 'device' + device_idx + '.address = "' + port_name + '"\n'
+        mbconfig += 'device' + device_idx + '.IP_Port = "' + str(row[10]) + '"\n'
+        mbconfig += 'device' + device_idx + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
+        mbconfig += 'device' + device_idx + '.RTU_Parity = "' + str(row[6]) + '"\n'
+        mbconfig += 'device' + device_idx + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
+        mbconfig += 'device' + device_idx + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
 
-        mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.Coils_Start = "' + str(row[13]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.Coils_Size = "' + str(row[14]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.Input_Registers_Start = "' + str(row[15]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.Input_Registers_Size = "' + str(row[16]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Start = "' + str(row[17]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Size = "' + str(row[18]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
-        mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
-        device_counter += 1
+        mbconfig += 'device' + device_idx + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
+        mbconfig += 'device' + device_idx + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
+        mbconfig += 'device' + device_idx + '.Coils_Start = "' + str(row[13]) + '"\n'
+        mbconfig += 'device' + device_idx + '.Coils_Size = "' + str(row[14]) + '"\n'
+        mbconfig += 'device' + device_idx + '.Input_Registers_Start = "' + str(row[15]) + '"\n'
+        mbconfig += 'device' + device_idx + '.Input_Registers_Size = "' + str(row[16]) + '"\n'
+        mbconfig += 'device' + device_idx + '.Holding_Registers_Read_Start = "' + str(row[17]) + '"\n'
+        mbconfig += 'device' + device_idx + '.Holding_Registers_Read_Size = "' + str(row[18]) + '"\n'
+        mbconfig += 'device' + device_idx + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
+        mbconfig += 'device' + device_idx + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
+        #device_counter += 1
 
     with open('./mbconfig.cfg', 'w+') as f:
         f.write(mbconfig)

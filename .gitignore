@@ -1,8 +1,9 @@
-*.pyc
 
+# where docs are output to on gitlab.. MUST be named public/
+public/
 
-# editors
-
-.idea/
 .sass-cache/
+.idea/
+
+*.pyc
 
