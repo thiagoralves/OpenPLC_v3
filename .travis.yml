@@ -1,0 +1,8 @@
+language: bash
+
+services:
+  - docker
+  
+script:
+  - docker build .
+  
