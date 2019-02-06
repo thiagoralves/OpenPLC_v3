@@ -1,0 +1,6 @@
+services:
+  - docker
+  
+script:
+  - docker build -t OpenPLC:v3 .
+  
