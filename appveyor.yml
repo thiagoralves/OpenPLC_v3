@@ -1,0 +1,10 @@
+image: Visual Studio 2015
+init:
+  - git config --global core.autocrlf input
+install:
+  # batch commands start from cmd:
+  #- cmd: C:\\cygwin\\bin\\bash.exe install.sh win
+  - cmd: echo Hello from Windows
+
+build: off
+
