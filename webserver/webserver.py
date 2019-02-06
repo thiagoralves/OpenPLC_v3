@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 import os
 import subprocess
@@ -46,7 +47,7 @@ def user_loader(username):
     """Get user details for flask admin"""
     sql = "SELECT user_id, username, name, pict_file FROM Users "
     sql += ' where username=? '
-    row, err = db_query(sql, (username,), single=True)
+    row, err = db_query(sql, (username), single=True)
     if err:
         print(err)
         return None
@@ -62,6 +63,46 @@ def user_loader(username):
 @login_manager.unauthorized_handler
 def unauthorized_handler():
     return 'Unauthorized'
+
+
+"""
+@login_manager.request_loader
+def request_loader(request):
+    username = request.form.get('username')
+
+    database = "openplc.db"
+    conn = create_connection(database)
+    if (conn != None):
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT username, password, name, pict_file FROM Users")
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+
+            for row in rows:
+                if (row[0] == username):
+                    user = User()
+                    user.id = row[0]
+                    user.name = row[2]
+                    user.pict_file = str(row[3])
+                    user.is_authenticated = (request.form['password'] == row[1])
+                    return user
+            return
+
+        except Error as e:
+            print("error connecting to the database" + str(e))
+            return
+    else:
+        return
+"""
+"""
+@app.before_request
+def before_request():
+    flask.session.permanent = True
+    app.permanent_session_lifetime = datetime.timedelta(minutes=59)
+    flask.session.modified = True
+"""
 
 
 #------------------------------------------------
@@ -96,6 +137,7 @@ def configure_runtime():
                 openplc_runtime.stop_dnp3()
 
 
+# TODO @pedro asks can these be lower/upper > esp32 and rtu is easier ??
 DEVICE_PROTOCOLS = [
     {'protocol': 'Uno', 'label': 'Arduino Uno'},
     {'protocol': 'Mega', 'label': 'Arduino Mega'},
@@ -340,44 +382,7 @@ def db_query(sql, args=(), single=False, as_list=False):
 
 
 
-"""
-@login_manager.request_loader
-def request_loader(request):
-    username = request.form.get('username')
-    
-    database = "openplc.db"
-    conn = create_connection(database)
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT username, password, name, pict_file FROM Users")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
 
-            for row in rows:
-                if (row[0] == username):
-                    user = User()
-                    user.id = row[0]
-                    user.name = row[2]
-                    user.pict_file = str(row[3])
-                    user.is_authenticated = (request.form['password'] == row[1])
-                    return user
-            return
-                    
-        except Error as e:
-            print("error connecting to the database" + str(e))
-            return
-    else:
-        return
-"""
-"""
-@app.before_request
-def before_request():
-    flask.session.permanent = True
-    app.permanent_session_lifetime = datetime.timedelta(minutes=59)
-    flask.session.modified = True
-"""
 
 
 #= -------- Template Stuff ---------
@@ -438,7 +443,7 @@ def login():
     if request.method == "POST":
         # we use <> paswword to avoid caching..
         username = request.form['oplc_username']
-        password = request.form['oplc_password']
+        password = request.form['oplc_secret']
 
         sql = "SELECT user_id, username, password, name, pict_file FROM Users"
         sql += " where username=? and password=? "
@@ -450,11 +455,11 @@ def login():
             ctx.error = "Incorrect User or Password "
 
         else:
-            user = User(row)
+            user = User()
             user.id = row['user_id']
             user.username = row['username']
             user.name = row['name']
-            user.pict_file = str(row[3])
+            user.pict_file = row['pict_file']
             flask_login.login_user(user, remember=True, fresh=True)
             return flask.redirect(flask.url_for('dashboard'))
 

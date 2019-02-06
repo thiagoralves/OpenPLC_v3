@@ -57,16 +57,24 @@
     <div class="row no-gutters">
         <div class="col-md-3">
 
-            {# --- Main Navigation #}
+            {# --- Main Navigation left panel  #}
             {% if current_user.is_authenticated %}
-            <ul class="nav nav-pills flex-column" id="mainmav">
-                {% for n in nav -%}
-                <li class="nav-item">
-                    <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"
-                         ><i class="fa {{n.icon}}"></i>&nbsp;{{n.label}}</a>
-                </li>
-                {%- endfor %}
-            </ul>
+
+                {# authenticated, so show menu/nav #}
+                <ul class="nav nav-pills flex-column" id="mainmav">
+                    {% for n in nav -%}
+                    <li class="nav-item">
+                        <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"
+                             ><i class="fa {{n.icon}}"></i>&nbsp;{{n.label}}</a>
+                    </li>
+                    {%- endfor %}
+                </ul>
+
+            {% else %}
+                {# Not auth so show logo etc #}
+                {#<img src="/static/openplc_logo.gif" width="100" style="background-color: red">
+                <h5>Probably the first fully open source Programable Logic Controller</h5> #}
+
             {% endif %}
 
         </div>
