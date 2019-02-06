@@ -1,4 +1,4 @@
-language: python
+language: bash
 
 services:
   - docker
