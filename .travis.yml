@@ -9,13 +9,13 @@ addons:
       - doxygen
 
 script:
-  - docker build .
+    #  - docker build .
   - doxygen doxygen.conf
   
 deploy:
   provider: pages
   skip_cleanup: true
-  local_dir: docs/html
+  local_dir: public
   github_token: $GITHUB_TOKEN
   keep-history: true
   on:
