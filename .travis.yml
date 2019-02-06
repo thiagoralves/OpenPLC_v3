@@ -3,6 +3,11 @@ language: bash
 services:
   - docker
   
+addons:
+  apt:
+    packages:
+      - doxygen
+
 script:
   - docker build .
   - doxygen doxygen.conf
