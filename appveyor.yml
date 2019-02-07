@@ -1,0 +1,14 @@
+image: Visual Studio 2015
+init:
+  - git config --global core.autocrlf input
+clone_folder: c:\projects
+environment:
+  matrix:
+    - TARGET: cygwin-gcc
+      BUILD_ENVIRONMENT: cygwin
+install:
+  # batch commands start from cmd:
+    - cmd: C:\\cygwin\\bin\\bash -l -c "cd C:/projects; ./install.sh win;"
+
+build: off
+
