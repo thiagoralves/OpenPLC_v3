@@ -4,6 +4,7 @@ if [ $# -eq 0 ]; then
     echo "Error: You must provide a platform name as argument"
     echo ""
     echo "Usage: ./install.sh [platform]   where [platform] can be"
+    echo "  debug         Install OpenPLC on Debian-based Linux distribution for debug"
     echo "  win           Install OpenPLC on Windows over Cygwin"
     echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
     echo "  rpi           Install OpenPLC on a Raspberry Pi"
@@ -17,7 +18,132 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-if [ "$1" == "win" ]; then
+if [ "$1" == "debug" ]; then
+    echo "Installing OpenPLC on Linux"
+    sudo apt-get update
+    sudo apt-get install build-essential pkg-config bison flex autoconf automake libtool make git python2.7 python-pip sqlite3 cmake
+    pip install flask
+    pip install flask-login
+    pip install pyserial
+    #make sure that packages are also installed for the super user
+    sudo -H pip install flask
+    sudo -H pip install flask-login
+    sudo -H pip install pyserial
+
+    echo ""
+    echo "[MATIEC COMPILER]"
+    cd utils/matiec_src
+    autoreconf -i
+    ./configure
+    make
+    cp ./iec2c ../../webserver/
+    if [ $? -ne 0 ]; then
+        echo "Error compiling MatIEC"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+
+    echo ""
+    echo "[ST OPTIMIZER]"
+    cd utils/st_optimizer_src
+    g++ st_optimizer.cpp -o st_optimizer
+    cp ./st_optimizer ../../webserver/
+    if [ $? -ne 0 ]; then
+        echo "Error compiling ST Optimizer"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+    
+    echo ""
+    echo "[GLUE GENERATOR]"
+    cd utils/glue_generator_src
+    g++ glue_generator.cpp -o glue_generator
+    cp ./glue_generator ../../webserver/core
+    if [ $? -ne 0 ]; then
+        echo "Error compiling Glue Generator"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
+    
+    echo ""
+    echo "[OPEN DNP3]"
+    cd utils/dnp3_src
+    echo "creating swapfile..."
+    sudo dd if=/dev/zero of=swapfile bs=1M count=1000
+    sudo mkswap swapfile
+    sudo swapon swapfile
+    cmake ../dnp3_src
+    make
+    sudo make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing OpenDNP3"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    sudo ldconfig
+    echo "removing swapfile..."
+    sudo swapoff swapfile
+    sudo rm -f ./swapfile
+    cd ../..
+    
+    echo ""
+    echo "[LIBMODBUS]"
+    cd utils/libmodbus_src
+    ./autogen.sh
+    ./configure
+    sudo make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing Libmodbus"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    sudo ldconfig
+    cd ../..
+
+    echo ""
+    echo "[OPC UA]"
+    sudo apt-get install -y python-pip python-dev
+    pip install opcua
+
+    echo ""
+    echo "[sysv_ipc]"
+    sudo pip install sysv_ipc
+    
+    echo ""
+    echo "[OPENPLC SERVICE]"
+    WORKING_DIR=$(pwd)
+    echo -e "[Unit]\n\
+Description=OpenPLC Service\n\
+After=network.target\n\
+\n\
+[Service]\n\
+Type=simple\n\
+Restart=always\n\
+RestartSec=1\n\
+User=root\n\
+Group=root\n\
+WorkingDirectory=$WORKING_DIR\n\
+ExecStart=$WORKING_DIR/start_openplc.sh\n\
+\n\
+[Install]\n\
+WantedBy=multi-user.target" >> openplc.service
+    sudo cp -rf ./openplc.service /lib/systemd/system/
+    rm -rf openplc.service
+    echo "Enabling OpenPLC Service..."
+    sudo systemctl daemon-reload
+    sudo systemctl enable openplc
+
+    echo ""
+    echo "[FINALIZING]"
+    cd webserver/scripts
+    ./change_hardware_layer.sh debug_linux
+    ./compile_program.sh blank_program.st
+    cp ./start_openplc.sh ../../
+
+elif [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
     cp ./utils/apt-cyg/apt-cyg ./
     cp ./utils/apt-cyg/wget.exe /bin
@@ -580,6 +706,7 @@ else
     echo "Error: unrecognized platform"
     echo ""
     echo "Usage: ./install.sh [platform]   where [platform] can be"
+    echo "  debug         Install OpenPLC on Debian-based Linux distribution for debug"
     echo "  win           Install OpenPLC on Windows over Cygwin"
     echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
     echo "  rpi           Install OpenPLC on a Raspberry Pi"

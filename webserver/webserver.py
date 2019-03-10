@@ -1286,6 +1286,8 @@ def hardware():
                         action    =  "hardware"
                         method    =  "post">
                         <select id='hardware_layer' name='hardware_layer' style="width:400px;height:30px;font-size: 16px;font-family: 'Roboto', sans-serif;">"""
+            if (current_driver == "debug_linux"): return_str += "<option selected='selected' value='debug_linux'>Debug Linux</option>"
+            else: return_str += "<option value='debug_linux'>Debug Linux</option>"
             if (current_driver == "blank"): return_str += "<option selected='selected' value='blank'>Blank</option>"
             else: return_str += "<option value='blank'>Blank</option>"
             if (current_driver == "blank_linux"): return_str += "<option selected='selected' value='blank_linux'>Blank Linux</option>"

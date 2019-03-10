@@ -10,7 +10,14 @@ cd scripts &>/dev/null
 #move to the core folder
 cd ../core
 
-if [ "$1" == "blank" ]; then
+if [ "$1" == "debug_linux" ]; then
+    echo "Activating Debug driver"
+    cp ./hardware_layers/debug.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo linux > ../scripts/openplc_platform
+    echo debug_linux > ../scripts/openplc_driver
+
+elif [ "$1" == "blank" ]; then
     echo "Activating Blank driver"
     cp ./hardware_layers/blank.cpp ./hardware_layer.cpp
     echo "Setting Platform"
