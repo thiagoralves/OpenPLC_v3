@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import subprocess
 import platform
@@ -405,7 +406,7 @@ def db_query(sql, args=(), single=False, as_list=False):
 Nav = [
     {"label": "Dashboard", "page": "dashboard", "icon": "fa-home"},
     {"label": "Programs", "page": "programs", "icon": "fa-braille"},
-    {"label": "Slave Devices", "page": "modbus", "icon": "fa-sitemap"},
+    {"label": "Slave Devices", "page": "slaves", "icon": "fa-sitemap"},
     {"label": "Monitoring", "page": "monitoring", "icon": "fa-signal"},
     {"label": "Hardware", "page": "hardware", "icon": "fa-microchip"},
     {"label": "Users", "page": "users", "icon": "fa-users"},
@@ -780,14 +781,14 @@ def compilation_logs():
         return openplc_runtime.compilation_status()
 
 
-@app.route('/modbus', methods=['GET', 'POST'])
+@app.route('/slaves', methods=['GET', 'POST'])
 @login_required
-def modbus():
+def slaves_index():
 
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        if (openplc_runtime.status() == "Compiling"):
+            return draw_compiling_page()
 
-        ctx = make_context("modbus")
-
+        ctx = make_context("slaves")
 
         sql = "SELECT dev_id, dev_name, dev_type, di_size, coil_size, ir_size, hr_read_size, hr_write_size FROM Slave_dev"
         rows, ctx.error = db_query(sql)
@@ -808,7 +809,7 @@ def modbus():
                 di = "-"
             else:
                 di = "%IX" + str(100 + (counter_di/8)) + "." + str(counter_di%8) + " to "
-                counter_di += row[3];
+                counter_di += row[3]
                 di += "%IX" + str(100 + ((counter_di-1)/8)) + "." + str((counter_di-1)%8)
 
             #calculate do
@@ -816,7 +817,7 @@ def modbus():
                 do = "-"
             else:
                 do = "%QX" + str(100 + (counter_do/8)) + "." + str(counter_do%8) + " to "
-                counter_do += row[4];
+                counter_do += row[4]
                 do += "%QX" + str(100 + ((counter_do-1)/8)) + "." + str((counter_do-1)%8)
 
             #calculate ai
@@ -824,7 +825,7 @@ def modbus():
                 ai = "-"
             else:
                 ai = "%IW" + str(100 + counter_ai) + " to "
-                counter_ai += row[5]+row[6];
+                counter_ai += row[5]+row[6]
                 ai += "%IW" + str(100 + (counter_ai-1))
 
             #calculate ao
@@ -832,24 +833,32 @@ def modbus():
                 ao = "-"
             else:
                 ao = "%QW" + str(100 + counter_ao) + " to "
-                counter_ao += row[7];
+                counter_ao += row[7]
                 ao += "%QW" + str(100 + (counter_ao-1))
 
 
             ctx.devices.append( [str(row[1]), str(row[2]), di, do, ai,ao ])
 
-        return render_template("modbus.html", c=ctx)
-        
+        return render_template("slaves.html", c=ctx)
 
-@app.route('/modbus/add', methods=['GET', 'POST'])
+IO_PREFIXES = [
+    {"prefix": "di", "label": "Discrete Inputs (%IX100.0)"},
+    {"prefix": "do", "label": "Coils (%QX100.0)"},
+    {"prefix": "ai", "label": "Input Registers (%IW100)"},
+    {"prefix": "aor", "label": "Holding Registers - Read (%IW100)"},
+    {"prefix": "aow", "label": "Holding Registers - Write (%QW100)"},
+]
+
+@app.route('/slave/add', methods=['GET', 'POST'])
 @login_required
-def modbus_add_device():
+def p_slave_edit():
 
     if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
-    ctx = make_context("modbus")
+    ctx = make_context("slaves")
 
     if request.method == 'POST':
+
         devname = flask.request.form.get('device_name')
         devtype = flask.request.form.get('device_protocol')
         devid = flask.request.form.get('device_id')
@@ -897,7 +906,8 @@ def modbus_add_device():
 
     if request.method == 'GET':
 
-        ctx.dev_protocols = DEVICE_PROTOCOLS
+        ctx.DEVICE_PROTOCOLS = DEVICE_PROTOCOLS
+        ctx.IO_PREFIXES = IO_PREFIXES
 
         #= ports for  serial devices
         ctx.ports = []
@@ -913,7 +923,7 @@ def modbus_add_device():
 
         #return_str += pages.add_slave_devices_tail + pages.add_devices_script
 
-        return render_template("modbus_add.html", c=ctx)
+        return render_template("slave_edit.html", c=ctx)
 
 
 
@@ -1482,6 +1492,11 @@ def main():
    print("Starting the web interface...")
    
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.parse_args()
+
+
     #Load information about current program on the openplc_runtime object
     file = open("active_program", "r")
     st_file = file.read()
@@ -1501,7 +1516,7 @@ if __name__ == '__main__':
             cur.close()
             conn.close()
             
-            app.run(debug=True, host='0.0.0.0', threaded=False, port=8080)
+            app.run(debug=True, host='0.0.0.0', threaded=False, port=8081)
         
         except Error as e:
             print("error connecting to the database" + str(e))
