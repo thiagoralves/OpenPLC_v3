@@ -21,39 +21,48 @@ import pages
 import openplc
 
 
-
-
 #------------------------------------------------
 # Flask app
 app = flask.Flask(__name__)
 
-# This causes cookies to loose between restarts in dev
-app.secret_key = "43259ternrjetktrp" #str(os.urandom(16))
+# str(os.urandom(16)) causes cookies to loose between restarts in dev
+app.secret_key = "openplciscoolandneedshelp" #str(os.urandom(16))
 
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 #------------------------------------------------
 #  Login + Security
-
 login_manager = flask_login.LoginManager()
 login_manager.login_view = "/login" # FIXME
 login_manager.init_app(app)
 
-class User(flask_login.UserMixin):
-    pass
+class User:
+
+    def __init__(self):
+
+        self.is_active = True
+        self.is_authenticated = True
+
+        self.user_id = None
+        self.username = None
+        self.name = None
+        self.pict_file = None
+
+    def get_id(self):
+        return self.user_id
 
 @login_manager.user_loader
-def user_loader(username):
+def user_loader(user_id):
     """Get user details for flask admin"""
     sql = "SELECT user_id, username, name, pict_file FROM Users "
-    sql += ' where username=? '
-    row, err = db_query(sql, (username), single=True)
+    sql += ' where user_id=? '
+    row, err = db_query(sql, [user_id], single=True)
     if err:
         print(err)
         return None
 
     user = User()
-    user.id = row["user_id"]
+    user.user_id = unicode(row["user_id"])
     user.username = row["username"]
     user.name = row["name"]
     user.pict_file = str(row["pict_file"])
@@ -106,7 +115,7 @@ def before_request():
 
 
 #------------------------------------------------
-#  OpenPLC Runtime.magic
+#  OpenPLC Runtime
 openplc_runtime = openplc.Runtime()
 
 def configure_runtime():
@@ -137,7 +146,6 @@ def configure_runtime():
                 openplc_runtime.stop_dnp3()
 
 
-# TODO @pedro asks can these be lower/upper > esp32 and rtu is easier ??
 DEVICE_PROTOCOLS = [
     {'protocol': 'Uno', 'label': 'Arduino Uno'},
     {'protocol': 'Mega', 'label': 'Arduino Mega'},
@@ -339,7 +347,7 @@ DB_FILE = "openplc.db"
 
 def db_query(sql, args=(), single=False, as_list=False):
     """ Opens db, execute query, close then return results.
-    This is one function atmo, as issues with multithread app.. (sigh!)
+    Querying is one function atmo, as issues with multithread app.
 
     :param sql: str with sql and :params placeholders
     :param args: dict with arg values
@@ -352,8 +360,10 @@ def db_query(sql, args=(), single=False, as_list=False):
         return None, "Cannot connect db"
     try:
         cur = conn.cursor()
+        print(sql, args)
+        err = cur.execute(sql, args)
+        print(err)
 
-        cur.execute(sql, args)
         rows = cur.fetchall()
         cur.close()
         conn.close()
@@ -371,7 +381,7 @@ def db_query(sql, args=(), single=False, as_list=False):
             return rows if as_list else row_dict, None
 
         if len(rows) == 0:
-            return None
+            return None, "No Rows"
 
         if len(rows) > 1:
             return None, "More than one row"
@@ -411,7 +421,7 @@ def nav_icon(page, default="fa-stop"):
 
 @app.context_processor
 def inject_template_vars():
-    # Puts the runtime and navigation into template vars
+    # Put the runtime and navigation into template context
     return dict(nav=Nav, runtime=openplc_runtime)
 
 class TemplateContext(object):
@@ -422,8 +432,6 @@ def make_context(page, **kwargs):
     c.error = None
     c.page = page
     c.icon = nav_icon(page)
-    #{"error": None, "page": page}
-    #c.update(kwargs)
     return c
 
 
@@ -436,35 +444,37 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-
-    # This is login page.. so if auth.. goto dash else recus and login and dash and login and dash and+++
+    # This is login page.. so if auth, goto dashboard
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
 
-    ctx = dict(error=None)
+    ctx = make_context("login")
 
     if request.method == "POST":
-        # we use <> paswword to avoid caching..
         username = request.form['oplc_username']
         password = request.form['oplc_secret']
 
-        sql = "SELECT user_id, username, password, name, pict_file FROM Users"
-        sql += " where username=? and password=? "
-        row, err = db_query(sql, (username, password), single=True)
-        if err:
-            ctx.error = err
+        if username and password:
 
-        if not row:
-            ctx.error = "Incorrect User or Password "
+            sql = "SELECT user_id, username, password, name, pict_file FROM Users"
+            sql += " where username=? and password=? "
+            row, err = db_query(sql, (username, password), single=True)
+            if err:
+                ctx.error = err
 
-        else:
-            user = User()
-            user.id = row['user_id']
-            user.username = row['username']
-            user.name = row['name']
-            user.pict_file = row['pict_file']
-            flask_login.login_user(user, remember=True, fresh=True)
-            return flask.redirect(flask.url_for('dashboard'))
+            if not row:
+                ctx.error = "Incorrect User or Password "
+
+            else:
+                # Login User
+                user = User()
+                user.user_id = unicode(row['user_id'])
+                user.username = row['username']
+                user.name = row['name']
+                user.pict_file = row['pict_file']
+                print(user)
+                flask_login.login_user(user, remember=True, fresh=True, )
+                return flask.redirect(flask.url_for('dashboard'))
 
     return render_template("login.html", c=ctx)
 
