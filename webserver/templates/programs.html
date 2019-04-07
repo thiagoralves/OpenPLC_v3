@@ -21,20 +21,21 @@
                 <td>{{row.name}}</td>
                 <td>{{row.file}}</td>
                 <td>{{row.date_upload}}</td>
-                <td width="10"><a class="btn btn-success" href="/program/{{row.prog_id}}/reload">Reload</a></td>
+                <td width="10"><a class="btn btn-success btn-sm" href="/program/{{row.prog_id}}">Reload</a></td>
           </tr>
         {% endfor %}
     </tbody>
 </table>
-<a href="/programs?list_all=1" ssstyle="text-align:right; float:right; color:black; font-weight:bold;">List all programs</a>
+<a href="/program/0" class="btn btn-primary">New Program</a>
 
 
 
 {# TODO error check before submiting for file #}
+{#
  <h2>Upload Program</h2>
-<form id="uploadForm" action="/program/upload" method="post">
+<form id="uploadForm" action="/program/upload" method="post" enctype="multipart/form-data">
      <div class="form-group">
-            <input type="file" ssclass="custom-file-input" id="file" accept=".st" required>
+            <input type="file" dclass="custom-file-input" id="file" name="file" accept=".st" required>
             <label class="custom-file-label" for="file">Choose <b>.st</b> file to upload</label>
      </div>
     <div class="form-group">
@@ -42,4 +43,5 @@
     </div>
 
 </form>
+#}
 {% endblock content %}

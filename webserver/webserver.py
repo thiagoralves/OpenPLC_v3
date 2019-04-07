@@ -18,8 +18,9 @@ from flask import redirect, request, render_template, url_for
 import flask_login
 from flask_login import current_user, login_required
 
+from flask_socketio import SocketIO #, send, emit
 
-import pages
+#import pages
 import openplc
 
 HERE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -33,8 +34,11 @@ app = flask.Flask(__name__)
 
 # str(os.urandom(16)) causes cookies to loose between restarts in dev
 app.secret_key = "openplciscoolandneedshelp" #str(os.urandom(16))
+app.config['SECRET_KEY'] = app.secret_key
 
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+socketio = SocketIO(app)
 
 #------------------------------------------------
 #  Login + Security
@@ -122,7 +126,7 @@ def before_request():
 
 #------------------------------------------------
 #  OpenPLC Runtime
-openplc_runtime = openplc.Runtime()
+openplc_runtime = openplc.Runtime(socketio)
 
 def get_settings():
     rows, err = db_query("SELECT * FROM Settings")
@@ -439,19 +443,23 @@ def db_insert(table, flds):
     sql += ") values ("
     sql += ",".join(["?" for i in range(0, len(keys) )])
     sql += ");"
+
     conn = db_connection()
     if not conn:
         return None, "Cannot connect db"
+
     try:
         cur = conn.cursor()
         cur.execute(sql, [flds[k] for k in keys])
         conn.commit()
 
-        # TODO get last id(but bot used atmo
-        return 0, None
+        ## get inserted id
+        sql = "select last_insert_rowid()"
+        cur.execute(sql)
+        row = cur.fetchone()
+        return row[0], None
 
     except Error as e:
-        print("error connecting to the database" + str(e))
         return None, str(e)
 
 def db_update(table, flds, p_name, p_id):
@@ -518,13 +526,13 @@ def make_context(page, **kwargs):
 
 #= -------- Handlers ---------
 @app.route('/')
-def index():
+def p_index():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
-def login():
+def p_login():
     # This is login page.. so if auth, goto dashboard
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
@@ -561,14 +569,14 @@ def login():
 
 
 @app.route('/logout')
-def logout():
+def p_logout():
     flask_login.logout_user()
     return redirect(url_for('login'))
 
 
 @app.route('/dashboard')
 @login_required
-def dashboard():
+def p_dashboard():
     #global openplc_runtime
     #if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
@@ -627,69 +635,90 @@ def p_programs():
     return render_template("programs.html", c=ctx)
 
 
-@app.route('/program/<int:prog_id>/reload', methods=['GET', 'POST'])
+@app.route('/program/<int:prog_id>', methods=['GET', 'POST'])
 @login_required
-def p_program_reload(prog_id):
+def p_program_edit(prog_id):
 
-    ctx = make_context("program_reload")
-    ctx.prog_id = prog_id
     if openplc_runtime.is_compiling():
         return draw_compiling_page()
 
+    ctx = make_context("programs")
+    ctx.prog_id = prog_id
+    ctx.program = {}
+    ctx.title = "New Program" if prog_id == 0 else "Progam Detail"
 
-    # return_str = pages.w3_style + pages.style + draw_top_div()
-    # return_str += """
-    #     <div class='main'>
-    #         <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-    #             <br>
-    #             <br>
-    #             <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-    #             <a href="programs" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Programs</p></a>
-    #             <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
-    #             <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-    #             <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-    #             <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
-    #             <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-    #             <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-    #             <br>
-    #             <br>"""
-    # return_str += draw_status()
-    # return_str += """
-    #     </div>
-    #     <div style="margin-left:320px; margin-right:70px">
-    #         <div style="w3-container">
-    #             <br>
-    #             <h2>Program Info</h2>
-    #             <br>"""
-    # database = "openplc.db"
-    # conn = create_connection(database)
+    if request.method == "POST":
 
-    ctx.program, ctx.error = db_query("SELECT * FROM Programs WHERE Prog_ID = ?", [int(prog_id)])
+        prog_file = request.files['file']
 
-    #     if (conn != None):
-    #         try:
-    #             cur = conn.cursor()
-    #             cur.execute("SELECT * FROM Programs WHERE Prog_ID = ?", (int(prog_id),))
-    #             row = cur.fetchone()
-    #             cur.close()
-    #             conn.close()
-    #             return_str += "<label for='prog_name'><b>Name</b></label><input type='text' id='prog_name' name='program_name' value='" + str(row[1]) + "' disabled>"
-    #             return_str += "<label for='prog_descr'><b>Description</b></label><textarea type='text' rows='10' style='resize:vertical' id='prog_descr' name='program_descr' disabled>" + str(row[2]) + "</textarea>"
-    #             return_str += "<label for='prog_file'><b>File</b></label><input type='text' id='prog_file' name='program_file' value='" + str(row[3]) + "' disabled>"
-    #             return_str += "<label for='prog_date'><b>Date Uploaded</b></label><input type='text' id='prog_date' name='program_date' value='" + time.strftime('%b %d, %Y - %I:%M%p', time.localtime(row[4])) + "' disabled>"
-    #             return_str += "<br><br><center><a href='compile-program?file=" + str(row[3]) + "' class='button' style='width: 310px; height: 53px; margin: 0px 20px 0px 20px;'><b>Reload program</b></a><a href='remove-program?id=" + str(prog_id) + "' class='button' style='width: 310px; height: 53px; margin: 0px 20px 0px 20px;'><b>Remove program</b></a></center>"
-    #             return_str += """
-    #             </div>
-    #         </div>
-    #     </div>
-    # </body>
-    # </html>"""
+        vars = {}
+        vars["Name"] = request.form["name"]
+        vars["Description"] = request.form["description"]
+        vars["Date_upload"] = str(int(time.time()))
+        vars['File'] = prog_file.filename
+
+        if prog_id == 0:
+            prog_id, err = db_insert("Programs", vars)
+
+        else:
+            db_insert("Programs", vars, "Prog_id", prog_id)
+
+        st_dir = os.path.join(WORK_DIR, "st_files")
+        if not os.path.exists(st_dir):
+            os.makedirs(st_dir)
+        save_path = os.path.join(st_dir, "%s" % prog_id)
+        prog_file.save(save_path)
+
+
+
+    ctx.program, ctx.error = db_query("SELECT * FROM Programs WHERE Prog_ID = ?", [str(prog_id)], single=True)
+
 
 
 
     return render_template("program_reload.html", c=ctx)
-        
-        
+
+@socketio.on('compile')
+def ws_xcommand(data):
+    print data
+    prog_id = data['prog_id']
+    sql = "SELECT * FROM Programs WHERE Prog_id=?"
+    row, error = db_query(sql, [str(prog_id)], single=True)
+    openplc_runtime.project_name = row["name"]
+    openplc_runtime.project_description = row["description"]
+    openplc_runtime.project_file = row["file"]
+
+    st_file = os.path.join(WORK_DIR, "st_files", str(row["prog_id"]) )
+    openplc_runtime.compile_program(st_file)
+
+    socketio.emit("xmessage", {"data": "foo"})
+    #print("xcommand", data)
+    #emit('xmessage', {'pong': data['ping']})
+
+@app.route('/program/<int:prog_id>/compile', methods=['GET', 'POST'])
+@login_required
+def p_program_compile(prog_id):
+    ## if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+    #st_file = flask.request.args.get('file')
+
+    # load information about the program being compiled into the openplc_runtime object
+    ctx = make_context("compiling")
+    ctx.prog_id = prog_id
+
+    sql = "SELECT * FROM Programs WHERE Prog_id=?"
+    row, ctx.error = db_query(sql, [str(prog_id)], single=True)
+    print ctx.error
+    ctx.program = row
+
+    openplc_runtime.project_name = row["name"]
+    openplc_runtime.project_description = row["description"]
+    openplc_runtime.project_file = row["file"]
+
+    st_file = os.path.join(WORK_DIR, "st_files", str(row["prog_id"]) )
+    #openplc_runtime.compile_program(st_file)
+
+    return render_template("compiling.html", c=ctx)
+
 @app.route('/remove-program', methods=['GET', 'POST'])
 def remove_program():
     if (flask_login.current_user.is_authenticated == False):
@@ -715,8 +744,16 @@ def remove_program():
             return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
 
 
-@app.route('/upload-program', methods=['GET', 'POST'])
-def upload_program():
+@app.route('/deadprogram/0', methods=['GET', 'POST'])
+def deadp_program_upload():
+
+    ctx = make_context("programs")
+
+    if request.method == "POST":
+        if 'file' in request.files:
+            prog_file = request.files['file']
+
+
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
@@ -825,33 +862,7 @@ def upload_program_action():
             return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
         
 
-@app.route('/compile-program', methods=['GET', 'POST'])
-@login_required
-def compile_program():
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        st_file = flask.request.args.get('file')
-        
-        #load information about the program being compiled into the openplc_runtime object
-        database = "openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
-                row = cur.fetchone()
-                openplc_runtime.project_name = str(row[1])
-                openplc_runtime.project_description = str(row[2])
-                openplc_runtime.project_file = str(row[3])
-                cur.close()
-                conn.close()
-            except Error as e:
-                print("error connecting to the database" + str(e))
-        else:
-            print("error connecting to the database")
-        
-        openplc_runtime.compile_program(st_file)
-        
-        return draw_compiling_page()
+
 
 
 @app.route('/compilation-logs', methods=['GET', 'POST'])
@@ -948,54 +959,11 @@ def p_slave_edit(dev_id):
             fnames.append("%s_start" % ii['prefix'])
             fnames.append("%s_size" % ii['prefix'])
 
-        # devname = flask.request.form.get('dev_name')
-        # devtype = flask.request.form.get('dev_type')
-        # slave_id = flask.request.form.get('slave_id')
-        # devip = flask.request.form.get('device_ip')
-        # devport = flask.request.form.get('device_port')
-        # devcport = flask.request.form.get('com_port')
-        # devbaud = flask.request.form.get('baud_rate')
-        # devparity = flask.request.form.get('parity')
-        # devdata = flask.request.form.get('device_data')
-        # devstop = flask.request.form.get('device_stop')
-        #
-        # di_start = flask.request.form.get('di_start')
-        # di_size = flask.request.form.get('di_size')
-        # do_start = flask.request.form.get('do_start')
-        # do_size = flask.request.form.get('do_size')
-        # ai_start = flask.request.form.get('ai_start')
-        # ai_size = flask.request.form.get('ai_size')
-        # aor_start = flask.request.form.get('aor_start')
-        # aor_size = flask.request.form.get('aor_size')
-        # aow_start = flask.request.form.get('aow_start')
-        # aow_size = flask.request.form.get('aow_size')
         vals = {}
         for fld in fnames:
             vals[fld] = request.form.get(fld)
         print(vals)
         dev_id, err = db_insert("Slave_dev", vals)
-
-        # conn = db_connection()
-        # if (conn != None):
-        #     try:
-        #         cur = conn.cursor()
-        #         cur.execute(
-        #             "INSERT INTO Slave_dev (dev_name, dev_type, slave_id, com_port, baud_rate, parity, data_bits, stop_bits, ip_address, ip_port, di_start, di_size, coil_start, coil_size, ir_start, ir_size, hr_read_start, hr_read_size, hr_write_start, hr_write_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        #             (devname, devtype, slave_id, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start,
-        #              di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size))
-        #         conn.commit()
-        #         cur.close()
-        #         conn.close()
-        #
-        #         generate_mbconfig()
-        #         return redirect(url_for('modbus'))
-        #
-        #     except Error as e:
-        #         print("error connecting to the database" + str(e))
-        #         return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(
-        #             e)
-        # else:
-        #     return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
 
     if request.method == 'GET':
 
@@ -1022,178 +990,6 @@ def p_slave_edit(dev_id):
         return render_template("slave_edit.html", c=ctx)
 
 
-
-#
-# @app.route('/modbus-edit-device', methods=['GET', 'POST'])
-# def modbus_edit_device():
-#     if (flask_login.current_user.is_authenticated == False):
-#         return flask.redirect(flask.url_for('login'))
-#     else:
-#         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-#         if (flask.request.method == 'GET'):
-#             dev_id = flask.request.args.get('table_id')
-#             return_str = pages.w3_style + pages.style + draw_top_div()
-#             return_str += """
-#                 <div class='main'>
-#                     <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-#                         <br>
-#                         <br>
-#                         <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-#                         <a href="programs" class="w3-bar-item w3-button"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
-#                         <a href="modbus" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/modbus-icon-512x512.png" alt="Modbus" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Slave Devices</p></a>
-#                         <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-#                         <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-#                         <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
-#                         <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-#                         <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-#                         <br>
-#                         <br>"""
-#             return_str += draw_status()
-#             return_str += """
-#                 </div>
-#                 <div style="margin-left:320px; margin-right:70px">
-#                     <div style="w3-container">
-#                         <br>
-#                         <h2>Edit slave device</h2>
-#                         <br>
-#                         <div style="float:left; width:45%; height:730px">
-#                         <form   id    = "uploadForm"
-#                             enctype   =  "multipart/form-data"
-#                             action    =  "modbus-edit-device"
-#                             method    =  "post"
-#                             onsubmit  =  "return validateForm()">"""
-#
-#             database = "openplc.db"
-#             conn = create_connection(database)
-#             if (conn != None):
-#                 try:
-#                     cur = conn.cursor()
-#                     cur.execute("SELECT * FROM Slave_dev WHERE dev_id = ?", (int(dev_id),))
-#                     row = cur.fetchone()
-#                     cur.close()
-#                     conn.close()
-#                     return_str += "<input type='hidden' value='" + dev_id + "' id='db_dev_id' name='db_dev_id'/>"
-#                     return_str += "<label for='dev_name'><b>Device Name</b></label><input type='text' id='dev_name' name='device_name' placeholder='My Device' value='" + str(row[1]) + "'>"
-#                     return_str += "<label for='dev_protocol'><b>Device Type</b></label><select id='dev_protocol' name='device_protocol'>"
-#                     if (str(row[2]) == "Uno"):
-#                         return_str += "<option selected='selected' value='Uno'>Arduino Uno</option>"
-#                     else:
-#                         return_str += "<option value='Uno'>Arduino Uno</option>"
-#                     if (str(row[2]) == "Mega"):
-#                         return_str += "<option selected='selected' value='Mega'>Arduino Mega</option>"
-#                     else:
-#                         return_str += "<option value='Mega'>Arduino Mega</option>"
-#                     if (str(row[2]) == "ESP32"):
-#                         return_str += "<option selected='selected' value='ESP32'>ESP32</option>"
-#                     else:
-#                         return_str += "<option value='ESP32'>ESP32</option>"
-#                     if (str(row[2]) == "ESP8266"):
-#                         return_str += "<option selected='selected' value='ESP8266'>ESP8266</option>"
-#                     else:
-#                         return_str += "<option value='ESP8266'>ESP8266</option>"
-#                     if (str(row[2]) == "TCP"):
-#                         return_str += "<option selected='selected' value='TCP'>Generic Modbus TCP Device</option>"
-#                     else:
-#                         return_str += "<option value='TCP'>Generic Modbus TCP Device</option>"
-#                     if (str(row[2]) == "RTU"):
-#                         return_str += "<option selected='selected' value='RTU'>Generic Modbus RTU Device</option></select>"
-#                     else:
-#                         return_str += "<option value='RTU'>Generic Modbus RTU Device</option></select>"
-#                     return_str += "<label for='dev_id'><b>Slave ID</b></label><input type='text' id='dev_id' name='device_id' placeholder='0' value='" + str(row[3]) + "'>"
-#                     return_str += "<div id=\"tcp-stuff\" style=\"display: none\"><label for='dev_ip'><b>IP Address</b></label><input type='text' id='dev_ip' name='device_ip' placeholder='192.168.0.1' value='" + str(row[9]) + "'>"
-#                     return_str += "<label for='dev_port'><b>IP Port</b></label><input type='text' id='dev_port' name='device_port' placeholder='502' value='" + str(row[10]) + "'></div>"
-#                     return_str += "<div id=\"rtu-stuff\"><label for='dev_cport'><b>COM Port</b></label><select id='dev_cport' name='device_cport'>"
-#                     ports = [comport.device for comport in serial.tools.list_ports.comports()]
-#                     for port in ports:
-#                         if (platform.system().startswith("CYGWIN")):
-#                             port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
-#                         else:
-#                             port_name = port
-#                         if (str(row[4]) == port_name):
-#                             return_str += "<option selected='selected' value'" + port_name + "'>" + port_name + "</option>"
-#                         else:
-#                             return_str += "<option value='" + port_name + "'>" + port_name + "</option>"
-#
-#                     return_str += pages.edit_slave_devices_tail
-#                     return_str += dev_id
-#                     return_str += """' class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Delete device</b></a></center>
-#                     </form>
-#                 </div>
-#             </div>
-#         </div>
-#     </body>"""
-#                     return_str += pages.edit_devices_script
-#                     return_str += 'devid.value = "' + str(row[3]) + '";'
-#                     return_str += 'devcport.value = "' + str(row[4]) + '";'
-#                     return_str += 'devbaud.value = "' + str(row[5]) + '";'
-#                     return_str += 'devparity.value = "' + str(row[6]) + '";'
-#                     return_str += 'devdata.value = "' + str(row[7]) + '";'
-#                     return_str += 'devstop.value = "' + str(row[8]) + '";'
-#                     return_str += 'devip.value = "' + str(row[9]) + '";'
-#                     return_str += 'devport.value = "' + str(row[10]) + '";'
-#                     return_str += 'distart.value = "' + str(row[11]) + '";'
-#                     return_str += 'disize.value = "' + str(row[12]) + '";'
-#                     return_str += 'dostart.value = "' + str(row[13]) + '";'
-#                     return_str += 'dosize.value = "' + str(row[14]) + '";'
-#                     return_str += 'aistart.value = "' + str(row[15]) + '";'
-#                     return_str += 'aisize.value = "' + str(row[16]) + '";'
-#                     return_str += 'aorstart.value = "' + str(row[17]) + '";'
-#                     return_str += 'aorsize.value = "' + str(row[18]) + '";'
-#                     return_str += 'aowstart.value = "' + str(row[19]) + '";'
-#                     return_str += 'aowsize.value = "' + str(row[20]) + '";}</script></html>'
-#
-#                 except Error as e:
-#                     print("error connecting to the database" + str(e))
-#                     return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-#             else:
-#                 return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-#
-#             return return_str
-#
-#         elif (flask.request.method == 'POST'):
-#             devid_db = flask.request.form['db_dev_id']
-#             devname = flask.request.form['device_name']
-#             devtype = flask.request.form['device_protocol']
-#             devid = flask.request.form['device_id']
-#             devip = flask.request.form['device_ip']
-#             devport = flask.request.form['device_port']
-#             devcport = flask.request.form['device_cport']
-#             devbaud = flask.request.form['device_baud']
-#             devparity = flask.request.form['device_parity']
-#             devdata = flask.request.form['device_data']
-#             devstop = flask.request.form['device_stop']
-#
-#             di_start = flask.request.form['di_start']
-#             di_size = flask.request.form['di_size']
-#             do_start = flask.request.form['do_start']
-#             do_size = flask.request.form['do_size']
-#             ai_start = flask.request.form['ai_start']
-#             ai_size = flask.request.form['ai_size']
-#             aor_start = flask.request.form['aor_start']
-#             aor_size = flask.request.form['aor_size']
-#             aow_start = flask.request.form['aow_start']
-#             aow_size = flask.request.form['aow_size']
-#
-#             database = "openplc.db"
-#             conn = create_connection(database)
-#             if (conn != None):
-#                 try:
-#                     cur = conn.cursor()
-#                     cur.execute("UPDATE Slave_dev SET dev_name = ?, dev_type = ?, slave_id = ?, com_port = ?, baud_rate = ?, parity = ?, data_bits = ?, stop_bits = ?, ip_address = ?, ip_port = ?, di_start = ?, di_size = ?, coil_start = ?, coil_size = ?, ir_start = ?, ir_size = ?, hr_read_start = ?, hr_read_size = ?, hr_write_start = ?, hr_write_size = ? WHERE dev_id = ?", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, int(devid_db)))
-#                     conn.commit()
-#                     cur.close()
-#                     conn.close()
-#
-#                     generate_mbconfig()
-#                     return flask.redirect(flask.url_for('modbus'))
-#
-#                 except Error as e:
-#                     print("error connecting to the database" + str(e))
-#                     return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-#             else:
-#                 return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-
-
 @app.route('/modbus/{dev_id}/delete', methods=['GET', 'POST'])
 @login_required
 def device_delete(dev_id):
@@ -1214,7 +1010,7 @@ def device_delete(dev_id):
             
 @app.route('/monitoring', methods=['GET', 'POST'])
 @login_required
-def monitoring():
+def p_monitoring():
 
     if openplc_runtime.is_compiling():
         return draw_compiling_page()
@@ -1419,13 +1215,27 @@ def db_connection():
         print(e)
     return None
 
+
+@socketio.on('connect')
+def ws_connect():
+    print("client connected")
+    socketio.emit('xmessage', {'data': 'Connected'})
+
+@socketio.on('disconnect')
+def ws_disconnect():
+    print('Client disconnected')
+
+
 #----------------------------------------------------------------------------
 #Main dummy function. Only displays a message and exits. The app keeps
 #running on the background by Flask
 #----------------------------------------------------------------------------
 def deadmain():
    print("Starting the web interface...")
-   
+
+
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="OpenPLC webserver")
@@ -1464,4 +1274,5 @@ if __name__ == '__main__':
                     openplc_runtime.project_description = row["Description"]
                     openplc_runtime.project_file = row["File"]
 
-    app.run(debug=True, host=args.address, threaded=False, port=args.port)
+    socketio.run(app, host=args.address, port=args.port, debug=True)
+    #app.run(debug=True, host=args.address, threaded=False, port=args.port)

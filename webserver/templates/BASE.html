@@ -86,7 +86,7 @@
 
         </div>
         <div class="col-md-9 content_wrapper">
-            <h1><i class="fa {{c.icon}}"></i>&nbsp;{{title}}</h1>
+            <h1><i class="fa {{c.icon}}"></i>&nbsp;{%if c.title %}{{c.title}}{%else%}{{title}}{%endif%}</h1>
             <div class="content">{% block content %}## content##{% endblock content %}</div>
         </div>
 
