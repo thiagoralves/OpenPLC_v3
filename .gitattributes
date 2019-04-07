@@ -1,0 +1,2 @@
+# Shell script files should never have line endings converted
+*.sh text eol=lf

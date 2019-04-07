@@ -39,6 +39,8 @@ extern int opterr;
 //extern int common_ticktime__;
 IEC_BOOL __DEBUG;
 
+IEC_LINT cycle_counter = 0;
+
 static int tick = 0;
 pthread_mutex_t bufferLock; //mutex for the internal buffers
 pthread_mutex_t logLock; //mutex for the internal log
@@ -60,6 +62,18 @@ void sleep_until(struct timespec *ts, int delay)
         ts->tv_sec++;
     }
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ts,  NULL);
+}
+
+//-----------------------------------------------------------------------------
+// Helper function - Makes the running thread sleep for the ammount of time
+// in milliseconds
+//-----------------------------------------------------------------------------
+void sleepms(int milliseconds)
+{
+	struct timespec ts;
+	ts.tv_sec = milliseconds / 1000;
+	ts.tv_nsec = (milliseconds % 1000) * 1000000;
+	nanosleep(&ts, NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -134,6 +148,34 @@ void disableOutputs()
     {
         if (int_output[i] != NULL) *int_output[i] = 0;
     }
+}
+
+//-----------------------------------------------------------------------------
+// Special Functions
+//-----------------------------------------------------------------------------
+void handleSpecialFunctions()
+{
+    //current time [%ML1024]
+    struct tm *current_time;
+    time_t rawtime;
+    
+    tzset();
+    time(&rawtime);
+    current_time = localtime(&rawtime);
+    
+    rawtime = rawtime - timezone;
+    if (current_time->tm_isdst > 0) rawtime = rawtime + 3600;
+        
+    if (special_functions[0] != NULL) *special_functions[0] = rawtime;
+    
+    //number of cycles [%ML1025]
+    cycle_counter++;
+    if (special_functions[1] != NULL) *special_functions[1] = cycle_counter;
+    
+    //comm error counter [%ML1026]
+    /* Implemented in modbus_master.cpp */
+
+    //insert other special functions below
 }
 
 int main(int argc,char **argv)
@@ -213,13 +255,12 @@ int main(int argc,char **argv)
 		//attached to the user variables
 		glueVars();
         
-        querySlaveDevices(); //query data from all slave devices
-		
 		updateBuffersIn(); //read input image
 
 		pthread_mutex_lock(&bufferLock); //lock mutex
 		updateCustomIn();
         updateBuffersIn_MB(); //update input image table with data from slave devices
+        handleSpecialFunctions();
 		config_run__(tick++); // execute plc program logic
 		updateCustomOut();
         updateBuffersOut_MB(); //update slave devices with data from the output image table

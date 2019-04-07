@@ -29,8 +29,8 @@
 #include "ladder.h"
 
 //some modbus defines
-#define MAX_DISCRETE_INPUT 		800
-#define MAX_COILS 				800
+#define MAX_DISCRETE_INPUT      8192
+#define MAX_COILS               8192
 #define MAX_HOLD_REGS 			8192
 #define MAX_INP_REGS			1024
 
@@ -43,7 +43,11 @@
 
 #define OPLC_CYCLE              50000000
 
-
+// Initial offset parameters (yurgen1975)
+int offset_di = 0;
+int offset_do = 0;
+int offset_ai = 0;
+int offset_ao = 0;
 
 using namespace std;
 using namespace opendnp3;
@@ -84,18 +88,22 @@ static inline std::string &trim(std::string &s) {
 class CommandCallback: public ICommandHandler {
 public:
    
-    //CROB
+    //CROB - changed to support offsets (yurgen1975)
     virtual CommandStatus Select(const ControlRelayOutputBlock& command, uint16_t index) {
+        index = index + offset_di;
         return CommandStatus::SUCCESS;
     }
     virtual CommandStatus Operate(const ControlRelayOutputBlock& command, uint16_t index, OperateType opType) {
+        index = index + offset_di;
         auto code = command.functionCode;
         CommandStatus return_val;
-
+            
+           
         if(code == ControlCode::LATCH_ON || code == ControlCode::LATCH_OFF) {
             return_val = CommandStatus::SUCCESS;
 
             IEC_BOOL crob_val = (code == ControlCode::LATCH_ON);
+                           
             pthread_mutex_lock(&bufferLock);
             if(bool_output[index/8][index%8] != NULL) {
                 *bool_output[index/8][index%8] = crob_val;
@@ -105,15 +113,16 @@ public:
         else {
             return_val = CommandStatus::NOT_SUPPORTED;
         }
-
         return return_val;
     }
 
-    //Analog Out
+    //Analog Out - changed to support offsets (yurgen1975)
     virtual CommandStatus Select(const AnalogOutputInt16& command, uint16_t index) {
+        index = index + offset_ao;
         return CommandStatus::SUCCESS;
     }
     virtual CommandStatus Operate(const AnalogOutputInt16& command, uint16_t index, OperateType opType) {
+        index = index + offset_ao;
         auto ao_val = command.value;
         pthread_mutex_lock(&bufferLock);
         if(index < MIN_16B_RANGE && int_output[index] != NULL) {
@@ -194,27 +203,28 @@ protected:
 
 //------------------------------------------------------------------
 // Function to update DNP3 values every time they may have changed
+// Updated by Yurgen1975 to support slave devices: DI/DO address 800 and AI/AO address 100
 //------------------------------------------------------------------
 void update_vals(std::shared_ptr<IOutstation> outstation){
     UpdateBuilder builder;
-    // Update Discrete input (Binary input)
-    for(int i = 1; i < MAX_DISCRETE_INPUT; i++) {
-        builder.Update(Binary((bool)(*bool_input[i/8][i%8])), i);
-
+    // Update Discrete input (Binary input) - changed to support offsets (yurgen1975)
+    for(int i = offset_di; i < MAX_DISCRETE_INPUT; i++) {
+        builder.Update(Binary((bool)(*bool_input[i/8][i%8])), i-offset_di);
     }
-    // Update Coils (Binary Output)
-    for(int i = 0; i < MAX_COILS; i++) {
-        builder.Update(BinaryOutputStatus((bool)(*bool_output[i/8][i%8])), i);
 
+    // Update Coils (Binary Output) - changed to support offsets (yurgen1975)
+    for(int i = offset_do; i < MAX_COILS; i++) {
+        builder.Update(BinaryOutputStatus((bool)(*bool_output[i/8][i%8])), i-offset_do);
     }    
-    // Update Input Registers (Analog Input)
-    for (int i = 0; i < MAX_INP_REGS; i++) {
-        builder.Update(Analog((int)(*int_input[i])), i);
 
+    // Update Input Registers (Analog Input) - changed to support offsets (yurgen1975)
+    for (int i = offset_ai; i < MAX_INP_REGS; i++) {
+        builder.Update(Analog((int)(*int_input[i])), i-offset_ai);
     }
-    // Update Holding Registers (Analog Output)
-    for (int i = 0; i < MIN_16B_RANGE; i++) {
-        builder.Update(AnalogOutputStatus((int)(*int_output[i])), i);
+    
+    // Update Holding Registers (Analog Output) - changed to support offsets (yurgen1975)
+    for (int i = offset_ao; i < MIN_16B_RANGE; i++) {
+        builder.Update(AnalogOutputStatus((int)(*int_output[i])), i-offset_ao);
     }
     // Update Holding registers for memory
     for (int i = MIN_16B_RANGE; i < MAX_16B_RANGE; i++) {
@@ -338,6 +348,25 @@ OutstationStackConfig parseDNP3Config() {
                     getline(iss, token, '=');     
                     config.outstation.eventBufferConfig =
                         EventBufferConfig::AllTypes(atoi(token.c_str()));
+
+// get offsets from dnp.cfg (yurgen1975)
+                } else if (token == "offset_di") {
+                    getline(iss, token, '=');     
+                    offset_di = atoi(token.c_str());
+                        
+                } else if (token == "offset_do") {
+                    getline(iss, token, '=');     
+                    offset_do = atoi(token.c_str());
+                        
+                } else if (token == "offset_ai") {
+                    getline(iss, token, '=');     
+                    offset_ai = atoi(token.c_str());
+                        
+                } else if (token == "offset_ao") {
+                    getline(iss, token, '=');     
+                    offset_ao = atoi(token.c_str());
+// -------------------------------------------------------------------
+
                 } else if (token == "sol_confirm_timeout") {
                     getline(iss, token, '=');     
                     config.outstation.params.solConfirmTimeout =
@@ -364,6 +393,7 @@ OutstationStackConfig parseDNP3Config() {
             }
         }
     }
+
     return config;
 } 
 

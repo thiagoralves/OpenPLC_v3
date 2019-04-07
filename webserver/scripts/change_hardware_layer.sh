@@ -30,6 +30,13 @@ elif [ "$1" == "fischertechnik" ]; then
     echo "Setting Platform"
     echo rpi > ../scripts/openplc_platform
     echo fischertechnik > ../scripts/openplc_driver
+    
+elif [ "$1" == "neuron" ]; then
+    echo "Activating Neuron driver"
+    cp ./hardware_layers/neuron.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo linux > ../scripts/openplc_platform
+    echo neuron > ../scripts/openplc_driver
 
 elif [ "$1" == "pixtend" ]; then
     echo "Activating PiXtend driver"
@@ -44,6 +51,13 @@ elif [ "$1" == "pixtend_2s" ]; then
     echo "Setting Platform"
     echo rpi > ../scripts/openplc_platform
     echo pixtend_2s > ../scripts/openplc_driver
+    
+elif [ "$1" == "pixtend_2l" ]; then
+    echo "Activating PiXtend 2L driver"
+    cp ./hardware_layers/pixtend2l.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo rpi > ../scripts/openplc_platform
+    echo pixtend_2l > ../scripts/openplc_driver  
 
 elif [ "$1" == "rpi" ]; then
     echo "Activating Raspberry Pi driver"
