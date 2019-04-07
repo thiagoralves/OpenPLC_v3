@@ -3,7 +3,7 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "Error: You must provide a platform name as argument"
     echo ""
-    echo "Usage: ./install.sh [platform]   where [platform] can be"
+    echo "Usage: ./install.sh [platform]  where [platform] can be"
     echo "  win           Install OpenPLC on Windows over Cygwin"
     echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
     echo "  docker        Install OpenPLC in a Docker container"
@@ -34,19 +34,20 @@ function install_py_deps {
 function install_all_libs {
 
     mkdir build
-    echo ""
-    echo "[MATIEC COMPILER]"
-    cd utils/matiec_src
-    autoreconf -i
-    ./configure
-    make
-    cp ./iec2c ../../build/iec2c
-    if [ $? -ne 0 ]; then
-        echo "Error compiling MatIEC"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
-    cd ../..
+
+#    echo ""
+#    echo "[MATIEC COMPILER]"
+#    cd utils/matiec_src
+#    autoreconf -i
+#    ./configure
+#    make
+#    cp ./iec2c ../../build/iec2c
+#    if [ $? -ne 0 ]; then
+#        echo "Error compiling MatIEC"
+#        echo "OpenPLC was NOT installed!"
+#        exit 1
+#    fi
+#    cd ../..
 
     echo ""
     echo "[ST OPTIMIZER]"
@@ -72,43 +73,43 @@ function install_all_libs {
     fi
     cd ../..
 
-    echo ""
-    echo "[OPEN DNP3]"
-    mkdir build/dnp3
-    #cd utils/dnp3_src
-    cd build/dnp3
-    echo "creating swapfile..."
-    $1 dd if=/dev/zero of=swapfile bs=1M count=1000
-    $1 mkswap swapfile
-    $1 swapon swapfile
-    #cmake ../dnp3_src
-    cmake ../../utils/dnp3_src
-    make
-    $1 make install
-    if [ $? -ne 0 ]; then
-        echo "Error installing OpenDNP3"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
-    $1 ldconfig
-    echo "removing swapfile..."
-    $1 swapoff swapfile
-    $1 rm -f ./swapfile
-    cd ../..
+#    echo ""
+#    echo "[OPEN DNP3]"
+#    mkdir build/dnp3
+#    #cd utils/dnp3_src
+#    cd build/dnp3
+#    echo "creating swapfile..."
+#    $1 dd if=/dev/zero of=swapfile bs=1M count=1000
+#    $1 mkswap swapfile
+#    $1 swapon swapfile
+#    #cmake ../dnp3_src
+#    cmake ../../utils/dnp3_src
+#    make
+#    $1 make install
+#    if [ $? -ne 0 ]; then
+#        echo "Error installing OpenDNP3"
+#        echo "OpenPLC was NOT installed!"
+#        exit 1
+#    fi
+#    $1 ldconfig
+#    echo "removing swapfile..."
+#    $1 swapoff swapfile
+#    $1 rm -f ./swapfile
+#    cd ../..
 
-    echo ""
-    echo "[LIBMODBUS]"
-    cd utils/libmodbus_src
-    ./autogen.sh
-    ./configure
-    $1 make install
-    if [ $? -ne 0 ]; then
-        echo "Error installing Libmodbus"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
-    $1 ldconfig
-    cd ../..
+#    echo ""
+#    echo "[LIBMODBUS]"
+#    cd utils/libmodbus_src
+#    ./autogen.sh
+#    ./configure
+#    $1 make install
+#    if [ $? -ne 0 ]; then
+#        echo "Error installing Libmodbus"
+#        echo "OpenPLC was NOT installed!"
+#        exit 1
+#    fi
+#    $1 ldconfig
+#    cd ../..
 
     if [ "$1" == "sudo" ]; then
         echo ""
@@ -237,7 +238,6 @@ elif [ "$1" == "linux" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    #cp ./start_openplc.sh ../../
 
 
 elif [ "$1" == "docker" ]; then
@@ -251,7 +251,6 @@ elif [ "$1" == "docker" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    #cp ./start_openplc.sh ../../
 
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
@@ -269,8 +268,6 @@ elif [ "$1" == "rpi" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    #cp ./start_openplc.sh ../../
-
 
 
 elif [ "$1" == "neuron" ]; then
@@ -297,7 +294,6 @@ elif [ "$1" == "neuron" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    #cp ./start_openplc.sh ../../
 
 
 
@@ -311,7 +307,6 @@ elif [ "$1" == "custom" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    #cp ./start_openplc.sh ../../
 
 
 else

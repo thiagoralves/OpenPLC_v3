@@ -7,17 +7,19 @@ fi
 #move into the scripts folder if you're not there already
 cd scripts &>/dev/null
 
-OPENPLC_PLATFORM=$(cat openplc_platform)
+BUILD_DIR="../../build"
+OPENPLC_PLATFORM=$(cat $BUILD_DIR/openplc_platform.txt)
 
+echo "#### $1 ###"
 #store the active program filename
 echo "$1" > ../active_program
 
 #compiling the ST file into C
 cd ..
 echo "Optimizing ST program..."
-../../build/st_optimizer ./st_files/"$1" ./st_files/"$1"
+$BUILD_DIR/st_optimizer ./st_files/"$1" ./st_files/"$1"
 echo "Generating C files..."
-../../build/iec2c ./st_files/  "$1"
+$BUILD_DIR/iec2c ./st_files/  "$1"
 if [ $? -ne 0 ]; then
     echo "Error generating C files"
     echo "Compilation finished with errors!"
