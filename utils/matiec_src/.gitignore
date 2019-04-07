@@ -1,0 +1,10 @@
+configure
+config/compile
+config/config.h
+config/config.h.in
+config/stamp-h1
+iec2c
+iec2iec
+stage1_2/iec_bison.cc
+stage1_2/iec_bison.hh
+stage1_2/iec_flex.cc

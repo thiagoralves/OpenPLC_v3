@@ -40,14 +40,14 @@ function install_all_libs {
     autoreconf -i
     ./configure
     make
-    cp ./iec2c ../../webserver/
+    cp ./iec2c ../../build/iec2c
     if [ $? -ne 0 ]; then
         echo "Error compiling MatIEC"
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
     cd ../..
-
+    exit 1
     echo ""
     echo "[ST OPTIMIZER]"
     cd utils/st_optimizer_src
@@ -225,10 +225,10 @@ if [ "$1" == "win" ]; then
 
 elif [ "$1" == "linux" ]; then
     echo "Installing OpenPLC on Linux"
-    linux_install_deps sudo
+    #linux_install_deps sudo
     
-    install_py_deps
-    install_py_deps sudo
+    #install_py_deps
+    #install_py_deps sudo
 
     install_all_libs sudo
 

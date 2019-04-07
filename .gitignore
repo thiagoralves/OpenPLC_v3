@@ -2,6 +2,9 @@
 # where docs are output to on gitlab.. MUST be named public/
 public/
 build/
+
+swapfile
+
 .sass-cache/
 .idea/
 
@@ -9,6 +12,18 @@ build/
 
 # IDE files for Visual Studio Code
 *.vscode/
+
+## C comiler stuff
+
+Makefile
+Makefile.in
+aclocal.m4
+config.log
+config.status
+.deps/
+.libs/
+autom4te.cache/
+
 
 # Prerequisites
 *.d
@@ -42,6 +57,5 @@ build/
 *.exe
 *.out
 *.app
-
 
 

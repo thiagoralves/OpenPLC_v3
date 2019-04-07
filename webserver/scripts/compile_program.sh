@@ -15,9 +15,9 @@ echo "$1" > ../active_program
 #compiling the ST file into C
 cd ..
 echo "Optimizing ST program..."
-./st_optimizer ./st_files/"$1" ./st_files/"$1"
+../../build/st_optimizer ./st_files/"$1" ./st_files/"$1"
 echo "Generating C files..."
-./iec2c ./st_files/  "$1"
+../../build/iec2c ./st_files/  "$1"
 if [ $? -ne 0 ]; then
     echo "Error generating C files"
     echo "Compilation finished with errors!"
