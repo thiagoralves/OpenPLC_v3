@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [ $# -eq 0 ]; then
     echo ""
     echo "Error: You must provide a platform name as argument"
@@ -18,10 +19,14 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-set -x 
+set -x
+
+WTF="OpenPLC was NOT installed!"
+
+
 # arg1: sudo or blank
 function linux_install_deps {
-    $1 apt-get update
+    #$1 apt-get update
     $1 apt-get install -y build-essential pkg-config bison flex autoconf \
                           automake libtool make git python2.7 python-pip  \
                           sqlite3 cmake git
@@ -53,10 +58,9 @@ function install_all_libs {
     echo "[ST OPTIMIZER]"
     cd utils/st_optimizer_src
     g++ st_optimizer.cpp -o ../../build/st_optimizer
-    #cp ./st_optimizer ../../webserver/
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
-        echo "OpenPLC was NOT installed!"
+        echo "$WTF"
         exit 1
     fi
     cd ../..
@@ -65,10 +69,9 @@ function install_all_libs {
     echo "[GLUE GENERATOR]"
     cd utils/glue_generator_src
     g++ glue_generator.cpp -o ../../build/glue_generator
-    #cp ./glue_generator ../../webserver/core
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
-        echo "OpenPLC was NOT installed!"
+        echo "$WTF"
         exit 1
     fi
     cd ../..
@@ -158,7 +161,7 @@ if [ "$1" == "win" ]; then
     cp ./utils/matiec_src/bin_win32/*.* ./webserver/
     if [ $? -ne 0 ]; then
         echo "Error compiling MatIEC"
-        echo "OpenPLC was NOT installed!"
+        echo "$WTF"
         exit 1
     fi
 
@@ -169,7 +172,7 @@ if [ "$1" == "win" ]; then
     cp ./st_optimizer.exe ../../webserver/
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
-        echo "OpenPLC was NOT installed!"
+        echo "$WTF"
         exit 1
     fi
     cd ../..
@@ -181,7 +184,7 @@ if [ "$1" == "win" ]; then
     cp ./glue_generator.exe ../../webserver/core
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
-        echo "OpenPLC was NOT installed!"
+        echo "$WTF"
         exit 1
     fi
     cd ../..
@@ -192,13 +195,13 @@ if [ "$1" == "win" ]; then
     mv dnp3.cpp dnp3.disabled
     if [ $? -ne 0 ]; then
         echo "Error disabling OpenDNP3"
-        echo "OpenPLC was NOT installed!"
+        echo "$WTF"
         exit 1
     fi
     mv dnp3_dummy.disabled dnp3_dummy.cpp
     if [ $? -ne 0 ]; then
         echo "Error disabling OpenDNP3"
-        echo "OpenPLC was NOT installed!"
+        echo "$WTF"
         exit 1
     fi
     cd ../..
@@ -211,7 +214,7 @@ if [ "$1" == "win" ]; then
     make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
-        echo "OpenPLC was NOT installed!"
+        echo "$WTF"
         exit 1
     fi
     cd ../..
