@@ -47,7 +47,7 @@ function install_all_libs {
         exit 1
     fi
     cd ../..
-    exit 1
+
     echo ""
     echo "[ST OPTIMIZER]"
     cd utils/st_optimizer_src
@@ -128,9 +128,9 @@ WorkingDirectory=$WORKING_DIR\n\
 ExecStart=$WORKING_DIR/start_openplc.sh\n\
 \n\
 [Install]\n\
-WantedBy=multi-user.target" >> openplc.service
-        $1 cp -rf ./openplc.service /lib/systemd/system/
-        rm -rf openplc.service
+WantedBy=multi-user.target" >> ./build/openplc.service
+        $1 cp -rf ./build/openplc.service /lib/systemd/system/
+        rm -rf ./build/openplc.service
         $1 "Enabling OpenPLC Service..."
         $1 systemctl daemon-reload
         $1 systemctl enable openplc
