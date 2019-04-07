@@ -12,7 +12,7 @@ OPENPLC_PLATFORM=$(cat $BUILD_DIR/openplc_platform.txt)
 
 echo "#### $1 ###"
 #store the active program filename
-echo "$1" > ../active_program
+echo "$1" > "$BUILD_DIR/active_program.txt"
 
 #compiling the ST file into C
 cd ..
@@ -33,8 +33,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-#compiling for each platform
+#---------------------------------------
+# compile for each platform
+
 cd core
+
 if [ "$OPENPLC_PLATFORM" = "win" ]; then
     echo "Compiling for Windows"
     echo "Generating object files..."

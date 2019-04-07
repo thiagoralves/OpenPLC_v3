@@ -5,9 +5,11 @@ if [ $# -eq 0 ]; then
 fi
 
 #move into the scripts folder if you're not there already
-cd scripts &>/dev/null
+#cd scripts &>/dev/null
 
 BUILD_DIR="../../build"
+
+#= openplc_* persist target files in build/
 PLATFORM_FILE="$BUILD_DIR/openplc_platform.txt"
 DRIVER_FILE="$BUILD_DIR/openplc_driver.txt"
 
