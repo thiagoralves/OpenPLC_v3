@@ -2,6 +2,8 @@
 # where docs are output to on gitlab.. MUST be named public/
 public/
 
+workspace/
+
 .sass-cache/
 .idea/
 

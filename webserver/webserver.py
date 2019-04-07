@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import sys
 import subprocess
 import platform
 import serial.tools.list_ports
@@ -21,7 +22,11 @@ from flask_login import current_user, login_required
 import pages
 import openplc
 
-
+HERE_DIR = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(HERE_DIR, ".."))
+WORK_DIR = None
+DB_FILE_NAME = "openplc.db"
+DB_FILE_PATH = None
 #------------------------------------------------
 # Flask app
 app = flask.Flask(__name__)
@@ -372,8 +377,6 @@ loading logs...
 #-------------------------------------------
 # Database stuff
 
-# TODO = schema creation etc and alternate path
-DB_FILE = "openplc.db"
 
 def db_query(sql, args=(), single=False, as_list=False):
     """ Opens db, execute query, close then return results.
@@ -1556,11 +1559,9 @@ def settings():
 #Creates a connection with the SQLite database.
 #----------------------------------------------------------------------------
 """ Create a connection to the database file """
-def db_connection(db_file=None):
-    if db_file == None:
-        db_file = DB_FILE
+def db_connection():
     try:
-        conn = sqlite3.connect(db_file)
+        conn = sqlite3.connect(DB_FILE_PATH)
         return conn
     except Error as e:
         print(e)
@@ -1579,32 +1580,37 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="OpenPLC webserver")
     parser.add_argument("-a", "--address", help="ip address to listen [127.0.0.1]", action="store", type=str, default="127.0.0.1")
     parser.add_argument("-p", "--port", help="http port [8080]", action="store", type=int, default=8080)
-    parser.add_argument("-w", "--workspace", help="Workspace directory", action="store", type=str)
+    parser.add_argument("workspace", help="Workspace directory", action="store", type=str)
     args = parser.parse_args()
-    print args
 
-    #Load information about current program on the openplc_runtime object
-    file = open("active_program", "r")
-    st_file = file.read()
-    st_file = st_file.replace('\r','').replace('\n','')
-    
+    # TODO check workspace exists
+    WORK_DIR = args.workspace
+    print WORK_DIR
+    if not os.path.exists(WORK_DIR):
+        sys.exit("FATAL: workspace dir not exist %s" % WORK_DIR)
 
-    conn = db_connection()
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
-            #cur.execute("SELECT * FROM Programs")
-            row = cur.fetchone()
-            openplc_runtime.project_name = str(row[1])
-            openplc_runtime.project_description = str(row[2])
-            openplc_runtime.project_file = str(row[3])
-            cur.close()
-            conn.close()
-            
-            app.run(debug=True, host=args.address, threaded=False, port=args.port)
-        
-        except Error as e:
-            print("error connecting to the database" + str(e))
-    else:
-        print("error connecting to the database")
+    DB_FILE_PATH = os.path.join(WORK_DIR, DB_FILE_NAME )
+    if not os.path.exists(DB_FILE_PATH):
+        s = "The database file `%s` does not exist\n" % DB_FILE_PATH
+        s += "If you have an existing file, please copy to location above."
+        s += "Other wise press Y to copy default."
+
+        inp = raw_input("Copy default db Y/N ?")
+        if inp.upper() == "Y":
+            copy_default # TODO
+
+    # Load information about current program on the openplc_runtime object
+    st_file = None
+    file_path = os.path.join(WORK_DIR, "active_program")
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
+            st_file = f.read().strip()
+
+            if st_file:
+                row, err = db_query("SELECT * FROM Programs WHERE File=?", [st_file], single=True)
+                if row:
+                    openplc_runtime.project_name = row["Name"]
+                    openplc_runtime.project_description = row["Description"]
+                    openplc_runtime.project_file = row["File"]
+
+    app.run(debug=True, host=args.address, threaded=False, port=args.port)
