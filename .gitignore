@@ -1,7 +1,7 @@
 
 # where docs are output to on gitlab.. MUST be named public/
 public/
-
+build/
 .sass-cache/
 .idea/
 
@@ -9,3 +9,39 @@ public/
 
 # IDE files for Visual Studio Code
 *.vscode/
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+

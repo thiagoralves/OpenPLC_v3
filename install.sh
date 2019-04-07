@@ -32,7 +32,9 @@ function install_py_deps {
 }
 
 function install_all_libs {
-        echo ""
+
+    mkdir build
+    echo ""
     echo "[MATIEC COMPILER]"
     cd utils/matiec_src
     autoreconf -i
@@ -49,8 +51,8 @@ function install_all_libs {
     echo ""
     echo "[ST OPTIMIZER]"
     cd utils/st_optimizer_src
-    g++ st_optimizer.cpp -o st_optimizer
-    cp ./st_optimizer ../../webserver/
+    g++ st_optimizer.cpp -o ../../build/st_optimizer
+    #cp ./st_optimizer ../../webserver/
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
         echo "OpenPLC was NOT installed!"
@@ -61,8 +63,8 @@ function install_all_libs {
     echo ""
     echo "[GLUE GENERATOR]"
     cd utils/glue_generator_src
-    g++ glue_generator.cpp -o glue_generator
-    cp ./glue_generator ../../webserver/core
+    g++ glue_generator.cpp -o ../../build/glue_generator
+    #cp ./glue_generator ../../webserver/core
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
         echo "OpenPLC was NOT installed!"
@@ -72,12 +74,15 @@ function install_all_libs {
 
     echo ""
     echo "[OPEN DNP3]"
-    cd utils/dnp3_src
+    mkdir build/dnp3
+    #cd utils/dnp3_src
+    cd build/dnp3
     echo "creating swapfile..."
     $1 dd if=/dev/zero of=swapfile bs=1M count=1000
     $1 mkswap swapfile
     $1 swapon swapfile
-    cmake ../dnp3_src
+    #cmake ../dnp3_src
+    cmake ../../utils/dnp3_src
     make
     $1 make install
     if [ $? -ne 0 ]; then
