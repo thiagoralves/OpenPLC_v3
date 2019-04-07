@@ -1,13 +1,14 @@
 
 {% extends "BASE.html" %}
 
-{% set title = "User" %}
+{% set title = "Program" %}
 
 
 {% block content %}
-{{c.user}} {{c.error}}
-<div class="let_me_in">
-    <form action="/user/{{c.user_id}}" method="POST">
+
+
+
+    <form action="/program/{{c.prog_id}}" method="POST">
         <div class="form-group">
             <label for='username'><b>Login ID</b></label>
             <input type='text' class="form-control" id='username' name='username'
@@ -31,5 +32,6 @@
             <input type="submit" class="btn btn-success" value='Save user' class="btn btn-success">
         </div>
     </form>
-</div>
+
+
 {% endblock content %}
