@@ -124,6 +124,14 @@ def before_request():
 #  OpenPLC Runtime
 openplc_runtime = openplc.Runtime()
 
+def get_settings():
+    rows, err = db_query("SELECT * FROM Settings")
+    #print rows
+    dic = {}
+    for r in rows:
+        dic[r['key'].lower()] = r['value']
+    return dic
+
 def configure_runtime():
     global openplc_runtime
 
@@ -393,8 +401,7 @@ def db_query(sql, args=(), single=False, as_list=False):
         return None, "Cannot connect db"
     try:
         cur = conn.cursor()
-        #print(sql, args)
-        err = cur.execute(sql, args)
+        cur.execute(sql, args)
         #print(err)
 
         rows = cur.fetchall()
@@ -1433,126 +1440,63 @@ def delete_user():
 
 
 @app.route('/settings', methods=['GET', 'POST'])
-def settings():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        if (flask.request.method == 'GET'):
-            return_str = pages.w3_style + pages.settings_style + draw_top_div() + pages.settings_head
-            return_str += draw_status()
-            return_str += """
-            </div>
-            <div style="margin-left:320px; margin-right:70px">
-                <div style="w3-container">
-                    <br>
-                    <h2>Settings</h2>
-                    <br>
-                    <form id        = "uploadForm"
-                        enctype     = "multipart/form-data"
-                        action      = "settings"
-                        method      = "post"
-                        onsubmit    = "return validateForm()">
-                        
-                        <label class="container">
-                            <b>Enable Modbus Server</b>"""
-            
-            database = "openplc.db"
-            conn = create_connection(database)
-            if (conn != None):
-                try:
-                    cur = conn.cursor()
-                    cur.execute("SELECT * FROM Settings")
-                    rows = cur.fetchall()
-                    cur.close()
-                    conn.close()
-                    
-                    for row in rows:
-                        if (row[0] == "Modbus_port"):
-                            modbus_port = str(row[1])
-                        elif (row[0] == "Dnp3_port"):
-                            dnp3_port = str(row[1])
-                    
-                    if (modbus_port == 'disabled'):
-                        return_str += """
-                            <input id="modbus_server" type="checkbox">
-                            <span class="checkmark"></span>
-                        </label>
-                        <label for='modbus_server_port'><b>Modbus Server Port</b></label>
-                        <input type='text' id='modbus_server_port' name='modbus_server_port' value='502'>"""
-                    else:
-                        return_str += """
-                            <input id="modbus_server" type="checkbox" checked>
-                            <span class="checkmark"></span>
-                        </label>
-                        <label for='modbus_server_port'><b>Modbus Server Port</b></label>
-                        <input type='text' id='modbus_server_port' name='modbus_server_port' value='""" + modbus_port + "'>"
-                        
-                    return_str += """
-                        <br>
-                        <br>
-                        <br>
-                        <label class="container">
-                            <b>Enable DNP3 Server</b>"""
-                    
-                    if (dnp3_port == 'disabled'):
-                        return_str += """
-                            <input id="dnp3_server" type="checkbox">
-                            <span class="checkmark"></span>
-                        </label>
-                        <label for='dnp3_server_port'><b>DNP3 Server Port</b></label>
-                        <input type='text' id='dnp3_server_port' name='dnp3_server_port' value='20000'>"""
-                    else:
-                        return_str += """
-                            <input id="dnp3_server" type="checkbox" checked>
-                            <span class="checkmark"></span>
-                        </label>
-                        <label for='dnp3_server_port'><b>DNP3 Server Port</b></label>
-                        <input type='text' id='dnp3_server_port' name='dnp3_server_port' value='""" + dnp3_port + "'>"
-                    return_str += pages.settings_tail
-                    
-                except Error as e:
-                    return_str += "error connecting to the database" + str(e)
-            else:
-                return_str += "Error opening DB"
+def p_settings():
 
-            return return_str
+    ctx = make_context("settings")
 
-        elif (flask.request.method == 'POST'):
-            modbus_port = flask.request.form.get('modbus_server_port')
-            dnp3_port = flask.request.form.get('dnp3_server_port')
-            
-            database = "openplc.db"
-            conn = create_connection(database)
-            if (conn != None):
-                try:
-                    cur = conn.cursor()
-                    if (modbus_port == None):
-                        cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Modbus_port'")
-                        conn.commit()
-                    else:
-                        cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Modbus_port'", (str(modbus_port),))
-                        conn.commit()
-                        
-                    if (dnp3_port == None):
-                        cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Dnp3_port'")
-                        conn.commit()
-                    else:
-                        cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Dnp3_port'", (str(dnp3_port),))
-                        conn.commit()
-                        
-                    cur.close()
-                    conn.close()
-                    configure_runtime()
-                    return flask.redirect(flask.url_for('dashboard'))
-                    
-                except Error as e:
-                    print("error connecting to the database" + str(e))
-                    return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-            else:
-                return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-        
 
+    if request.method == 'POST':
+
+        conn = db_connection()
+        cur = conn.cursor()
+
+        modbus_port = request.form.get('modbus_port', "disabled")
+        sql = "UPDATE Settings SET Value = ? WHERE Key = 'Modbus_port'"
+        cur.execute(sql, (modbus_port,))
+        conn.commit()
+
+        dnp3_port = request.form.get('dnp3_port', "disabled")
+        sql = "UPDATE Settings SET Value = ? WHERE Key = 'Dnp3_port'"
+        cur.execute(sql, [dnp3_port])
+        conn.commit()
+
+
+        #
+        #
+        #
+        # database = "openplc.db"
+        # conn = create_connection(database)
+        # if (conn != None):
+        #     try:
+        #         cur = conn.cursor()
+        #         if (modbus_port == None):
+        #             cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Modbus_port'")
+        #             conn.commit()
+        #         else:
+        #             cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Modbus_port'", (str(modbus_port),))
+        #             conn.commit()
+        #
+        #         if (dnp3_port == None):
+        #             cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Dnp3_port'")
+        #             conn.commit()
+        #         else:
+        #             cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Dnp3_port'", (str(dnp3_port),))
+        #             conn.commit()
+        #
+        #         cur.close()
+        #         conn.close()
+        #         configure_runtime()
+        #         return flask.redirect(flask.url_for('dashboard'))
+        #
+        #     except Error as e:
+        #         print("error connecting to the database" + str(e))
+        #         return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+        # else:
+        #     return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+
+    ctx.settings = get_settings()
+
+    return render_template("settings.html", c=ctx)
 
     
 #----------------------------------------------------------------------------
@@ -1565,7 +1509,6 @@ def db_connection():
         return conn
     except Error as e:
         print(e)
-
     return None
 
 #----------------------------------------------------------------------------

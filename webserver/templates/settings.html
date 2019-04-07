@@ -7,5 +7,73 @@
 
 {% block content %}
 
+ <form id="settingsForm" action="/settings" method="POST">
+
+     <fieldset>
+         <legend>Modbus Server</legend>
+
+         <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="modbus_enabled"
+                {% if c.settings.modbus_port != "disabled"%}checked{%endif%}>
+            <label class="form-check-label" for="modbus_enabled">Enable</label>
+         </div>
+         <div class="form-group">
+            <label for='modbus_port'>Port</label>
+            <input type='number' id='modbus_port' name='modbus_port'
+                   value='{% if c.settings.modbus_port != "disabled"%}{{c.settings.modbus_port}}{%else%}502{%endif%}'
+                   min="0" max="65535">
+         </div>
+
+     </fieldset>
+
+
+     <fieldset>
+         <legend>DNP3 Server</legend>
+
+         <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="dnp3_enabled"
+                {% if c.settings.dnp3_port != "disabled"%}checked{%endif%}>
+            <label class="form-check-label" for="dnp3_enabled">Enable</label>
+         </div>
+         <div class="form-group">
+            <label for='dnp3_port'>Port</label>
+            <input type='number' id='dnp3_port' name='dnp3_port'
+                   value='{% if c.settings.dnp3_port != "disabled"%}{{c.settings.dnp3_port}}{%else%}20000{%endif%}'
+                   min="0" max="65535" >
+         </div>
+
+     </fieldset>
+
+      <fieldset>
+         <legend>Slave Devices</legend>
+
+         <div class="form-group">
+            <label for='slave_polling_period'>Polling Period (ms)</label>
+            <input type='number' class="form-control" id='slave_polling_period' name='slave_polling_period' value='100' min="1" max="30000">
+         </div>
+
+          <div class="form-group">
+            <label for='slave_polling_period'>Timeout (ms)</label>
+            <input type='number' class="form-control" id='slave_timeout' name='slave_timeout' value='1000' min="500" max="30000" step="100">
+         </div>
+
+
+     </fieldset>
+
+
+
+    <label class="container">
+        <b>Start OpenPLC in RUN mode</b>
+        <input id="auto_run" type="checkbox">
+        <span class="checkmark"></span>
+    </label>
+    <input type='hidden' value='false' id='auto_run_text' name='auto_run_text'/>
+
+
+      <button type="submit" class="btn btn-primary">Submit</button>
+
+</form>
+
+<script type="text/javascript" src="/static/js/settings.js"></script>
 
 {% endblock content %}
