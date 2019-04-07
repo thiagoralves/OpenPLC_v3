@@ -220,7 +220,7 @@ if [ "$1" == "win" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    #cp ./start_openplc.sh ../../
 
 
 elif [ "$1" == "linux" ]; then
@@ -237,7 +237,7 @@ elif [ "$1" == "linux" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    #cp ./start_openplc.sh ../../
 
 
 elif [ "$1" == "docker" ]; then
@@ -251,7 +251,7 @@ elif [ "$1" == "docker" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    #cp ./start_openplc.sh ../../
 
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
@@ -269,7 +269,7 @@ elif [ "$1" == "rpi" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    #cp ./start_openplc.sh ../../
 
 
 
@@ -297,7 +297,7 @@ elif [ "$1" == "neuron" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    #cp ./start_openplc.sh ../../
 
 
 
@@ -311,7 +311,7 @@ elif [ "$1" == "custom" ]; then
     cd webserver/scripts
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    #cp ./start_openplc.sh ../../
 
 
 else
