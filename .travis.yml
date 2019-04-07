@@ -1,33 +1,22 @@
+language: bash
 
-os:
-  - linux
-dist: trusty
-sudo: required
-
-
-language: cpp
-
-before_install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
-
+services:
+  - docker
+  
 addons:
   apt:
-    sources:
-      - ubuntu-toolchain-r-test
     packages:
-      - gcc-4.9
-      - g++-4.9
-
-
-branches:
-  only:
-    - master
-    - develop
-    - pedro
-
+      - doxygen
 
 script:
- - sudo pip install --upgrade pip
- - ./install.sh linux
-
-
+  - docker build .
+  - doxygen doxygen.conf
+  
+    #deploy:
+    #  provider: pages
+    #  skip_cleanup: true
+    #  local_dir: public
+    #  github_token: $GITHUB_TOKEN
+    #  keep-history: true
+    #  on:
+    #    branch: master
