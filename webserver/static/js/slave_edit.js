@@ -1,291 +1,180 @@
-
-var dev_protocol = document.getElementById('dev_protocol');
+"use strict";
 var tcpdiv = document.getElementById("tcp-stuff");
 var rtudiv = document.getElementById("rtu-stuff");
-
-var devport = document.getElementById("dev_port");
-var devid = document.getElementById("dev_id");
-
-var devbaud = document.getElementById("dev_baud");
-var devparity = document.getElementById("dev_parity");
-var devdata = document.getElementById("dev_data");
-var devstop = document.getElementById("dev_stop");
-
-var distart = document.getElementById("di_start");
-var disize = document.getElementById("di_size");
-var dostart = document.getElementById("do_start");
-var dosize = document.getElementById("do_size");
-var aistart = document.getElementById("ai_start");
-var aisize = document.getElementById("ai_size");
-var aorstart = document.getElementById("aor_start");
-var aorsize = document.getElementById("aor_size");
-var aowstart = document.getElementById("aow_start");
-var aowsize = document.getElementById("aow_size");
-
-window.onload = function()
-{
-    setupPageContent()
+var frm = document.getElementById('slave_form');
+var dev_name = document.getElementById("dev_name");
+var dev_type = document.getElementById('dev_type');
+var dev_ip = document.getElementById("ip_address");
+var dev_port = document.getElementById("ip_port");
+var slave_id = document.getElementById("slave_id");
+var dev_baud = document.getElementById("baud_rate");
+var dev_parity = document.getElementById("parity");
+var dev_data = document.getElementById("data_bits");
+var dev_stop = document.getElementById("stop_bits");
+var di_start = document.getElementById("di_start");
+var di_size = document.getElementById("di_size");
+var do_start = document.getElementById("coil_start");
+var do_size = document.getElementById("coil_size");
+var ai_start = document.getElementById("ir_start");
+var ai_size = document.getElementById("ir_size");
+var aor_start = document.getElementById("hr_read_start");
+var aor_size = document.getElementById("hr_read_size");
+var aow_start = document.getElementById("hr_write_start");
+var aow_size = document.getElementById("hr_write_size");
+window.onload = function () {
+    updateFormWidgets();
     //LoadValuesFromDB()
-}
-
-function turnElementOn(element)
-{
-    element.readOnly = false
-    element.value = ""
+};
+function turnElementOn(element) {
+    element.readOnly = false;
+    element.value = "";
     //element.style.backgroundColor = "white"
     //element.style.color = "black"
 }
-
-function turnElementOff(element)
-{
-    element.readOnly = true
-   // element.style.backgroundColor = "#F8F8F8"
+function turnElementOff(element) {
+    element.readOnly = true;
+    // element.style.backgroundColor = "#F8F8F8"
     //element.style.color = "#9C9C9C"
 }
-
-dev_protocol.onchange = function()
-{
-    first_time_edit = false;
-    setupPageContent()
-}
-
-function setupPageContent()
-{
-    var dtype = dev_protocol.options[dev_protocol.selectedIndex].value;
-
-
-    switch(dtype){
-
-    case "TCP":
-        tcpdiv.style.display = "block";
-        rtudiv.style.display = "none";
-
-        turnElementOn(devport);
-        turnElementOn(devid);
-        turnElementOn(distart);
-        turnElementOn(disize);
-        turnElementOn(dostart);
-        turnElementOn(dosize);
-        turnElementOn(aistart);
-        turnElementOn(aisize);
-        turnElementOn(aorstart);
-        turnElementOn(aorsize);
-        turnElementOn(aowstart);
-        turnElementOn(aowsize);
-        break;
-
-    case "ESP32":
-
-        tcpdiv.style.display = "block";
-        rtudiv.style.display = "none";
-
-        turnElementOff(devport);
-        devport.value = "502";
-        turnElementOff(devid);
-        devid.value = "0";
-        turnElementOff(distart);
-        distart.value = "0";
-        turnElementOff(disize);
-        disize.value = "8";
-        turnElementOff(dostart);
-        dostart.value = "0";
-        turnElementOff(dosize);
-        dosize.value = "8";
-        turnElementOff(aistart);
-        aistart.value = "0";
-        turnElementOff(aisize);
-        aisize.value = "1";
-        turnElementOff(aorstart);
-        aorstart.value = "0";
-        turnElementOff(aorsize);
-        aorsize.value = "0";
-        turnElementOff(aowstart);
-        aowstart.value = "0";
-        turnElementOff(aowsize);
-        aowsize.value = "1";
-        break;
-
-    case "ESP8266":
-
-            tcpdiv.style.display = "block";
-            rtudiv.style.display = "none";
-
-            turnElementOff(devport);
-            devport.value = "502"
-            turnElementOff(devid)
-            devid.value = "0"
-            turnElementOff(distart)
-            distart.value = "0"
-            turnElementOff(disize)
-            disize.value = "8"
-            turnElementOff(dostart)
-            dostart.value = "0"
-            turnElementOff(dosize)
-            dosize.value = "8"
-            turnElementOff(aistart)
-            aistart.value = "0"
-            turnElementOff(aisize)
-            aisize.value = "1"
-            turnElementOff(aorstart)
-            aorstart.value = "0"
-            turnElementOff(aorsize)
-            aorsize.value = "0"
-            turnElementOff(aowstart)
-            aowstart.value = "0"
-            turnElementOff(aowsize)
-            aowsize.value = "1"
-
-    case "RTU":
-
-            tcpdiv.style.display = "none"
-            rtudiv.style.display = "block"
-
-            turnElementOn(devid)
-            turnElementOn(devbaud)
-            turnElementOn(devparity)
-            devparity.value = "None"
-            turnElementOn(devdata)
-            turnElementOn(devstop)
-            turnElementOn(distart)
-            turnElementOn(disize)
-            turnElementOn(dostart)
-            turnElementOn(dosize)
-            turnElementOn(aistart)
-            turnElementOn(aisize)
-            turnElementOn(aorstart)
-            turnElementOn(aorsize)
-            turnElementOn(aowstart)
-            turnElementOn(aowsize)
-
-    case "Uno":
-
-            tcpdiv.style.display = "none"
-            rtudiv.style.display = "block"
-
-            turnElementOff(devid)
-            devid.value = "0"
-            turnElementOff(devbaud)
-            devbaud.value = "115200"
-            turnElementOff(devparity)
-            devparity.value = "None"
-            turnElementOff(devdata)
-            devdata.value = "8"
-            turnElementOff(devstop)
-            devstop.value = "1"
-            turnElementOff(distart)
-            distart.value = "0"
-            turnElementOff(disize)
-            disize.value = "5"
-            turnElementOff(dostart)
-            dostart.value = "0"
-            turnElementOff(dosize)
-            dosize.value = "4"
-            turnElementOff(aistart)
-            aistart.value = "0"
-            turnElementOff(aisize)
-            aisize.value = "6"
-            turnElementOff(aorstart)
-            aorstart.value = "0"
-            turnElementOff(aorsize)
-            aorsize.value = "0"
-            turnElementOff(aowstart)
-            aowstart.value = "0"
-            turnElementOff(aowsize)
-            aowsize.value = "3"
+dev_type.onchange = function () {
+    updateFormWidgets();
+};
+function updateFormWidgets() {
+    // switch all elements off, then enable on option below
+    for (var _i = 0, _a = [dev_port, slave_id, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size]; _i < _a.length; _i++) {
+        var ele = _a[_i];
+        turnElementOff(ele);
+    }
+    var dtype = dev_type.options[dev_type.selectedIndex].value;
+    console.log(dtype);
+    switch (dtype) {
+        case "TCP":
+            $(tcpdiv).show();
+            $(rtudiv).hide();
+            turnElementOn(dev_port);
+            turnElementOn(slave_id);
+            turnElementOn(di_start);
+            turnElementOn(di_size);
+            turnElementOn(do_start);
+            turnElementOn(do_size);
+            turnElementOn(ai_start);
+            turnElementOn(ai_size);
+            turnElementOn(aor_start);
+            turnElementOn(aor_size);
+            turnElementOn(aow_start);
+            turnElementOn(aow_size);
             break;
-
-    case "Mega":
-
-            tcpdiv.style.display = "none"
-            rtudiv.style.display = "block"
-
-            turnElementOff(devid)
-            devid.value = "0"
-            turnElementOff(devbaud)
-            devbaud.value = "115200"
-            turnElementOff(devparity)
-            devparity.value = "None"
-            turnElementOff(devdata)
-            devdata.value = "8"
-            turnElementOff(devstop)
-            devstop.value = "1"
-            turnElementOff(distart)
-            distart.value = "0"
-            turnElementOff(disize)
-            disize.value = "24"
-            turnElementOff(dostart)
-            dostart.value = "0"
-            turnElementOff(dosize)
-            dosize.value = "16"
-            turnElementOff(aistart)
-            aistart.value = "0"
-            turnElementOff(aisize)
-            aisize.value = "16"
-            turnElementOff(aorstart)
-            aorstart.value = "0"
-            turnElementOff(aorsize)
-            aorsize.value = "0"
-            turnElementOff(aowstart)
-            aowstart.value = "0"
-            turnElementOff(aowsize)
-            aowsize.value = "12"
+        case "RTU":
+            $(tcpdiv).hide();
+            $(rtudiv).show();
+            turnElementOn(slave_id);
+            turnElementOn(dev_baud);
+            turnElementOn(dev_parity);
+            dev_parity.value = "None";
+            turnElementOn(dev_data);
+            turnElementOn(dev_stop);
+            turnElementOn(di_start);
+            turnElementOn(di_size);
+            turnElementOn(do_start);
+            turnElementOn(do_size);
+            turnElementOn(ai_start);
+            turnElementOn(ai_size);
+            turnElementOn(aor_start);
+            turnElementOn(aor_size);
+            turnElementOn(aow_start);
+            turnElementOn(aow_size);
+            break;
+        case "ESP32":
+            $(tcpdiv).show();
+            $(rtudiv).hide();
+            dev_port.value = "502";
+            slave_id.value = "0";
+            di_start.value = "0";
+            di_size.value = "8";
+            do_start.value = "0";
+            do_size.value = "8";
+            ai_start.value = "0";
+            ai_size.value = "1";
+            aor_start.value = "0";
+            aor_size.value = "0";
+            aow_start.value = "0";
+            aow_size.value = "1";
+            break;
+        case "ESP8266":
+            $(tcpdiv).show();
+            $(rtudiv).hide();
+            dev_port.value = "502";
+            slave_id.value = "0";
+            di_start.value = "0";
+            di_size.value = "8";
+            do_start.value = "0";
+            do_size.value = "8";
+            ai_start.value = "0";
+            ai_size.value = "1";
+            aor_start.value = "0";
+            aor_size.value = "0";
+            aow_start.value = "0";
+            aow_size.value = "1";
+            break;
+        case "Uno":
+            $(tcpdiv).hide();
+            $(rtudiv).show();
+            slave_id.value = "0";
+            dev_baud.value = "115200";
+            dev_parity.value = "None";
+            dev_data.value = "8";
+            dev_stop.value = "1";
+            di_start.value = "0";
+            di_size.value = "5";
+            do_start.value = "0";
+            do_size.value = "4";
+            ai_start.value = "0";
+            ai_size.value = "6";
+            aor_start.value = "0";
+            aor_size.value = "0";
+            aow_start.value = "0";
+            aow_size.value = "3";
+            break;
+        case "Mega":
+            $(tcpdiv).hide();
+            $(rtudiv).show();
+            slave_id.value = "0";
+            dev_baud.value = "115200";
+            dev_parity.value = "None";
+            dev_data.value = "8";
+            dev_stop.value = "1";
+            di_start.value = "0";
+            di_size.value = "24";
+            do_start.value = "0";
+            do_size.value = "16";
+            ai_start.value = "0";
+            ai_size.value = "16";
+            aor_start.value = "0";
+            aor_size.value = "0";
+            aow_start.value = "0";
+            aow_size.value = "12";
             break;
     }
-
-
 }
-
-
-
-function validateForm()
-{
-    var devname = document.forms["uploadForm"]["dev_name"].value;
-    var devid = document.forms["uploadForm"]["dev_id"].value;
-
-    var devip = document.forms["uploadForm"]["dev_ip"].value;
-    var devport = document.forms["uploadForm"]["dev_port"].value;
-
-    var devbaud = document.forms["uploadForm"]["dev_baud"].value;
-    var devdata = document.forms["uploadForm"]["dev_data"].value;
-    var devstop = document.forms["uploadForm"]["dev_stop"].value;
-
-    var distart = document.forms["uploadForm"]["di_start"].value;
-    var disize = document.forms["uploadForm"]["di_size"].value;
-    var dostart = document.forms["uploadForm"]["do_start"].value;
-    var dosize = document.forms["uploadForm"]["do_size"].value;
-    var aistart = document.forms["uploadForm"]["ai_start"].value;
-    var aisize = document.forms["uploadForm"]["ai_size"].value;
-    var aorstart = document.forms["uploadForm"]["aor_start"].value;
-    var aorsize = document.forms["uploadForm"]["aor_size"].value;
-    var aowstart = document.forms["uploadForm"]["aow_start"].value;
-    var aowstart = document.forms["uploadForm"]["aow_start"].value;
-    var aowsize = document.forms["uploadForm"]["aow_size"].value;
-
-
-    if (devname == "" || devid == "" || distart == "" || disize == "" || dostart == "" || dosize == "" || aistart == "" || aisize == "" || aorstart == "" || aorsize == "" || aowstart == "" || aowsize == "")
-    {
+function validateForm() {
+    if (dev_name.value == "" || slave_id.value == "") {
         alert("Please fill out all the fields before saving!");
         return false;
     }
-
-    var device_type = dev_protocol.options[dev_protocol.selectedIndex].value
-    if (device_type=="TCP" || device_type=="ESP32" || device_type=="ESP8266")
-    {
-        if (devip == "" || devport == "")
-        {
+    var device_type = dev_protocol.options[dev_protocol.selectedIndex].value;
+    if (device_type == "TCP" || device_type == "ESP32" || device_type == "ESP8266") {
+        if (dev_ip.value == "" || dev_port.value == "") {
             alert("Please fill out all the fields before saving!");
             return false;
         }
     }
-    else
-    {
-        if (devbaud == "" || devdata == "" || devstop == "")
-        {
+    else {
+        if (dev_baud.value == "" || dev_data.value == "" || dev_stop.value == "") {
             alert("Please fill out all the fields before saving!");
             return false;
         }
     }
-    alert("ok");
+    return confirm("click tp submot");
     return false;
     return true;
 }

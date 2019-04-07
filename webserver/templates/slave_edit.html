@@ -7,65 +7,70 @@
 
 {% block content %}
 
-<form id="uploadForm" action="/slave/add" method="POST" onsubmit="return validateForm()">
+
+<form id="slave_form" action="/slave/{{c.dev_id}}" method="POST" onsubmit="return validateForm()">
 <div class="row">
     <div class="col">
 
         <div class="form-group">
             <label for='dev_name'>Device Name</label>
-            <input type='text' class="form-control" id='dev_name' name='device_name' required>
+            <input type='text' class="form-control" id='dev_name' name='dev_name' required value="{{c.device.dev_name}}">
         </div>
 
         <div class="form-group">
-            <label for='dev_protocol'>Device Type</label>
-            <select id='dev_protocol' class="form-control" name='device_protocol'>
+            <label for='dev_type'>Device Type</label>
+            <select id='dev_type' class="form-control" name='dev_type'>
                 {% for dp in c.DEVICE_PROTOCOLS %}
-                    <option {% if dp.protocol == 1 %} selected='selected'{%endif%} value='{{dp.protocol}}'>{{dp.label}}</option>
+                    <option {% if c.device.dev_type == dp.protocol %} selected='selected'{%endif%} value='{{dp.protocol}}'>{{dp.label}}</option>
                 {% endfor %}
             </select>
         </div>
 
         <div class="form-group">
-            <label for='dev_id'>Slave ID</label>
-            <input type='number' class="form-control" id='dev_id' name='device_id' placeholder='0' required>
+            <label for='slave_id'>Slave ID</label>
+            <input type='number' class="form-control" id='slave_id' name='slave_id' placeholder='0'
+                   min="0" max="256" required value="{{c.device.slave_id}}">
         </div>
 
         <div id="tcp-stuff">
             <div class="form-group">
-                <label for='dev_ip'>IP Address</label>
-                <input type='text' class="form-control" id='dev_ip' name='device_ip' placeholder='192.168.0.1'>
+                <label for='ip_address'>IP Address</label>
+                <input type='text' class="form-control" id='ip_address' name='ip_address'
+                       placeholder='eg 192.168.1.1' value="{{c.device.dev_ip}}">
             </div>
             <div class="form-group">
-                <label for='dev_port'>IP Port</label>
-                <input type='number' class="form-control" id='dev_port' name='device_port' placeholder='502'>
+                <label for='ip_port'>IP Port</label>
+                <input type='number' class="form-control" id='ip_port' name='ip_port'
+                       placeholder='eg 502' value="{{c.device.dev_port}}">
             </div>
         </div>
         <div id="rtu-stuff">
             <div class="form-group">
 
-                <label for='dev_cport'>COM Port</label>
-                <select id='dev_cport' class="form-control" name='device_cport'>
+                <label for='com_port'>COM Port</label>
+                <select id='com_port' class="form-control" name='com_port' value="{{c.device.com_port}}">
                 </select>
             </div>
-             <div class="form-group">
-                <label for='dev_baud'>Baud Rate</label>
-                <input type='number' class="form-control" id='dev_baud' name='device_baud' placeholder='19200'>
+             <!--suppress BuyFluidPluginNoteInspection -->
+            <div class="form-group">
+                <label for='baud_rate'>Baud Rate</label>
+                <input type='number' class="form-control" id='baud_rate' name='baud_rate' value="{{c.device.baud_rate}}">
              </div>
              <div class="form-group">
-                <label for='dev_parity'>Parity</label>
-                <select id='dev_parity' class="form-control" name='device_parity'>
+                <label for='parity'>Parity</label>
+                <select id='parity' class="form-control" name='parity'>
                     <option value='None'>None</option>
                     <option value='Even'>Even</option>
                     <option value='Odd'>Odd</option>
                 </select>
              </div>
              <div class="form-group">
-                <label for='dev_data'>Data Bits</label>
-                <input type='number' class="form-control" id='dev_data' name='device_data' placeholder='8'>
+                <label for='data_bits'>Data Bits</label>
+                <input type='number' class="form-control" id='data_bits' name='data_bits' placeholder='eg 8'>
              </div>
              <div class="form-group">
-                <label for='dev_stop'>Stop Bits</label>
-                <input type='number' class="form-control" id='dev_stop' name='device_stop' placeholder='1'>
+                <label for='stop_bits'>Stop Bits</label>
+                <input type='number' class="form-control" id='stop_bits' name='stop_bits' placeholder='eg 1'>
              </div>
         </div>
 
@@ -81,11 +86,13 @@
                 <label for='{{rec.prefix}}_start' class="col-sm-4 col-form-label">Start Address:</label>
 
                 <div class="col-sm-2">
-                        <input type='text' class="form-control" ddstyle='width: 20%' id='{{rec.prefix}}_start' name='{{rec.prefix}}_start' placeholder='0'>
+                    <input type='text' class="form-control" required
+                           id='{{rec.prefix}}_start' name='{{rec.prefix}}_start'>
                 </div>
-                <label for='{{rec.prefix}}_size' class="col-sm-4 col-form-label">Size:</label>
-                <div class="col-sm-2">
-                        <input type='text' class="form-control" ddstyle='width: 20%' id='{{rec.prefix}}_size' name='{{rec.prefix}}_size' placeholder='8'>
+                <label for='{{rec.prefix}}_size' class="col-sm-2 col-form-label">Size:</label>
+                <div class="col-sm-3">
+                    <input type='number' class="form-control" required min="8" max="9999"
+                           id='{{rec.prefix}}_size' name='{{rec.prefix}}_size'>
                 </div>
             </div>
         </fieldset>
@@ -93,7 +100,7 @@
 
     </div>
 </div>
-     <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value='Save device'></center>
+     <center><input type="submit" class="btn btn-primary"  value='Save device'></center>
 </form>
 
 
