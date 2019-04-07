@@ -1571,14 +1571,17 @@ def db_connection(db_file=None):
 #Main dummy function. Only displays a message and exits. The app keeps
 #running on the background by Flask
 #----------------------------------------------------------------------------
-def main():
+def deadmain():
    print("Starting the web interface...")
    
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
-    parser.parse_args()
-
+    parser = argparse.ArgumentParser(description="OpenPLC webserver")
+    parser.add_argument("-a", "--address", help="ip address to listen [127.0.0.1]", action="store", type=str, default="127.0.0.1")
+    parser.add_argument("-p", "--port", help="http port [8080]", action="store", type=int, default=8080)
+    parser.add_argument("-w", "--workspace", help="Workspace directory", action="store", type=str)
+    args = parser.parse_args()
+    print args
 
     #Load information about current program on the openplc_runtime object
     file = open("active_program", "r")
@@ -1599,7 +1602,7 @@ if __name__ == '__main__':
             cur.close()
             conn.close()
             
-            app.run(debug=True, host='0.0.0.0', threaded=False, port=8081)
+            app.run(debug=True, host=args.address, threaded=False, port=args.port)
         
         except Error as e:
             print("error connecting to the database" + str(e))
