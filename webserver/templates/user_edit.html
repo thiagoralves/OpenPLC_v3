@@ -5,28 +5,30 @@
 
 
 {% block content %}
-
+{{c.user}} {{c.error}}
 <div class="let_me_in">
-    <form action="/user/add" method="post">
+    <form action="/user/{{c.user_id}}" method="POST">
         <div class="form-group">
             <label for='username'><b>Login ID</b></label>
-            <input type='text' id='username' name='username' placeholder='username'>
+            <input type='text' class="form-control" id='username' name='username'
+                   value="{{c.user.username}}" placeholder='eg jblogs' required  minlength="2">
         </div>
 
         <div class="form-group">
             <label for='name'><b>Name</b></label>
-            <input type='text' id='name' name='oplc_name' placeholder='eg Nungu SmithAno'>
+            <input type='text' class="form-control" id='name' name='name'
+                    value="{{c.user.username}}" placeholder='eg Nungu SmithAno' required>
         </div>
         <div class="form-group">
             <label for='email'><b>Email</b></label>
-            <input type='text' id='email' name='oplc_email' placeholder='mypi@rhubarb.ky'>
+            <input type='email' class="form-control" id='email' name='email'  value="{{c.user.email}}">
         </div>
         <div class="form-group">
-            <label for="x_secret_combo_of_characters"><b>Password</b></label>
-            <input type='text' id='x_secret_combo_of_characters' name='xpasswd' placeholder='password'>
+            <label for="xpasswd"><b>Password</b></label>
+            <input type='text' class="form-control" id='xpasswd' name='xpasswd'   value="{{c.user.password}}" minlength="4">
         </div>
         <div class="form-group">
-            <input type="submit" class="button" value='Save user' class="btn btn-success">
+            <input type="submit" class="btn btn-success" value='Save user' class="btn btn-success">
         </div>
     </form>
 </div>

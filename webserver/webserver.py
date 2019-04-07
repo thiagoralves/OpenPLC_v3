@@ -445,6 +445,7 @@ def db_insert(table, flds):
     try:
         cur = conn.cursor()
         cur.execute(sql, [flds[k] for k in keys])
+        conn.commit()
 
         # TODO get last id(but bot used atmo
         return 0, None
@@ -467,6 +468,7 @@ def db_update(table, flds, p_name, p_id):
     try:
         cur = conn.cursor()
         cur.execute(sql, vals)
+        conn.commit()
         return None
 
     except Error as e:
@@ -1223,67 +1225,68 @@ def monitoring():
             
 @app.route('/hardware', methods=['GET', 'POST'])
 @login_required
-def hardware():
+def p_hardware():
 
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        if (flask.request.method == 'GET'):
-            with open('./scripts/openplc_driver') as f: current_driver = f.read().rstrip()
-            return_str = pages.w3_style + pages.hardware_style + draw_top_div() + pages.hardware_head
-            return_str += draw_status()
-            return_str += """
-            </div>
-            <div style="margin-left:320px; margin-right:70px">
-                <div style="w3-container">
+    ctx = make_context("hardware")
+
+    if (flask.request.method == 'DEADGET'):
+        with open('./scripts/openplc_driver') as f: current_driver = f.read().rstrip()
+        return_str = pages.w3_style + pages.hardware_style + draw_top_div() + pages.hardware_head
+        return_str += draw_status()
+        return_str += """
+        </div>
+        <div style="margin-left:320px; margin-right:70px">
+            <div style="w3-container">
+                <br>
+                <h2>Hardware</h2>
+                <p>OpenPLC controls inputs and outputs through a piece of code called hardware layer (also known as driver). Therefore, to properly handle the inputs and outputs of your board, you must select the appropriate hardware layer for it. The Blank hardware layer is the default option on OpenPLC, which provides no support for native inputs and outputs.</p>
+                <!-- <p>This section allows you to change the hardware layer used by OpenPLC. It is also possible to augment the current hardware layer through the hardware layer code box. -->
+                <p><b>OpenPLC Hardware Layer</b><p>
+                <form   id    = "uploadForm"
+                    enctype   =  "multipart/form-data"
+                    action    =  "hardware"
+                    method    =  "post">
+                    <select id='hardware_layer' name='hardware_layer' style="width:400px;height:30px;font-size: 16px;font-family: 'Roboto', sans-serif;">"""
+        if (current_driver == "blank"): return_str += "<option selected='selected' value='blank'>Blank</option>"
+        else: return_str += "<option value='blank'>Blank</option>"
+        if (current_driver == "blank_linux"): return_str += "<option selected='selected' value='blank_linux'>Blank Linux</option>"
+        else: return_str += "<option value='blank_linux'>Blank with DNP3 (Linux only)</option>"
+        if (current_driver == "fischertechnik"): return_str += "<option selected='selected' value='fischertechnik'>Fischertechnik</option>"
+        else: return_str += "<option value='fischertechnik'>Fischertechnik</option>"
+        if (current_driver == "pixtend"): return_str += "<option selected='selected' value='pixtend'>PiXtend</option>"
+        else: return_str += "<option value='pixtend'>PiXtend</option>"
+        if (current_driver == "pixtend_2s"): return_str += "<option selected='selected' value='pixtend_2s'>PiXtend 2s</option>"
+        else: return_str += "<option value='pixtend_2s'>PiXtend 2s</option>"
+        if (current_driver == "rpi"): return_str += "<option selected='selected' value='rpi'>Raspberry Pi</option>"
+        else: return_str += "<option value='rpi'>Raspberry Pi</option>"
+        if (current_driver == "rpi_old"): return_str += "<option selected='selected' value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
+        else: return_str += "<option value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
+        if (current_driver == "simulink"): return_str += "<option selected='selected' value='simulink'>Simulink</option>"
+        else: return_str += "<option value='simulink'>Simulink</option>"
+        if (current_driver == "simulink_linux"): return_str += "<option selected='selected' value='simulink_linux'>Simulink with DNP3 (Linux only)</option>"
+        else: return_str += "<option value='simulink_linux'>Simulink with DNP3 (Linux only)</option>"
+        if (current_driver == "unipi"): return_str += "<option selected='selected' value='unipi'>UniPi v1.1</option>"
+        else: return_str += "<option value='unipi'>UniPi v1.1</option>"
+        return_str += """
+                    </select>
                     <br>
-                    <h2>Hardware</h2>
-                    <p>OpenPLC controls inputs and outputs through a piece of code called hardware layer (also known as driver). Therefore, to properly handle the inputs and outputs of your board, you must select the appropriate hardware layer for it. The Blank hardware layer is the default option on OpenPLC, which provides no support for native inputs and outputs.</p>
-                    <!-- <p>This section allows you to change the hardware layer used by OpenPLC. It is also possible to augment the current hardware layer through the hardware layer code box. -->
-                    <p><b>OpenPLC Hardware Layer</b><p>
-                    <form   id    = "uploadForm"
-                        enctype   =  "multipart/form-data"
-                        action    =  "hardware"
-                        method    =  "post">
-                        <select id='hardware_layer' name='hardware_layer' style="width:400px;height:30px;font-size: 16px;font-family: 'Roboto', sans-serif;">"""
-            if (current_driver == "blank"): return_str += "<option selected='selected' value='blank'>Blank</option>"
-            else: return_str += "<option value='blank'>Blank</option>"
-            if (current_driver == "blank_linux"): return_str += "<option selected='selected' value='blank_linux'>Blank Linux</option>"
-            else: return_str += "<option value='blank_linux'>Blank with DNP3 (Linux only)</option>"
-            if (current_driver == "fischertechnik"): return_str += "<option selected='selected' value='fischertechnik'>Fischertechnik</option>"
-            else: return_str += "<option value='fischertechnik'>Fischertechnik</option>"
-            if (current_driver == "pixtend"): return_str += "<option selected='selected' value='pixtend'>PiXtend</option>"
-            else: return_str += "<option value='pixtend'>PiXtend</option>"
-            if (current_driver == "pixtend_2s"): return_str += "<option selected='selected' value='pixtend_2s'>PiXtend 2s</option>"
-            else: return_str += "<option value='pixtend_2s'>PiXtend 2s</option>"
-            if (current_driver == "rpi"): return_str += "<option selected='selected' value='rpi'>Raspberry Pi</option>"
-            else: return_str += "<option value='rpi'>Raspberry Pi</option>"
-            if (current_driver == "rpi_old"): return_str += "<option selected='selected' value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
-            else: return_str += "<option value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
-            if (current_driver == "simulink"): return_str += "<option selected='selected' value='simulink'>Simulink</option>"
-            else: return_str += "<option value='simulink'>Simulink</option>"
-            if (current_driver == "simulink_linux"): return_str += "<option selected='selected' value='simulink_linux'>Simulink with DNP3 (Linux only)</option>"
-            else: return_str += "<option value='simulink_linux'>Simulink with DNP3 (Linux only)</option>"
-            if (current_driver == "unipi"): return_str += "<option selected='selected' value='unipi'>UniPi v1.1</option>"
-            else: return_str += "<option value='unipi'>UniPi v1.1</option>"
-            return_str += """
-                        </select>
-                        <br>
-                        <br>
-                        <p><b>Hardware Layer Code Box</b><p>
-                        <p>The Hardware Layer Code Box allows you to extend the functionality of the current driver by adding custom code to it, such as reading I2C, SPI and 1-Wire sensors, or controling port expanders to add more outputs to your hardware</p>
-                        <textarea wrap="off" spellcheck="false" name="custom_layer_code" id="custom_layer_code">"""
-            with open('./core/custom_layer.h') as f: return_str += f.read()
-            return_str += pages.hardware_tail
+                    <br>
+                    <p><b>Hardware Layer Code Box</b><p>
+                    <p>The Hardware Layer Code Box allows you to extend the functionality of the current driver by adding custom code to it, such as reading I2C, SPI and 1-Wire sensors, or controling port expanders to add more outputs to your hardware</p>
+                    <textarea wrap="off" spellcheck="false" name="custom_layer_code" id="custom_layer_code">"""
+        with open('./core/custom_layer.h') as f: return_str += f.read()
+        return_str += pages.hardware_tail
             
-        else:
-            hardware_layer = flask.request.form['hardware_layer']
-            custom_layer_code = flask.request.form['custom_layer_code']
-            with open('./active_program') as f: current_program = f.read()
-            with open('./core/custom_layer.h', 'w+') as f: f.write(custom_layer_code)
-            
-            subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
-            return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
-        
-        return return_str
+    else:
+        hardware_layer = flask.request.form['hardware_layer']
+        custom_layer_code = flask.request.form['custom_layer_code']
+        with open('./active_program') as f: current_program = f.read()
+        with open('./core/custom_layer.h', 'w+') as f: f.write(custom_layer_code)
+
+        subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
+        return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
+
+    return render_template("hardware", c=ctx)
 
 
 @app.route('/restore_custom_hardware')
@@ -1301,109 +1304,47 @@ def restore_custom_hardware():
 
 @app.route('/users')
 @login_required
-def users():
+def p_users():
 
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+    if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
-        ctx = make_context("users")
+    ctx = make_context("users")
 
-        sql = "SELECT user_id, name, username, email FROM Users order by username asc"
-        ctx.users, ctx.error = db_query(sql)
+    sql = "SELECT user_id, name, username, email FROM Users order by username asc"
+    ctx.users, ctx.error = db_query(sql)
 
-        return render_template("users.html", c=ctx)
+    return render_template("users.html", c=ctx)
 
-
-@app.route('/add-user', methods=['GET', 'POST'])
-def add_user():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        if (flask.request.method == 'GET'):
-            return_str = pages.w3_style + pages.style + draw_top_div()
-            return_str += """
-                <div class='main'>
-                    <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-                        <br>
-                        <br>
-                        <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-                        <a href='programs' class='w3-bar-item w3-button'><img src='/static/programs-icon-64x64.png' alt='Programs' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
-                        <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
-                        <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-                        <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-                        <a href="users" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/users-icon-64x64.png" alt="Users" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Users</p></a>
-                        <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-                        <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-                        <br>
-                        <br>"""
-            return_str += draw_status() + pages.add_user_tail
-            return return_str
-            
-        elif (flask.request.method == 'POST'):
-            name = flask.request.form['full_name']
-            username = flask.request.form['user_name']
-            email = flask.request.form['user_email']
-            password = flask.request.form['user_password']
-            form_has_picture = True
-            if ('file' not in flask.request.files):
-                form_has_picture = False
-            
-            database = "openplc.db"
-            conn = create_connection(database)
-            if (conn != None):
-                try:
-                    cur = conn.cursor()
-                    if (form_has_picture):
-                        pict_file = flask.request.files['file']
-                        if (pict_file.filename != ''):
-                            file_extension = pict_file.filename.split('.')
-                            filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
-                            pict_file.save(os.path.join('static', filename))
-                            cur.execute("INSERT INTO Users (name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?)", (name, username, email, password, "/static/"+filename))
-                        else:
-                            cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password))
-                    else:
-                        cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password))
-                    conn.commit()
-                    cur.close()
-                    conn.close()
-                    return flask.redirect(flask.url_for('users'))
-                    
-                except Error as e:
-                    print("error connecting to the database" + str(e))
-                    return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-            else:
-                return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-
-
-@app.route('/user/<int:user_id>/edit', methods=['GET', 'POST'])
+@app.route('/user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
-def user_edit(user_id):
+def p_user_edit(user_id):
 
 
     if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
     ctx = make_context("users")
 
-
+    ctx.user_id = user_id
+    ctx.user = {}
 
     if request.method == 'POST':
 
+        vars = {}
+        vars['name'] = request.form['name']
+        vars['username'] = request.form['username']
+        vars['email'] = request.form['email']
+        vars['password'] = request.form['xpasswd']
+        if user_id == 0:
+            db_insert("Users", vars)
+        else:
+            db_update("Users", vars, "user_id", user_id)
 
-        user_id = flask.request.form.get('user_id')
-        name = flask.request.form('name')
-        username = flask.request.form['username']
-        email = flask.request.form['email']
-        xpass = flask.request.form['xpass']
+        return redirect(url_for('p_users'))
 
 
-
-        return redirect(url_for('users'))
-
-
-
-    sql = "SELECT * FROM Users WHERE user_id = ?"
-    ctx.user, ctx.error = db_query(sql, (str(user_id)), single=True)
+    if user_id > 0:
+        sql = "SELECT * FROM Users WHERE user_id = ?"
+        ctx.user, ctx.error = db_query(sql, [str(user_id)], single=True)
 
     return render_template("user_edit.html", c=ctx)
 
@@ -1459,40 +1400,6 @@ def p_settings():
         sql = "UPDATE Settings SET Value = ? WHERE Key = 'Dnp3_port'"
         cur.execute(sql, [dnp3_port])
         conn.commit()
-
-
-        #
-        #
-        #
-        # database = "openplc.db"
-        # conn = create_connection(database)
-        # if (conn != None):
-        #     try:
-        #         cur = conn.cursor()
-        #         if (modbus_port == None):
-        #             cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Modbus_port'")
-        #             conn.commit()
-        #         else:
-        #             cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Modbus_port'", (str(modbus_port),))
-        #             conn.commit()
-        #
-        #         if (dnp3_port == None):
-        #             cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Dnp3_port'")
-        #             conn.commit()
-        #         else:
-        #             cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Dnp3_port'", (str(dnp3_port),))
-        #             conn.commit()
-        #
-        #         cur.close()
-        #         conn.close()
-        #         configure_runtime()
-        #         return flask.redirect(flask.url_for('dashboard'))
-        #
-        #     except Error as e:
-        #         print("error connecting to the database" + str(e))
-        #         return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        # else:
-        #     return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
 
     ctx.settings = get_settings()
 

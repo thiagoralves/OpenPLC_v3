@@ -17,11 +17,13 @@
               <td><i class="fa fa-user"></i>&nbsp;<b>{{row.username}}</b></td>
                 <td>{{row.name}}</td>
                 <td>{{row.email}}</td>
-                <td width="10"><a class="btn btn-success" href="/user/{{row.user_id}}/edit">Edit</a></td>
+                <td width="10"><a class="btn btn-success btn-sm" href="/user/{{row.user_id}}">Edit</a></td>
           </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<a href="/user/0" class="btn btn-primary">New user</a>
 
 {% endblock content %}
 
