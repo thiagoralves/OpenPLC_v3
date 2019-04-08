@@ -17,7 +17,7 @@ echo "$1" > "$BUILD_DIR/active_program.txt"
 #compiling the ST file into C
 cd ..
 echo "Optimizing ST program..."
-$BUILD_DIR/st_optimizer ./st_files/"$1" ./st_files/"$1"
+$BUILD_DIR/st_optimizer ../st_files/"$1" ./st_files/"$1.opt"
 echo "Generating C files..."
 $BUILD_DIR/iec2c ./st_files/  "$1"
 if [ $? -ne 0 ]; then

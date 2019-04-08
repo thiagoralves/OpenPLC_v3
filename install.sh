@@ -40,19 +40,19 @@ function install_all_libs {
 
     mkdir build
 
-#    echo ""
-#    echo "[MATIEC COMPILER]"
-#    cd utils/matiec_src
-#    autoreconf -i
-#    ./configure
-#    make
-#    cp ./iec2c ../../build/iec2c
-#    if [ $? -ne 0 ]; then
-#        echo "Error compiling MatIEC"
-#        echo "OpenPLC was NOT installed!"
-#        exit 1
-#    fi
-#    cd ../..
+    echo ""
+    echo "[MATIEC COMPILER]"
+    cd utils/matiec_src
+    autoreconf -i
+    ./configure
+    make
+    cp ./iec2c ../../build/iec2c
+    if [ $? -ne 0 ]; then
+        echo "Error compiling MatIEC"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    cd ../..
 
     echo ""
     echo "[ST OPTIMIZER]"
