@@ -21,15 +21,17 @@ fi
 
 set -x
 
-WTF="OpenPLC was NOT installed!"
-
+ERROR_MESS="OpenPLC was NOT installed!"
+SCRIPTS_DIR="scripts"
+BUILD_DIR="build"
 
 # arg1: sudo or blank
 function linux_install_deps {
     #$1 apt-get update
-    $1 apt-get install -y build-essential pkg-config bison flex autoconf \
-                          automake libtool make git python2.7 python-pip  \
-                          sqlite3 cmake git
+    $1 apt-get install -y build-essential pkg-config bison flex \
+                          autoconf automake libtool make cmake \
+                          python2.7 python-pip  \
+                          sqlite3
 }
 
 function install_py_deps {
@@ -60,7 +62,7 @@ function install_all_libs {
     g++ st_optimizer.cpp -o ../../build/st_optimizer
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
-        echo "$WTF"
+        echo "$ERROR_MESS"
         exit 1
     fi
     cd ../..
@@ -71,7 +73,7 @@ function install_all_libs {
     g++ glue_generator.cpp -o ../../build/glue_generator
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
-        echo "$WTF"
+        echo "$ERROR_MESS"
         exit 1
     fi
     cd ../..
@@ -161,7 +163,7 @@ if [ "$1" == "win" ]; then
     cp ./utils/matiec_src/bin_win32/*.* ./webserver/
     if [ $? -ne 0 ]; then
         echo "Error compiling MatIEC"
-        echo "$WTF"
+        echo "$ERROR_MESS"
         exit 1
     fi
 
@@ -172,7 +174,7 @@ if [ "$1" == "win" ]; then
     cp ./st_optimizer.exe ../../webserver/
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
-        echo "$WTF"
+        echo "$ERROR_MESS"
         exit 1
     fi
     cd ../..
@@ -184,7 +186,7 @@ if [ "$1" == "win" ]; then
     cp ./glue_generator.exe ../../webserver/core
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
-        echo "$WTF"
+        echo "$ERROR_MESS"
         exit 1
     fi
     cd ../..
@@ -195,13 +197,13 @@ if [ "$1" == "win" ]; then
     mv dnp3.cpp dnp3.disabled
     if [ $? -ne 0 ]; then
         echo "Error disabling OpenDNP3"
-        echo "$WTF"
+        echo "$ERROR_MESS"
         exit 1
     fi
     mv dnp3_dummy.disabled dnp3_dummy.cpp
     if [ $? -ne 0 ]; then
         echo "Error disabling OpenDNP3"
-        echo "$WTF"
+        echo "$ERROR_MESS"
         exit 1
     fi
     cd ../..
@@ -214,7 +216,7 @@ if [ "$1" == "win" ]; then
     make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
-        echo "$WTF"
+        echo "$ERROR_MESS"
         exit 1
     fi
     cd ../..

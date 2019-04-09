@@ -1,18 +1,44 @@
-import sqlite3
-from sqlite3 import Error
+
+
 import os
+import sys
 import subprocess
 import platform
 import serial.tools.list_ports
 import random
 import datetime
 import time
+
+import sqlite3
+from sqlite3 import Error
+import flask
+import flask_login
+
+
 import pages
 import openplc
-import sys
 
-import flask 
-import flask_login
+
+
+ROOT_PATH =  os.path.abspath( os.path.join(os.path.dirname( __file__ ), ".."))
+BUILD_DIR = os.path.join(ROOT_PATH, "build")
+WORK_DIR = None
+
+def db_file():
+    """Returns path to db file"""
+    return "%s/openplc.db"  % WORK_DIR
+
+def read_file(file_path):
+    if not os.path.exists(file_path):
+        return None
+    with open(file_path, "r") as f:
+        return f.read()
+    return None
+
+def get_active_program():
+    read_file("%s/active_program.txt" % WORK_DIR)
+
+
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
@@ -1854,46 +1880,51 @@ def create_connection(db_file):
 #----------------------------------------------------------------------------
 def main():
    print("Starting the web interface...")
-   
-if __name__ == '__main__':
-    #Load information about current program on the openplc_runtime object
-    file = open("active_program", "r")
-    st_file = file.read()
-    st_file = st_file.replace('\r','').replace('\n','')
-    
-    reload(sys)
-    sys.setdefaultencoding('UTF8')
-    
-    database = "openplc.db"
-    conn = create_connection(database)
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
-            #cur.execute("SELECT * FROM Programs")
-            row = cur.fetchone()
-            openplc_runtime.project_name = str(row[1])
-            openplc_runtime.project_description = str(row[2])
-            openplc_runtime.project_file = str(row[3])
-            
-            cur.execute("SELECT * FROM Settings")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-            
-            for row in rows:
-                if (row[0] == "Start_run_mode"):
-                    start_run = str(row[1])
-                    
-            if (start_run == 'true'):
-                print("Initializing OpenPLC in RUN mode...")
-                openplc_runtime.start_runtime()
-                time.sleep(1)
-                configure_runtime()
-            
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
-        
-        except Error as e:
-            print("error connecting to the database" + str(e))
-    else:
-        print("error connecting to the database")
+
+def run_server(work_dir, address="0.0.0.0", port=8080, debug_enabled=False):
+
+    global WORK_DIR, DB_FILE
+    WORK_DIR = work_dir
+    DB_FILE = "%s/openplc.db"
+
+
+    # Load information about current program on the openplc_runtime object
+    st_file = get_active_program()
+    if st_file != None:
+        st_file = st_file.replace('\r', '').replace('\n', '')
+
+        reload(sys)
+        sys.setdefaultencoding('UTF8')
+
+        conn = create_connection(db_file())
+        if (conn != None):
+           try:
+               cur = conn.cursor()
+               cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
+               # cur.execute("SELECT * FROM Programs")
+               row = cur.fetchone()
+               openplc_runtime.project_name = str(row[1])
+               openplc_runtime.project_description = str(row[2])
+               openplc_runtime.project_file = str(row[3])
+
+               cur.execute("SELECT * FROM Settings")
+               rows = cur.fetchall()
+               cur.close()
+               conn.close()
+
+               for row in rows:
+                   if (row[0] == "Start_run_mode"):
+                       start_run = str(row[1])
+
+               if (start_run == 'true'):
+                   print("Initializing OpenPLC in RUN mode...")
+                   openplc_runtime.start_runtime()
+                   time.sleep(1)
+                   configure_runtime()
+
+           except Error as e:
+               print("error connecting to the database" + str(e))
+        else:
+           print("error connecting to the database")
+
+    app.run(debug=debug_enabled, host=address, threaded=True, port=port)
