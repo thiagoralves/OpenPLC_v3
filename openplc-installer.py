@@ -20,19 +20,42 @@ ROOT_PATH =  os.path.abspath( os.path.dirname( __file__ ))
 
 BUILD_DIR = os.path.join(ROOT_PATH, "build")
 
-## Utils ------------------------------------d
+## Utils ------------------------------------
+def outta_here():
+    sys.exit(0)
+
+
 def _read_file(path):
     with open(path, "r") as f:
         return f.read().strip()
     return None
 
 
+def c_maitec():
+    """Compile Matiec"""
+    with lcd("utils/matiec_src"):
+        local("autoreconf - i")
+        local("./configure")
+        local("make")
+        local("cp. /iec2c %s/iec2c" % BUILD_DIR)
+
+def c_st_optimizer():
+    """Compile ST Optmimizer"""
+    with lcd("utils/st_optimizer_src"):
+        local("g++ st_optimizer.cpp -o %s/st_optimizer" % BUILD_DIR)
+
+def c_modbus():
+    """Compile ST Optmimizer"""
+    with lcd("utils/st_optimizer_src"):
+        local("g++ st_optimizer.cpp -o %s/st_optimizer" % BUILD_DIR)
 
 
-
-
-
-
+COMPILE_PACKS = [
+    {"package": "maitec",       "label": "Maitec - compile and install", "runner": c_maitec},
+    {"package": "st_optimizer", "label": "ST Optimizer - compile", "runner": c_st_optimizer},
+    {"package": "modbus",       "label": "Modbus - compile and install", "runner": c_modbus},
+    {"package": "quit",         "label": "Quit", "runner": outta_here},
+]
 
 
 
@@ -99,25 +122,14 @@ if curr_platform == None:
 
 print('Platform: %s' %  curr_platform)
 
-COMPILE_OPTS = [
-    "maitec",
-    "st_optimizer",
-    "modbus",
-    "Quit",
-]
 
 
 q_compile = [
     {
         'type': 'list',
-        'name': 'compile',
+        'name': 'package',
         'message': 'Compile Menu',
-        'choices': [
-            "maitec",
-            "st_optimizer",
-            "modbus",
-            "Quit",
-        ]
+        'choices': [p['label'] for p in COMPILE_PACKS]
 
     }
 ]
@@ -125,9 +137,14 @@ q_compile = [
 
 while True:
     answers = prompt(q_compile, style=custom_style)
-    c = answers.get("compile")
-    print(c)
-    if c == "Quit":
-        sys.exit(0)
+    pck = answers.get("package")
+    print("pck=", pck)
+
+    if pck.lower()
+
+    for p in COMPILE_PACKS:
+        if p['label'] == pck:
+            p['runner']()
+
 
 
