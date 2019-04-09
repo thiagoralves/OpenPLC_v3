@@ -10,7 +10,7 @@ solution for automation and research. OpenPLC has been used in
 as a framework for industrial cyber security research, given that it is the only controller 
 to provide the entire source code.
 
-The OpenPLC Project consists of three sub-projects:
+The OpenPLC Project consists of three projects:
 1. [Runtime](https://github.com/thiagoralves/OpenPLC_v3) (this reos)
 2. [Programming editor](http://www.openplcproject.com/plcopen-editor)
 3. [HMI builder](http://www.openplcproject.com/reference-installing-scadabr)

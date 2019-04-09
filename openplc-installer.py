@@ -17,7 +17,6 @@ from fabric.api import local, lcd, sudo, warn_only
 
 
 ROOT_PATH =  os.path.abspath( os.path.dirname( __file__ ))
-
 BUILD_DIR = os.path.join(ROOT_PATH, "build")
 
 ## Utils ------------------------------------
@@ -108,7 +107,7 @@ def get_platform():
 
 curr_platform = get_platform()
 
-def q_platform():
+def gui_platform():
     qu = [
         {
             'type': 'list',
@@ -123,15 +122,29 @@ def q_platform():
     answers = prompt(qu, style=custom_style)
     return answers.get("platform")
 
+APT_PACKAGES = [
+    "build-essential", "pkg-config", "bison" "flex",
+    "autoconf", "automake", "libtool", "make", "cmake",
+    "python2.7", "python-pip"
+    "sqlite3"
+]
+
+def install_apts():
+    local("sudo apt-get install -y " % " ".join(APT_PACKAGES))
+
+
 
 #=======================================================================
+## Fun Starts
+#=======================================================================
+print('+----------------------------------+')
+print('+ OpenPLC Installer (experimental) +')
+print('+----------------------------------+')
 
-print('=== OpenPLC Installer ====')
-
-print("PLATROM=", curr_platform, PLATFORM_FILE, platform.platform())
+print("PLATFORM=", curr_platform, PLATFORM_FILE, platform.platform())
 
 if curr_platform == None:
-    q_platform()
+    gui_platform()
 
 print('Platform: %s' %  curr_platform)
 
