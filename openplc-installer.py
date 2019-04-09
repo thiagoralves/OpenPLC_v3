@@ -34,7 +34,7 @@ def _read_file(path):
 def c_maitec():
     """Compile Matiec"""
     with lcd("utils/matiec_src"):
-        local("autoreconf - i")
+        local("./autoreconf - i")
         local("./configure")
         local("make")
         local("cp. /iec2c %s/iec2c" % BUILD_DIR)
@@ -46,16 +46,29 @@ def c_st_optimizer():
 
 def c_modbus():
     """Compile ST Optmimizer"""
-    with lcd("utils/st_optimizer_src"):
-        local("g++ st_optimizer.cpp -o %s/st_optimizer" % BUILD_DIR)
+    with lcd("utils/libmodbus_src"):
+        local("./autogen.sh")
+        local("./configure")
+        local("sudo make install")
+        local("sudo ldconfig")
+
+def c_dnp3():
+    """Compile ST Optmimizer"""
+    local("mkdir %s/dnp3" % BUILD_DIR)
+    with lcd("%s/dnp3" % BUILD_DIR):
+        local("./autogen.sh")
+        local("$1 dd if=/dev/zero of=swapfile bs=1M count=1000")
+        local("$1 mkswap swapfile")
+        local("$1 swapon swapfile")
+        local("cmake ../../utils/dnp3_src")
+        local("make")
+        local("sudo make insall")
+        local("sudo ldconfig")
+        local("sudo swapoff swapfile")
+        local("sudo rm -f ./swapfile")
 
 
-COMPILE_PACKS = [
-    {"package": "maitec",       "label": "Maitec - compile and install", "runner": c_maitec},
-    {"package": "st_optimizer", "label": "ST Optimizer - compile", "runner": c_st_optimizer},
-    {"package": "modbus",       "label": "Modbus - compile and install", "runner": c_modbus},
-    {"package": "quit",         "label": "Quit", "runner": outta_here},
-]
+
 
 
 
@@ -124,11 +137,20 @@ print('Platform: %s' %  curr_platform)
 
 
 
+COMPILE_PACKS = [
+    {"package": "all",          "label": "All packages", "runner": c_maitec},
+    {"package": "maitec",       "label": "maitec - compile and install", "runner": c_maitec},
+    {"package": "st_optimizer", "label": "ST Optimizer - compile", "runner": c_st_optimizer},
+    {"package": "dnp3",         "label": "dnp3 - compile and install", "runner": c_dnp3},
+    {"package": "modbus",       "label": "modbus - compile and install", "runner": c_modbus},
+
+    {"package": "quit",         "label": "Quit", "runner": outta_here},
+]
 q_compile = [
     {
         'type': 'list',
         'name': 'package',
-        'message': 'Compile Menu',
+        'message': 'Compile Packages',
         'choices': [p['label'] for p in COMPILE_PACKS]
 
     }
@@ -140,7 +162,8 @@ while True:
     pck = answers.get("package")
     print("pck=", pck)
 
-    if pck.lower()
+    if pck.lower() == "quit":
+        sys.exit(0)
 
     for p in COMPILE_PACKS:
         if p['label'] == pck:

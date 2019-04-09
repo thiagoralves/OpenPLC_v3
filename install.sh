@@ -76,43 +76,43 @@ function install_all_libs {
     fi
     cd ../..
 
-#    echo ""
-#    echo "[OPEN DNP3]"
-#    mkdir build/dnp3
-#    #cd utils/dnp3_src
-#    cd build/dnp3
-#    echo "creating swapfile..."
-#    $1 dd if=/dev/zero of=swapfile bs=1M count=1000
-#    $1 mkswap swapfile
-#    $1 swapon swapfile
-#    #cmake ../dnp3_src
-#    cmake ../../utils/dnp3_src
-#    make
-#    $1 make install
-#    if [ $? -ne 0 ]; then
-#        echo "Error installing OpenDNP3"
-#        echo "OpenPLC was NOT installed!"
-#        exit 1
-#    fi
-#    $1 ldconfig
-#    echo "removing swapfile..."
-#    $1 swapoff swapfile
-#    $1 rm -f ./swapfile
-#    cd ../..
+    echo ""
+    echo "[OPEN DNP3]"
+    mkdir build/dnp3
+    #cd utils/dnp3_src
+    cd build/dnp3
+    echo "creating swapfile..."
+    $1 dd if=/dev/zero of=swapfile bs=1M count=1000
+    $1 mkswap swapfile
+    $1 swapon swapfile
+    #cmake ../dnp3_src
+    cmake ../../utils/dnp3_src
+    make
+    $1 make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing OpenDNP3"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    $1 ldconfig
+    echo "removing swapfile..."
+    $1 swapoff swapfile
+    $1 rm -f ./swapfile
+    cd ../..
 
-#    echo ""
-#    echo "[LIBMODBUS]"
-#    cd utils/libmodbus_src
-#    ./autogen.sh
-#    ./configure
-#    $1 make install
-#    if [ $? -ne 0 ]; then
-#        echo "Error installing Libmodbus"
-#        echo "OpenPLC was NOT installed!"
-#        exit 1
-#    fi
-#    $1 ldconfig
-#    cd ../..
+    echo ""
+    echo "[LIBMODBUS]"
+    cd utils/libmodbus_src
+    ./autogen.sh
+    ./configure
+    $1 make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing Libmodbus"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+    $1 ldconfig
+    cd ../..
 
     if [ "$1" == "sudo" ]; then
         echo ""
