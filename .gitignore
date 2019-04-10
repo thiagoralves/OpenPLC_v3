@@ -7,5 +7,12 @@ public/
 
 *.pyc
 
-# IDE files for Visual Studio Code
+# IDE files for Visual Studio Code and Visual Studio
+CMakeSettings.json
 *.vscode/
+*.vs/
+
+# Build directories
+webserver/bin
+webserver/build
+obj/
