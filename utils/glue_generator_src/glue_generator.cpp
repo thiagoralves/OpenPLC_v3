@@ -1,16 +1,28 @@
+#include <cstring>
+#include <cstdlib>
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstring>
-#include <cstdlib>
+#include <vector>
+#include <list>
 
 using namespace std;
+
+/// Defines the information we need about a particular variable
+/// in order to generate the glue structures.
+struct IecVar {
+    string name;
+    string type;
+    uint16_t pos1;
+    uint16_t pos2;
+};
 
 /// Write the header to the output stream. The header is common among all glueVars files.
 /// @param glueVars The output stream to write to.
 void generateHeader(ostream& glueVars)
 {
-	glueVars << 	"\
+    glueVars << "\
 //-----------------------------------------------------------------------------\r\n\
 // Copyright 2015 Thiago Alves\r\n\
 // This file is part of the OpenPLC Software Stack.\r\n\
@@ -39,6 +51,34 @@ void generateHeader(ostream& glueVars)
 \r\n\
 TIME __CURRENT_TIME;\r\n\
 extern unsigned long long common_ticktime__;\r\n\
+\r\n\
+enum IecGlueValueType {\r\n\
+IEC_BOOL,\r\n\
+IEC_BYTE,\r\n\
+IEC_SINT,\r\n\
+IEC_USINT,\r\n\
+IEC_INT,\r\n\
+IEC_UINT,\r\n\
+IEC_WORD,\r\n\
+IEC_DINT,\r\n\
+IEC_UDINT,\r\n\
+IEC_DWORD,\r\n\
+IEC_REAL,\r\n\
+IEC_LREAL,\r\n\
+IEC_LWORD,\r\n\
+IEC_LINT,\r\n\
+IEC_ULINT\r\n\
+IEC_UNASSIGNED,\r\n\
+};\r\n\
+\r\n\
+/// Defines the mapping for a glued variable.\r\n\
+struct GlueVariable {\r\n\
+\r\n\
+    /// The type of the glue variable.\r\n\
+    IecGlueValueType type;\r\n\
+    /// A pointer to the memory address for reading/writing the value.\r\n\
+    void* value;\r\n\
+};\r\n\
 \r\n\
 //Internal buffers for I/O and memory. These buffers are defined in the\r\n\
 //auto-generated glueVars.cpp file\r\n\
@@ -71,9 +111,7 @@ IEC_LINT *special_functions[BUFFER_SIZE];\r\n\
 #define __LOCATED_VAR(type, name, ...) type* name = &__##name;\r\n\
 #include \"LOCATED_VARIABLES.h\"\r\n\
 #undef __LOCATED_VAR\r\n\
-\r\n\
-void glueVars()\r\n\
-{\r\n";
+\r\n";
 }
 
 int parseIecVars(istream& locatedVars, char *varName, char *varType)
@@ -111,7 +149,7 @@ int parseIecVars(istream& locatedVars, char *varName, char *varType)
 	}
 }
 
-void findPositions(char *varName, int *pos1, int *pos2)
+void findPositions(const char *varName, uint16_t *pos1, uint16_t *pos2)
 {
 	int i=4, j=0;
 	char tempBuffer[100];
@@ -141,13 +179,8 @@ void findPositions(char *varName, int *pos1, int *pos2)
 	*pos2 = atoi(tempBuffer);
 }
 
-void glueVar(ostream& glueVars, char *varName, char *varType)
+void glueVar(ostream& glueVars, const char *varName, uint16_t pos1, uint16_t pos2)
 {
-	cout << "varName: " << varName << "\tvarType: " << varType << endl;
-	int pos1, pos2;
-
-	findPositions(varName, &pos1, &pos2);
-
 	if (pos2 >= 8)
 	{
 		cout << "***Invalid addressing on located variable" << varName << "***" << endl;
@@ -206,11 +239,73 @@ void glueVar(ostream& glueVars, char *varName, char *varType)
 	}
 }
 
+void generateIntegratedGlue(ostream& glueVars, const list<IecVar>& all_vars, int32_t max_index) {
+
+    // We want to build 4 arrays here - inputs, outputs, boolean inputs and boolean outputs.
+    // To do that, we need to divide the list into the relevant parts so that we can
+    // assign the mapping location at compile time. A little upfront processing here means
+    // saves some work at runtime.
+
+    // Allocate arrays with sufficient space so we don't have to check later.
+    vector<const IecVar*> input_vars(max_index + 1);
+    vector<const IecVar*> output_vars(max_index + 1);
+    int32_t max_input(-1);
+    int32_t max_output(-1);
+
+    for (auto it = all_vars.begin(); it != all_vars.end(); ++it) {
+        const char direction = (*it).name[2];
+        const int32_t pos1 = (*it).pos1;
+        if ((*it).type.compare("BOOL") != 0)
+        {
+            if (direction == 'I')
+            {
+                max_input = max(pos1, max_input);
+                input_vars[pos1] = &(*it);
+            }
+            else if (direction == 'Q') {
+                max_output = max(pos1, max_output);
+                output_vars[pos1] = &(*it);
+            }
+        }
+    }
+
+    // Now that things are sorted, we are ready to write them out.
+    glueVars << "/// The size of the array of input variables.\r\n";
+    glueVars << "const std:::uint16_t OPLCGLUE_INPUT_SIZE(" << max_input + 1 << ");\r\n";
+    glueVars << "GlueVariable oplc_input_vars[" << max(max_input + 1, 1) << "] = {\r\n";
+    for (auto i = 0; i < max_input + 1; i++)
+    {
+        if (input_vars[i] != nullptr)
+        {
+            glueVars << "    { IEC_" << input_vars[i]->type << ", " << input_vars[i]->name << " },\r\n";
+        }
+        else
+        {
+            glueVars << "    { IEC_UNASSIGNED, nullptr },\r\n";
+        }
+    }
+    glueVars << "};\r\n\r\n";
+
+    glueVars << "/// The size of the array of output variables.\r\n";
+    glueVars << "const std:::uint16_t OPLCGLUE_OUTPUT_SIZE(" << max_output + 1 << ");\r\n";
+    glueVars << "GlueVariable oplc_output_vars[" << max(max_output + 1, 1) << "] = {\r\n";
+    for (auto i = 0; i < max_output + 1; i++)
+    {
+        if (output_vars[i] != nullptr)
+        {
+            glueVars << "    { IEC_" << output_vars[i]->type << ", " << output_vars[i]->name << " },\r\n";
+        }
+        else
+        {
+            glueVars << "    { IEC_UNASSIGNED, nullptr },\r\n";
+        }
+    }
+    glueVars << "};\r\n\r\n";
+}
+
 void generateBottom(ostream& glueVars)
 {
-	glueVars << "}\r\n\
-\r\n\
-void updateTime()\r\n\
+	glueVars << "void updateTime()\r\n\
 {\r\n\
 	__CURRENT_TIME.tv_nsec += common_ticktime__;\r\n\
 \r\n\
@@ -223,14 +318,42 @@ void updateTime()\r\n\
 }
 
 void generateBody(istream& locatedVars, ostream& glueVars) {
-    // Start the generation process.
+    // Start the generation process. We need to know all of the variables
+    // in advance so that we can appropriately size some storage based
+    // on the variables that are actually needed.
+
+    list<IecVar> all_vars;
+
+    // Keep track of the counts of types that we care about
+
     char iecVar_name[100];
     char iecVar_type[100];
+    int32_t max_index(-1);
 
     while (parseIecVars(locatedVars, iecVar_name, iecVar_type))
     {
-        glueVar(glueVars, iecVar_name, iecVar_type);
+        cout << "varName: " << iecVar_name << "\tvarType: " << iecVar_type << endl;
+
+        // Get the indices these reference. The second position is
+        // only relevant for boolean types that pack 8 bits into one
+        // value.
+        uint16_t pos1;
+        uint16_t pos2;
+        findPositions(iecVar_name, &pos1, &pos2);
+        max_index = max(max_index, (int32_t)pos1);
+
+        all_vars.push_back(IecVar{ iecVar_name, iecVar_type, pos1, pos2 });
     }
+
+    // Generate the classical glue variables
+    glueVars << "void glueVars()\r\n{\r\n";
+    for (auto it = all_vars.begin(); it != all_vars.end(); ++it) {
+        glueVar(glueVars, (*it).name.c_str(), (*it).pos1, (*it).pos2);
+    }
+    glueVars << "}\r\n\r\n";
+
+    // Generate the unified glue variables
+    generateIntegratedGlue(glueVars, all_vars, max_index);
 }
 
 /// This is our main function. We define it with a different name and then

@@ -13,6 +13,6 @@ CMakeSettings.json
 *.vs/
 
 # Build directories
-webserver/bin
-webserver/build
+**/bin/
+**/build/
 obj/
