@@ -80,7 +80,11 @@ class runtime:
     
     def start_runtime(self):
         if (self.status() == "Stopped"):
-            a = subprocess.Popen([ROOT_DIR + '/build/openplc'])
+            path = ROOT_DIR + '/build/openplc'
+            if not os.path.exists(path):
+                print("Runtime not exist!")
+                return
+            a = subprocess.Popen([path])
             self.runtime_status = "Running"
     
     def stop_runtime(self):

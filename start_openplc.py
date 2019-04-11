@@ -20,6 +20,7 @@ if __name__ == '__main__':
     work_dir = args.work_dir.strip()
     if not os.path.exists(work_dir):
         sys.exit("Workspace dir `%s` does not exist")
+    work_dir = os.path.abspath(work_dir)
 
     db_file = "%s/openplc.db" % work_dir
     if not os.path.exists(db_file):
@@ -31,6 +32,8 @@ if __name__ == '__main__':
         print(ans)
         if ans == "c":
             os.system("cp ./etc/openplc_default.db %s/openplc.db" % work_dir)
+            os.system("mkdir %s/st_files" % work_dir)
+            os.system("./etc/st_files/blank_program.st", "%s/st_files/blank_program.st" % work_dir)
         else:
             sys.exit("Quit")
 

@@ -1,5 +1,4 @@
 
-
 import os
 import sys
 import subprocess
@@ -36,7 +35,7 @@ def read_file(file_path):
     if not os.path.exists(file_path):
         return None
     with open(file_path, "r") as f:
-        return f.read()
+        return f.read().strip()
     return None
 
 def write_file(file_path, contents):
@@ -165,7 +164,7 @@ def generate_mbconfig():
                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
                 device_counter += 1
 
-            write_file(SRC_GEN_DIR + "/mbconfig.cfg", mbconfig)
+            write_file(os.path.join(BUILD_DIR, "mbconfig.cfg"), mbconfig)
             #with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
             
         except Error as e:
@@ -1885,8 +1884,8 @@ def run_server(work_dir, address="0.0.0.0", port=8080, debug_enabled=False):
     # Load information about current program on the openplc_runtime object
     st_file = get_active_program()
     if st_file != None:
-        st_file = st_file.replace('\r', '').replace('\n', '')
-
+        #st_file = st_file.replace('\r', '').replace('\n', '')
+        print "ST==", st_file
         reload(sys)
         sys.setdefaultencoding('UTF8')
 

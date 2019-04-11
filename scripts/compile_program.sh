@@ -8,25 +8,22 @@ HERE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $HERE_DIR/common.sh
 
 
-#move into the scripts folder if you're not there already
-#cd scripts &>/dev/null
-
-
 OPENPLC_PLATFORM=$(cat $PLATFORM_FILE)
 
 echo "#### $1 ###"
 #store the active program filename
-echo "$1" > "$ACTIVE_PROGAM_FILE"
+echo $(basename $1) > "$ACTIVE_PROGAM_FILE"
 
 OUT_ST="$BUILD_DIR/opti.st"
 
 mkdir $SRC_GEN_DIR
-#compiling the ST file into C
-#cd ..
+
+set -x
+
 echo "Optimizing ST program..."
 $BUILD_DIR/st_optimizer "$1" "$OUT_ST"
 echo "Generating C files..."
-#$BUILD_DIR/iec2c $BUILD_DIR/st_files/ "$OUT_ST"
+
 $BUILD_DIR/iec2c -I "$ETC_DIR/lib" -T $SRC_GEN_DIR "$OUT_ST"
 if [ $? -ne 0 ]; then
     echo "Error generating C files"
@@ -34,51 +31,44 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-set -x
 
-#echo "Moving Files..."
-#mv -f POUS.c POUS.h LOCATED_VARIABLES.h VARIABLES.csv Config0.c Config0.h Res0.c ./core/
-#if [ $? -ne 0 ]; then
-#    echo "Error moving files"
-#    echo "Compilation finished with errors!"
-#    exit 1
-#fi
+
+# Copy cpp files
 cp $CORE_DIR/ladder.h $SRC_GEN_DIR
 cp $CORE_DIR/custom_layer.h $SRC_GEN_DIR
 cp $CORE_DIR/dnp3.cpp $SRC_GEN_DIR
-cp $CORE_DIR/dnp3.cfg $SRC_GEN_DIR
 cp $CORE_DIR/modbus.cpp $SRC_GEN_DIR
 cp $CORE_DIR/modbus_master.cpp $SRC_GEN_DIR
 cp $CORE_DIR/server.cpp $SRC_GEN_DIR
 cp $CORE_DIR/interactive_server.cpp $SRC_GEN_DIR
+cp $CORE_DIR/main.cpp $SRC_GEN_DIR
 
-
+#copy config
+cp $CORE_DIR/dnp3.cfg $BUILD_DIR
 
 #---------------------------------------
 # compile for each platform
-
-
 cd $SRC_GEN_DIR
 
 if [ "$OPENPLC_PLATFORM" = "win" ]; then
     echo "Compiling for Windows"
     echo "Generating object files..."
-    g++ -I ./lib -c Config0.c -w
+    g++ -I $C_LIBS_DIR -c Config0.c -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
         exit 1
     fi
-    g++ -I ./lib -c Res0.c -w
+    g++ -I $C_LIBS_DIR -c Res0.c -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
         exit 1
     fi
     echo "Generating glueVars..."
-    ./glue_generator
+    $BUILD_DIR/glue_generator
     echo "Compiling main program..."
-    g++ *.cpp *.o -o openplc -I ./lib -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib -lmodbus -w
+    g++ *.cpp *.o -o openplc -I $C_LIBS_DIR -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib -lmodbus -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
@@ -117,22 +107,22 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
 elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     echo "Compiling for Raspberry Pi"
     echo "Generating object files..."
-    g++ -std=gnu++11 -I ./lib -c Config0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 -I $C_LIBS_DIR -c Config0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
         exit 1
     fi
-    g++ -std=gnu++11 -I ./lib -c Res0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 -I $C_LIBS_DIR -c Res0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
         exit 1
     fi
     echo "Generating glueVars..."
-    ./glue_generator
+    $BUILD_DIR/glue_generator
     echo "Compiling main program..."
-    g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 *.cpp *.o -o openplc -I $C_LIBS_DIR -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
