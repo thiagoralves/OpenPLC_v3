@@ -1,19 +1,19 @@
 
 # where docs are output to on gitlab.. MUST be named public/
 public/
-build/
 
+build/
 swapfile
 
-.sass-cache/
-.idea/
 
 *.pyc
 *.*~
-# IDE files for Visual Studio Code
+
+# IDE files
 *.vscode/
 *.kate-swp
-
+.sass-cache/
+.idea/
 
 
 ## C comiler stuff

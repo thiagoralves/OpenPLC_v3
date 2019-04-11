@@ -1,11 +1,21 @@
-#Use this for OpenPLC console: http://eyalarubas.com/python-subproc-nonblock.html
+
+# Use this for OpenPLC console: http://eyalarubas.com/python-subproc-nonblock.html
+import sys
 import os
 import subprocess
 import socket
 import errno
 import time
 from threading import Thread
-from Queue import Queue, Empty
+
+#from Queue import Queue, Empty
+is_py2 = sys.version[0] == '2'
+if is_py2:
+    import Queue as queue
+else:
+    import queue as queue
+
+
 
 ROOT_DIR = os.path.abspath( os.path.join(os.path.dirname( __file__ ), ".."))
 
@@ -41,7 +51,7 @@ class NonBlockingStreamReader:
         '''
 
         self._s = stream
-        self._q = Queue()
+        self._q = queue.Queue()
 
         def _populateQueue(stream, queue):
             '''
@@ -67,7 +77,7 @@ class NonBlockingStreamReader:
         try:
             return self._q.get(block = timeout is not None,
                     timeout = timeout)
-        except Empty:
+        except queue.Empty:
             return None
 
 class UnexpectedEndOfStream(Exception): pass

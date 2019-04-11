@@ -1,4 +1,5 @@
 
+from __future__ import print_function
 import os
 import sys
 import subprocess
@@ -14,8 +15,8 @@ import flask
 import flask_login
 
 
-import pages
-import openplc
+from . import pages
+from . import openplc
 
 
 
@@ -1884,10 +1885,9 @@ def run_server(work_dir, address="0.0.0.0", port=8080, debug_enabled=False):
     # Load information about current program on the openplc_runtime object
     st_file = get_active_program()
     if st_file != None:
-        #st_file = st_file.replace('\r', '').replace('\n', '')
-        print "ST==", st_file
-        reload(sys)
-        sys.setdefaultencoding('UTF8')
+
+        #reload(sys)
+        #sys.setdefaultencoding('UTF8')
 
         conn = create_connection(db_file())
         if (conn != None):
