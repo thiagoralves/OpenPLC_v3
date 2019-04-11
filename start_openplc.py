@@ -30,7 +30,7 @@ if __name__ == '__main__':
         ans = raw_input(": ")
         print(ans)
         if ans == "c":
-            os.cmd("cp ./etc/openplc_default.db %s/openplc.db")
+            os.system("cp ./etc/openplc_default.db %s/openplc.db" % work_dir)
         else:
             sys.exit("Quit")
 
