@@ -9,7 +9,7 @@ swapfile
 .idea/
 
 *.pyc
-
+*.*~
 # IDE files for Visual Studio Code
 *.vscode/
 *.kate-swp
