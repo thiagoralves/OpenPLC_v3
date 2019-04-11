@@ -243,7 +243,7 @@ elif [ "$1" == "linux" ]; then
     #install_py_deps
     #install_py_deps sudo
 
-    install_all_libs sudo
+    #install_all_libs sudo
 
     echo ""
     echo "[FINALIZING]"
