@@ -53,8 +53,7 @@ class User(flask_login.UserMixin):
 
 def configure_runtime():
     global openplc_runtime
-    database = "openplc.db"
-    conn = create_connection(database)
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             print("Openning database")
@@ -86,8 +85,7 @@ def configure_runtime():
 
 
 def generate_mbconfig():
-    database = "openplc.db"
-    conn = create_connection(database)
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             cur = conn.cursor()
@@ -353,8 +351,7 @@ loading logs...
     
 @login_manager.user_loader
 def user_loader(username):
-    database = "openplc.db"
-    conn = create_connection(database)
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             cur = conn.cursor()
@@ -382,9 +379,8 @@ def user_loader(username):
 @login_manager.request_loader
 def request_loader(request):
     username = request.form.get('username')
-    
-    database = "openplc.db"
-    conn = create_connection(database)
+
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             cur = conn.cursor()
@@ -431,9 +427,8 @@ def login():
 
     username = flask.request.form['username']
     password = flask.request.form['password']
-    
-    database = "openplc.db"
-    conn = create_connection(database)
+
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             cur = conn.cursor()
@@ -580,8 +575,7 @@ def programs():
                         <tr style='background-color: white'>
                             <th>Program Name</th><th>File</th><th>Date Uploaded</th>
                         </tr>"""
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -656,8 +650,7 @@ def reload_program():
                     <br>
                     <h2>Program Info</h2>
                     <br>"""
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -693,8 +686,7 @@ def remove_program():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         prog_id = flask.request.args.get('id')
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -802,8 +794,7 @@ def upload_program_action():
         prog_file = flask.request.form['prog_file']
         epoch_time = flask.request.form['epoch_time']
         
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -831,8 +822,7 @@ def compile_program():
         st_file = flask.request.args.get('file')
         
         #load information about the program being compiled into the openplc_runtime object
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -896,8 +886,7 @@ def modbus():
                         <tr style='background-color: white'>
                             <th>Device Name</th><th>Device Type</th><th>DI</th><th>DO</th><th>AI</th><th>AO</th>
                         </tr>"""
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -1063,8 +1052,7 @@ def add_modbus_device():
             aow_start = flask.request.form.get('aow_start')
             aow_size = flask.request.form.get('aow_size')
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1122,8 +1110,7 @@ def modbus_edit_device():
                             method    =  "post"
                             onsubmit  =  "return validateForm()">"""
                             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1233,8 +1220,7 @@ def modbus_edit_device():
             aow_start = flask.request.form.get('aow_start')
             aow_size = flask.request.form.get('aow_size')
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1260,8 +1246,7 @@ def delete_device():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         devid_db = flask.request.args.get('dev_id')
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -1414,8 +1399,7 @@ def users():
                             <th>Full Name</th><th>Username</th><th>Email</th>
                         </tr>"""
         
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -1481,8 +1465,7 @@ def add_user():
             if ('file' not in flask.request.files):
                 form_has_picture = False
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1547,8 +1530,7 @@ def edit_user():
                             method    =  "post"
                             onsubmit  =  "return validateForm()">"""
                         
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1609,8 +1591,8 @@ def edit_user():
             if ('file' not in flask.request.files):
                 form_has_picture = False
             
-            database = "openplc.db"
-            conn = create_connection(database)
+
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1645,8 +1627,7 @@ def delete_user():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         user_id = flask.request.args.get('user_id')
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -1695,8 +1676,7 @@ def settings():
                         <label class="container">
                             <b>Enable Modbus Server</b>"""
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1806,8 +1786,7 @@ def settings():
             slave_polling = flask.request.form.get('slave_polling_period')
             slave_timeout = flask.request.form.get('slave_timeout')
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1883,9 +1862,9 @@ def main():
 
 def run_server(work_dir, address="0.0.0.0", port=8080, debug_enabled=False):
 
-    global WORK_DIR, DB_FILE
+    global WORK_DIR
     WORK_DIR = work_dir
-    DB_FILE = "%s/openplc.db"
+
 
 
     # Load information about current program on the openplc_runtime object
