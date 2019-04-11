@@ -33,6 +33,9 @@ if [ $? -ne 0 ]; then
     echo "Compilation finished with errors!"
     exit 1
 fi
+
+set -x
+
 #echo "Moving Files..."
 #mv -f POUS.c POUS.h LOCATED_VARIABLES.h VARIABLES.csv Config0.c Config0.h Res0.c ./core/
 #if [ $? -ne 0 ]; then
@@ -40,9 +43,20 @@ fi
 #    echo "Compilation finished with errors!"
 #    exit 1
 #fi
+cp $CORE_DIR/ladder.h $SRC_GEN_DIR
+cp $CORE_DIR/custom_layer.h $SRC_GEN_DIR
+cp $CORE_DIR/dnp3.cpp $SRC_GEN_DIR
+cp $CORE_DIR/dnp3.cfg $SRC_GEN_DIR
+cp $CORE_DIR/modbus.cpp $SRC_GEN_DIR
+cp $CORE_DIR/modbus_master.cpp $SRC_GEN_DIR
+cp $CORE_DIR/server.cpp $SRC_GEN_DIR
+cp $CORE_DIR/interactive_server.cpp $SRC_GEN_DIR
+
+
 
 #---------------------------------------
 # compile for each platform
+
 
 cd $SRC_GEN_DIR
 
@@ -91,7 +105,7 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     echo "Generating glueVars..."
     $BUILD_DIR/glue_generator
     echo "Compiling main program..."
-    g++ -std=gnu++11 *.cpp *.o -o $BUILD_DIR/openplc -I $C_LIBS_DIR -I $CORE_DIR -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 *.cpp *.o -o $BUILD_DIR/openplc -I $C_LIBS_DIR  -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C openplc files"
         echo "Compilation finished with errors!"
