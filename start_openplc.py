@@ -13,7 +13,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="OpenPLC webserver")
     parser.add_argument("-a", "--address", help="ip address to listen [127.0.0.1]", action="store", type=str, default="127.0.0.1")
     parser.add_argument("-p", "--port", help="http port [8080]", action="store", type=int, default=8080)
-    parser.add_argument("-d", "--debug", help="Print debug messages", action="store", type=bool, default=False)
+    parser.add_argument("-d", "--debug", help="Print debug messages", action="store_true",  default=False)
     parser.add_argument("work_dir", help="Work storage directory", action="store", type=str)
     args = parser.parse_args()
 
@@ -35,4 +35,4 @@ if __name__ == '__main__':
             sys.exit("Quit")
 
 
-    webserver.webserver.run_server(work_dir, address=args.address, port=args.port)
+    webserver.webserver.run_server(work_dir, address=args.address, port=args.port, debug_enabled=args.debug)

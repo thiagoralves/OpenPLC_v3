@@ -15,6 +15,14 @@ The OpenPLC Project consists of three projects:
 2. [Programming editor](http://www.openplcproject.com/plcopen-editor)
 3. [HMI builder](http://www.openplcproject.com/reference-installing-scadabr)
 
+# Upgrade
+- if its an upgrade, then a few changes.
+- copy your data...
+
+# Install Targets
+
+
+
 ## Installation:
 ```bash
 git clone https://github.com/thiagoralves/OpenPLC_v3.git

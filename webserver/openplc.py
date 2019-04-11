@@ -1,10 +1,14 @@
 #Use this for OpenPLC console: http://eyalarubas.com/python-subproc-nonblock.html
+import os
 import subprocess
 import socket
 import errno
 import time
 from threading import Thread
 from Queue import Queue, Empty
+
+ROOT_DIR = os.path.abspath( os.path.join(os.path.dirname( __file__ ), ".."))
+
 
 intervals = (
     ('weeks', 604800),  # 60 * 60 * 24 * 7
@@ -76,7 +80,7 @@ class runtime:
     
     def start_runtime(self):
         if (self.status() == "Stopped"):
-            a = subprocess.Popen(['./core/openplc'])
+            a = subprocess.Popen([ROOT_DIR + '/build/openplc'])
             self.runtime_status = "Running"
     
     def stop_runtime(self):
@@ -99,7 +103,7 @@ class runtime:
         global compilation_status_str
         global compilation_object
         compilation_status_str = ""
-        a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        a = subprocess.Popen([ROOT_DIR + '/scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         compilation_object = NonBlockingStreamReader(a.stdout)
     
     def compilation_status(self):

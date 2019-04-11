@@ -21,7 +21,11 @@ import openplc
 
 
 ROOT_PATH =  os.path.abspath( os.path.join(os.path.dirname( __file__ ), ".."))
+CORE_DIR = os.path.join(ROOT_PATH, "etc", "core")
+SCRIPTS_DIR = os.path.join(ROOT_PATH, "scripts")
 BUILD_DIR = os.path.join(ROOT_PATH, "build")
+SRC_GEN_DIR = os.path.join(BUILD_DIR, "src_gen")
+
 WORK_DIR = None
 
 def db_file():
@@ -35,13 +39,20 @@ def read_file(file_path):
         return f.read()
     return None
 
-def get_active_program():
-    read_file("%s/active_program.txt" % WORK_DIR)
+def write_file(file_path, contents):
+    with open(file_path, "w") as f:
+        return f.write(contents)
+    return None
 
+def get_active_program():
+    return read_file("%s/active_program.txt" % BUILD_DIR)
+
+def get_driver():
+    return read_file('%s/openplc_driver.txt' % BUILD_DIR)
 
 
 app = flask.Flask(__name__)
-app.secret_key = str(os.urandom(16))
+app.secret_key = "thisisopenplcand=its++cool" #str(os.urandom(16))
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
@@ -153,8 +164,9 @@ def generate_mbconfig():
                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
                 device_counter += 1
-                
-            with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
+
+            write_file(SRC_GEN_DIR + "/mbconfig.cfg", mbconfig)
+            #with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
             
         except Error as e:
             print("error connecting to the database" + str(e))
@@ -716,7 +728,7 @@ def upload_program():
             return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
         
         filename = str(random.randint(1,1000000)) + ".st"
-        prog_file.save(os.path.join('st_files', filename))
+        prog_file.save(os.path.join(WORK_DIR, 'st_files', filename))
         
         return_str = pages.w3_style + pages.style + draw_top_div()
         return_str += """
@@ -819,6 +831,7 @@ def compile_program():
         return flask.redirect(flask.url_for('login'))
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+
         st_file = flask.request.args.get('file')
         
         #load information about the program being compiled into the openplc_runtime object
@@ -838,7 +851,7 @@ def compile_program():
         else:
             print("error connecting to the database")
         
-        openplc_runtime.compile_program(st_file)
+        openplc_runtime.compile_program(os.path.join(WORK_DIR, "st_files", st_file))
         
         return draw_compiling_page()
 
@@ -1288,7 +1301,7 @@ def hardware():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         if (flask.request.method == 'GET'):
-            with open('./scripts/openplc_driver') as f: current_driver = f.read().rstrip()
+            current_driver = get_driver()
             return_str = pages.w3_style + pages.hardware_style + draw_top_div() + pages.hardware_head
             return_str += draw_status()
             return_str += """
@@ -1336,16 +1349,18 @@ def hardware():
                         <p><b>Hardware Layer Code Box</b><p>
                         <p>The Hardware Layer Code Box allows you to extend the functionality of the current driver by adding custom code to it, such as reading I2C, SPI and 1-Wire sensors, or controling port expanders to add more outputs to your hardware</p>
                         <textarea wrap="off" spellcheck="false" name="custom_layer_code" id="custom_layer_code">"""
-            with open('./core/custom_layer.h') as f: return_str += f.read()
+            return_str += read_file(CORE_DIR + "/custom_layer.h")
+            #with open('./core/custom_layer.h') as f: return_str += f.read()
             return_str += pages.hardware_tail
             
         else:
             hardware_layer = flask.request.form['hardware_layer']
             custom_layer_code = flask.request.form['custom_layer_code']
-            with open('./active_program') as f: current_program = f.read()
-            with open('./core/custom_layer.h', 'w+') as f: f.write(custom_layer_code)
+            current_program = get_active_program()
+            with open(SRC_GEN_DIR + '/custom_layer.h', 'w+') as f:
+                f.write(custom_layer_code)
             
-            subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
+            subprocess.call([SCRIPTS_DIR + '/change_hardware_layer.sh', hardware_layer])
             return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
         
         return return_str
