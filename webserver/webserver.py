@@ -4,20 +4,18 @@ import os
 import sys
 import subprocess
 import platform
-import serial.tools.list_ports
 import random
 import datetime
 import time
 
+import serial.tools.list_ports
 import sqlite3
 from sqlite3 import Error
 import flask
 import flask_login
 
-
 from . import pages
 from . import openplc
-
 
 
 ROOT_PATH =  os.path.abspath( os.path.join(os.path.dirname( __file__ ), ".."))
@@ -52,7 +50,7 @@ def get_driver():
 
 
 app = flask.Flask(__name__)
-app.secret_key = "thisisopenplcand=its++cool" #str(os.urandom(16))
+app.secret_key = "thi234sisop43enplcand=its++cool" # looses cookie str(os.urandom(16))
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
