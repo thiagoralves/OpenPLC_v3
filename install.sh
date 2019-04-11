@@ -14,7 +14,6 @@ function linux_install_deps {
     $1 apt-get update
     $1 apt-get install -y build-essential pkg-config bison flex \
                           autoconf automake libtool make cmake \
-                          python2.7 python-pip  \
                           sqlite3
 }
 
@@ -28,7 +27,7 @@ function install_all_libs {
 
     echo ""
     echo "[MATIEC COMPILER]"
-    cd utils/matiec_src
+    cd $ROOT_DIR/utils/matiec_src
     autoreconf -i
     ./configure
     make
@@ -38,29 +37,29 @@ function install_all_libs {
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[ST OPTIMIZER]"
-    cd utils/st_optimizer_src
+    cd $ROOT_DIR/utils/st_optimizer_src
     g++ st_optimizer.cpp -o $BUILD_DIR/st_optimizer
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
         echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[GLUE GENERATOR]"
-    cd utils/glue_generator_src
+    cd $ROOT_DIR/utils/glue_generator_src
     g++ glue_generator.cpp -o $BUILD_DIR/glue_generator
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
         echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[OPEN DNP3]"
@@ -72,7 +71,7 @@ function install_all_libs {
     $1 mkswap swapfile
     $1 swapon swapfile
     #cmake ../dnp3_src
-    cmake ../../utils/dnp3_src
+    cmake $ROOT_DIR/utils/dnp3_src
     make
     $1 make install
     if [ $? -ne 0 ]; then
@@ -84,11 +83,11 @@ function install_all_libs {
     echo "removing swapfile..."
     $1 swapoff swapfile
     $1 rm -f ./swapfile
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[LIBMODBUS]"
-    cd utils/libmodbus_src
+    cd $ROOT_DIR/utils/libmodbus_src
     ./autogen.sh
     ./configure
     $1 make install
@@ -98,7 +97,7 @@ function install_all_libs {
         exit 1
     fi
     $1 ldconfig
-    cd ../..
+    cd $ROOT_DIR
 
     if [ "$1" == "sudo" ]; then
         echo ""
@@ -154,17 +153,17 @@ fi
 
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
-    cp ./utils/apt-cyg/apt-cyg ./
-    cp ./utils/apt-cyg/wget.exe /bin
+    #cp ./utils/apt-cyg/apt-cyg ./
+    #cp ./utils/apt-cyg/wget.exe /bin
     install apt-cyg /bin
     apt-cyg install lynx
     rm -f /bin/wget.exe
-    apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3
-    lynx -source https://bootstrap.pypa.io/get-pip.py > get-pip.py
-    python get-pip.py
-    pip install flask
-    pip install flask-login
-    pip install pyserial
+    apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3
+    #lynx -source https://bootstrap.pypa.io/get-pip.py > get-pip.py
+    #python get-pip.py
+    #pip install flask
+    #pip install flask-login
+    #pip install pyserial
 
     echo ""
     echo "[MATIEC COMPILER]"
