@@ -1,29 +1,13 @@
 #!/bin/bash
 
-if [ $# -eq 0 ]; then
-    echo ""
-    echo "Error: You must provide a platform name as argument"
-    echo ""
-    echo "Usage: ./install.sh [platform]  where [platform] can be"
-    echo "  win           Install OpenPLC on Windows over Cygwin"
-    echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
-    echo "  docker        Install OpenPLC in a Docker container"
-    echo "  rpi           Install OpenPLC on a Raspberry Pi"
-    echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
-    echo "  custom        Skip all specific package installation and tries to install"
-    echo "                OpenPLC assuming your system already has all dependencies met."
-    echo "                This option can be useful if you're trying to install OpenPLC"
-    echo "                on an unsuported Linux platform or had manually installed"
-    echo "                all the dependency packages before."
-    echo ""
-    exit 1
-fi
+#set -x
 
-set -x
+HERE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source $HERE_DIR/scripts/common.sh
+
+
 
 ERROR_MESS="OpenPLC was NOT installed!"
-SCRIPTS_DIR="scripts"
-BUILD_DIR="build"
 
 # arg1: sudo or blank
 function linux_install_deps {
@@ -39,8 +23,8 @@ function install_py_deps {
 }
 
 function install_all_libs {
-
-    mkdir build
+    echo "BUILD_DIR=$BUILD_DIR"
+    mkdir $BUILD_DIR
 
     echo ""
     echo "[MATIEC COMPILER]"
@@ -48,7 +32,7 @@ function install_all_libs {
     autoreconf -i
     ./configure
     make
-    cp ./iec2c ../../build/iec2c
+    cp ./iec2c $BUILD_DIR/iec2c
     if [ $? -ne 0 ]; then
         echo "Error compiling MatIEC"
         echo "OpenPLC was NOT installed!"
@@ -59,7 +43,7 @@ function install_all_libs {
     echo ""
     echo "[ST OPTIMIZER]"
     cd utils/st_optimizer_src
-    g++ st_optimizer.cpp -o ../../build/st_optimizer
+    g++ st_optimizer.cpp -o $BUILD_DIR/st_optimizer
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
         echo "$ERROR_MESS"
@@ -70,7 +54,7 @@ function install_all_libs {
     echo ""
     echo "[GLUE GENERATOR]"
     cd utils/glue_generator_src
-    g++ glue_generator.cpp -o ../../build/glue_generator
+    g++ glue_generator.cpp -o $BUILD_DIR/glue_generator
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
         echo "$ERROR_MESS"
@@ -80,9 +64,9 @@ function install_all_libs {
 
     echo ""
     echo "[OPEN DNP3]"
-    mkdir build/dnp3
+    mkdir $BUILD_DIR/dnp3
     #cd utils/dnp3_src
-    cd build/dnp3
+    cd $BUILD_DIR/dnp3
     echo "creating swapfile..."
     $1 dd if=/dev/zero of=swapfile bs=1M count=1000
     $1 mkswap swapfile
@@ -90,10 +74,10 @@ function install_all_libs {
     #cmake ../dnp3_src
     cmake ../../utils/dnp3_src
     make
-    $1 make install
+    sudo make install
     if [ $? -ne 0 ]; then
         echo "Error installing OpenDNP3"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
     $1 ldconfig
@@ -107,10 +91,10 @@ function install_all_libs {
     cd utils/libmodbus_src
     ./autogen.sh
     ./configure
-    $1 make install
+    sudo make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
     $1 ldconfig
@@ -134,15 +118,39 @@ WorkingDirectory=$WORKING_DIR\n\
 ExecStart=$WORKING_DIR/start_openplc.sh\n\
 \n\
 [Install]\n\
-WantedBy=multi-user.target" >> ./build/openplc.service
-        $1 cp -rf ./build/openplc.service /lib/systemd/system/
-        rm -rf ./build/openplc.service
-        $1 "Enabling OpenPLC Service..."
-        $1 systemctl daemon-reload
-        $1 systemctl enable openplc
+WantedBy=multi-user.target" >> $BUILD_DIR/openplc.service
+        sudo cp -rf $BUILD_DIR/openplc.service /lib/systemd/system/
+        rm -rf $BUILD_DIR/openplc.service
+        echo "Enabling OpenPLC Service..."
+        sudo systemctl daemon-reload
+        sudo systemctl enable openplc
     fi
 }
 
+function print_usage {
+    echo ""
+    echo "Error: You must provide a platform name as argument"
+    echo ""
+    echo "Usage: ./install.sh [platform]  where [platform] can be"
+    echo "  win           Install OpenPLC on Windows over Cygwin"
+    echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
+    echo "  docker        Install OpenPLC in a Docker container"
+    echo "  rpi           Install OpenPLC on a Raspberry Pi"
+    echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
+    echo "  custom        Skip all specific package installation and tries to install"
+    echo "                OpenPLC assuming your system already has all dependencies met."
+    echo "                This option can be useful if you're trying to install OpenPLC"
+    echo "                on an unsuported Linux platform or had manually installed"
+    echo "                all the dependency packages before."
+    echo ""
+    exit 1
+}
+
+##----------------------------------------
+
+if [ $# -eq 0 ]; then
+    print_usage
+fi
 
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
@@ -223,10 +231,9 @@ if [ "$1" == "win" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
-    ./change_hardware_layer.sh blank
-    ./compile_program.sh blank_program.st
-    #cp ./start_openplc.sh ../../
+    #cd webserver/scripts
+    $SCRIPTS_DIR/change_hardware_layer.sh blank
+    $SCRIPTS_DIR/compile_program.sh blank_program.st
 
 
 elif [ "$1" == "linux" ]; then
@@ -240,9 +247,9 @@ elif [ "$1" == "linux" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
+    #cd webserver/scripts
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 elif [ "$1" == "docker" ]; then
@@ -253,9 +260,9 @@ elif [ "$1" == "docker" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
+    #cd webserver/scripts
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
@@ -271,8 +278,8 @@ elif [ "$1" == "rpi" ]; then
     echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh blank_program.st
 
 
 elif [ "$1" == "neuron" ]; then
@@ -297,8 +304,8 @@ elif [ "$1" == "neuron" ]; then
     echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh blank_program.st
 
 
 
@@ -310,23 +317,11 @@ elif [ "$1" == "custom" ]; then
     echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh blank_program.st
 
 
 else
-    echo ""
-    echo "Error: unrecognized platform"
-    echo ""
-    echo "Usage: ./install.sh [platform]   where [platform] can be"
-    echo "  win           Install OpenPLC on Windows over Cygwin"
-    echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
-    echo "  rpi           Install OpenPLC on a Raspberry Pi"
-    echo "  custom        Skip all specific package installation and tries to install"
-    echo "                OpenPLC assuming your system already has all dependencies met."
-    echo "                This option can be useful if you're trying to install OpenPLC"
-    echo "                on an unsuported Linux platform or had manually installed"
-    echo "                all the dependency packages before."
-    echo ""
+    print_usage
     exit 1
 fi
