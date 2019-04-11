@@ -11,7 +11,7 @@ ERROR_MESS="OpenPLC was NOT installed!"
 
 # arg1: sudo or blank
 function linux_install_deps {
-    #$1 apt-get update
+    $1 apt-get update
     $1 apt-get install -y build-essential pkg-config bison flex \
                           autoconf automake libtool make cmake \
                           python2.7 python-pip  \
@@ -74,7 +74,7 @@ function install_all_libs {
     #cmake ../dnp3_src
     cmake ../../utils/dnp3_src
     make
-    sudo make install
+    $1 make install
     if [ $? -ne 0 ]; then
         echo "Error installing OpenDNP3"
         echo "$ERROR_MESS"
@@ -91,7 +91,7 @@ function install_all_libs {
     cd utils/libmodbus_src
     ./autogen.sh
     ./configure
-    sudo make install
+    $1 make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
         echo "$ERROR_MESS"
@@ -119,11 +119,11 @@ ExecStart=$WORKING_DIR/start_openplc.sh\n\
 \n\
 [Install]\n\
 WantedBy=multi-user.target" >> $BUILD_DIR/openplc.service
-        sudo cp -rf $BUILD_DIR/openplc.service /lib/systemd/system/
+        $1 cp -rf $BUILD_DIR/openplc.service /lib/systemd/system/
         rm -rf $BUILD_DIR/openplc.service
         echo "Enabling OpenPLC Service..."
-        sudo systemctl daemon-reload
-        sudo systemctl enable openplc
+        $1 systemctl daemon-reload
+        $1 systemctl enable openplc
     fi
 }
 
@@ -243,7 +243,7 @@ elif [ "$1" == "linux" ]; then
     #install_py_deps
     #install_py_deps sudo
 
-    #install_all_libs sudo
+    install_all_libs sudo
 
     echo ""
     echo "[FINALIZING]"
