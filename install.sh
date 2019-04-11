@@ -155,7 +155,7 @@ if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
     #cp ./utils/apt-cyg/apt-cyg ./
     cp $ROOT_DIR/utils/apt-cyg/wget.exe /bin
-    install $ROOT_DIR/utils/apt-cyg/apt-cyg /bin
+    install $ROOT_DIR/utils/apt-cyg/apt-cyg.sh /bin/apt-cyg
     apt-cyg install lynx
     #rm -f /bin/wget.exe
     apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3
