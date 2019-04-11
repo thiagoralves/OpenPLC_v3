@@ -154,7 +154,7 @@ fi
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
     #cp ./utils/apt-cyg/apt-cyg ./
-    #cp ./utils/apt-cyg/wget.exe /bin
+    cp $ROOT_DIR/utils/apt-cyg/wget.exe /bin
     install $ROOT_DIR/utils/apt-cyg/apt-cyg /bin
     apt-cyg install lynx
     #rm -f /bin/wget.exe
