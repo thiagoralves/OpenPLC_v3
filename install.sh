@@ -224,6 +224,7 @@ if [ "$1" == "win" ]; then
     cd $ROOT_DIR/utils/libmodbus_src
     ./autogen.sh
     ./configure
+    make
     make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
