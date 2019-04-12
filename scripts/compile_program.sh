@@ -24,12 +24,12 @@ echo "Optimizing ST program..."
 $BUILD_DIR/st_optimizer "$1" "$OUT_ST"
 echo "Generating C files..."
 
-#$BUILD_DIR/iec2c -I "$ETC_DIR/lib" -T $SRC_GEN_DIR "$OUT_ST"
-#if [ $? -ne 0 ]; then
-#    echo "Error generating C files"
-#    echo "Compilation finished with errors!"
-#    exit 1
-#fi
+$BUILD_DIR/iec2c -I "$ETC_DIR/lib" -T $SRC_GEN_DIR "$OUT_ST"
+if [ $? -ne 0 ]; then
+    echo "Error generating C files"
+    echo "Compilation finished with errors!"
+    exit 1
+fi
 
 
 
@@ -53,7 +53,7 @@ cd $SRC_GEN_DIR
 if [ "$OPENPLC_PLATFORM" = "win" ]; then
     echo "Compiling for Windows"
     echo "Generating object files..."
-    g++ -I $C_LIBS_DIR -c ./Config0.c -w
+    g++ -I $C_LIBS_DIR -c Config0.c -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
