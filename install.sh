@@ -153,6 +153,10 @@ fi
 
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
+
+    echo "BUILD_DIR=$BUILD_DIR"
+    mkdir $BUILD_DIR
+
     #cp ./utils/apt-cyg/apt-cyg ./
     cp $ROOT_DIR/utils/apt-cyg/wget.exe /bin
     install $ROOT_DIR/utils/apt-cyg/apt-cyg.sh /bin/apt-cyg
@@ -167,7 +171,7 @@ if [ "$1" == "win" ]; then
 
     echo ""
     echo "[MATIEC COMPILER]"
-    cp ./utils/matiec_src/bin_win32/*.* ./webserver/
+    cp $ROOT_DIR/utils/matiec_src/bin_win32/*.* $BUILD_DIR
     if [ $? -ne 0 ]; then
         echo "Error compiling MatIEC"
         echo "$ERROR_MESS"
