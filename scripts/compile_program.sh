@@ -24,7 +24,8 @@ echo "Optimizing ST program..."
 $BUILD_DIR/st_optimizer "$1" "$OUT_ST"
 echo "Generating C files..."
 
-$BUILD_DIR/iec2c -I "$ETC_DIR/lib" -T $SRC_GEN_DIR "$OUT_ST"
+cd $BUILD_DIR
+./iec2c -I "$ETC_DIR/lib" -T $SRC_GEN_DIR "$OUT_ST"
 if [ $? -ne 0 ]; then
     echo "Error generating C files"
     echo "Compilation finished with errors!"
@@ -36,7 +37,7 @@ fi
 # Copy cpp files
 cp $CORE_DIR/ladder.h $SRC_GEN_DIR
 cp $CORE_DIR/custom_layer.h $SRC_GEN_DIR
-cp $CORE_DIR/dnp3.cpp $SRC_GEN_DIR
+#cp $CORE_DIR/dnp3.cpp $SRC_GEN_DIR
 cp $CORE_DIR/modbus.cpp $SRC_GEN_DIR
 cp $CORE_DIR/modbus_master.cpp $SRC_GEN_DIR
 cp $CORE_DIR/server.cpp $SRC_GEN_DIR
@@ -44,7 +45,7 @@ cp $CORE_DIR/interactive_server.cpp $SRC_GEN_DIR
 cp $CORE_DIR/main.cpp $SRC_GEN_DIR
 
 #copy config
-cp $CORE_DIR/dnp3.cfg $BUILD_DIR
+#cp $CORE_DIR/dnp3.cfg $BUILD_DIR
 
 #---------------------------------------
 # compile for each platform
