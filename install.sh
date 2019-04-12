@@ -222,7 +222,7 @@ if [ "$1" == "win" ]; then
 
     echo ""
     echo "[LIBMODBUS]"
-    export CYGWIN=binmode on
+    #export CYGWIN=binmode on
 
     cd $ROOT_DIR/utils/libmodbus_src
     ./autogen.sh
