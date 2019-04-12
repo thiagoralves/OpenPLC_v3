@@ -176,48 +176,48 @@ if [ "$1" == "win" ]; then
 
     echo ""
     echo "[ST OPTIMIZER]"
-    cd utils/st_optimizer_src
-    g++ st_optimizer.cpp -o st_optimizer
-    cp ./st_optimizer.exe ../../webserver/
+    cd $ROOT_DIR/utils/st_optimizer_src
+    g++ st_optimizer.cpp -o $ROOT_DIR/st_optimizer
+    #cp ./st_optimizer.exe ../../webserver/
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
         echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[GLUE GENERATOR]"
-    cd utils/glue_generator_src
-    g++ glue_generator.cpp -o glue_generator
-    cp ./glue_generator.exe ../../webserver/core
+    cd $ROOT_DIR/utils/glue_generator_src
+    g++ glue_generator.cpp -o $ROOT_DIR/glue_generator
+    #cp ./glue_generator.exe ../../webserver/core
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
         echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
-    echo ""
-    echo "[OPEN DNP3]"
-    cd webserver/core
-    mv dnp3.cpp dnp3.disabled
-    if [ $? -ne 0 ]; then
-        echo "Error disabling OpenDNP3"
-        echo "$ERROR_MESS"
-        exit 1
-    fi
-    mv dnp3_dummy.disabled dnp3_dummy.cpp
-    if [ $? -ne 0 ]; then
-        echo "Error disabling OpenDNP3"
-        echo "$ERROR_MESS"
-        exit 1
-    fi
-    cd ../..
+#    echo ""
+#    echo "[OPEN DNP3]"
+#    cd webserver/core
+#    mv dnp3.cpp dnp3.disabled
+#    if [ $? -ne 0 ]; then
+#        echo "Error disabling OpenDNP3"
+#        echo "$ERROR_MESS"
+#        exit 1
+#    fi
+#    mv dnp3_dummy.disabled dnp3_dummy.cpp
+#    if [ $? -ne 0 ]; then
+#        echo "Error disabling OpenDNP3"
+#        echo "$ERROR_MESS"
+#        exit 1
+#    fi
+#    cd ../..
 
     echo ""
     echo "[LIBMODBUS]"
-    cd utils/libmodbus_src
+    cd $ROOT_DIR/utils/libmodbus_src
     ./autogen.sh
     ./configure
     make install
@@ -226,13 +226,13 @@ if [ "$1" == "win" ]; then
         echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[FINALIZING]"
     #cd webserver/scripts
     $SCRIPTS_DIR/change_hardware_layer.sh blank
-    $SCRIPTS_DIR/compile_program.sh blank_program.st
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 elif [ "$1" == "linux" ]; then
@@ -246,7 +246,6 @@ elif [ "$1" == "linux" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    #cd webserver/scripts
     $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
     $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
@@ -259,7 +258,6 @@ elif [ "$1" == "docker" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    #cd webserver/scripts
     $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
     $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
@@ -276,9 +274,8 @@ elif [ "$1" == "rpi" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
     $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
-    $SCRIPTS_DIR/compile_program.sh blank_program.st
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 elif [ "$1" == "neuron" ]; then
@@ -302,9 +299,8 @@ elif [ "$1" == "neuron" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
     $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
-    $SCRIPTS_DIR/compile_program.sh blank_program.st
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 
@@ -315,9 +311,8 @@ elif [ "$1" == "custom" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
     $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
-    $SCRIPTS_DIR/compile_program.sh blank_program.st
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 else
