@@ -202,22 +202,15 @@ if [ "$1" == "win" ]; then
     fi
     cd $ROOT_DIR
 
-#    echo ""
-#    echo "[OPEN DNP3]"
-#    cd webserver/core
-#    mv dnp3.cpp dnp3.disabled
-#    if [ $? -ne 0 ]; then
-#        echo "Error disabling OpenDNP3"
-#        echo "$ERROR_MESS"
-#        exit 1
-#    fi
-#    mv dnp3_dummy.disabled dnp3_dummy.cpp
-#    if [ $? -ne 0 ]; then
-#        echo "Error disabling OpenDNP3"
-#        echo "$ERROR_MESS"
-#        exit 1
-#    fi
-#    cd ../..
+    # NOTE: dnp3 is not used on windows as it dont compile ;-( (can u help?)
+    echo ""
+    echo "[OPEN DNP3]"
+    cp $CORE_DIR/dnp3_dummy.cpp $SRC_GEN/dnp3.cpp
+    if [ $? -ne 0 ]; then
+        echo "Error disabling OpenDNP3"
+        echo "$ERROR_MESS"
+        exit 1
+    fi
 
 
     echo ""
