@@ -219,18 +219,20 @@ if [ "$1" == "win" ]; then
 #    fi
 #    cd ../..
 
-#    echo ""
-#    echo "[LIBMODBUS]"
-#    cd $ROOT_DIR/utils/libmodbus_src
-#    ./autogen.sh
-#    ./configure
-#    make install
-#    if [ $? -ne 0 ]; then
-#        echo "Error installing Libmodbus"
-#        echo "$ERROR_MESS"
-#        exit 1
-#    fi
-#    cd $ROOT_DIR
+
+    echo ""
+    echo "[LIBMODBUS]"
+    set CYGWIN=binmode on
+    cd $ROOT_DIR/utils/libmodbus_src
+    ./autogen.sh
+    ./configure
+    make install
+    if [ $? -ne 0 ]; then
+        echo "Error installing Libmodbus"
+        echo "$ERROR_MESS"
+        exit 1
+    fi
+    cd $ROOT_DIR
 
     echo ""
     echo "[FINALIZING]"
