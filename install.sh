@@ -181,7 +181,7 @@ if [ "$1" == "win" ]; then
     echo ""
     echo "[ST OPTIMIZER]"
     cd $ROOT_DIR/utils/st_optimizer_src
-    g++ st_optimizer.cpp -o $ROOT_DIR/st_optimizer
+    g++ st_optimizer.cpp -o $BUILD_DIR/st_optimizer
     #cp ./st_optimizer.exe ../../webserver/
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
@@ -193,7 +193,7 @@ if [ "$1" == "win" ]; then
     echo ""
     echo "[GLUE GENERATOR]"
     cd $ROOT_DIR/utils/glue_generator_src
-    g++ glue_generator.cpp -o $ROOT_DIR/glue_generator
+    g++ glue_generator.cpp -o $BUILD_DIR/glue_generator
     #cp ./glue_generator.exe ../../webserver/core
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
