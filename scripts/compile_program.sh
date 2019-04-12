@@ -24,7 +24,7 @@ echo "Optimizing ST program..."
 $BUILD_DIR/st_optimizer "$1" "$OUT_ST"
 echo "Generating C files..."
 
-$BUILD_DIR/iec2c -I "$ETC_DIR/lib" -T $SRC_GEN_DIR "$OUT_ST"
+$BUILD_DIR/iec2c -I "$ETC_DIR\lib" -T $SRC_GEN_DIR "$OUT_ST"
 if [ $? -ne 0 ]; then
     echo "Error generating C files"
     echo "Compilation finished with errors!"

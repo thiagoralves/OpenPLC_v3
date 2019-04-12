@@ -164,7 +164,7 @@ if [ "$1" == "win" ]; then
     #rm -f /bin/wget.exe
     apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3
     lynx -source https://bootstrap.pypa.io/get-pip.py > $BUILD_DIR/get-pip.py
-    python $BUILD_DIR/get-pip.py
+    python $BUILD_DIR\get-pip.py
     #pip install flask
     #pip install flask-login
     #pip install pyserial
