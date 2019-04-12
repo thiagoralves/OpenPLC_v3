@@ -47,7 +47,7 @@ cp $CORE_DIR/interactive_server.cpp $SRC_GEN_DIR
 cp $CORE_DIR/main.cpp $SRC_GEN_DIR
 
 #copy config
-#cp $CORE_DIR/dnp3.cfg $BUILD_DIR
+cp $CORE_DIR/dnp3.cfg $BUILD_DIR
 
 #---------------------------------------
 # compile for each platform
