@@ -53,7 +53,7 @@ cd $SRC_GEN_DIR
 if [ "$OPENPLC_PLATFORM" = "win" ]; then
     echo "Compiling for Windows"
     echo "Generating object files..."
-    g++ -I $C_LIBS_DIR -c Config0.c -w
+    g++ -I $C_LIBS_DIR -c ./Config0.c -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
