@@ -68,7 +68,7 @@ if [ "$OPENPLC_PLATFORM" = "win" ]; then
     echo "Generating glueVars..."
     $BUILD_DIR/glue_generator
     echo "Compiling main program..."
-    g++ *.cpp *.o -o openplc -I $C_LIBS_DIR -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib -lmodbus -w
+    g++ *.cpp *.o -o $BUILD_DIR/openplc -I $C_LIBS_DIR -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib -lmodbus -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
@@ -122,7 +122,7 @@ elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     echo "Generating glueVars..."
     $BUILD_DIR/glue_generator
     echo "Compiling main program..."
-    g++ -std=gnu++11 *.cpp *.o -o openplc -I $C_LIBS_DIR -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 *.cpp *.o -o $BUILD_DIR/openplc -I $C_LIBS_DIR -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
@@ -130,6 +130,7 @@ elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     fi
     echo "Compilation finished successfully!"
     exit 0
+
 else
     echo "Error: Undefined platform! OpenPLC can only compile for Windows, Linux and Raspberry Pi environments"
     echo "Compilation finished with errors!"
