@@ -162,7 +162,7 @@ if [ "$1" == "win" ]; then
     install $ROOT_DIR/utils/apt-cyg/apt-cyg.sh /bin/apt-cyg
     apt-cyg install lynx
     #rm -f /bin/wget.exe
-    apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3
+    apt-cyg install wget dos2unix gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3
     #lynx -source https://bootstrap.pypa.io/get-pip.py > $BUILD_DIR/get-pip.py
     #python $BUILD_DIR/get-pip.py
     #pip install flask

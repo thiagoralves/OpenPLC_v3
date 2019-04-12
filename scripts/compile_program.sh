@@ -24,7 +24,7 @@ echo "Optimizing ST program..."
 $BUILD_DIR/st_optimizer "$1" "$OUT_ST"
 echo "Generating C files..."
 
-# Bixare as the first does not not run on windows ;-(
+# Bizzare as the first does not not run on cygwin windows ;-(
 #$BUILD_DIR/iec2c -I "$ETC_DIR/lib" -T $SRC_GEN_DIR "$OUT_ST"
 cd $BUILD_DIR
 ./iec2c -I ../etc/lib -T ./src_gen ./opti.st
