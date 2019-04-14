@@ -9,4 +9,4 @@ pages:
     paths:
     - public
   only:
-  - master
+  - build_stuff
