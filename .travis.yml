@@ -9,8 +9,8 @@ addons:
       - doxygen
 
 script:
-  - docker build .
-  - doxygen doxygen.conf
+  #- docker build .
+  #- doxygen doxygen.conf
   
     #deploy:
     #  provider: pages

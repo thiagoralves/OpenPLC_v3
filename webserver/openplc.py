@@ -1,10 +1,24 @@
-#Use this for OpenPLC console: http://eyalarubas.com/python-subproc-nonblock.html
+
+# Use this for OpenPLC console: http://eyalarubas.com/python-subproc-nonblock.html
+import sys
+import os
 import subprocess
 import socket
 import errno
 import time
 from threading import Thread
-from Queue import Queue, Empty
+
+#from Queue import Queue, Empty
+is_py2 = sys.version[0] == '2'
+if is_py2:
+    import Queue as queue
+else:
+    import queue as queue
+
+
+
+ROOT_DIR = os.path.abspath( os.path.join(os.path.dirname( __file__ ), ".."))
+
 
 intervals = (
     ('weeks', 604800),  # 60 * 60 * 24 * 7
@@ -37,7 +51,7 @@ class NonBlockingStreamReader:
         '''
 
         self._s = stream
-        self._q = Queue()
+        self._q = queue.Queue()
 
         def _populateQueue(stream, queue):
             '''
@@ -63,7 +77,7 @@ class NonBlockingStreamReader:
         try:
             return self._q.get(block = timeout is not None,
                     timeout = timeout)
-        except Empty:
+        except queue.Empty:
             return None
 
 class UnexpectedEndOfStream(Exception): pass
@@ -76,7 +90,11 @@ class runtime:
     
     def start_runtime(self):
         if (self.status() == "Stopped"):
-            a = subprocess.Popen(['./core/openplc'])
+            path = ROOT_DIR + '/build/openplc'
+            if not os.path.exists(path):
+                print("Runtime not exist!")
+                return
+            a = subprocess.Popen([path])
             self.runtime_status = "Running"
     
     def stop_runtime(self):
@@ -99,7 +117,7 @@ class runtime:
         global compilation_status_str
         global compilation_object
         compilation_status_str = ""
-        a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        a = subprocess.Popen([ROOT_DIR + '/scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         compilation_object = NonBlockingStreamReader(a.stdout)
     
     def compilation_status(self):

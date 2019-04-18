@@ -131,7 +131,7 @@ function wget {
 
 function find-workspace {
   # default working directory and mirror
-  
+
   # work wherever setup worked last, if possible
   cache=$(awk '
   BEGIN {

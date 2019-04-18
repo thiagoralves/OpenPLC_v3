@@ -1,21 +1,56 @@
-import sqlite3
-from sqlite3 import Error
+
+from __future__ import print_function
 import os
+import sys
 import subprocess
 import platform
-import serial.tools.list_ports
 import random
 import datetime
 import time
-import pages
-import openplc
-import sys
 
-import flask 
+import serial.tools.list_ports
+import sqlite3
+from sqlite3 import Error
+import flask
 import flask_login
 
+from . import pages
+from . import openplc
+
+
+ROOT_PATH =  os.path.abspath( os.path.join(os.path.dirname( __file__ ), ".."))
+CORE_DIR = os.path.join(ROOT_PATH, "etc", "core")
+SCRIPTS_DIR = os.path.join(ROOT_PATH, "scripts")
+BUILD_DIR = os.path.join(ROOT_PATH, "build")
+SRC_GEN_DIR = os.path.join(BUILD_DIR, "src_gen")
+
+WORK_DIR = None
+
+def db_file():
+    """Returns path to db file"""
+    return "%s/openplc.db"  % WORK_DIR
+
+def read_file(file_path):
+    if not os.path.exists(file_path):
+        return None
+    with open(file_path, "r") as f:
+        return f.read().strip()
+    return None
+
+def write_file(file_path, contents):
+    with open(file_path, "w") as f:
+        return f.write(contents)
+    return None
+
+def get_active_program():
+    return read_file("%s/active_program.txt" % BUILD_DIR)
+
+def get_driver():
+    return read_file('%s/openplc_driver.txt' % BUILD_DIR)
+
+
 app = flask.Flask(__name__)
-app.secret_key = str(os.urandom(16))
+app.secret_key = "thi234sisop43enplcand=its++cool" # looses cookie str(os.urandom(16))
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
@@ -27,8 +62,7 @@ class User(flask_login.UserMixin):
 
 def configure_runtime():
     global openplc_runtime
-    database = "openplc.db"
-    conn = create_connection(database)
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             print("Openning database")
@@ -60,8 +94,7 @@ def configure_runtime():
 
 
 def generate_mbconfig():
-    database = "openplc.db"
-    conn = create_connection(database)
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             cur = conn.cursor()
@@ -129,8 +162,9 @@ def generate_mbconfig():
                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
                 device_counter += 1
-                
-            with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
+
+            write_file(os.path.join(BUILD_DIR, "mbconfig.cfg"), mbconfig)
+            #with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
             
         except Error as e:
             print("error connecting to the database" + str(e))
@@ -327,8 +361,7 @@ loading logs...
     
 @login_manager.user_loader
 def user_loader(username):
-    database = "openplc.db"
-    conn = create_connection(database)
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             cur = conn.cursor()
@@ -356,9 +389,8 @@ def user_loader(username):
 @login_manager.request_loader
 def request_loader(request):
     username = request.form.get('username')
-    
-    database = "openplc.db"
-    conn = create_connection(database)
+
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             cur = conn.cursor()
@@ -405,9 +437,8 @@ def login():
 
     username = flask.request.form['username']
     password = flask.request.form['password']
-    
-    database = "openplc.db"
-    conn = create_connection(database)
+
+    conn = create_connection(db_file())
     if (conn != None):
         try:
             cur = conn.cursor()
@@ -554,8 +585,7 @@ def programs():
                         <tr style='background-color: white'>
                             <th>Program Name</th><th>File</th><th>Date Uploaded</th>
                         </tr>"""
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -630,8 +660,7 @@ def reload_program():
                     <br>
                     <h2>Program Info</h2>
                     <br>"""
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -667,8 +696,7 @@ def remove_program():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         prog_id = flask.request.args.get('id')
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -698,7 +726,7 @@ def upload_program():
             return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
         
         filename = str(random.randint(1,1000000)) + ".st"
-        prog_file.save(os.path.join('st_files', filename))
+        prog_file.save(os.path.join(WORK_DIR, 'st_files', filename))
         
         return_str = pages.w3_style + pages.style + draw_top_div()
         return_str += """
@@ -776,8 +804,7 @@ def upload_program_action():
         prog_file = flask.request.form['prog_file']
         epoch_time = flask.request.form['epoch_time']
         
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -802,11 +829,11 @@ def compile_program():
         return flask.redirect(flask.url_for('login'))
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+
         st_file = flask.request.args.get('file')
         
         #load information about the program being compiled into the openplc_runtime object
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -822,7 +849,7 @@ def compile_program():
         else:
             print("error connecting to the database")
         
-        openplc_runtime.compile_program(st_file)
+        openplc_runtime.compile_program(os.path.join(WORK_DIR, "st_files", st_file))
         
         return draw_compiling_page()
 
@@ -870,8 +897,7 @@ def modbus():
                         <tr style='background-color: white'>
                             <th>Device Name</th><th>Device Type</th><th>DI</th><th>DO</th><th>AI</th><th>AO</th>
                         </tr>"""
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -1037,8 +1063,7 @@ def add_modbus_device():
             aow_start = flask.request.form.get('aow_start')
             aow_size = flask.request.form.get('aow_size')
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1096,8 +1121,7 @@ def modbus_edit_device():
                             method    =  "post"
                             onsubmit  =  "return validateForm()">"""
                             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1207,8 +1231,7 @@ def modbus_edit_device():
             aow_start = flask.request.form.get('aow_start')
             aow_size = flask.request.form.get('aow_size')
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1234,8 +1257,7 @@ def delete_device():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         devid_db = flask.request.args.get('dev_id')
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -1277,7 +1299,7 @@ def hardware():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         if (flask.request.method == 'GET'):
-            with open('./scripts/openplc_driver') as f: current_driver = f.read().rstrip()
+            current_driver = get_driver()
             return_str = pages.w3_style + pages.hardware_style + draw_top_div() + pages.hardware_head
             return_str += draw_status()
             return_str += """
@@ -1325,16 +1347,18 @@ def hardware():
                         <p><b>Hardware Layer Code Box</b><p>
                         <p>The Hardware Layer Code Box allows you to extend the functionality of the current driver by adding custom code to it, such as reading I2C, SPI and 1-Wire sensors, or controling port expanders to add more outputs to your hardware</p>
                         <textarea wrap="off" spellcheck="false" name="custom_layer_code" id="custom_layer_code">"""
-            with open('./core/custom_layer.h') as f: return_str += f.read()
+            return_str += read_file(CORE_DIR + "/custom_layer.h")
+            #with open('./core/custom_layer.h') as f: return_str += f.read()
             return_str += pages.hardware_tail
             
         else:
             hardware_layer = flask.request.form['hardware_layer']
             custom_layer_code = flask.request.form['custom_layer_code']
-            with open('./active_program') as f: current_program = f.read()
-            with open('./core/custom_layer.h', 'w+') as f: f.write(custom_layer_code)
+            current_program = get_active_program()
+            with open(SRC_GEN_DIR + '/custom_layer.h', 'w+') as f:
+                f.write(custom_layer_code)
             
-            subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
+            subprocess.call([SCRIPTS_DIR + '/change_hardware_layer.sh', hardware_layer])
             return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
         
         return return_str
@@ -1388,8 +1412,7 @@ def users():
                             <th>Full Name</th><th>Username</th><th>Email</th>
                         </tr>"""
         
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -1455,8 +1478,7 @@ def add_user():
             if ('file' not in flask.request.files):
                 form_has_picture = False
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1521,8 +1543,7 @@ def edit_user():
                             method    =  "post"
                             onsubmit  =  "return validateForm()">"""
                         
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1583,8 +1604,8 @@ def edit_user():
             if ('file' not in flask.request.files):
                 form_has_picture = False
             
-            database = "openplc.db"
-            conn = create_connection(database)
+
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1619,8 +1640,7 @@ def delete_user():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         user_id = flask.request.args.get('user_id')
-        database = "openplc.db"
-        conn = create_connection(database)
+        conn = create_connection(db_file())
         if (conn != None):
             try:
                 cur = conn.cursor()
@@ -1669,8 +1689,7 @@ def settings():
                         <label class="container">
                             <b>Enable Modbus Server</b>"""
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1780,8 +1799,7 @@ def settings():
             slave_polling = flask.request.form.get('slave_polling_period')
             slave_timeout = flask.request.form.get('slave_timeout')
             
-            database = "openplc.db"
-            conn = create_connection(database)
+            conn = create_connection(db_file())
             if (conn != None):
                 try:
                     cur = conn.cursor()
@@ -1854,46 +1872,50 @@ def create_connection(db_file):
 #----------------------------------------------------------------------------
 def main():
    print("Starting the web interface...")
-   
-if __name__ == '__main__':
-    #Load information about current program on the openplc_runtime object
-    file = open("active_program", "r")
-    st_file = file.read()
-    st_file = st_file.replace('\r','').replace('\n','')
-    
-    reload(sys)
-    sys.setdefaultencoding('UTF8')
-    
-    database = "openplc.db"
-    conn = create_connection(database)
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
-            #cur.execute("SELECT * FROM Programs")
-            row = cur.fetchone()
-            openplc_runtime.project_name = str(row[1])
-            openplc_runtime.project_description = str(row[2])
-            openplc_runtime.project_file = str(row[3])
-            
-            cur.execute("SELECT * FROM Settings")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-            
-            for row in rows:
-                if (row[0] == "Start_run_mode"):
-                    start_run = str(row[1])
-                    
-            if (start_run == 'true'):
-                print("Initializing OpenPLC in RUN mode...")
-                openplc_runtime.start_runtime()
-                time.sleep(1)
-                configure_runtime()
-            
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
-        
-        except Error as e:
-            print("error connecting to the database" + str(e))
-    else:
-        print("error connecting to the database")
+
+def run_server(work_dir, address="0.0.0.0", port=8080, debug_enabled=False):
+
+    global WORK_DIR
+    WORK_DIR = work_dir
+
+
+
+    # Load information about current program on the openplc_runtime object
+    st_file = get_active_program()
+    if st_file != None:
+
+        #reload(sys)
+        #sys.setdefaultencoding('UTF8')
+
+        conn = create_connection(db_file())
+        if (conn != None):
+           try:
+               cur = conn.cursor()
+               cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
+               # cur.execute("SELECT * FROM Programs")
+               row = cur.fetchone()
+               openplc_runtime.project_name = str(row[1])
+               openplc_runtime.project_description = str(row[2])
+               openplc_runtime.project_file = str(row[3])
+
+               cur.execute("SELECT * FROM Settings")
+               rows = cur.fetchall()
+               cur.close()
+               conn.close()
+
+               for row in rows:
+                   if (row[0] == "Start_run_mode"):
+                       start_run = str(row[1])
+
+               if (start_run == 'true'):
+                   print("Initializing OpenPLC in RUN mode...")
+                   openplc_runtime.start_runtime()
+                   time.sleep(1)
+                   configure_runtime()
+
+           except Error as e:
+               print("error connecting to the database" + str(e))
+        else:
+           print("error connecting to the database")
+
+    app.run(debug=debug_enabled, host=address, threaded=True, port=port)
