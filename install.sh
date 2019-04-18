@@ -163,11 +163,9 @@ if [ "$1" == "win" ]; then
     apt-cyg install lynx
     #rm -f /bin/wget.exe
     apt-cyg install wget dos2unix gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3
-    #lynx -source https://bootstrap.pypa.io/get-pip.py > $BUILD_DIR/get-pip.py
-    #python $BUILD_DIR/get-pip.py
-    #pip install flask
-    #pip install flask-login
-    #pip install pyserial
+    lynx -source https://bootstrap.pypa.io/get-pip.py > $BUILD_DIR/get-pip.py
+    python $BUILD_DIR/get-pip.py
+    pip install -r requirements.txt
 
     echo ""
     echo "[MATIEC COMPILER]"
@@ -235,10 +233,10 @@ if [ "$1" == "win" ]; then
 
 elif [ "$1" == "linux" ]; then
     echo "Installing OpenPLC on Linux"
-    #linux_install_deps sudo
+    linux_install_deps sudo
     
-    #install_py_deps
-    #install_py_deps sudo
+    install_py_deps
+    install_py_deps sudo
 
     install_all_libs sudo
 
