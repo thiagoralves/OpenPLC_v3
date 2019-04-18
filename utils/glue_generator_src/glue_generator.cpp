@@ -47,30 +47,37 @@ void generateHeader(ostream& glueVars)
 // Thiago Alves, May 2016\r\n\
 //-----------------------------------------------------------------------------\r\n\
 \r\n\
+#include <cstdint>\r\n\
+\r\n\
 #include \"iec_std_lib.h\"\r\n\
 \r\n\
 TIME __CURRENT_TIME;\r\n\
 extern unsigned long long common_ticktime__;\r\n\
 \r\n\
+#ifndef OPLC_IEC_GLUE_VALUE_TYPE\r\n\
+#define OPLC_IEC_GLUE_VALUE_TYPE\r\n\
 enum IecGlueValueType {\r\n\
-IEC_BOOL,\r\n\
-IEC_BYTE,\r\n\
-IEC_SINT,\r\n\
-IEC_USINT,\r\n\
-IEC_INT,\r\n\
-IEC_UINT,\r\n\
-IEC_WORD,\r\n\
-IEC_DINT,\r\n\
-IEC_UDINT,\r\n\
-IEC_DWORD,\r\n\
-IEC_REAL,\r\n\
-IEC_LREAL,\r\n\
-IEC_LWORD,\r\n\
-IEC_LINT,\r\n\
-IEC_ULINT\r\n\
-IEC_UNASSIGNED,\r\n\
+    IECVT_BOOL,\r\n\
+    IECVT_BYTE,\r\n\
+    IECVT_SINT,\r\n\
+    IECVT_USINT,\r\n\
+    IECVT_INT,\r\n\
+    IECVT_UINT,\r\n\
+    IECVT_WORD,\r\n\
+    IECVT_DINT,\r\n\
+    IECVT_UDINT,\r\n\
+    IECVT_DWORD,\r\n\
+    IECVT_REAL,\r\n\
+    IECVT_LREAL,\r\n\
+    IECVT_LWORD,\r\n\
+    IECVT_LINT,\r\n\
+    IECVT_ULINT,\r\n\
+    IECVT_UNASSIGNED,\r\n\
 };\r\n\
+#endif // OPLC_IEC_GLUE_VALUE_TYPE\r\n\
 \r\n\
+#ifndef OPLC_GLUE_VARIABLE\r\n\
+#define OPLC_GLUE_VARIABLE\r\n\
 /// Defines the mapping for a glued variable.\r\n\
 struct GlueVariable {\r\n\
 \r\n\
@@ -79,6 +86,7 @@ struct GlueVariable {\r\n\
     /// A pointer to the memory address for reading/writing the value.\r\n\
     void* value;\r\n\
 };\r\n\
+#endif // OPLC_GLUE_VARIABLE\r\n\
 \r\n\
 //Internal buffers for I/O and memory. These buffers are defined in the\r\n\
 //auto-generated glueVars.cpp file\r\n\
@@ -271,33 +279,33 @@ void generateIntegratedGlue(ostream& glueVars, const list<IecVar>& all_vars, int
 
     // Now that things are sorted, we are ready to write them out.
     glueVars << "/// The size of the array of input variables.\r\n";
-    glueVars << "const std:::uint16_t OPLCGLUE_INPUT_SIZE(" << max_input + 1 << ");\r\n";
-    glueVars << "GlueVariable oplc_input_vars[" << max(max_input + 1, 1) << "] = {\r\n";
+    glueVars << "const std::uint16_t OPLCGLUE_INPUT_SIZE(" << max_input + 1 << ");\r\n";
+    glueVars << "GlueVariable oplc_input_vars[] = {\r\n";
     for (auto i = 0; i < max_input + 1; i++)
     {
         if (input_vars[i] != nullptr)
         {
-            glueVars << "    { IEC_" << input_vars[i]->type << ", " << input_vars[i]->name << " },\r\n";
+            glueVars << "    { IECVT_" << input_vars[i]->type << ", " << input_vars[i]->name << " },\r\n";
         }
         else
         {
-            glueVars << "    { IEC_UNASSIGNED, nullptr },\r\n";
+            glueVars << "    { IECVT_UNASSIGNED, nullptr },\r\n";
         }
     }
     glueVars << "};\r\n\r\n";
 
     glueVars << "/// The size of the array of output variables.\r\n";
-    glueVars << "const std:::uint16_t OPLCGLUE_OUTPUT_SIZE(" << max_output + 1 << ");\r\n";
-    glueVars << "GlueVariable oplc_output_vars[" << max(max_output + 1, 1) << "] = {\r\n";
+    glueVars << "const std::uint16_t OPLCGLUE_OUTPUT_SIZE(" << max_output + 1 << ");\r\n";
+    glueVars << "GlueVariable oplc_output_vars[] = {\r\n";
     for (auto i = 0; i < max_output + 1; i++)
     {
         if (output_vars[i] != nullptr)
         {
-            glueVars << "    { IEC_" << output_vars[i]->type << ", " << output_vars[i]->name << " },\r\n";
+            glueVars << "    { IECVT_" << output_vars[i]->type << ", " << output_vars[i]->name << " },\r\n";
         }
         else
         {
-            glueVars << "    { IEC_UNASSIGNED, nullptr },\r\n";
+            glueVars << "    { IECVT_UNASSIGNED, nullptr },\r\n";
         }
     }
     glueVars << "};\r\n\r\n";
