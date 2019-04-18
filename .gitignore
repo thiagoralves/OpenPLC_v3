@@ -16,3 +16,7 @@ CMakeSettings.json
 **/bin/
 **/build/
 obj/
+
+*.o
+*.s
+*.ii

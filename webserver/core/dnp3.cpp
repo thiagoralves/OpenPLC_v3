@@ -1,7 +1,21 @@
-//2017 Trevor Aron
+// Copyright 2017 Trevor Aron, 2019 Smarter Grid Solutions
 //
-//File contains code for DNP3
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
+// http ://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissionsand
+// limitations under the License.
+
+// This is the main entry point for a single instance of DNP3 outstation.
+// This supplies a single function that you can use to start the outstation
+// and configuration according to a configuration file.
+
 #include <asiodnp3/DNP3Manager.h>
 #include <asiodnp3/PrintingSOEHandler.h>
 #include <asiodnp3/PrintingChannelListener.h>
@@ -12,7 +26,6 @@
 #include <opendnp3/outstation/SimpleCommandHandler.h>
 
 #include <opendnp3/LogLevels.h>
-//#include <opendnp3/outstation/Database.h>
 
 #include <string>
 #include <thread>
@@ -31,19 +44,6 @@
 #include "dnp3_publisher.h"
 #include "dnp3_receiver.h"
 
-//some modbus defines
-#define MAX_DISCRETE_INPUT      8192
-#define MAX_COILS               8192
-#define MAX_HOLD_REGS 			8192
-#define MAX_INP_REGS			1024
-
-#define MIN_16B_RANGE			1024
-#define MAX_16B_RANGE			2047
-#define MIN_32B_RANGE			2048
-#define MAX_32B_RANGE			4095
-#define MIN_64B_RANGE			4096
-#define MAX_64B_RANGE			8191
-
 #define OPLC_CYCLE              50000000
 
 // Initial offset parameters (yurgen1975)
@@ -59,8 +59,9 @@ using namespace asiopal;
 using namespace asiodnp3;
 
 /// Trim from both ends (in place), removing only whitespace.
-/// @param s The string to trimp
-static inline void trim(std::string& s) {
+/// @param s The string to trim
+static inline void trim(std::string& s)
+{
 	// Trim from the left
 	s.erase(s.begin(), std::find_if(s.begin(), s.end(),
 		std::not1(std::ptr_fun<int, int>(std::isspace))));
@@ -74,14 +75,16 @@ static inline void trim(std::string& s) {
 /// as specified in the stream.
 /// @param cfg_stream The stream to read for configuration settings
 /// @return The configuration represented by the stream and any defaults.
-OutstationStackConfig create_config(istream& cfg_stream) {
+OutstationStackConfig create_config(istream& cfg_stream)
+{
 	// We need to know the size of the database (number of points) before
-	// we can do anything. To avoid doing to passes of the stream, read
+	// we can do anything. To avoid doing two passes of the stream, read
 	// everything into a map, then get the database size, and finally
-	// processing the remaining items
+	// process the remaining items
 	map<string, string> cfg_values;
 	string line;
-	while (getline(cfg_stream, line)) {
+	while (getline(cfg_stream, line))
+	{
 		// Skip comment lines or those that are not a key-value pair
 		auto pos = line.find('=');
 		if (pos == string::npos || line[0] == '#')
@@ -100,24 +103,30 @@ OutstationStackConfig create_config(istream& cfg_stream) {
 	// Now that we know if we have the database size, we can ceate the stack config
 	auto default_size = 0;
 	auto db_size = cfg_values.find("database_size");
-	if (db_size != cfg_values.end()) {
+	if (db_size != cfg_values.end())
+	{
 		default_size = atoi(db_size->second.c_str());
 		cfg_values.erase(db_size);
 	}
 	auto config = OutstationStackConfig(DatabaseSizes::AllTypes(default_size));
 
 	// Finally, handle the remaining items
-	for (auto it = cfg_values.begin(); it != cfg_values.end(); ++it) {
+	for (auto it = cfg_values.begin(); it != cfg_values.end(); ++it)
+	{
 		auto token = it->first;
 		auto value = it->second;
-		try {
-			if (token == "local_address") {
+		try
+		{
+			if (token == "local_address")
+			{
 				config.link.LocalAddr = atoi(value.c_str());
 			}
-			else if (token == "remote_address") {
+			else if (token == "remote_address")
+			{
 				config.link.RemoteAddr = atoi(value.c_str());
 			}
-			else if (token == "keep_alive_timeout") {
+			else if (token == "keep_alive_timeout")
+			{
 				if (value == "MAX")
 				{
 					config.link.KeepAliveTimeout = openpal::TimeDuration::Max();
@@ -126,7 +135,8 @@ OutstationStackConfig create_config(istream& cfg_stream) {
 					config.link.KeepAliveTimeout = openpal::TimeDuration::Seconds(atoi(value.c_str()));
 				}
 			}
-			else if (token == "enable_unsolicited") {
+			else if (token == "enable_unsolicited")
+			{
 				if (token == "True")
 				{
 					config.outstation.params.allowUnsolicited = true;
@@ -136,47 +146,59 @@ OutstationStackConfig create_config(istream& cfg_stream) {
 					config.outstation.params.allowUnsolicited = false;
 				}
 			}
-			else if (token == "select_timeout") {
+			else if (token == "select_timeout")
+			{
 				config.outstation.params.selectTimeout = openpal::TimeDuration::Seconds(atoi(value.c_str()));
 			}
-			else if (token == "max_controls_per_request") {
+			else if (token == "max_controls_per_request")
+			{
 				config.outstation.params.maxControlsPerRequest = atoi(value.c_str());
 			}
-			else if (token == "max_rx_frag_size") {
+			else if (token == "max_rx_frag_size")
+			{
 				config.outstation.params.maxRxFragSize = atoi(value.c_str());
 			}
-			else if (token == "max_tx_frag_size") {
+			else if (token == "max_tx_frag_size")
+			{
 				config.outstation.params.maxTxFragSize = atoi(value.c_str());
 			}
-			else if (token == "event_buffer_size") {
+			else if (token == "event_buffer_size")
+			{
 				config.outstation.eventBufferConfig = EventBufferConfig::AllTypes(atoi(value.c_str()));
 			}
-			else if (token == "offset_di") {
+			else if (token == "offset_di")
+			{
 				offset_di = atoi(value.c_str());
 			}
-			else if (token == "offset_do") {
+			else if (token == "offset_do")
+			{
 				offset_do = atoi(value.c_str());
 			}
-			else if (token == "offset_ai") {
+			else if (token == "offset_ai")
+			{
 				offset_ai = atoi(value.c_str());
 			}
-			else if (token == "offset_ao") {
+			else if (token == "offset_ao"){
 				offset_ao = atoi(value.c_str());
 			}
-			else if (token == "sol_confirm_timeout") {
+			else if (token == "sol_confirm_timeout")
+			{
 				config.outstation.params.solConfirmTimeout =
 					openpal::TimeDuration::Milliseconds(atoi(value.c_str()));
 			}
-			else if (token == "unsol_confirm_timeout") {
+			else if (token == "unsol_confirm_timeout")
+			{
 				config.outstation.params.unsolConfirmTimeout =
 					openpal::TimeDuration::Milliseconds(atoi(value.c_str()));
 			}
-			else if (token == "unsol_retry_timeout") {
+			else if (token == "unsol_retry_timeout")
+			{
 				config.outstation.params.unsolRetryTimeout =
 					openpal::TimeDuration::Milliseconds(atoi(value.c_str()));
 			}
 		}
-		catch (...) {
+		catch (...)
+		{
 			cout << "Malformed Line: " << token << "=" << value << endl;
 			exit(1);
 		}
@@ -193,7 +215,10 @@ OutstationStackConfig create_config(istream& cfg_stream) {
 /// @param cfg_stream_fn An input stream to read configuration information from. This will be reset
 ///                      once use of the stream has been completed.
 /// @param run A signal for running this server. This server terminates when this signal is false.
-void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>>& cfg_stream, const bool* run) {
+void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>>& cfg_stream, const bool* run)
+{
+	unsigned char log_msg[1000];
+
 	const uint32_t FILTERS = levels::NORMAL;
 
 	OutstationStackConfig config(create_config(*cfg_stream));
@@ -209,7 +234,7 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 	// Create a listener server
 	auto channel = manager.AddTCPServer("DNP3_Server", FILTERS, ChannelRetry::Default(), "0.0.0.0", port, PrintingChannelListener::Create());
 
-	// We provide variable bindings into DNP3 so that it can support multiple
+	// We provide variable bindings into DNP3 so that it can support multiple outstations.
 	// There are two pieces to this - the glue and the defined range for this instance.
 	std::shared_ptr<GlueVariables> glue_variables = std::make_shared<GlueVariables>(
 		&bufferLock,
@@ -219,7 +244,7 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 		oplc_input_vars,
 		0,
 		oplc_output_vars);
-	Dnp3Range range;
+	Dnp3Range range = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	// Create a new outstation with a log level, command handler, and
 	// config info this returns a thread-safe interface used for
@@ -236,7 +261,8 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 	outstation->Enable();
 	{
 		auto publisher = std::make_shared<Dnp3Publisher>(outstation, glue_variables, range);
-		printf("DNP3 Enabled \n");
+		sprintf(log_msg, "DNP3 outstation enabled on port %d\n", port);
+        log(log_msg);
 
 		// Continuously update
 		struct timespec timer_start;
@@ -245,21 +271,29 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 		// Run this until we get a signal to stop.
 		while (*run)
 		{
-			pthread_mutex_lock(&bufferLock);
 			publisher->WriteToPoints();
-			pthread_mutex_unlock(&bufferLock);
 			sleep_until(&timer_start, OPLC_CYCLE);
 		}
+
+		outstation->Disable();
+		sprintf(log_msg, "DNP3 outstation disabled on port %d\n", port);
+		log(log_msg);
 	}
 
-	printf("Shutting down DNP3 server\n");
+	sprintf(log_msg, "Shutting down DNP3 server\n");
+    log(log_msg);
+
+	
 	channel->Shutdown();
-	printf("DNP3 Server deactivated\n");
+
+	sprintf(log_msg, "DNP3 Server deactivated\n");
+    log(log_msg);
 }
 
 /// Function to begin DNP3 server functions. This is the normal way that the
 /// DNP3 server is started.
-void dnp3StartServer(int port) {
+void dnp3StartServer(int port)
+{
 	unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new ifstream("dnp3.cfg"), [](istream* s)
 		{
 			reinterpret_cast<ifstream*>(s)->close();

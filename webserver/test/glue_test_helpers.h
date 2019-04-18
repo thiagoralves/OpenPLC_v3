@@ -19,7 +19,7 @@
 
 #define TEST_BUFFER_SIZE 1024
 
-/// Allocate a pointer to a new glue structure for the specifie data type.
+/// Allocate a pointer to a new glue structure for the specific data type.
 /// Initializes the values in the structure to the specified initial value.
 /// @param buffer_size The size of the buffer to allocate.
 /// @param start The first index to assign a default value

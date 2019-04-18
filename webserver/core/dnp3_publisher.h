@@ -36,7 +36,7 @@ namespace asiodnp3
 class Dnp3Publisher {
 public:
     /// Constructs a new instance of the publihser object.
-    /// @param outstation The outstation we that is ourselves
+    /// @param outstation The outstation that is ourselves
     /// @param glue_variables The buffers that we use for data transfer
     Dnp3Publisher(
         std::shared_ptr<asiodnp3::IOutstation> outstation,

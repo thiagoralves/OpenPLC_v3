@@ -25,7 +25,7 @@
 using namespace fakeit;
 using namespace opendnp3;
 
-/// An implementation of the updat ehandler that caches the updates that were
+/// An implementation of the update handler that caches the updates that were
 /// requested. This imlementation allows us to spy on the behaviour and to know
 /// during the tests whether the correct updates were called.
 class UpdateCaptureHandler : public opendnp3::IUpdateHandler {

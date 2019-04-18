@@ -35,7 +35,7 @@ inline int16_t mapDnp3IndexToGlueIndex(uint16_t start, uint16_t stop, uint16_t o
 /// @param end One past the last valid index.
 /// @param offset The offset defined for this set of values.
 /// @param dnp3_index The index of the point for DNP3.
-/// @return CommandStatus::SUCCESS is the DNP3 index is in range, otherwise, CommandStatus::OUT_OF_RANGE.
+/// @return CommandStatus::SUCCESS if the DNP3 index is in range, otherwise, CommandStatus::OUT_OF_RANGE.
 inline CommandStatus mapDnp3IndexToStatus(uint16_t start, uint16_t stop, uint16_t offset, uint16_t dnp3_index) {
     return mapDnp3IndexToGlueIndex(start, stop, offset, dnp3_index) >= 0 ? CommandStatus::SUCCESS : CommandStatus::OUT_OF_RANGE;
 }
@@ -54,7 +54,7 @@ Dnp3Receiver::Dnp3Receiver(
 
 /// CROB
 CommandStatus Dnp3Receiver::Select(const ControlRelayOutputBlock& command, uint16_t index) {
-    // TODO this is the existing behaviour, but I think this should be do (since that's what it actually modifies)
+    // TODO this is the existing behaviour, but I think this should be done differently (since that's what it actually modifies)
     return mapDnp3IndexToStatus(range.bool_outputs_start, range.bool_outputs_end, range.bool_outputs_offset, index);
 }
 

@@ -51,7 +51,7 @@ enum IecGlueValueType {
 
 #ifndef OPLC_GLUE_VARIABLE
 #define OPLC_GLUE_VARIABLE
-/// Defines the mapping for a glued variable. This defiition must be consistent
+/// Defines the mapping for a glued variable. This definition must be consistent
 /// with what is produced by the glue generator.
 struct GlueVariable {
     /// The type of the glue variable.
@@ -124,20 +124,20 @@ struct GlueVariables {
     /// Mapped to QXx_x locations.
     IEC_BOOL*** const bool_outputs;
 
-    /// The size of the inputs array.  You can index up to inputsSize - 1
+    /// The size of the inputs array.  You can index up to inputs_size - 1
     /// in the array.
     const std::uint16_t inputs_size;
 
     /// The input glue variables array. The number of items in the array is
-    /// given by inputsSize.
+    /// given by inputs_size.
     GlueVariable* const inputs;
 
-    /// The size of the outputs array. You can index up to outputsSize - 1
+    /// The size of the outputs array. You can index up to outputs_size - 1
     /// in the array.
     const std::uint16_t outputs_size;
 
     /// The output glue variables array. The number of items in the array is
-    /// given by outputsSize.
+    /// given by outputs_size.
     GlueVariable* const outputs;
 };
 

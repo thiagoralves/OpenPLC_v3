@@ -24,8 +24,8 @@
 /// the glue into multiple outstations.
 struct Dnp3Range {
     std::int16_t inputs_offset;
-	std::int16_t inputs_start;
-	std::int16_t inputs_end;
+    std::int16_t inputs_start;
+    std::int16_t inputs_end;
 
     std::int16_t outputs_offset;
     std::int16_t outputs_start;

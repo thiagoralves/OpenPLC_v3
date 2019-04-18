@@ -61,7 +61,7 @@ endif()
 if(OPLC_MODBUS)
 	# This whole modbus thing isn't nice, but it is how the project has
 	# libmodbus directly included and I don't want to change that now
-    include_directories(utils/libmodbus_src/src)
+  include_directories(utils/libmodbus_src/src)
 	ExternalProject_Add(libmodbus_proj
 		SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/utils/libmodbus_src
 		BUILD_IN_SOURCE 1
