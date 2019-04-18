@@ -9,7 +9,7 @@ addons:
       - doxygen
 
 script:
-  #- docker build .
+  - docker build .
   #- doxygen doxygen.conf
   
     #deploy:
