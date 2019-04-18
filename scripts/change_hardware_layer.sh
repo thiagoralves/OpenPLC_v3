@@ -6,27 +6,13 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-##move into the scripts folder if you're not there already
-##cd scripts &>/dev/null
-#SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-#ROOT_DIR=`realpath $SCRIPTS_DIR/..`
-#
-#BUILD_DIR="$ROOT_DIR/build"
-#ETC_DIR="$ROOT_DIR/etc"
-#CORE_DIR="$ETC_DIR/core"
-#
-##= openplc_* persist target files in build/
-#PLATFORM_FILE="$BUILD_DIR/openplc_platform.txt"
-#DRIVER_FILE="$BUILD_DIR/openplc_driver.txt"
 
 HERE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $HERE_DIR/common.sh
 
-mkdir $SRC_GEN_DIR
-echo "BUILD_DIR=$BUILD_DIR"
+mkdir -p $SRC_GEN_DIR
 
-#move to the core folder
-#cd ../core
+
 
 if [ "$1" == "blank" ]; then
     echo "Activating Blank driver"
