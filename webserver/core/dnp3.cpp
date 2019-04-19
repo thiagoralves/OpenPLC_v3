@@ -111,9 +111,8 @@ pair<OutstationStackConfig, Dnp3Range> create_config(istream& cfg_stream)
 		cfg_values.erase(db_size);
 	}
 
-
 	auto config = OutstationStackConfig(DatabaseSizes::AllTypes(default_size));
-	Dnp3Range range = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	Dnp3Range range = { 0, 0, OPLCGLUE_INPUT_SIZE, 0, 0, OPLCGLUE_OUTPUT_SIZE, 0, 0, BUFFER_SIZE, 0, 0, BUFFER_SIZE };
 
 	// Finally, handle the remaining items
 	for (auto it = cfg_values.begin(); it != cfg_values.end(); ++it)
@@ -173,18 +172,18 @@ pair<OutstationStackConfig, Dnp3Range> create_config(istream& cfg_stream)
 			}
 			else if (token == "offset_di")
 			{
-				offset_di = atoi(value.c_str());
+				range.bool_inputs_offset = atoi(value.c_str());
 			}
 			else if (token == "offset_do")
 			{
-				offset_do = atoi(value.c_str());
+				range.bool_outputs_offset = atoi(value.c_str());
 			}
 			else if (token == "offset_ai")
 			{
-				offset_ai = atoi(value.c_str());
+				range.inputs_offset = atoi(value.c_str());
 			}
 			else if (token == "offset_ao"){
-				offset_ao = atoi(value.c_str());
+				range.outputs_offset = atoi(value.c_str());
 			}
 			else if (token == "sol_confirm_timeout")
 			{
@@ -255,18 +254,18 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 	// Create a new outstation with a log level, command handler, and
 	// config info this returns a thread-safe interface used for
 	// updating the outstation's database.
-	std::shared_ptr<ICommandHandler> cc = std::make_shared<Dnp3Receiver>(glue_variables, config.second);
+	std::shared_ptr<ICommandHandler> cc = std::make_shared<Dnp3Receiver>(glue_variables, config_range.second);
 	auto outstation = channel->AddOutstation(
 		"outstation",
 		cc,
 		DefaultOutstationApplication::Create(),
-		config.first
+		config_range.first
 	);
 
 	// Enable the outstation and start communications
 	outstation->Enable();
 	{
-		auto publisher = std::make_shared<Dnp3Publisher>(outstation, glue_variables, config.second);
+		auto publisher = std::make_shared<Dnp3Publisher>(outstation, glue_variables, config_range.second);
 		sprintf(log_msg, "DNP3 outstation enabled on port %d\n", port);
         log(log_msg);
 
@@ -298,6 +297,7 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 
 /// Function to begin DNP3 server functions. This is the normal way that the
 /// DNP3 server is started.
+/// @param port The port to run against.
 void dnp3StartServer(int port)
 {
 	unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new ifstream("dnp3.cfg"), [](istream* s)

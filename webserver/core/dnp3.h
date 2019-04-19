@@ -23,21 +23,21 @@
 /// the glue mapping. This could allow you to divide up
 /// the glue into multiple outstations.
 struct Dnp3Range {
-    std::int16_t inputs_offset;
-    std::int16_t inputs_start;
-    std::int16_t inputs_end;
+    std::uint16_t inputs_offset;
+    std::uint16_t inputs_start;
+    std::uint16_t inputs_end;
 
-    std::int16_t outputs_offset;
-    std::int16_t outputs_start;
-    std::int16_t outputs_end;
+    std::uint16_t outputs_offset;
+    std::uint16_t outputs_start;
+    std::uint16_t outputs_end;
 
-    std::int16_t bool_inputs_offset;
-    std::int16_t bool_inputs_start;
-    std::int16_t bool_inputs_end;
+    std::uint16_t bool_inputs_offset;
+    std::uint16_t bool_inputs_start;
+    std::uint16_t bool_inputs_end;
 
-    std::int16_t bool_outputs_offset;
-    std::int16_t bool_outputs_start;
-    std::int16_t bool_outputs_end;
+    std::uint16_t bool_outputs_offset;
+    std::uint16_t bool_outputs_start;
+    std::uint16_t bool_outputs_end;
 };
 
 #endif // CORE_DNP3_H
