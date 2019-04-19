@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <istream>
+#include <sstream>
 
 /// Defines an offest mapping for DNP3 to glue variables.
 /// This structure allows you to specify valid ranges for
@@ -38,6 +39,15 @@ struct Dnp3Range {
     std::uint16_t bool_outputs_offset;
     std::uint16_t bool_outputs_start;
     std::uint16_t bool_outputs_end;
+
+    std::string ToString() {
+        std::stringstream ss;
+        ss << "DNP3 range (S,E,O) " << "I: " << this->inputs_start << ' ' << this->inputs_end << ' ' << this->inputs_offset;
+        ss << "; O: " << this->outputs_start << ' ' << this->outputs_end << ' ' << this->outputs_offset;
+        ss << "; BI: " << this->bool_inputs_start << ' ' << this->bool_inputs_end << ' ' << this->bool_inputs_offset;
+        ss << "; BO: " << this->bool_outputs_start << ' ' << this->bool_outputs_end << ' ' << this->bool_outputs_offset;
+        return ss.str();
+    }
 };
 
 #endif // CORE_DNP3_H

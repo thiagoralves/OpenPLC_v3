@@ -26,7 +26,6 @@ before_script:
 script:
   - docker build .
   - doxygen doxygen.conf
-  - mkdir build && cd build && cmake ..
   
     #deploy:
     #  provider: pages

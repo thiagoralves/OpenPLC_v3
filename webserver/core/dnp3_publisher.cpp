@@ -52,7 +52,7 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
     //   it is written to point 5.
 
     // Update Discrete input (Binary input)
-    for (auto i = range.bool_inputs_start; i < range.bool_inputs_end; i++)
+    /*for (auto i = range.bool_inputs_start; i < range.bool_inputs_end; i++)
     {
         builder.Update(Binary(*glue_variables->bool_inputs[i/8][i%8]), i - range.bool_inputs_offset);
         num_writes += 1;
@@ -63,7 +63,7 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
     {
         builder.Update(BinaryOutputStatus(*glue_variables->bool_outputs[i/8][i%8]), i - range.bool_outputs_offset);
         num_writes += 1;
-    }
+    }*/
 
     // Write the generic types
     for (auto i = range.inputs_start; i < range.inputs_end; i++) {

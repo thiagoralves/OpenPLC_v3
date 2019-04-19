@@ -57,7 +57,14 @@ pthread_t dnp3_thread;
 //-----------------------------------------------------------------------------
 void *modbusThread(void *arg)
 {
-    startServer(modbus_port);
+    try
+    {
+        startServer(modbus_port);
+    }
+    catch (...)
+    {
+        printf("Exception caught in Modbus thread\r\n");
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -65,7 +72,14 @@ void *modbusThread(void *arg)
 //-----------------------------------------------------------------------------
 void *dnp3Thread(void *arg)
 {
-    dnp3StartServer(dnp3_port);
+    try
+    {
+        dnp3StartServer(dnp3_port);
+    }
+    catch (...)
+    {
+        printf("Exception caught in Modbus thread\r\n");
+    }
 }
 
 //-----------------------------------------------------------------------------

@@ -244,12 +244,10 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 		&bufferLock,
 		reinterpret_cast<IEC_BOOL ***>(bool_input),
 		reinterpret_cast<IEC_BOOL ***>(bool_output),
-		0,
+		OPLCGLUE_INPUT_SIZE,
 		oplc_input_vars,
-		0,
+		OPLCGLUE_OUTPUT_SIZE,
 		oplc_output_vars);
-
-	Dnp3Range range = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	// Create a new outstation with a log level, command handler, and
 	// config info this returns a thread-safe interface used for
@@ -266,7 +264,7 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 	outstation->Enable();
 	{
 		auto publisher = std::make_shared<Dnp3Publisher>(outstation, glue_variables, config_range.second);
-		sprintf(log_msg, "DNP3 outstation enabled on port %d\n", port);
+		sprintf(log_msg, "DNP3 outstation enabled on port %d %s\n", port, config_range.second.ToString().c_str());
         log(log_msg);
 
 		// Continuously update
