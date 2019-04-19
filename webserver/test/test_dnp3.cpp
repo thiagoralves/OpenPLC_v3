@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cstdint>
+#include <utility>
 
 #include "glue.h"
 
@@ -48,7 +49,8 @@ SCENARIO("create_config", "")
 		WHEN("stream is empty creates default config")
 		{
 			std::stringstream input_stream;
-			OutstationStackConfig config(create_config(input_stream));
+			pair<OutstationStackConfig, Dnp3Range> config_range(create_config(input_stream));
+			OutstationStackConfig config = config_range.first;
 
 			REQUIRE(config.dbConfig.binary.IsEmpty());
 			REQUIRE(config.dbConfig.doubleBinary.IsEmpty());
@@ -68,7 +70,8 @@ SCENARIO("create_config", "")
 		WHEN("stream only specifies default size")
 		{
 			std::stringstream input_stream("database_size=1");
-			OutstationStackConfig config(create_config(input_stream));
+			pair<OutstationStackConfig, Dnp3Range> config_range(create_config(input_stream));
+			OutstationStackConfig config = config_range.first;
 
 			REQUIRE(config.dbConfig.binary.Size() == 1);
 			REQUIRE(config.dbConfig.doubleBinary.Size() == 1);

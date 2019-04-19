@@ -39,6 +39,7 @@
 #include <locale>
 #include <fstream>
 #include <map>
+#include <utility>
 
 #include "ladder.h"
 #include "dnp3_publisher.h"
@@ -74,8 +75,9 @@ static inline void trim(std::string& s)
 /// Create the outstation stack configuration using the configration settings
 /// as specified in the stream.
 /// @param cfg_stream The stream to read for configuration settings
-/// @return The configuration represented by the stream and any defaults.
-OutstationStackConfig create_config(istream& cfg_stream)
+/// @return The configuration represented by the stream and any defaults and
+///         the range mapping.
+pair<OutstationStackConfig, Dnp3Range> create_config(istream& cfg_stream)
 {
 	// We need to know the size of the database (number of points) before
 	// we can do anything. To avoid doing two passes of the stream, read
@@ -108,7 +110,10 @@ OutstationStackConfig create_config(istream& cfg_stream)
 		default_size = atoi(db_size->second.c_str());
 		cfg_values.erase(db_size);
 	}
+
+
 	auto config = OutstationStackConfig(DatabaseSizes::AllTypes(default_size));
+	Dnp3Range range = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	// Finally, handle the remaining items
 	for (auto it = cfg_values.begin(); it != cfg_values.end(); ++it)
@@ -204,7 +209,7 @@ OutstationStackConfig create_config(istream& cfg_stream)
 		}
 	}
 
-	return config;
+	return make_pair(config, range);
 }
 
 /// Start the DNP3 server running on the specified port and configured using
@@ -221,7 +226,7 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 
 	const uint32_t FILTERS = levels::NORMAL;
 
-	OutstationStackConfig config(create_config(*cfg_stream));
+	pair<OutstationStackConfig, Dnp3Range> config_range(create_config(*cfg_stream));
 
 	// We are done with the file, so release the unique ptr. Normally this
 	// will close the reference to the file
@@ -244,23 +249,24 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 		oplc_input_vars,
 		0,
 		oplc_output_vars);
+
 	Dnp3Range range = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	// Create a new outstation with a log level, command handler, and
 	// config info this returns a thread-safe interface used for
 	// updating the outstation's database.
-	std::shared_ptr<ICommandHandler> cc = std::make_shared<Dnp3Receiver>(glue_variables, range);
+	std::shared_ptr<ICommandHandler> cc = std::make_shared<Dnp3Receiver>(glue_variables, config.second);
 	auto outstation = channel->AddOutstation(
 		"outstation",
 		cc,
 		DefaultOutstationApplication::Create(),
-		config
+		config.first
 	);
 
 	// Enable the outstation and start communications
 	outstation->Enable();
 	{
-		auto publisher = std::make_shared<Dnp3Publisher>(outstation, glue_variables, range);
+		auto publisher = std::make_shared<Dnp3Publisher>(outstation, glue_variables, config.second);
 		sprintf(log_msg, "DNP3 outstation enabled on port %d\n", port);
         log(log_msg);
 
