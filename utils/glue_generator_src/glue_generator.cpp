@@ -279,7 +279,7 @@ void generateIntegratedGlue(ostream& glueVars, const list<IecVar>& all_vars, int
 
     // Now that things are sorted, we are ready to write them out.
     glueVars << "/// The size of the array of input variables.\n";
-    glueVars << "const std::uint16_t OPLCGLUE_INPUT_SIZE(" << max_input + 1 << ");\n";
+    glueVars << "extern std::uint16_t const OPLCGLUE_INPUT_SIZE(" << max_input + 1 << ");\n";
     glueVars << "GlueVariable oplc_input_vars[] = {\n";
     for (auto i = 0; i < max_input + 1; i++)
     {
@@ -295,7 +295,7 @@ void generateIntegratedGlue(ostream& glueVars, const list<IecVar>& all_vars, int
     glueVars << "};\n\n";
 
     glueVars << "/// The size of the array of output variables.\n";
-    glueVars << "const std::uint16_t OPLCGLUE_OUTPUT_SIZE(" << max_output + 1 << ");\n";
+    glueVars << "extern std::uint16_t const OPLCGLUE_OUTPUT_SIZE(" << max_output + 1 << ");\n";
     glueVars << "GlueVariable oplc_output_vars[] = {\n";
     for (auto i = 0; i < max_output + 1; i++)
     {

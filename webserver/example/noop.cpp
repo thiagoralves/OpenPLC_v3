@@ -93,13 +93,13 @@ void glueVars()
 }
 
 /// The size of the array of input variables
-const std::uint16_t OPLCGLUE_INPUT_SIZE(0);
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(0);
 GlueVariable oplc_input_vars[] = {
 	{ IECVT_UNASSIGNED, nullptr },
 };
 
 /// The size of the array of output variables
-const std::uint16_t OPLCGLUE_OUTPUT_SIZE(0);
+extern std::uint16_t const OPLCGLUE_OUTPUT_SIZE(0);
 GlueVariable oplc_output_vars[] = {
 	{ IECVT_UNASSIGNED, nullptr },
 };

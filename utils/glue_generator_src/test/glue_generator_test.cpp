@@ -29,11 +29,11 @@ using namespace std;
 #define PREFIX "void glueVars()\n{\n"
 #define POSTFIX "}\n\n"
 #define EMPTY_INPUT "/// The size of the array of input variables.\n\
-const std::uint16_t OPLCGLUE_INPUT_SIZE(0);\n\
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(0);\n\
 GlueVariable oplc_input_vars[] = {\n\
 };\n\n"
 #define EMPTY_OUTPUT "/// The size of the array of output variables.\n\
-const std::uint16_t OPLCGLUE_OUTPUT_SIZE(0);\n\
+extern std::uint16_t const OPLCGLUE_OUTPUT_SIZE(0);\n\
 GlueVariable oplc_output_vars[] = {\n\
 };\n\n"
 
@@ -73,7 +73,7 @@ SCENARIO("", "") {
             std::stringstream input_stream("__LOCATED_VAR(BYTE,__IB0,I,B,0)");
             generateBody(input_stream, output_stream);
             const char* expected = PREFIX"\tbyte_input[0] = __IB0;\n" POSTFIX "/// The size of the array of input variables.\n\
-const std::uint16_t OPLCGLUE_INPUT_SIZE(1);\n\
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(1);\n\
 GlueVariable oplc_input_vars[] = {\n\
     { IECVT_BYTE, __IB0 },\n\
 };\n\n" EMPTY_OUTPUT;
@@ -84,7 +84,7 @@ GlueVariable oplc_input_vars[] = {\n\
             std::stringstream input_stream("__LOCATED_VAR(SINT,__IB1,I,B,1)");
             generateBody(input_stream, output_stream);
             const char* expected = PREFIX "\tbyte_input[1] = __IB1;\n" POSTFIX "/// The size of the array of input variables.\n\
-const std::uint16_t OPLCGLUE_INPUT_SIZE(2);\n\
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(2);\n\
 GlueVariable oplc_input_vars[] = {\n\
     { IECVT_UNASSIGNED, nullptr },\n\
     { IECVT_SINT, __IB1 },\n\
@@ -96,7 +96,7 @@ GlueVariable oplc_input_vars[] = {\n\
             std::stringstream input_stream("__LOCATED_VAR(SINT,__QB1,Q,B,1)");
             generateBody(input_stream, output_stream);
             const char* expected = PREFIX "\tbyte_output[1] = __QB1;\n" POSTFIX EMPTY_INPUT "/// The size of the array of output variables.\n\
-const std::uint16_t OPLCGLUE_OUTPUT_SIZE(2);\n\
+extern std::uint16_t const OPLCGLUE_OUTPUT_SIZE(2);\n\
 GlueVariable oplc_output_vars[] = {\n\
     { IECVT_UNASSIGNED, nullptr },\n\
     { IECVT_SINT, __QB1 },\n\
@@ -108,7 +108,7 @@ GlueVariable oplc_output_vars[] = {\n\
             std::stringstream input_stream("__LOCATED_VAR(USINT,__IB2,I,B,2)");
             generateBody(input_stream, output_stream);
             const char* expected = PREFIX "\tbyte_input[2] = __IB2;\n" POSTFIX "/// The size of the array of input variables.\n\
-const std::uint16_t OPLCGLUE_INPUT_SIZE(3);\n\
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(3);\n\
 GlueVariable oplc_input_vars[] = {\n\
     { IECVT_UNASSIGNED, nullptr },\n\
     { IECVT_UNASSIGNED, nullptr },\n\
@@ -121,7 +121,7 @@ GlueVariable oplc_input_vars[] = {\n\
             std::stringstream input_stream("__LOCATED_VAR(WORD,__IW0,I,W,0)");
             generateBody(input_stream, output_stream);
             const char* expected = PREFIX "\tint_input[0] = __IW0;\n" POSTFIX "/// The size of the array of input variables.\n\
-const std::uint16_t OPLCGLUE_INPUT_SIZE(1);\n\
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(1);\n\
 GlueVariable oplc_input_vars[] = {\n\
     { IECVT_WORD, __IW0 },\n\
 };\n\n" EMPTY_OUTPUT;
@@ -132,7 +132,7 @@ GlueVariable oplc_input_vars[] = {\n\
             std::stringstream input_stream("__LOCATED_VAR(WORD,__QW0,Q,W,0)");
             generateBody(input_stream, output_stream);
             const char* expected = PREFIX "\tint_output[0] = __QW0;\n" POSTFIX EMPTY_INPUT "/// The size of the array of output variables.\n\
-const std::uint16_t OPLCGLUE_OUTPUT_SIZE(1);\n\
+extern std::uint16_t const OPLCGLUE_OUTPUT_SIZE(1);\n\
 GlueVariable oplc_output_vars[] = {\n\
     { IECVT_WORD, __QW0 },\n\
 };\n\n";
@@ -143,7 +143,7 @@ GlueVariable oplc_output_vars[] = {\n\
             std::stringstream input_stream("__LOCATED_VAR(INT,__IW1,I,W,1)");
             generateBody(input_stream, output_stream);
             const char* expected = PREFIX "\tint_input[1] = __IW1;\n" POSTFIX "/// The size of the array of input variables.\n\
-const std::uint16_t OPLCGLUE_INPUT_SIZE(2);\n\
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(2);\n\
 GlueVariable oplc_input_vars[] = {\n\
     { IECVT_UNASSIGNED, nullptr },\n\
     { IECVT_INT, __IW1 },\n\
@@ -156,7 +156,7 @@ GlueVariable oplc_input_vars[] = {\n\
             generateBody(input_stream, output_stream);
 
             const char* expected = PREFIX "\tint_input[2] = __IW2;\n" POSTFIX "/// The size of the array of input variables.\n\
-const std::uint16_t OPLCGLUE_INPUT_SIZE(3);\n\
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(3);\n\
 GlueVariable oplc_input_vars[] = {\n\
     { IECVT_UNASSIGNED, nullptr },\n\
     { IECVT_UNASSIGNED, nullptr },\n\
@@ -171,7 +171,7 @@ GlueVariable oplc_input_vars[] = {\n\
 
             // Note that the type-separate glue does not support REAL types
             const char* expected = PREFIX POSTFIX "/// The size of the array of input variables.\n\
-const std::uint16_t OPLCGLUE_INPUT_SIZE(11);\n\
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(11);\n\
 GlueVariable oplc_input_vars[] = {\n\
     { IECVT_REAL, __ID0 },\n\
     { IECVT_UNASSIGNED, nullptr },\n\
