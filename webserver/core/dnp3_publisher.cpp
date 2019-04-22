@@ -41,7 +41,7 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
     std::uint32_t num_writes(0);
     asiodnp3::UpdateBuilder builder;
 
-    pthread_mutex_lock(glue_variables->bufferLock);
+    pthread_mutex_lock(glue_variables->buffer_lock);
 
     // Writes data points to the outstation. We support two capabilities here:
     //
@@ -52,18 +52,18 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
     //   it is written to point 5.
 
     // Update Discrete input (Binary input)
-    /*for (auto i = range.bool_inputs_start; i < range.bool_inputs_end; i++)
+    for (auto i = range.bool_inputs_start; i < range.bool_inputs_end; i++)
     {
-        builder.Update(Binary(*glue_variables->bool_inputs[i/8][i%8]), i - range.bool_inputs_offset);
+        builder.Update(Binary(*glue_variables->BoolInputAt(i, 0)), i - range.bool_inputs_offset);
         num_writes += 1;
     }
 
     // Update Coils (Binary Output)
     for (auto i = range.bool_outputs_start; i < range.bool_outputs_end; i++)
     {
-        builder.Update(BinaryOutputStatus(*glue_variables->bool_outputs[i/8][i%8]), i - range.bool_outputs_offset);
+        builder.Update(BinaryOutputStatus(*glue_variables->BoolOutputAt(i, 0)), i - range.bool_outputs_offset);
         num_writes += 1;
-    }*/
+    }
 
     // Write the generic types
     for (auto i = range.inputs_start; i < range.inputs_end; i++) {
@@ -218,7 +218,7 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
 		}
 	}
 
-    pthread_mutex_unlock(glue_variables->bufferLock);
+    pthread_mutex_unlock(glue_variables->buffer_lock);
 
     outstation->Apply(builder.Build());
 

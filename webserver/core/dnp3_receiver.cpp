@@ -71,9 +71,13 @@ CommandStatus Dnp3Receiver::Operate(const ControlRelayOutputBlock& command, uint
 
     IEC_BOOL crob_val = (code == ControlCode::LATCH_ON);
 
-    pthread_mutex_lock(glue_variables->bufferLock);
-    *glue_variables->bool_outputs[index / 8][index % 8] = crob_val;
-	pthread_mutex_unlock(glue_variables->bufferLock);
+    
+	IEC_BOOL* glue = glue_variables->BoolOutputAt(index, 0);
+	if (glue != nullptr) {
+		pthread_mutex_lock(glue_variables->buffer_lock);
+		*glue = crob_val;
+		pthread_mutex_unlock(glue_variables->buffer_lock);
+	}
 
     return CommandStatus::SUCCESS;
 }
@@ -132,7 +136,7 @@ CommandStatus Dnp3Receiver::UpdateGlueVariable(T value, uint16_t dnp3_index) con
 
     // We have a container we can write to, but we need to update the value as appropriate
     // for the particular value container type.
-    pthread_mutex_lock(glue_variables->bufferLock);
+    pthread_mutex_lock(glue_variables->buffer_lock);
     CommandStatus status = CommandStatus::SUCCESS;
     switch (type)
     {
@@ -212,7 +216,7 @@ CommandStatus Dnp3Receiver::UpdateGlueVariable(T value, uint16_t dnp3_index) con
             break;
         }
     }
-    pthread_mutex_unlock(glue_variables->bufferLock);
+    pthread_mutex_unlock(glue_variables->buffer_lock);
 
     return status;
 }

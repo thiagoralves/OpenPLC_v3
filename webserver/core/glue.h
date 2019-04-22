@@ -85,14 +85,14 @@ struct GlueVariables {
 
 	GlueVariables(
 		pthread_mutex_t* buffer_lock,
-		IEC_BOOL*** bool_inputs,
-		IEC_BOOL*** bool_outputs,
+		IEC_BOOL** bool_inputs,
+		IEC_BOOL** bool_outputs,
 		std::uint16_t inputs_size,
 		GlueVariable* inputs,
 		std::uint16_t outputs_size,
 		GlueVariable* outputs) :
 
-		bufferLock(buffer_lock),
+		buffer_lock(buffer_lock),
 		bool_inputs(bool_inputs),
 		bool_outputs(bool_outputs),
 		inputs_size(inputs_size),
@@ -103,7 +103,7 @@ struct GlueVariables {
 
 	GlueVariables(const GlueVariables& copy) :
 
-		bufferLock(copy.bufferLock),
+		buffer_lock(copy.buffer_lock),
 		bool_inputs(copy.bool_inputs),
 		bool_outputs(copy.bool_outputs),
 		inputs_size(copy.inputs_size),
@@ -113,16 +113,36 @@ struct GlueVariables {
 	{}
 
     ///  Mutex for this structure
-    pthread_mutex_t* bufferLock;
+    pthread_mutex_t* buffer_lock;
 
     // Booleans - these are mapped separately because they have an additional
     // level of nesting.
 
-    /// Mapped to IXx_x locations.
-    IEC_BOOL*** const bool_inputs;
+    /// Mapped to IXx_x locations. This is a a 2D array where the second index
+	/// must have a length of 8.
+    IEC_BOOL** bool_inputs;
 
-    /// Mapped to QXx_x locations.
-    IEC_BOOL*** const bool_outputs;
+    /// Mapped to QXx_x locations. This is a a 2D array where the second index
+	/// must have a length of 8.
+    IEC_BOOL** bool_outputs;
+
+	/// Gets the boolean input at the specified primary and secondary index.
+	/// @param prim The primary (first) index in the 2-D array
+	/// @param sec The secondary index in the 2-D array.
+	/// @return A pointer to the boolean value.
+	inline IEC_BOOL* BoolInputAt(std::uint16_t prim, std::uint16_t sec) {
+		std::uint16_t idx = prim * 8 + sec;
+		return this->bool_inputs[idx];
+	}
+
+	/// Gets the boolean output at the specified primary and secondary index.
+	/// @param prim The primary (first) index in the 2-D array
+	/// @param sec The secondary index in the 2-D array.
+	/// @return A pointer to the boolean value.
+	inline IEC_BOOL* BoolOutputAt(std::uint16_t prim, std::uint16_t sec) {
+		std::uint16_t idx = prim * 8 + sec;
+		return this->bool_outputs[idx];
+	}
 
     /// The size of the inputs array.  You can index up to inputs_size - 1
     /// in the array.

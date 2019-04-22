@@ -43,17 +43,12 @@ static inline GlueVariable* glue_alloc(std::uint16_t buffer_size, std::uint16_t 
 /// @param start The first index to assign a default value
 /// @param end One past the index to assign a default value.
 /// @param default_value the default value to assign to members.
-static inline IEC_BOOL*** glue_boolean_alloc(std::uint16_t buffer_size, std::uint16_t start = 0, std::uint16_t stop = 0, bool default_value = false) {
-    IEC_BOOL*** buffer = new IEC_BOOL**[buffer_size];
+static inline IEC_BOOL** glue_boolean_alloc(std::uint16_t buffer_size, std::uint16_t start = 0, std::uint16_t stop = 0) {
+    IEC_BOOL** buffer = new IEC_BOOL*[buffer_size * 8];
 
-    for (auto i = 0; i < buffer_size; ++i) {
+    for (auto i = 0; i < buffer_size * 8; ++i) {
         if (i >= start && i < stop) {
-            IEC_BOOL** group = new IEC_BOOL*[8];
-            for (auto j = 0; j < 8; ++j) {
-                group[j] = new IEC_BOOL;
-                *group[j] = default_value;
-            }
-            buffer[i] = group;
+            buffer[i] = new IEC_BOOL;
         }
         else {
             buffer[i] = nullptr;
@@ -125,13 +120,10 @@ static inline void glue_free(GlueVariable* buffer, std::uint16_t buffer_size) {
 /// Free a glue structure that was previously allocated by glue_boolean_alloc.
 /// @param buffer The buffer to free.
 /// @param buffer_size The size of the buffer to free.
-static inline void glue_boolean_free(IEC_BOOL*** buffer, std::uint16_t buffer_size) {
-    for (auto i = 0; i < buffer_size; ++i) {
+static inline void glue_boolean_free(IEC_BOOL** buffer, std::uint16_t buffer_size) {
+    for (auto i = 0; i < buffer_size * 8; ++i) {
         if (buffer[i] != nullptr) {
-            for (auto j = 0; j < 8; ++j) {
-                delete buffer[i][j];
-            }
-            delete[] buffer[i];
+            delete buffer[i];
         }
     }
     delete[] buffer;
@@ -142,8 +134,8 @@ static inline void glue_boolean_free(IEC_BOOL*** buffer, std::uint16_t buffer_si
 /// @return the allocated glue variables.
 static inline std::shared_ptr<GlueVariables> make_vars() {
     //Booleans
-    IEC_BOOL*** bool_input = glue_boolean_alloc(TEST_BUFFER_SIZE, 0, TEST_BUFFER_SIZE);
-    IEC_BOOL*** bool_output = glue_boolean_alloc(TEST_BUFFER_SIZE, 0, TEST_BUFFER_SIZE);
+    IEC_BOOL** bool_input = glue_boolean_alloc(TEST_BUFFER_SIZE, 0, TEST_BUFFER_SIZE);
+    IEC_BOOL** bool_output = glue_boolean_alloc(TEST_BUFFER_SIZE, 0, TEST_BUFFER_SIZE);
 
     //Bytes
     GlueVariable* inputs = glue_alloc(TEST_BUFFER_SIZE, 0, TEST_BUFFER_SIZE);

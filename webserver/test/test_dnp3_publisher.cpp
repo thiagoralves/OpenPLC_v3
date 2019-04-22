@@ -96,7 +96,7 @@ SCENARIO("dnp3 publisher", "WriteToPoints") {
 		Dnp3Publisher mapper(outstation, variables, range);
 
 		WHEN("value is false") {
-			*variables->bool_inputs[0][0] = false;
+			*variables->bool_inputs[0] = false;
 			auto num_writes = mapper.WriteToPoints();
 
 			THEN("Writes binary input false") {
@@ -109,7 +109,7 @@ SCENARIO("dnp3 publisher", "WriteToPoints") {
 		}
 
 		WHEN("value is true") {
-			*variables->bool_inputs[0][0] = true;
+			*variables->bool_inputs[0] = true;
 			auto num_writes = mapper.WriteToPoints();
 
 			THEN("Writes binary input true") {
@@ -128,7 +128,7 @@ SCENARIO("dnp3 publisher", "WriteToPoints") {
             range.bool_inputs_end = 9;
 			Dnp3Publisher mapper(outstation, variables, range);
 
-            *variables->bool_inputs[1][0] = true;
+            *variables->bool_inputs[1] = true;
             auto num_writes = mapper.WriteToPoints();
 
             THEN("Writes binary input") {
@@ -147,7 +147,7 @@ SCENARIO("dnp3 publisher", "WriteToPoints") {
 		Dnp3Publisher mapper(outstation, variables, range);
 
         WHEN("value is false") {
-            *variables->bool_outputs[0][0] = false;
+            *variables->bool_outputs[0] = false;
             auto num_writes = mapper.WriteToPoints();
 
             THEN("Writes binary output false") {
@@ -160,7 +160,7 @@ SCENARIO("dnp3 publisher", "WriteToPoints") {
         }
 
         WHEN("value is true") {
-            *variables->bool_outputs[0][0] = true;
+            *variables->bool_outputs[0] = true;
             auto num_writes = mapper.WriteToPoints();
 
             THEN("Writes binary output true") {

@@ -242,8 +242,8 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 	// There are two pieces to this - the glue and the defined range for this instance.
 	std::shared_ptr<GlueVariables> glue_variables = std::make_shared<GlueVariables>(
 		&bufferLock,
-		reinterpret_cast<IEC_BOOL ***>(bool_input),
-		reinterpret_cast<IEC_BOOL ***>(bool_output),
+		&(bool_input[0][0]),
+		&(bool_output[0][0]),
 		OPLCGLUE_INPUT_SIZE,
 		oplc_input_vars,
 		OPLCGLUE_OUTPUT_SIZE,

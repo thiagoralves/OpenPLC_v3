@@ -68,7 +68,7 @@ SCENARIO("dnp3 receiver", "Receiver") {
             THEN("sets output to true") {
                 REQUIRE(receiver.Select(crob, 0) == CommandStatus::SUCCESS);
                 REQUIRE(receiver.Operate(crob, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
-                REQUIRE(*variables->bool_outputs[0][0]);
+                REQUIRE(*variables->bool_outputs[0]);
             }
         }
 
@@ -78,7 +78,7 @@ SCENARIO("dnp3 receiver", "Receiver") {
             THEN("sets output to false") {
                 REQUIRE(receiver.Select(crob, 0) == CommandStatus::SUCCESS);
                 REQUIRE(receiver.Operate(crob, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
-                REQUIRE(!(*variables->bool_outputs[0][0]));
+                REQUIRE(!(*variables->bool_outputs[0]));
             }
         }
     }
