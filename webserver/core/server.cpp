@@ -29,6 +29,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <spdlog/spdlog.h>
 
 #include "ladder.h"
 
@@ -85,7 +86,6 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
 //-----------------------------------------------------------------------------
 int createSocket(int port)
 {
-    unsigned char log_msg[1000];
     int socket_fd;
     struct sockaddr_in server_addr;
 
@@ -93,15 +93,16 @@ int createSocket(int port)
     socket_fd = socket(AF_INET,SOCK_STREAM,0);
     if (socket_fd<0)
     {
-        sprintf(log_msg, "Modbus Server: error creating stream socket => %s\n", strerror(errno));
-        log(log_msg);
+		spdlog::error("Modbus Server: error creating stream socket => {}", strerror(errno));
         return -1;
     }
     
     //Set SO_REUSEADDR
     int enable = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-        perror("setsockopt(SO_REUSEADDR) failed");
+	if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+		spdlog::error("setsockopt(SO_REUSEADDR) failed");
+	}
+        
     
     SetSocketBlockingEnabled(socket_fd, false);
 
@@ -114,15 +115,14 @@ int createSocket(int port)
     //Bind socket
     if (bind(socket_fd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0)
     {
-        sprintf(log_msg, "Modbus Server: error binding socket => %s\n", strerror(errno));
-        log(log_msg);
+        spdlog::error("Modbus Server: error binding socket => {}", strerror(errno));
         return -1;
     }
     
     // we accept max 5 pending connections
     listen(socket_fd,5);
-    sprintf(log_msg, "Modbus Server: Listening on port %d\n", port);
-    log(log_msg);
+
+	spdlog::info("Modbus Server: Listening on port => {}", port);
 
     return socket_fd;
 }
@@ -138,8 +138,7 @@ int waitForClient(int socket_fd)
     struct sockaddr_in client_addr;
     socklen_t client_len;
 
-    sprintf(log_msg, "Modbus Server: waiting for new client...\n");
-    log(log_msg);
+    spdlog::info("Modbus Server: waiting for new client...");
 
     client_len = sizeof(client_addr);
     while (run_modbus)
@@ -182,13 +181,11 @@ void processMessage(unsigned char *buffer, int bufferSize, int client_fd)
 //-----------------------------------------------------------------------------
 void *handleConnections(void *arguments)
 {
-    unsigned char log_msg[1000];
     int client_fd = *(int *)arguments;
     unsigned char buffer[1024];
     int messageSize;
 
-    sprintf(log_msg, "Modbus Server: Thread created for client ID: %d\n", client_fd);
-    log(log_msg);
+	spdlog::info("Modbus Server: Thread created for client ID: {}", client_fd);
 
     while(run_modbus)
     {
@@ -201,23 +198,21 @@ void *handleConnections(void *arguments)
             // something has  gone wrong or the client has closed connection
             if (messageSize == 0)
             {
-                sprintf(log_msg, "Modbus Server: client ID: %d has closed the connection\n", client_fd);
-                log(log_msg);
+				spdlog::info("Modbus Server: client ID: {} has closed the connection", client_fd);
             }
             else
             {
-                sprintf(log_msg, "Modbus Server: Something is wrong with the  client ID: %d message Size : %i\n", client_fd, messageSize);
-                log(log_msg);
+				spdlog::error("Modbus Server: Something is wrong with the  client ID: {} message Size : {}", client_fd, messageSize);
             }
             break;
         }
 
         processMessage(buffer, messageSize, client_fd);
     }
-    //printf("Debug: Closing client socket and calling pthread_exit in server.cpp\n");
+    
+    spdlog::debug("Closing client socket and calling pthread_exit");
     close(client_fd);
-    sprintf(log_msg, "Terminating Modbus connections thread\r\n");
-    log(log_msg);
+	spdlog::info("Terminating Modbus connections thread");
     pthread_exit(NULL);
 }
 
@@ -239,17 +234,14 @@ void startServer(int port)
         client_fd = waitForClient(socket_fd); //block until a client connects
         if (client_fd < 0)
         {
-            sprintf(log_msg, "Modbus Server: Error accepting client!\n");
-            log(log_msg);
+			spdlog::info("Modbus Server: Error accepting client!");
         }
-
         else
         {
             int arguments[1];
             pthread_t thread;
             int ret = -1;
-            sprintf(log_msg, "Modbus Server: Client accepted! Creating thread for the new client ID: %d...\n", client_fd);
-            log(log_msg);
+			spdlog::info("Modbus Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
             arguments[0] = client_fd;
             ret = pthread_create(&thread, NULL, handleConnections, arguments);
             if (ret==0) 
@@ -260,6 +252,5 @@ void startServer(int port)
     }
     close(socket_fd);
     close(client_fd);
-    sprintf(log_msg, "Terminating Modbus thread\r\n");
-    log(log_msg);
+	spdlog::info("Terminating Modbus thread");
 }

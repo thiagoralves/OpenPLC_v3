@@ -115,11 +115,8 @@ extern int ignored_int_outputs[];
 //main.cpp
 void sleep_until(struct timespec *ts, int delay);
 void sleepms(int milliseconds);
-void log(unsigned char *logmsg);
 bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber);
 extern uint8_t run_openplc;
-extern unsigned char log_buffer[1000000];
-extern int log_index;
 void handleSpecialFunctions();
 
 //server.cpp
@@ -130,6 +127,7 @@ bool SetSocketBlockingEnabled(int fd, bool blocking);
 
 //interactive_server.cpp
 void startInteractiveServer(int port);
+void initializeLogging(int argc,char **argv);
 extern bool run_modbus;
 extern bool run_dnp3;
 extern time_t start_time;

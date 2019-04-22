@@ -16,17 +16,6 @@
 // This supplies a single function that you can use to start the outstation
 // and configuration according to a configuration file.
 
-#include <asiodnp3/DNP3Manager.h>
-#include <asiodnp3/PrintingSOEHandler.h>
-#include <asiodnp3/PrintingChannelListener.h>
-#include <asiodnp3/ConsoleLogger.h>
-#include <asiodnp3/UpdateBuilder.h>
-
-#include <asiopal/UTCTimeSource.h>
-#include <opendnp3/outstation/SimpleCommandHandler.h>
-
-#include <opendnp3/LogLevels.h>
-
 #include <string>
 #include <thread>
 #include <iostream>
@@ -40,6 +29,17 @@
 #include <fstream>
 #include <map>
 #include <utility>
+
+#include <asiodnp3/DNP3Manager.h>
+#include <asiodnp3/PrintingSOEHandler.h>
+#include <asiodnp3/PrintingChannelListener.h>
+#include <asiodnp3/ConsoleLogger.h>
+#include <asiodnp3/UpdateBuilder.h>
+#include <asiopal/UTCTimeSource.h>
+#include <opendnp3/outstation/SimpleCommandHandler.h>
+#include <opendnp3/LogLevels.h>
+
+#include <spdlog/spdlog.h>
 
 #include "ladder.h"
 #include "dnp3_publisher.h"
@@ -203,7 +203,7 @@ pair<OutstationStackConfig, Dnp3Range> create_config(istream& cfg_stream)
 		}
 		catch (...)
 		{
-			cout << "Malformed Line: " << token << "=" << value << endl;
+			spdlog::error("Malformed line {} = {}", token, value);
 			exit(1);
 		}
 	}
@@ -221,8 +221,6 @@ pair<OutstationStackConfig, Dnp3Range> create_config(istream& cfg_stream)
 /// @param run A signal for running this server. This server terminates when this signal is false.
 void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>>& cfg_stream, const bool* run)
 {
-	unsigned char log_msg[1000];
-
 	const uint32_t FILTERS = levels::NORMAL;
 
 	pair<OutstationStackConfig, Dnp3Range> config_range(create_config(*cfg_stream));
@@ -264,8 +262,8 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 	outstation->Enable();
 	{
 		auto publisher = std::make_shared<Dnp3Publisher>(outstation, glue_variables, config_range.second);
-		sprintf(log_msg, "DNP3 outstation enabled on port %d %s\n", port, config_range.second.ToString().c_str());
-        log(log_msg);
+
+		spdlog::info("DNP3 outstation enabled on port {0:d} with range {}", port, config_range.second.ToString().c_str());
 
 		// Continuously update
 		struct timespec timer_start;
@@ -279,18 +277,13 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 		}
 
 		outstation->Disable();
-		sprintf(log_msg, "DNP3 outstation disabled on port %d\n", port);
-		log(log_msg);
+		spdlog::info("DNP3 outstation disabled on port {0:d}", port);
 	}
 
-	sprintf(log_msg, "Shutting down DNP3 server\n");
-    log(log_msg);
-
-	
+	spdlog::info("Shutting down DNP3 server");
 	channel->Shutdown();
 
-	sprintf(log_msg, "DNP3 Server deactivated\n");
-    log(log_msg);
+	spdlog::info("DNP3 Server deactivated");
 }
 
 /// Function to begin DNP3 server functions. This is the normal way that the

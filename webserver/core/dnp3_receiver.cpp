@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
+#include <spdlog/spdlog.h>
+
 #include "dnp3_receiver.h"
 
 using namespace opendnp3;
@@ -54,11 +56,12 @@ Dnp3Receiver::Dnp3Receiver(
 
 /// CROB
 CommandStatus Dnp3Receiver::Select(const ControlRelayOutputBlock& command, uint16_t index) {
-    // TODO this is the existing behaviour, but I think this should be done differently (since that's what it actually modifies)
+	spdlog::trace("DNP3 select CROB index");
     return mapDnp3IndexToStatus(range.bool_outputs_start, range.bool_outputs_end, range.bool_outputs_offset, index);
 }
 
 CommandStatus Dnp3Receiver::Operate(const ControlRelayOutputBlock& command, uint16_t index, OperateType opType) {
+	spdlog::trace("DNP3 operate CROB");
     auto code = command.functionCode;
     auto glue_index = mapDnp3IndexToGlueIndex(range.bool_outputs_start, range.bool_outputs_end, range.bool_outputs_offset, index);
 
@@ -84,7 +87,9 @@ CommandStatus Dnp3Receiver::Operate(const ControlRelayOutputBlock& command, uint
 
 /// Analog Out
 CommandStatus Dnp3Receiver::Select(const AnalogOutputInt16& command, uint16_t index) {
-    return mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
+	CommandStatus status = mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
+	spdlog::trace("DNP3 select AO int16 point status");
+    return status;
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputInt16& command, uint16_t index, OperateType opType) {
@@ -93,7 +98,9 @@ CommandStatus Dnp3Receiver::Operate(const AnalogOutputInt16& command, uint16_t i
 
 //AnalogOut 32 (Int)
 CommandStatus Dnp3Receiver::Select(const AnalogOutputInt32& command, uint16_t index) {
-    return mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
+	CommandStatus status = mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
+	spdlog::trace("DNP3 select AO int32 point  statu");
+	return status;
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputInt32& command, uint16_t index, OperateType opType) {
@@ -102,7 +109,9 @@ CommandStatus Dnp3Receiver::Operate(const AnalogOutputInt32& command, uint16_t i
 
 //AnalogOut 32 (Float)
 CommandStatus Dnp3Receiver::Select(const AnalogOutputFloat32& command, uint16_t index) {
-    return mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
+	CommandStatus status = mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
+	spdlog::trace("DNP3 select AO float32 point status");
+	return status;
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputFloat32& command, uint16_t index, OperateType opType) {
@@ -111,7 +120,9 @@ CommandStatus Dnp3Receiver::Operate(const AnalogOutputFloat32& command, uint16_t
 
 //AnalogOut 64
 CommandStatus Dnp3Receiver::Select(const AnalogOutputDouble64& command, uint16_t index) {
-    return mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
+	CommandStatus status = mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
+	spdlog::trace("DNP3 select AO double64 point status");
+	return status;
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputDouble64& command, uint16_t index, OperateType opType) {
@@ -123,6 +134,7 @@ CommandStatus Dnp3Receiver::UpdateGlueVariable(T value, uint16_t dnp3_index) con
     int16_t glue_index = mapDnp3IndexToGlueIndex(range.outputs_start, range.outputs_end, range.outputs_offset, dnp3_index);
 
     if (glue_index < 0 || glue_index >= glue_variables->outputs_size) {
+		spdlog::trace("DNP3 update point is out of mapped glue range");
         return CommandStatus::OUT_OF_RANGE;
     }
 
@@ -131,6 +143,7 @@ CommandStatus Dnp3Receiver::UpdateGlueVariable(T value, uint16_t dnp3_index) con
     void* value_container = glue_variables->outputs[glue_index].value;
 
     if (type == IECVT_UNASSIGNED || value_container == nullptr) {
+		spdlog::trace("DNP3 update point for glue index is not mapped");
         return CommandStatus::OUT_OF_RANGE;
     }
 
