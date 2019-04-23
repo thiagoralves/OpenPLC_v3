@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <wiringPi.h>
 #include <wiringSerial.h>
-#include <pthread.h>
+#include <mutex>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -153,39 +153,40 @@ void updateBuffersIn()
 	sendBytes[1] = 0; //make sure output is off
 	sendBytes[2] = 0; //make sure output is off
 
-	pthread_mutex_lock(&bufferLock);
-	for (i=0; i<8; i++)
 	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-		    if (bool_output[0][i] != NULL) sendBytes[1] = sendBytes[1] | (*bool_output[0][i] << i); //write each bit
+		std::lock_guard<std::mutex> lock(bufferLock);
+		for (i = 0; i < 8; i++)
+		{
+			if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+				if (bool_output[0][i] != NULL) sendBytes[1] = sendBytes[1] | (*bool_output[0][i] << i); //write each bit
+		}
+		for (i = 8; i < 16; i++)
+		{
+			if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+				if (bool_output[1][i % 8] != NULL) sendBytes[2] = sendBytes[2] | (*bool_output[1][i % 8] << (i - 8)); //write each bit
+		}
 	}
-	for (i=8; i<16; i++)
-	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-		    if (bool_output[1][i%8] != NULL) sendBytes[2] = sendBytes[2] | (*bool_output[1][i%8] << (i-8)); //write each bit
-	}
-	pthread_mutex_unlock(&bufferLock);
 
 	sendOutput(sendBytes, recvBytes);
 
-	pthread_mutex_lock(&bufferLock);
-	//if (int_input[0] != NULL) *int_input[0] = (int)(recvBytes[2] << 8) | (int)recvBytes[3]; //EX
-	//if (int_input[1] != NULL) *int_input[1] = (int)(recvBytes[4] << 8) | (int)recvBytes[5]; //EY
+	{
+		std::lock_guard<std::mutex> lock(bufferLock);
+		//if (int_input[0] != NULL) *int_input[0] = (int)(recvBytes[2] << 8) | (int)recvBytes[3]; //EX
+		//if (int_input[1] != NULL) *int_input[1] = (int)(recvBytes[4] << 8) | (int)recvBytes[5]; //EY
 
-	for (i=0; i<8; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-		    if (bool_input[0][i] != NULL) *bool_input[0][i] = (recvBytes[0] >> i) & 0x01;
-		//printf("%d\t", DiscreteInputBuffer0[i]);
+		for (i = 0; i < 8; i++)
+		{
+			if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+				if (bool_input[0][i] != NULL) * bool_input[0][i] = (recvBytes[0] >> i) & 0x01;
+			//printf("%d\t", DiscreteInputBuffer0[i]);
+		}
+		for (i = 8; i < 16; i++)
+		{
+			if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+				if (bool_input[1][i % 8] != NULL) * bool_input[1][i % 8] = (recvBytes[1] >> (i - 8)) & 0x01;
+			//printf("%d\t", DiscreteInputBuffer0[i]);
+		}
 	}
-	for (i=8; i<16; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-		    if (bool_input[1][i%8] != NULL) *bool_input[1][i%8] = (recvBytes[1] >> (i-8)) & 0x01;
-		//printf("%d\t", DiscreteInputBuffer0[i]);
-	}
-	//printf("\n");
-	pthread_mutex_unlock(&bufferLock);
 }
 
 //-----------------------------------------------------------------------------
@@ -200,38 +201,38 @@ void updateBuffersOut()
 	sendBytes[1] = 0; //make sure output is off
 	sendBytes[2] = 0; //make sure output is off
 
-	pthread_mutex_lock(&bufferLock);
-	for (i=0; i<8; i++)
 	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-		    if (bool_output[0][i] != NULL) sendBytes[1] = sendBytes[1] | (*bool_output[0][i] << i); //write each bit
+		std::lock_guard<std::mutex> lock(bufferLock);
+		for (i = 0; i < 8; i++)
+		{
+			if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+				if (bool_output[0][i] != NULL) sendBytes[1] = sendBytes[1] | (*bool_output[0][i] << i); //write each bit
+		}
+		for (i = 8; i < 16; i++)
+		{
+			if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+				if (bool_output[1][i % 8] != NULL) sendBytes[2] = sendBytes[2] | (*bool_output[1][i % 8] << (i - 8)); //write each bit
+		}
 	}
-	for (i=8; i<16; i++)
-	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-		    if (bool_output[1][i%8] != NULL) sendBytes[2] = sendBytes[2] | (*bool_output[1][i%8] << (i-8)); //write each bit
-	}
-	pthread_mutex_unlock(&bufferLock);
 
 	sendOutput(sendBytes, recvBytes);
 
-	pthread_mutex_lock(&bufferLock);
-	//if (int_input[0] != NULL) *int_input[0] = (int)(recvBytes[2] << 8) | (int)recvBytes[3]; //EX
-	//if (int_input[1] != NULL) *int_input[1] = (int)(recvBytes[4] << 8) | (int)recvBytes[5]; //EY
+	{
+		std::lock_guard<std::mutex> lock(bufferLock);
+		//if (int_input[0] != NULL) *int_input[0] = (int)(recvBytes[2] << 8) | (int)recvBytes[3]; //EX
+		//if (int_input[1] != NULL) *int_input[1] = (int)(recvBytes[4] << 8) | (int)recvBytes[5]; //EY
 
-	for (i=0; i<8; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-		    if (bool_input[0][i] != NULL) *bool_input[0][i] = (recvBytes[0] >> i) & 0x01;
-		//printf("%d\t", DiscreteInputBuffer0[i]);
+		for (i = 0; i < 8; i++)
+		{
+			if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+				if (bool_input[0][i] != NULL) * bool_input[0][i] = (recvBytes[0] >> i) & 0x01;
+			//printf("%d\t", DiscreteInputBuffer0[i]);
+		}
+		for (i = 8; i < 16; i++)
+		{
+			if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+				if (bool_input[1][i % 8] != NULL) * bool_input[1][i % 8] = (recvBytes[1] >> (i - 8)) & 0x01;
+			//printf("%d\t", DiscreteInputBuffer0[i]);
+		}
 	}
-	for (i=8; i<16; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-		    if (bool_input[1][i%8] != NULL) *bool_input[1][i%8] = (recvBytes[1] >> (i-8)) & 0x01;
-		//printf("%d\t", DiscreteInputBuffer0[i]);
-	}
-	//printf("\n");
-	pthread_mutex_unlock(&bufferLock);
 }
-

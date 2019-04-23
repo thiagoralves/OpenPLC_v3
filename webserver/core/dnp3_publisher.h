@@ -17,7 +17,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <mutex>
 
 #include "dnp3.h"
 #include "iec_types.h"

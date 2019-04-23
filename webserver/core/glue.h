@@ -16,7 +16,8 @@
 #define CORE_GLUE_H
 
 #include <cstdint>
-#include <pthread.h>
+#include <memory>
+#include <mutex>
 
 #include "iec_types.h"
 
@@ -84,7 +85,7 @@ struct GlueVariable {
 struct GlueVariables {
 
 	GlueVariables(
-		pthread_mutex_t* buffer_lock,
+		std::mutex* buffer_lock,
 		IEC_BOOL** bool_inputs,
 		IEC_BOOL** bool_outputs,
 		std::uint16_t inputs_size,
@@ -113,7 +114,7 @@ struct GlueVariables {
 	{}
 
     ///  Mutex for this structure
-    pthread_mutex_t* buffer_lock;
+    std::mutex* buffer_lock;
 
     // Booleans - these are mapped separately because they have an additional
     // level of nesting.

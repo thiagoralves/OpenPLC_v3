@@ -38,8 +38,8 @@
 #include <softPwm.h>
 #include <wiringPiSPI.h>
 #include <wiringSerial.h>
-#include <pthread.h>
 #include <string.h>
+#include <mutex>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -778,7 +778,7 @@ int Spi_Get_Gpio()
 	return spi_output[3];
 }
 
-pthread_mutex_t localBufferLock; //mutex for the internal ADC buffer
+std::mutex localBufferLock; //mutex for the internal ADC buffer
 struct pixtIn InputData;
 struct pixtOut OutputData;
 struct pixtOutDAC OutputDataDAC;
@@ -791,19 +791,21 @@ void *updateLocalBuffers(void *args)
 
 	while(1)
 	{
-		pthread_mutex_lock(&localBufferLock);
-		memcpy(&OutputData_thread, &OutputData, sizeof(pixtOut));
-		memcpy(&OutputDataDAC_thread, &OutputDataDAC, sizeof(pixtOutDAC));
-		pthread_mutex_unlock(&localBufferLock);
+		{
+			std::lock_guard<std::mutex> local_lock(localBufferLock);
+			memcpy(&OutputData_thread, &OutputData, sizeof(pixtOut));
+			memcpy(&OutputDataDAC_thread, &OutputDataDAC, sizeof(pixtOutDAC));
+		}
 
 		//Exchange PiXtend Data
 		OutputData_thread.byUcCtrl = 16;
 		Spi_AutoMode(&OutputData_thread, &InputData_thread);
 		Spi_AutoModeDAC(&OutputDataDAC_thread);
 
-		pthread_mutex_lock(&localBufferLock);
-		memcpy(&InputData, &InputData_thread, sizeof(pixtIn));
-		pthread_mutex_unlock(&localBufferLock);
+		{
+			std::lock_guard<std::mutex> local_lock(localBufferLock);
+			memcpy(&InputData, &InputData_thread, sizeof(pixtIn));
+		}
 
 		sleep_ms(10);
 	}
@@ -830,8 +832,8 @@ void initializeHardware()
 void updateBuffersIn()
 {
 	//lock mutexes
-	pthread_mutex_lock(&bufferLock);
-	pthread_mutex_lock(&localBufferLock);
+	std::lock_guard<std::mutex> lock(bufferLock);
+	std::lock_guard<std::mutex> local_lock(localBufferLock);
 
 	//DIGITAL INPUT
 	for (int i = 0; i < MAX_DIG_IN; i++)
@@ -848,10 +850,6 @@ void updateBuffersIn()
 	    if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
 		    if (int_input[i] != NULL) *int_input[i] = analogInputs[i];
 	}
-
-	//unlock mutexes
-	pthread_mutex_unlock(&localBufferLock);
-	pthread_mutex_unlock(&bufferLock);
 }
 
 //-----------------------------------------------------------------------------
@@ -862,8 +860,8 @@ void updateBuffersIn()
 void updateBuffersOut()
 {
 	//lock mutexes
-	pthread_mutex_lock(&bufferLock);
-	pthread_mutex_lock(&localBufferLock);
+	std::lock_guard<std::mutex> lock(bufferLock);
+	std::lock_guard<std::mutex> local_lock(localBufferLock);
 
 	//DIGITAL OUTPUT
 	for (int i = 0; i < MAX_DIG_OUT; i++)
@@ -898,8 +896,4 @@ void updateBuffersOut()
     			if (int_output[i] != NULL) pwmOutputs[i-2] = *int_output[i];
 		}
 	}
-
-	//unlock mutexes
-	pthread_mutex_unlock(&localBufferLock);
-	pthread_mutex_unlock(&bufferLock);
 }

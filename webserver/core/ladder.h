@@ -25,6 +25,7 @@
 
 #include <pthread.h>
 #include <cstdint>
+#include <mutex>
 
 //Internal buffers for I/O and memory. These buffers are defined in the
 //auto-generated glueVars.cpp file
@@ -74,7 +75,7 @@ extern IEC_LINT *lint_memory[BUFFER_SIZE];
 extern IEC_LINT *special_functions[BUFFER_SIZE];
 
 //lock for the buffer
-extern pthread_mutex_t bufferLock;
+extern std::mutex bufferLock;
 
 //Common task timer
 extern unsigned long long common_ticktime__;

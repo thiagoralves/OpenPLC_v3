@@ -25,10 +25,7 @@
 // Thiago Alves, Dec 2015
 //-----------------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
+#include <mutex>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -48,7 +45,7 @@ void initializeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+	std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
 
 	/*********READING AND WRITING TO I/O**************
 
@@ -59,8 +56,6 @@ void updateBuffersIn()
 	write_analog_output(0, *int_output[0]);
 
 	**************************************************/
-
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -70,7 +65,7 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+	std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
 
 	/*********READING AND WRITING TO I/O**************
 
@@ -81,7 +76,5 @@ void updateBuffersOut()
 	write_analog_output(0, *int_output[0]);
 
 	**************************************************/
-
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 

@@ -31,10 +31,10 @@
 #include <errno.h>
 #include <netdb.h>
 #include <string.h>
-#include <pthread.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <time.h>
+#include <mutex>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -129,24 +129,25 @@ void *exchangeData(void *arg)
 		}
 		else
 		{
-			pthread_mutex_lock(&bufferLock); //lock mutex
-			for (int i = 0; i < ANALOG_BUF_SIZE; i++)
 			{
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-				    if (int_input[i] != NULL) *int_input[i] = plc_data->analogIn[i];
+				std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
+				for (int i = 0; i < ANALOG_BUF_SIZE; i++)
+				{
+					if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
+						if (int_input[i] != NULL) * int_input[i] = plc_data->analogIn[i];
 
-                if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-    				if (int_output[i] != NULL) plc_data->analogOut[i] = *int_output[i];
+					if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
+						if (int_output[i] != NULL) plc_data->analogOut[i] = *int_output[i];
+				}
+				for (int i = 0; i < DIGITAL_BUF_SIZE; i++)
+				{
+					if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+						if (bool_input[i / 8][i % 8] != NULL) * bool_input[i / 8][i % 8] = plc_data->digitalIn[i];
+
+					if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+						if (bool_output[i / 8][i % 8] != NULL) plc_data->digitalOut[i] = *bool_output[i / 8][i % 8];
+				}
 			}
-			for (int i = 0; i < DIGITAL_BUF_SIZE; i++)
-			{
-			    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-    				if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = plc_data->digitalIn[i];
-				
-				if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-    				if (bool_output[i/8][i%8] != NULL) plc_data->digitalOut[i] = *bool_output[i/8][i%8];
-			}
-			pthread_mutex_unlock(&bufferLock); //unlock mutex
 
 			//printf("sending data...\n");
 			net_len = sendto(socket_fd, plc_data, sizeof(*plc_data), 0, (struct sockaddr *) &client, cli_len);
