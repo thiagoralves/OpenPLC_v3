@@ -1,0 +1,22 @@
+language: bash
+
+services:
+  - docker
+  
+addons:
+  apt:
+    packages:
+      - doxygen
+
+script:
+  - docker build .
+  - doxygen doxygen.conf
+  
+    #deploy:
+    #  provider: pages
+    #  skip_cleanup: true
+    #  local_dir: public
+    #  github_token: $GITHUB_TOKEN
+    #  keep-history: true
+    #  on:
+    #    branch: master
