@@ -25,6 +25,7 @@
 
 #include <pthread.h>
 #include <cstdint>
+#include <mutex>
 
 #define MODBUS_PROTOCOL     0
 #define DNP3_PROTOCOL       1
@@ -78,7 +79,7 @@ extern IEC_LINT *lint_memory[BUFFER_SIZE];
 extern IEC_LINT *special_functions[BUFFER_SIZE];
 
 //lock for the buffer
-extern pthread_mutex_t bufferLock;
+extern std::mutex bufferLock;
 
 //Common task timer
 extern unsigned long long common_ticktime__;

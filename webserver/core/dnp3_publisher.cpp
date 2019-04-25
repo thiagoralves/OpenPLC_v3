@@ -42,11 +42,9 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
     std::uint32_t num_writes(0);
     asiodnp3::UpdateBuilder builder;
 
-    pthread_mutex_lock(glue_variables->buffer_lock);
+	std::lock_guard<std::mutex> lock(*glue_variables->buffer_lock);
 
 	spdlog::trace("Writing glue variables to DNP3 points");
-
-	spdlog::debug("Writing glue variables to DNP3 points");
 
     // Writes data points to the outstation. We support two capabilities here:
     //
@@ -222,8 +220,6 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
             }
 		}
 	}
-
-    pthread_mutex_unlock(glue_variables->buffer_lock);
 
     outstation->Apply(builder.Build());
 

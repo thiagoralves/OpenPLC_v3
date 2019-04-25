@@ -37,12 +37,37 @@ option(OPLC_DNP3_OUTSTATION "Enable the DNP3 outstation" OFF)
 option(OPLC_MODBUS "Enable the Modbus" OFF)
 option(OPLC_NOOP_APP "Enable building a demo app" OFF)
 option(OPLC_UNITTEST "Enable unit tests" OFF)
+
+# These options enable building libraries containing the various harware layers.
+# The objective of these builds is to ensure that the code compiles cleanly.
+option(OPLC_BLANK_LIB "Enable buidling the default blank library" OFF)
+option(OPLC_NEURON_LIB "Enable buidling the default Neuron library" OFF)
+option(OPLC_PIXTEND_LIB "Enable buidling the default Pixtend library" OFF)
+option(OPLC_PIXTEND2L_LIB "Enable buidling the default Pixtend2l library" OFF)
+option(OPLC_PIXTEND2S_LIB "Enable buidling the default Pixtend2l library" OFF)
+option(OPLC_RASPERBERRYPI_LIB "Enable buidling the default RaspberryPI library" OFF)
+option(OPLC_RASPERBERRYPIOLD_LIB "Enable buidling the default RaspberryPI OLD library" OFF)
+option(OPLC_SIMULINK_LIB "Enable buidling the default Simulink library" OFF)
+option(OPLC_UNIPI_LIB "Enable buidling the default Unipi library" OFF)
+option(OPLC_FISCHERTECHNIK_LIB "Enable buidling the default fischertechnik library" OFF)
+
 if(OPLC_ALL)
   message("Enabling all optional components")
   set(OPLC_DNP3_OUTSTATION ON)
   set(OPLC_MODBUS ON)
   set(OPLC_NOOP_APP ON)
   set(OPLC_UNITTEST ON)
+
+  set(OPLC_BLANK_LIB ON)
+  set(OPLC_NEURON_LIB ON)
+  set(OPLC_PIXTEND_LIB ON)
+  set(OPLC_PIXTEND2L_LIB ON)
+  set(OPLC_PIXTEND2S_LIB ON)
+  set(OPLC_RASPERBERRYPI_LIB ON)
+  set(OPLC_RASPERBERRYPIOLD_LIB ON)
+  set(OPLC_SIMULINK_LIB ON)
+  set(OPLC_UNIPI_LIB ON)
+  set(OPLC_FISCHERTECHNIK_LIB ON)
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
@@ -99,4 +124,73 @@ if(OPLC_UNITTEST)
 	file(GLOB oplctest_SRC webserver/test/*.cpp)
 	add_executable(oplctest ${oplctest_SRC} webserver/core/dnp3_publisher.cpp webserver/core/dnp3_receiver.cpp)
 	target_link_libraries(oplctest LINK_PUBLIC asiodnp3 ${OPLC_PTHREAD})
+endif()
+
+# Default application built for blank (Linux)
+if(OPLC_BLANK_LIB)
+	add_library(oplcblank ${oplc_SRC} webserver/core/hardware_layers/blank.cpp)
+	target_link_libraries(oplcblank LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+endif()
+
+# Default application built for Neuron
+if(OPLC_NEURON_LIB)
+	add_library(oplcneuron ${oplc_SRC} webserver/core/hardware_layers/neuron.cpp)
+	target_link_libraries(oplcneuron LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+endif()
+
+# Default application built for Pixtend
+if(OPLC_PIXTEND_LIB)
+	add_library(oplcpixtend ${oplc_SRC} webserver/core/hardware_layers/pixtend.cpp)
+	target_include_directories(oplcpixtend SYSTEM PUBLIC webserver/test/mock_headers)
+	target_link_libraries(oplcpixtend LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+endif()
+
+# Default application built for Pixtend2L
+if(OPLC_PIXTEND2L_LIB)
+	add_library(oplcpixtend2l ${oplc_SRC} webserver/core/hardware_layers/pixtend2l.cpp)
+	target_include_directories(oplcpixtend2l SYSTEM PUBLIC webserver/test/mock_headers)
+	target_link_libraries(oplcpixtend2l LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+endif()
+
+
+# Default application built for Pixtend2S
+if(OPLC_PIXTEND2S_LIB)
+	add_library(oplcpixtend2s ${oplc_SRC} webserver/core/hardware_layers/pixtend2s.cpp)
+	target_include_directories(oplcpixtend2s SYSTEM PUBLIC webserver/test/mock_headers)
+	target_link_libraries(oplcpixtend2s LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+endif()
+
+# Default application built for RaspberryPI
+if(OPLC_RASPERBERRYPI_LIB)
+	add_library(oplcraspberrypi ${oplc_SRC} webserver/core/hardware_layers/raspberrypi.cpp)
+	target_include_directories(oplcraspberrypi SYSTEM PUBLIC webserver/test/mock_headers)
+	target_link_libraries(oplcraspberrypi LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+endif()
+
+# Default application built for RaspberryPI (Old)
+if(OPLC_RASPERBERRYPIOLD_LIB)
+	add_library(oplcraspberrypiold ${oplc_SRC} webserver/core/hardware_layers/raspberrypi_old.cpp)
+	target_include_directories(oplcraspberrypiold SYSTEM PUBLIC webserver/test/mock_headers)
+	target_link_libraries(oplcraspberrypiold LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+endif()
+
+# Default application built for Simulink
+if(OPLC_SIMULINK_LIB)
+	add_library(oplcsimulink ${oplc_SRC} webserver/core/hardware_layers/simulink.cpp)
+	target_include_directories(oplcsimulink SYSTEM PUBLIC webserver/test/mock_headers)
+	target_link_libraries(oplcsimulink LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+endif()
+
+# Default application built for UniPI
+if(OPLC_UNIPI_LIB)
+	add_library(oplcunipi ${oplc_SRC} webserver/core/hardware_layers/unipi.cpp)
+	target_include_directories(oplcunipi SYSTEM PUBLIC webserver/test/mock_headers)
+	target_link_libraries(oplcunipi LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+endif()
+
+# Default application built for Fischertechnik 
+if(OPLC_FISCHERTECHNIK_LIB)
+	add_library(oplcfischertechnik ${oplc_SRC} webserver/core/hardware_layers/fischertechnik.cpp)
+	target_include_directories(oplcfischertechnik SYSTEM PUBLIC webserver/test/mock_headers)
+	target_link_libraries(oplcfischertechnik LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()

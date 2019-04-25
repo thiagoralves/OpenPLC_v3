@@ -31,7 +31,7 @@
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
 #include <mcp23008.h>
-#include <pthread.h>
+#include <mutex>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -50,7 +50,7 @@ const int inputPinMask[MAX_INPUT] = { 7, 7, 0, 2, 4, 3, 5, 14, 11, 10, 13, 6, 12
 int adc_fd;
 unsigned int adcBuffer[2];
 
-pthread_mutex_t adcBufferLock; //mutex for the internal ADC buffer
+std::mutex adcBufferLock; //mutex for the internal ADC buffer
 
 //-----------------------------------------------------------------------------
 // Helper function - Makes the running thread sleep for the ammount of time
@@ -104,9 +104,10 @@ void *readAdcThread(void *args)
         conversion = value*2.28;
         if (conversion > 65535.0) {conversion=65535.0;}
         value = (unsigned int)conversion;
-		pthread_mutex_lock(&adcBufferLock);
-		adcBuffer[0] = value;
-		pthread_mutex_unlock(&adcBufferLock);
+		{
+			std::lock_guard<std::mutex> guard(adcBufferLock);
+			adcBuffer[0] = value;
+		}
 
 		config = 0xA8; //read channel 1
 		wiringPiI2CWrite(adc_fd, config);
@@ -124,9 +125,10 @@ void *readAdcThread(void *args)
         conversion = value*2.28;
         if (conversion > 65535.0) {conversion=65535.0;}
         value = (unsigned int)conversion;
-		pthread_mutex_lock(&adcBufferLock);
-		adcBuffer[1] = value;
-		pthread_mutex_unlock(&adcBufferLock);
+		{
+			std::lock_guard<std::mutex> guard(adcBufferLock);
+			adcBuffer[1] = value;
+		}
 	}
 }
 
@@ -146,9 +148,8 @@ int mcp_adcRead(int chan)
 	int returnValue;
 	if (chan < 2)
 	{
-		pthread_mutex_lock(&adcBufferLock);
+		std::lock_guard<std::mutex> guard(adcBufferLock);
 		returnValue = adcBuffer[chan];
-		pthread_mutex_unlock(&adcBufferLock);
 
 		return returnValue;
 	}
@@ -200,7 +201,7 @@ void initializeHardware()
 void updateBuffersIn()
 {
 	//printf("Digital Inputs:\n");
-	pthread_mutex_lock(&bufferLock); //lock mutex
+	std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
 	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
@@ -213,9 +214,6 @@ void updateBuffersIn()
 	    if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
     		if (int_input[i] != NULL) *int_input[i] = mcp_adcRead(i); //printf("[AI%d]: %d | ", i, mcp_adcRead(i));
 	}
-	//printf("\n");
-
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -225,7 +223,7 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+	std::lock_guard<std::mutex> lock(bufferLock);
 
 	//printf("\nDigital Outputs:\n");
 	for (int i = 0; i < MAX_OUTPUT; i++)
@@ -236,6 +234,5 @@ void updateBuffersOut()
 	
 	if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), 0))
 	    if(int_output[0] != NULL) pwmWrite(ANALOG_OUT_PIN, (*int_output[0] / 64));
-	
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+
 }

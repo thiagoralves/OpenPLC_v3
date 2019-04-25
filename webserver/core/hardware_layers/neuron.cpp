@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <spdlog/spdlog.h>
+#include <mutex>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -99,6 +100,7 @@ void searchForIO()
 {
     char path[200];
     char path_fmt[200];
+	char log_msg[1000];
 
 	spdlog::info("Neuron: Searching for I/O...");
     
@@ -217,7 +219,7 @@ void searchForIO()
     while (digital_inputs[index][0] != '\0')
     {
         sprintf(log_msg, "%s\t=>\t%%IX%d.%d\n", digital_inputs[index], (index/8), (index%8));
-        log(log_msg);
+		spdlog::info(log_msg);
         index++;
     }
     
@@ -226,7 +228,7 @@ void searchForIO()
     while (digital_outputs[index][0] != '\0')
     {
         sprintf(log_msg, "%s\t=>\t%%QX%d.%d\n", digital_outputs[index], (index/8), (index%8));
-        log(log_msg);
+		spdlog::info(log_msg);
         index++;
     }
     
@@ -235,7 +237,7 @@ void searchForIO()
     while (analog_inputs[index][0] != '\0')
     {
         sprintf(log_msg, "%s\t=>\t%%IW%d\n", analog_inputs[index], index);
-        log(log_msg);
+		spdlog::info(log_msg);
         index++;
     }
     
@@ -250,7 +252,7 @@ void searchForIO()
         else
             sprintf(log_msg, "%s\t=>\t%%QW%d\n", analog_outputs[index], index);
         
-        log(log_msg);
+		spdlog::info(log_msg);
         index++;
     }
 }
@@ -271,7 +273,7 @@ void initializeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+	std::lock_guard<std::mutex> lock(bufferLock);
     
     /* read digital inputs */
     int i = 0;
@@ -297,8 +299,6 @@ void updateBuffersIn()
         
         i++;
     }
-
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -308,7 +308,7 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+	std::lock_guard<std::mutex> lock(bufferLock);
     
     /* write digital outputs */
     int i = 0;
@@ -344,7 +344,4 @@ void updateBuffersOut()
         }
         i++;
     }
-    
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
-    
 }

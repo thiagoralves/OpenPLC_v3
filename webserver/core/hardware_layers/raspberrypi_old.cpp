@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <wiringPi.h>
 #include <wiringSerial.h>
-#include <pthread.h>
+#include <mutex>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -106,7 +106,7 @@ void initializeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+	std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
 
 	//INPUT
 	for (int i = 0; i < MAX_INPUT; i++)
@@ -114,8 +114,6 @@ void updateBuffersIn()
 	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
     		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = digitalRead(inBufferPinMask[i]);
 	}
-
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -125,7 +123,7 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+	std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
 
 	//OUTPUT
 	for (int i = 0; i < MAX_OUTPUT; i++)
@@ -140,6 +138,4 @@ void updateBuffersOut()
 	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
     		if (int_output[i] != NULL) pwmWrite(analogOutBufferPinMask[i], (*int_output[i] / 64));
 	}
-
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
 }

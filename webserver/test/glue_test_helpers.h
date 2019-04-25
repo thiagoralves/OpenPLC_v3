@@ -16,6 +16,7 @@
 #define TEST_GLUE_TEST_HELPERS_H
 
 #include <cstdint>
+#include <mutex>
 
 #define TEST_BUFFER_SIZE 1024
 
@@ -141,8 +142,7 @@ static inline std::shared_ptr<GlueVariables> make_vars() {
     GlueVariable* inputs = glue_alloc(TEST_BUFFER_SIZE, 0, TEST_BUFFER_SIZE);
     GlueVariable* outputs = glue_alloc(TEST_BUFFER_SIZE, 0, TEST_BUFFER_SIZE);
 
-    pthread_mutex_t *mutex = new pthread_mutex_t;
-    pthread_mutex_init(mutex, nullptr);
+	auto mutex = new std::mutex;
 
     return std::shared_ptr<GlueVariables>(new GlueVariables{
         mutex,
@@ -157,11 +157,12 @@ static inline std::shared_ptr<GlueVariables> make_vars() {
         }, [](GlueVariables* vars) {
         // Specialize the destructor for the shared pointer so that this will
         // clean up everything on destruction.
-        glue_boolean_free(vars->bool_inputs, TEST_BUFFER_SIZE);
-        glue_boolean_free(vars->bool_outputs, TEST_BUFFER_SIZE);
-        glue_free(vars->inputs, TEST_BUFFER_SIZE);
-        glue_free(vars->outputs, TEST_BUFFER_SIZE);
-        delete vars;
+			delete vars->buffer_lock;
+			glue_boolean_free(vars->bool_inputs, TEST_BUFFER_SIZE);
+			glue_boolean_free(vars->bool_outputs, TEST_BUFFER_SIZE);
+			glue_free(vars->inputs, TEST_BUFFER_SIZE);
+			glue_free(vars->outputs, TEST_BUFFER_SIZE);
+			delete vars;
     });
 }
 

@@ -44,7 +44,7 @@ IEC_BOOL __DEBUG;
 IEC_LINT cycle_counter = 0;
 
 static int tick = 0;
-pthread_mutex_t bufferLock; //mutex for the internal buffers
+std::mutex bufferLock; //mutex for the internal buffers
 uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
 
 //-----------------------------------------------------------------------------
@@ -167,15 +167,6 @@ int main(int argc,char **argv)
     glueVars();
 
     //======================================================
-    //               MUTEX INITIALIZATION
-    //======================================================
-    if (pthread_mutex_init(&bufferLock, NULL) != 0)
-    {
-		spdlog::error("Mutex init failed");
-        exit(1);
-    }
-
-    //======================================================
     //              HARDWARE INITIALIZATION
     //======================================================
     initializeHardware();
@@ -230,14 +221,16 @@ int main(int argc,char **argv)
         
 		updateBuffersIn(); //read input image
 
-		pthread_mutex_lock(&bufferLock); //lock mutex
-		updateCustomIn();
-        updateBuffersIn_MB(); //update input image table with data from slave devices
-        handleSpecialFunctions();
-		config_run__(tick++); // execute plc program logic
-		updateCustomOut();
-        updateBuffersOut_MB(); //update slave devices with data from the output image table
-		pthread_mutex_unlock(&bufferLock); //unlock mutex
+		
+		{
+			std::lock_guard<std::mutex> guard(bufferLock);
+			updateCustomIn();
+			updateBuffersIn_MB(); //update input image table with data from slave devices
+			handleSpecialFunctions();
+			config_run__(tick++); // execute plc program logic
+			updateCustomOut();
+			updateBuffersOut_MB(); //update slave devices with data from the output image table
+		}
 
 		updateBuffersOut(); //write output image
         

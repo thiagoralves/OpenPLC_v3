@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <mutex>
 
 #include "ladder.h"
 
@@ -95,7 +96,7 @@ int word(unsigned char byte1, unsigned char byte2)
 //-----------------------------------------------------------------------------
 void mapUnusedIO()
 {
-	pthread_mutex_lock(&bufferLock);
+	std::lock_guard<std::mutex> guard(bufferLock);
 
 	for(int i = 0; i < MAX_DISCRETE_INPUT; i++)
 	{
@@ -120,8 +121,6 @@ void mapUnusedIO()
 		if (i >= MIN_16B_RANGE && i <= MAX_16B_RANGE)
 			if (int_memory[i - MIN_16B_RANGE] == NULL) int_memory[i] = &mb_holding_regs[i];
 	}
-
-	pthread_mutex_unlock(&bufferLock);
 }
 
 //-----------------------------------------------------------------------------
@@ -168,7 +167,7 @@ void ReadCoils(unsigned char *buffer, int bufferSize)
 	buffer[5] = lowByte(ByteDataLength + 3); //Number of bytes after this one
 	buffer[8] = ByteDataLength;     //Number of bytes of data
 
-	pthread_mutex_lock(&bufferLock);
+	std::lock_guard<std::mutex> guard(bufferLock);
 	for(int i = 0; i < ByteDataLength ; i++)
 	{
 		for(int j = 0; j < 8; j++)
@@ -191,7 +190,6 @@ void ReadCoils(unsigned char *buffer, int bufferSize)
 			}
 		}
 	}
-	pthread_mutex_unlock(&bufferLock);
 
 	if (mb_error != ERR_NONE)
 	{
@@ -235,7 +233,7 @@ void ReadDiscreteInputs(unsigned char *buffer, int bufferSize)
 	buffer[5] = lowByte(ByteDataLength + 3); //Number of bytes after this one
 	buffer[8] = ByteDataLength;     //Number of bytes of data
 
-	pthread_mutex_lock(&bufferLock);
+	std::lock_guard<std::mutex> guard(bufferLock);
 	for(int i = 0; i < ByteDataLength ; i++)
 	{
 		for(int j = 0; j < 8; j++)
@@ -258,7 +256,6 @@ void ReadDiscreteInputs(unsigned char *buffer, int bufferSize)
 			}
 		}
 	}
-	pthread_mutex_unlock(&bufferLock);
 
 	if (mb_error != ERR_NONE)
 	{
@@ -301,7 +298,7 @@ void ReadHoldingRegisters(unsigned char *buffer, int bufferSize)
 	buffer[5] = lowByte(ByteDataLength + 3); //Number of bytes after this one
 	buffer[8] = ByteDataLength;     //Number of bytes of data
 
-	pthread_mutex_lock(&bufferLock);
+	std::lock_guard<std::mutex> guard(bufferLock);
 	for(int i = 0; i < WordDataLength; i++)
 	{
 		int position = Start + i;
@@ -399,7 +396,6 @@ void ReadHoldingRegisters(unsigned char *buffer, int bufferSize)
 			mb_error = ERR_ILLEGAL_DATA_ADDRESS;
 		}
 	}
-	pthread_mutex_unlock(&bufferLock);
 
 	if (mb_error != ERR_NONE)
 	{
@@ -442,7 +438,7 @@ void ReadInputRegisters(unsigned char *buffer, int bufferSize)
 	buffer[5] = lowByte(ByteDataLength + 3); //Number of bytes after this one
 	buffer[8] = ByteDataLength;     //Number of bytes of data
 
-	pthread_mutex_lock(&bufferLock);
+	std::lock_guard<std::mutex> guard(bufferLock);
 	for(int i = 0; i < WordDataLength; i++)
 	{
 		int position = Start + i;
@@ -464,7 +460,6 @@ void ReadInputRegisters(unsigned char *buffer, int bufferSize)
 			mb_error = ERR_ILLEGAL_DATA_ADDRESS;
 		}
 	}
-	pthread_mutex_unlock(&bufferLock);
 
 	if (mb_error != ERR_NONE)
 	{
@@ -505,12 +500,11 @@ void WriteCoil(unsigned char *buffer, int bufferSize)
 			value = 0;
 		}
 
-		pthread_mutex_lock(&bufferLock);
+		std::lock_guard<std::mutex> guard(bufferLock);
 		if (bool_output[Start/8][Start%8] != NULL)
 		{
 			*bool_output[Start/8][Start%8] = value;
 		}
-		pthread_mutex_unlock(&bufferLock);
 	}
 
 	else //invalid address
@@ -547,7 +541,7 @@ void WriteRegister(unsigned char *buffer, int bufferSize)
 
 	Start = word(buffer[8],buffer[9]);
 
-	pthread_mutex_lock(&bufferLock);
+	std::lock_guard<std::mutex> guard(bufferLock);
 	//analog outputs
 	if (Start <= MIN_16B_RANGE)
 	{
@@ -625,7 +619,6 @@ void WriteRegister(unsigned char *buffer, int bufferSize)
 	{
 		mb_error = ERR_ILLEGAL_DATA_ADDRESS;
 	}
-	pthread_mutex_unlock(&bufferLock);
 
 	if (mb_error != ERR_NONE)
 	{
@@ -670,7 +663,7 @@ void WriteMultipleCoils(unsigned char *buffer, int bufferSize)
 	buffer[4] = 0;
 	buffer[5] = 6; //Number of bytes after this one.
 
-	pthread_mutex_lock(&bufferLock);
+	std::lock_guard<std::mutex> guard(bufferLock);
 	for(int i = 0; i < ByteDataLength ; i++)
 	{
 		for(int j = 0; j < 8; j++)
@@ -686,7 +679,6 @@ void WriteMultipleCoils(unsigned char *buffer, int bufferSize)
 			}
 		}
 	}
-	pthread_mutex_unlock(&bufferLock);
 
 	if (mb_error != ERR_NONE)
 	{
@@ -728,7 +720,7 @@ void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 	buffer[4] = 0;
 	buffer[5] = 6; //Number of bytes after this one.
 
-	pthread_mutex_lock(&bufferLock);
+	std::lock_guard<std::mutex> guard(bufferLock);
 	for(int i = 0; i < WordDataLength; i++)
 	{
 		int position = Start + i;
@@ -804,7 +796,6 @@ void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 			mb_error = ERR_ILLEGAL_DATA_ADDRESS;
 		}
 	}
-	pthread_mutex_unlock(&bufferLock);
 
 	if (mb_error != ERR_NONE)
 	{

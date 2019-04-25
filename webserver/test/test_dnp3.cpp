@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <utility>
+#include <mutex>
 
 #include "catch.hpp"
 #include "fakeit.hpp"
@@ -28,7 +29,7 @@ bool run_dnp3(false);
 #include "glue.h"
 IEC_BOOL* bool_output[BUFFER_SIZE][8];
 IEC_BOOL* bool_input[BUFFER_SIZE][8];
-pthread_mutex_t bufferLock;
+std::mutex bufferLock;
 const std::uint16_t OPLCGLUE_INPUT_SIZE(1);
 GlueVariable oplc_input_vars[] = {
 	{ IECVT_UNASSIGNED, nullptr },
