@@ -37,6 +37,8 @@
 #include <fstream>
 #include <string>
 
+#include <spdlog/spdlog.h>
+
 #include "ladder.h"
 
 #define MB_TCP				1
@@ -307,9 +309,7 @@ void parseConfig()
 	}
     else
     {
-        unsigned char log_msg[1000];
-        sprintf(log_msg, "Skipping configuration of Slave Devices (mbconfig.cfg file not found)\n");
-        log(log_msg);
+		spdlog::info("Skipping configuration of Slave Devices (mbconfig.cfg file not found)");
     }
 
 	//Parser Debug
@@ -346,8 +346,6 @@ void *querySlaveDevices(void *arg)
 {
     while (run_openplc)
     {
-        unsigned char log_msg[1000];
-        
         uint16_t bool_input_index = 0;
         uint16_t bool_output_index = 0;
         uint16_t int_input_index = 0;
@@ -358,12 +356,10 @@ void *querySlaveDevices(void *arg)
             //Verify if device is connected
             if (!mb_devices[i].isConnected)
             {
-                sprintf(log_msg, "Device %s is disconnected. Attempting to reconnect...\n", mb_devices[i].dev_name);
-                log(log_msg);
+				spdlog::info("Device {} is disconnected. Attempting to reconnect...", mb_devices[i].dev_name);
                 if (modbus_connect(mb_devices[i].mb_ctx) == -1)
                 {
-                    sprintf(log_msg, "Connection failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                    log(log_msg);
+					spdlog::error("Connection failed on MB device {}: {}", mb_devices[i].dev_name, modbus_strerror(errno));
                     
                     if (special_functions[2] != NULL) *special_functions[2]++;
                     
@@ -376,8 +372,7 @@ void *querySlaveDevices(void *arg)
                 }
                 else
                 {
-                    sprintf(log_msg, "Connected to MB device %s\n", mb_devices[i].dev_name);
-                    log(log_msg);
+					spdlog::info("Connected to MB device {}", mb_devices[i].dev_name);
                     mb_devices[i].isConnected = true;
                 }
             }
@@ -404,8 +399,7 @@ void *querySlaveDevices(void *arg)
                             mb_devices[i].isConnected = false;
                         }
                         
-                        sprintf(log_msg, "Modbus Read Discrete Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+						spdlog::info("Modbus Read Discrete Input Registers failed on MB device {}: {}", mb_devices[i].dev_name, modbus_strerror(errno));
                         bool_input_index += (mb_devices[i].discrete_inputs.num_regs);
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
@@ -447,8 +441,7 @@ void *querySlaveDevices(void *arg)
                             mb_devices[i].isConnected = false;
                         }
 
-                        sprintf(log_msg, "Modbus Write Coils failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+                        spdlog::error("Modbus Write Coils failed on MB device {}: {}", mb_devices[i].dev_name, modbus_strerror(errno));
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
                     
@@ -471,8 +464,7 @@ void *querySlaveDevices(void *arg)
                             mb_devices[i].isConnected = false;
                         }
                         
-                        sprintf(log_msg, "Modbus Read Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+						spdlog::error("Modbus Read Input Registers failed on MB device {}: {}", mb_devices[i].dev_name, modbus_strerror(errno));
                         int_input_index += (mb_devices[i].input_registers.num_regs);
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
@@ -506,8 +498,7 @@ void *querySlaveDevices(void *arg)
                             modbus_close(mb_devices[i].mb_ctx);
                             mb_devices[i].isConnected = false;
                         }
-                        sprintf(log_msg, "Modbus Read Holding Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+						spdlog::error("Modbus Read Holding Registers failed on MB device {}: {}", mb_devices[i].dev_name, modbus_strerror(errno));
                         int_input_index += (mb_devices[i].holding_read_registers.num_regs);
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
@@ -550,8 +541,7 @@ void *querySlaveDevices(void *arg)
                             mb_devices[i].isConnected = false;
                         }
                         
-                        sprintf(log_msg, "Modbus Write Holding Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+						spdlog::error("Modbus Write Holding Registers failed on MB device {}: {}", mb_devices[i].dev_name, modbus_strerror(errno));
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
                     

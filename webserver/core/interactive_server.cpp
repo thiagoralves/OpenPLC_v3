@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <memory>
 #include <netdb.h>
 #include <string.h>
 #include <pthread.h>
@@ -35,7 +36,10 @@
 #include <fcntl.h>
 #include <time.h>
 
+#include <spdlog/spdlog.h>
+
 #include "ladder.h"
+#include "logsink.h"
 
 //Global Variables
 bool run_modbus = 0;
@@ -54,6 +58,12 @@ time_t end_time;
 pthread_t modbus_thread;
 pthread_t dnp3_thread;
 pthread_t enip_thread;
+
+//Log Buffer
+#define LOG_BUFFER_SIZE 1000000
+unsigned char log_buffer[LOG_BUFFER_SIZE];
+std::shared_ptr<buffered_sink> log_sink;
+
 
 //-----------------------------------------------------------------------------
 // Start the Modbus Thread
@@ -107,23 +117,22 @@ int readCommandArgument(unsigned char *command)
 //-----------------------------------------------------------------------------
 int createSocket_interactive(int port)
 {
-    unsigned char log_msg[1000];
     int socket_fd;
     struct sockaddr_in server_addr;
 
     //Create TCP Socket
     socket_fd = socket(AF_INET,SOCK_STREAM,0);
-    if (socket_fd<0)
+    if (socket_fd < 0)
     {
-        sprintf(log_msg, "Interactive Server: error creating stream socket => %s\n", strerror(errno));
-        log(log_msg);
+		spdlog::error("Interactive Server: error creating stream socket => {}", strerror(errno));
         exit(1);
     }
     
     //Set SO_REUSEADDR
     int enable = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-        perror("setsockopt(SO_REUSEADDR) failed");
+	if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+		perror("setsockopt(SO_REUSEADDR) failed");
+	}
         
     SetSocketBlockingEnabled(socket_fd, false);
     
@@ -136,14 +145,12 @@ int createSocket_interactive(int port)
     //Bind socket
     if (bind(socket_fd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0)
     {
-        sprintf(log_msg, "Interactive Server: error binding socket => %s\n", strerror(errno));
-        log(log_msg);
+		spdlog::error("Interactive Server: error binding socket => {}", strerror(errno));
         exit(1);
     }
     // we accept max 5 pending connections
     listen(socket_fd,5);
-    sprintf(log_msg, "Interactive Server: Listening on port %d\n", port);
-    log(log_msg);
+	spdlog::info("Interactive Server: Listening on port {}", port);
 
     return socket_fd;
 }
@@ -158,7 +165,7 @@ int waitForClient_interactive(int socket_fd)
     struct sockaddr_in client_addr;
     socklen_t client_len;
 
-    printf("Interactive Server: waiting for new client...\n");
+	spdlog::info("Interactive Server: waiting for new client...");
 
     client_len = sizeof(client_addr);
     while (run_openplc)
@@ -192,7 +199,8 @@ int listenToClient_interactive(int client_fd, unsigned char *buffer)
 //-----------------------------------------------------------------------------
 void processCommand(unsigned char *buffer, int client_fd)
 {
-    unsigned char log_msg[1000];
+    spdlog::info("Process command received {}", buffer);
+
     int count_char = 0;
     
     if (processing_command)
@@ -205,21 +213,18 @@ void processCommand(unsigned char *buffer, int client_fd)
     if (strncmp(buffer, "quit()", 6) == 0)
     {
         processing_command = true;
-        sprintf(log_msg, "Issued quit() command\n");
-        log(log_msg);
+		spdlog::info("Issued quit() command");
         if (run_modbus)
         {
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
-            sprintf(log_msg, "Modbus server was stopped\n");
-            log(log_msg);
+			spdlog::info("Modbus server was stopped");
         }
         if (run_dnp3)
         {
             run_dnp3 = 0;
             pthread_join(dnp3_thread, NULL);
-            sprintf(log_msg, "DNP3 server was stopped\n");
-            log(log_msg);
+			spdlog::info("DNP3 server was stopped");
         }
         run_openplc = 0;
         processing_command = false;
@@ -227,18 +232,16 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "start_modbus(", 13) == 0)
     {
         processing_command = true;
-        sprintf(log_msg, "Issued start_modbus() command to start on port: %d\n", readCommandArgument(buffer));
-        log(log_msg);
-        modbus_port = readCommandArgument(buffer);
+		modbus_port = readCommandArgument(buffer);
+		spdlog::info("Issued start_modbus() command to start on port: {}", modbus_port);
+        
         if (run_modbus)
         {
-            sprintf(log_msg, "Modbus server already active. Restarting on port: %d\n", modbus_port);
-            log(log_msg);
+			spdlog::info("Modbus server already active. Restarting on port: {}", modbus_port);
             //Stop Modbus server
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
-            sprintf(log_msg, "Modbus server was stopped\n");
-            log(log_msg);
+			spdlog::info("Modbus server was stopped");
         }
         //Start Modbus server
         run_modbus = 1;
@@ -248,32 +251,27 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "stop_modbus()", 13) == 0)
     {
         processing_command = true;
-        sprintf(log_msg, "Issued stop_modbus() command\n");
-        log(log_msg);
+		spdlog::info("Issued stop_modbus() command");
         if (run_modbus)
         {
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
-            sprintf(log_msg, "Modbus server was stopped\n");
-            log(log_msg);
+			spdlog::info("Modbus server was stopped");
         }
         processing_command = false;
     }
     else if (strncmp(buffer, "start_dnp3(", 11) == 0)
     {
         processing_command = true;
-        sprintf(log_msg, "Issued start_dnp3() command to start on port: %d\n", readCommandArgument(buffer));
-        log(log_msg);
-        dnp3_port = readCommandArgument(buffer);
+		dnp3_port = readCommandArgument(buffer);
+		spdlog::info("Issued start_dnp3() command to start on port: {}", dnp3_port);
         if (run_dnp3)
         {
-            sprintf(log_msg, "DNP3 server already active. Restarting on port: %d\n", dnp3_port);
-            log(log_msg);
+			spdlog::info("DNP3 server already active. Restarting on port: {}", dnp3_port);
             //Stop DNP3 server
             run_dnp3 = 0;
             pthread_join(dnp3_thread, NULL);
-            sprintf(log_msg, "DNP3 server was stopped\n");
-            log(log_msg);
+			spdlog::info("DNP3 server was stopped");
         }
         //Start DNP3 server
         run_dnp3 = 1;
@@ -283,14 +281,12 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "stop_dnp3()", 11) == 0)
     {
         processing_command = true;
-        sprintf(log_msg, "Issued stop_dnp3() command\n");
-        log(log_msg);
+		spdlog::info("Issued stop_dnp3() command");
         if (run_dnp3)
         {
             run_dnp3 = 0;
             pthread_join(dnp3_thread, NULL);
-            sprintf(log_msg, "DNP3 server was stopped\n");
-            log(log_msg);
+			spdlog::info("DNP3 server was stopped");
         }
         processing_command = false;
     }
@@ -332,8 +328,9 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "runtime_logs()", 14) == 0)
     {
         processing_command = true;
-        printf("Issued runtime_logs() command\n");
-        write(client_fd, log_buffer, log_index);
+        spdlog::debug("Issued runtime_logs() command");
+        std::string data = log_sink->data();
+        write(client_fd, data.c_str(), data.size());
         processing_command = false;
         return;
     }
@@ -342,7 +339,7 @@ void processCommand(unsigned char *buffer, int client_fd)
         processing_command = true;
         time(&end_time);
         count_char = sprintf(buffer, "%llu\n", (unsigned long long)difftime(end_time, start_time));
-        write(client_fd, buffer, count_char);
+        //write(client_fd, buffer, count_char);
         processing_command = false;
         return;
     }
@@ -350,7 +347,7 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         count_char = sprintf(buffer, "Error: unrecognized command\n");
-        write(client_fd, buffer, count_char);
+        //write(client_fd, buffer, count_char);
         processing_command = false;
         return;
     }
@@ -387,7 +384,7 @@ void *handleConnections_interactive(void *arguments)
     unsigned char buffer[1024];
     int messageSize;
 
-    printf("Interactive Server: Thread created for client ID: %d\n", client_fd);
+	spdlog::info("Interactive Server: Thread created for client ID: {}", client_fd);
 
     while(run_openplc)
     {
@@ -400,20 +397,21 @@ void *handleConnections_interactive(void *arguments)
             // something has  gone wrong or the client has closed connection
             if (messageSize == 0)
             {
-                printf("Interactive Server: client ID: %d has closed the connection\n", client_fd);
+				spdlog::info("Interactive Server: client ID: {} has closed the connection", client_fd);
             }
             else
             {
-                printf("Interactive Server: Something is wrong with the  client ID: %d message Size : %i\n", client_fd, messageSize);
+				spdlog::error("Interactive Server: Something is wrong with the client ID: {} message Size : {}", client_fd, messageSize);
             }
             break;
         }
 
         processMessage_interactive(buffer, messageSize, client_fd);
     }
-    //printf("Debug: Closing client socket and calling pthread_exit in interactive_server.cpp\n");
+
+    spdlog::debug("Closing client socket and calling pthread_exit in interactive_server.cpp");
     closeSocket(client_fd);
-    printf("Terminating interactive server connections\r\n");
+	spdlog::info("Terminating interactive server connections");
     pthread_exit(NULL);
 }
 
@@ -424,7 +422,6 @@ void *handleConnections_interactive(void *arguments)
 //-----------------------------------------------------------------------------
 void startInteractiveServer(int port)
 {
-    unsigned char log_msg[1000];
     int socket_fd, client_fd;
     socket_fd = createSocket_interactive(port);
 
@@ -433,17 +430,15 @@ void startInteractiveServer(int port)
         client_fd = waitForClient_interactive(socket_fd); //block until a client connects
         if (client_fd < 0)
         {
-            sprintf(log_msg, "Interactive Server: Error accepting client!\n");
-            log(log_msg);
+			spdlog::error("Interactive Server: Error accepting client!");
         }
-
         else
         {
             int arguments[1];
             pthread_t thread;
             int ret = -1;
 
-            printf("Interactive Server: Client accepted! Creating thread for the new client ID: %d...\n", client_fd);
+			spdlog::info("Interactive Server: Client accepted! Creating thread for the new client ID: {}", client_fd);
             arguments[0] = client_fd;
             ret = pthread_create(&thread, NULL, handleConnections_interactive, arguments);
             if (ret==0) 
@@ -452,9 +447,16 @@ void startInteractiveServer(int port)
             }
         }
     }
-    printf("Closing socket...");
+
+	spdlog::info("Closing socket...");
     closeSocket(socket_fd);
     closeSocket(client_fd);
-    sprintf(log_msg, "Terminating interactive server thread\r\n");
-    log(log_msg);
+
+	spdlog::info("Terminating interactive server thread");
+}
+
+void initializeLogging(int argc,char **argv)
+{
+    log_sink.reset(new buffered_sink(log_buffer, LOG_BUFFER_SIZE));
+    spdlog::default_logger()->sinks().push_back(log_sink);
 }

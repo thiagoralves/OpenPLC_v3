@@ -31,6 +31,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <spdlog/spdlog.h>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -98,10 +99,8 @@ void searchForIO()
 {
     char path[200];
     char path_fmt[200];
-    unsigned char log_msg[1000];
-    
-    sprintf(log_msg, "Neuron: Searching for I/O...\n");
-    log(log_msg);
+
+	spdlog::info("Neuron: Searching for I/O...");
     
     /* look for digital inputs */
     strcpy(path_fmt, "/sys/devices/platform/unipi_plc/io_group%d/di_%d_%02d/di_value");
@@ -213,8 +212,7 @@ void searchForIO()
     }
     
     /* print found I/Os on console log */
-    sprintf(log_msg, "Neuron: Done!\n\nNeuron Digital Inputs\n");
-    log(log_msg);
+	spdlog::info("Neuron: Done!\n\nNeuron Digital Inputs");
     index = 0;
     while (digital_inputs[index][0] != '\0')
     {
@@ -223,8 +221,7 @@ void searchForIO()
         index++;
     }
     
-    sprintf(log_msg, "\nNeuron Digital Outputs\n");
-    log(log_msg);
+	spdlog::info("Neuron Digital Outputs");
     index = 0;
     while (digital_outputs[index][0] != '\0')
     {
@@ -233,8 +230,7 @@ void searchForIO()
         index++;
     }
     
-    sprintf(log_msg, "\nNeuron Analog Inputs\n");
-    log(log_msg);
+	spdlog::info("Neuron Analog Inputs");
     index = 0;
     while (analog_inputs[index][0] != '\0')
     {
@@ -243,8 +239,7 @@ void searchForIO()
         index++;
     }
     
-    sprintf(log_msg, "\nNeuron Analog Outputs\n");
-    log(log_msg);
+	spdlog::info("Neuron Analog Outputs");
     index = 0;
     while (analog_outputs[index][0] != '\0')
     {

@@ -15,8 +15,6 @@
 #include <cstdint>
 #include <utility>
 
-#include "glue.h"
-
 #include "catch.hpp"
 #include "fakeit.hpp"
 
@@ -24,10 +22,10 @@
 // changes. For now, just include it here so that we can we test it. This is needed
 // because the structure currently depends on a number of globals that make testing
 // a bit hard.
-void log(unsigned char* msg) {}
 void sleep_until(timespec*, int) {}
 bool run_dnp3(false);
 #include "dnp3.cpp"
+#include "glue.h"
 IEC_BOOL* bool_output[BUFFER_SIZE][8];
 IEC_BOOL* bool_input[BUFFER_SIZE][8];
 pthread_mutex_t bufferLock;

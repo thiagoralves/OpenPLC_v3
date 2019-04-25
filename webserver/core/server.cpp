@@ -29,6 +29,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <spdlog/spdlog.h>
 
 #include "ladder.h"
 
@@ -86,7 +87,6 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
 //-----------------------------------------------------------------------------
 int createSocket(int port)
 {
-    unsigned char log_msg[1000];
     int socket_fd;
     struct sockaddr_in server_addr;
 
@@ -94,15 +94,17 @@ int createSocket(int port)
     socket_fd = socket(AF_INET,SOCK_STREAM,0);
     if (socket_fd<0)
     {
-        sprintf(log_msg, "Server: error creating stream socket => %s\n", strerror(errno));
-        log(log_msg);
+        spdlog::error("Server: error creating stream socket => {}", strerror(errno));
         return -1;
     }
     
     //Set SO_REUSEADDR
     int enable = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-        perror("setsockopt(SO_REUSEADDR) failed");
+	  if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) 
+    {
+		    spdlog::error("setsockopt(SO_REUSEADDR) failed");
+	  }
+        
     
     SetSocketBlockingEnabled(socket_fd, false);
 
@@ -115,16 +117,13 @@ int createSocket(int port)
     //Bind socket
     if (bind(socket_fd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0)
     {
-        sprintf(log_msg, "Server: error binding socket => %s\n", strerror(errno));
-        log(log_msg);
+        spdlog::error("Server: error binding socket => {}", strerror(errno));
         return -1;
     }
     
     // we accept max 5 pending connections
     listen(socket_fd,5);
-    sprintf(log_msg, "Server: Listening on port %d\n", port);
-    log(log_msg);
-
+    spdlog::info("Server: Listening on port => {}", port);
     return socket_fd;
 }
 
@@ -145,8 +144,7 @@ int waitForClient(int socket_fd, int protocol_type)
     else if (protocol_type == ENIP_PROTOCOL)
         run_server = &run_enip;
 
-    sprintf(log_msg, "Server: waiting for new client...\n");
-    log(log_msg);
+    spdlog::info("Server: waiting for new client...");
 
     client_len = sizeof(client_addr);
     while (*run_server)
@@ -210,8 +208,7 @@ void *handleConnections(void *arguments)
     else if (protocol_type == ENIP_PROTOCOL)
         run_server = &run_enip;
 
-    sprintf(log_msg, "Server: Thread created for client ID: %d\n", client_fd);
-    log(log_msg);
+	  spdlog::info("Server: Thread created for client ID: {}", client_fd);
 
     while(*run_server)
     {
@@ -224,23 +221,21 @@ void *handleConnections(void *arguments)
             // something has  gone wrong or the client has closed connection
             if (messageSize == 0)
             {
-                sprintf(log_msg, "Server: client ID: %d has closed the connection\n", client_fd);
-                log(log_msg);
+				        spdlog::info("Server: client ID: {} has closed the connection", client_fd);
             }
             else
             {
-                sprintf(log_msg, "Server: Something is wrong with the  client ID: %d message Size : %i\n", client_fd, messageSize);
-                log(log_msg);
+				        spdlog::error("Server: Something is wrong with the  client ID: {} message Size : {}", client_fd, messageSize);
             }
             break;
         }
 
         processMessage(buffer, messageSize, client_fd, protocol_type);
     }
-    //printf("Debug: Closing client socket and calling pthread_exit in server.cpp\n");
+    
+    spdlog::debug("Closing client socket and calling pthread_exit");
     close(client_fd);
-    sprintf(log_msg, "Terminating server connections thread\r\n");
-    log(log_msg);
+	  spdlog::info("Terminating server connections thread");
     pthread_exit(NULL);
 }
 
@@ -270,17 +265,14 @@ void startServer(int port, int protocol_type)
         client_fd = waitForClient(socket_fd, protocol_type); //block until a client connects
         if (client_fd < 0)
         {
-            sprintf(log_msg, "Server: Error accepting client!\n");
-            log(log_msg);
+			      spdlog::info("Server: Error accepting client!");
         }
-
         else
         {
             int arguments[2];
             pthread_t thread;
             int ret = -1;
-            sprintf(log_msg, "Server: Client accepted! Creating thread for the new client ID: %d...\n", client_fd);
-            log(log_msg);
+			      spdlog::info("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
             arguments[0] = client_fd;
             arguments[1] = protocol_type;
             ret = pthread_create(&thread, NULL, handleConnections, (void*)arguments);
@@ -292,6 +284,5 @@ void startServer(int port, int protocol_type)
     }
     close(socket_fd);
     close(client_fd);
-    sprintf(log_msg, "Terminating server thread\r\n");
-    log(log_msg);
+	  spdlog::info("Terminating server thread");
 }

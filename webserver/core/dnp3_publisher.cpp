@@ -14,6 +14,7 @@
 
 #include <asiodnp3/IOutstation.h>
 #include <asiodnp3/UpdateBuilder.h>
+#include <spdlog/spdlog.h>
 
 #include "dnp3_publisher.h"
 #include "glue.h"
@@ -42,6 +43,10 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
     asiodnp3::UpdateBuilder builder;
 
     pthread_mutex_lock(glue_variables->buffer_lock);
+
+	spdlog::trace("Writing glue variables to DNP3 points");
+
+	spdlog::debug("Writing glue variables to DNP3 points");
 
     // Writes data points to the outstation. We support two capabilities here:
     //
