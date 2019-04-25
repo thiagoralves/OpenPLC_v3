@@ -2,11 +2,26 @@ language: bash
 
 services:
   - docker
-  
+
+compiler:
+  - gcc
+
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
     packages:
+      - g++-5
       - doxygen
+      - cmake-data
+      - cmake
+
+before_script:
+  - eval "CC=gcc-5 && CXX=g++-5"
+  - which $CXX
+  - which $CC
+  - $CXX --version
+  - cmake --version
 
 script:
   - docker build .

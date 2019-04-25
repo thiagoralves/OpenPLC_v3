@@ -1,0 +1,2 @@
+[*.{cpp}]
+guidelines = 80, 120

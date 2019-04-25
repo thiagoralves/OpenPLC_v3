@@ -27,6 +27,40 @@
 TIME __CURRENT_TIME;
 extern unsigned long long common_ticktime__;
 
+#ifndef OPLC_IEC_GLUE_VALUE_TYPE
+#define OPLC_IEC_GLUE_VALUE_TYPE
+enum IecGlueValueType {
+	IECVT_BOOL,
+	IECVT_BYTE,
+	IECVT_SINT,
+	IECVT_USINT,
+	IECVT_INT,
+	IECVT_UINT,
+	IECVT_WORD,
+	IECVT_DINT,
+	IECVT_UDINT,
+	IECVT_DWORD,
+	IECVT_REAL,
+	IECVT_LREAL,
+	IECVT_LWORD,
+	IECVT_LINT,
+	IECVT_ULINT,
+	IECVT_UNASSIGNED,
+};
+#endif // OPLC_IEC_GLUE_VALUE_TYPE
+
+#ifndef OPLC_GLUE_VARIABLE
+#define OPLC_GLUE_VARIABLE
+/// Defines the mapping for a glued variable.
+struct GlueVariable {
+	/// The type of the glue variable.
+	IecGlueValueType type;
+	/// A pointer to the memory address for reading/writing the value.
+	void* value;
+};
+#endif // OPLC_GLUE_VARIABLE
+
+
 //Internal buffers for I/O and memory. These buffers are defined in the
 //auto-generated glueVars.cpp file
 #define BUFFER_SIZE		1024
@@ -48,7 +82,6 @@ IEC_UINT *int_memory[BUFFER_SIZE];
 IEC_DINT *dint_memory[BUFFER_SIZE];
 IEC_LINT *lint_memory[BUFFER_SIZE];
 
-
 #define __LOCATED_VAR(type, name, ...) type __##name;
 #include "LOCATED_VARIABLES.h"
 #undef __LOCATED_VAR
@@ -59,6 +92,18 @@ IEC_LINT *lint_memory[BUFFER_SIZE];
 void glueVars()
 {
 }
+
+/// The size of the array of input variables
+extern std::uint16_t const OPLCGLUE_INPUT_SIZE(0);
+GlueVariable oplc_input_vars[] = {
+	{ IECVT_UNASSIGNED, nullptr },
+};
+
+/// The size of the array of output variables
+extern std::uint16_t const  OPLCGLUE_OUTPUT_SIZE(0);
+GlueVariable oplc_output_vars[] = {
+	{ IECVT_UNASSIGNED, nullptr },
+};
 
 void updateTime()
 {

@@ -24,7 +24,7 @@
 //-----------------------------------------------------------------------------
 
 #include <pthread.h>
-#include <stdint.h>
+#include <cstdint>
 
 #define MODBUS_PROTOCOL     0
 #define DNP3_PROTOCOL       1
@@ -82,6 +82,13 @@ extern pthread_mutex_t bufferLock;
 
 //Common task timer
 extern unsigned long long common_ticktime__;
+
+struct GlueVariable;
+
+extern const std::uint16_t OPLCGLUE_INPUT_SIZE;
+extern GlueVariable oplc_input_vars[];
+extern const std::uint16_t OPLCGLUE_OUTPUT_SIZE;
+extern GlueVariable oplc_output_vars[];
 
 //----------------------------------------------------------------------
 //FUNCTION PROTOTYPES
