@@ -884,6 +884,8 @@ settings_tail = """
             var modbus_text = document.getElementById('modbus_server_port');
             var dnp3_checkbox = document.getElementById('dnp3_server');
             var dnp3_text = document.getElementById('dnp3_server_port');
+            var enip_checkbox = document.getElementById('enip_server');
+            var enip_text = document.getElementById('enip_server_port');
             var auto_run_checkbox = document.getElementById('auto_run');
             var auto_run_text = document.getElementById('auto_run_text');
             
@@ -903,6 +905,15 @@ settings_tail = """
             else
             {
                 dnp3_text.disabled = true;
+            }
+            
+            if (enip_checkbox.checked == true)
+            {
+                enip_text.disabled = false;
+            }
+            else
+            {
+                enip_text.disabled = true;
             }
             
             if (auto_run_checkbox.checked == true)
@@ -925,6 +936,11 @@ settings_tail = """
             setupCheckboxes();
         }
         
+        document.getElementById('enip_server').onchange = function()
+        {
+            setupCheckboxes();
+        }
+        
         document.getElementById('auto_run').onchange = function()
         {
             setupCheckboxes();
@@ -936,6 +952,8 @@ settings_tail = """
             var modbus_port = document.forms["uploadForm"]["modbus_server_port"].value;
             var dnp3_checkbox = document.forms["uploadForm"]["dnp3_server"].checked;
             var dnp3_port = document.forms["uploadForm"]["dnp3_server_port"].value;
+            var enip_checkbox = document.forms["uploadForm"]["enip_server"].checked;
+            var enip_port = document.forms["uploadForm"]["enip_server_port"].value;
             
             if (modbus_checkbox && (Number(modbus_port) < 0 || Number(modbus_port) > 65535))
             {
@@ -943,6 +961,11 @@ settings_tail = """
                 return false;
             }
             if (dnp3_checkbox && (Number(dnp3_port) < 0 || Number(dnp3_port) > 65535))
+            {
+                alert("Please select a port number between 0 and 65535");
+                return false;
+            }
+            if (enip_checkbox && (Number(enip_port) < 0 || Number(enip_port) > 65535))
             {
                 alert("Please select a port number between 0 and 65535");
                 return false;

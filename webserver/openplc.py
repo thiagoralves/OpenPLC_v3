@@ -174,6 +174,28 @@ class runtime:
                 s.close()
             except:
                 print("Error connecting to OpenPLC runtime")
+                
+    def start_enip(self, port_num):
+        if (self.status() == "Running"):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect(('localhost', 43628))
+                s.send('start_enip(' + str(port_num) + ')\n')
+                data = s.recv(1000)
+                s.close()
+            except:
+                print("Error connecting to OpenPLC runtime")
+                
+    def stop_enip(self):
+        if (self.status() == "Running"):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect(('localhost', 43628))
+                s.send('stop_enip()\n')
+                data = s.recv(1000)
+                s.close()
+            except:
+                print("Error connecting to OpenPLC runtime")
     
     def logs(self):
         if (self.status() == "Running"):
