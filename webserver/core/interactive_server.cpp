@@ -46,6 +46,8 @@ bool run_modbus = 0;
 int modbus_port = 502;
 bool run_dnp3 = 0;
 int dnp3_port = 20000;
+bool run_enip = 0;
+int enip_port = 44818;
 unsigned char server_command[1024];
 int command_index = 0;
 bool processing_command = 0;
@@ -55,24 +57,20 @@ time_t end_time;
 //Global Threads
 pthread_t modbus_thread;
 pthread_t dnp3_thread;
+pthread_t enip_thread;
+
+//Log Buffer
 #define LOG_BUFFER_SIZE 1000000
 unsigned char log_buffer[LOG_BUFFER_SIZE];
-
 std::shared_ptr<buffered_sink> log_sink;
+
 
 //-----------------------------------------------------------------------------
 // Start the Modbus Thread
 //-----------------------------------------------------------------------------
 void *modbusThread(void *arg)
 {
-    try
-    {
-        startServer(modbus_port);
-    }
-    catch (...)
-    {
-        printf("Exception caught in Modbus thread\r\n");
-    }
+    startServer(modbus_port, MODBUS_PROTOCOL);
 }
 
 //-----------------------------------------------------------------------------
@@ -80,14 +78,15 @@ void *modbusThread(void *arg)
 //-----------------------------------------------------------------------------
 void *dnp3Thread(void *arg)
 {
-    try
-    {
-        dnp3StartServer(dnp3_port);
-    }
-    catch (...)
-    {
-        printf("Exception caught in Modbus thread\r\n");
-    }
+    dnp3StartServer(dnp3_port);
+}
+
+//-----------------------------------------------------------------------------
+// Start the Enip Thread
+//-----------------------------------------------------------------------------
+void *enipThread(void *arg)
+{
+    startServer(enip_port, ENIP_PROTOCOL);
 }
 
 //-----------------------------------------------------------------------------
@@ -288,6 +287,41 @@ void processCommand(unsigned char *buffer, int client_fd)
             run_dnp3 = 0;
             pthread_join(dnp3_thread, NULL);
 			spdlog::info("DNP3 server was stopped");
+        }
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "start_enip(", 11) == 0)
+    {
+        processing_command = true;
+        sprintf(log_msg, "Issued start_enip() command to start on port: %d\n", readCommandArgument(buffer));
+        log(log_msg);
+        enip_port = readCommandArgument(buffer);
+        if (run_enip)
+        {
+            sprintf(log_msg, "EtherNet/IP server already active. Restarting on port: %d\n", enip_port);
+            log(log_msg);
+            //Stop Enip server
+            run_enip = 0;
+            pthread_join(enip_thread, NULL);
+            sprintf(log_msg, "EtherNet/IP server was stopped\n");
+            log(log_msg);
+        }
+        //Start Enip server
+        run_enip = 1;
+        pthread_create(&enip_thread, NULL, enipThread, NULL);
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "stop_enip()", 11) == 0)
+    {
+        processing_command = true;
+        sprintf(log_msg, "Issued stop_enip() command\n");
+        log(log_msg);
+        if (run_enip)
+        {
+            run_enip = 0;
+            pthread_join(enip_thread, NULL);
+            sprintf(log_msg, "EtherNet/IP server was stopped\n");
+            log(log_msg);
         }
         processing_command = false;
     }
