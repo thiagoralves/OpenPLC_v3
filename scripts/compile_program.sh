@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [ $# -eq 0 ]; then
     echo "Error: You must provide a file to be compiled as argument"
     exit 1
@@ -16,18 +17,18 @@ echo $(basename $1) > "$ACTIVE_PROGAM_FILE"
 
 OUT_ST="$BUILD_DIR/opti.st"
 
-mkdir $SRC_GEN_DIR
+mkdir -p $SRC_GEN_DIR
 
 set -x
 
 echo "Optimizing ST program..."
-$BUILD_DIR/st_optimizer "$1" "$OUT_ST"
+$BIN_DIR/st_optimizer "$1" "$OUT_ST"
 echo "Generating C files..."
 
 # Bizzare as the first does not not run on cygwin windows ;-(
 #$BUILD_DIR/iec2c -I "$ETC_DIR/lib" -T $SRC_GEN_DIR "$OUT_ST"
-cd $BUILD_DIR
-./iec2c -I ../etc/lib -T ./src_gen ./opti.st
+cd $BIN_DIR
+./iec2c -I ../../runtime/lib -T ../src_gen ../opti.st
 if [ $? -ne 0 ]; then
     echo "Error generating C files"
     echo "Compilation finished with errors!"
@@ -46,9 +47,11 @@ fi
 #cp $CORE_DIR/interactive_server.cpp $SRC_GEN_DIR
 #cp $CORE_DIR/main.cpp $SRC_GEN_DIR
 cp $CORE_DIR/*.* $SRC_GEN_DIR
+#cp $VENDOR_DIR/spdlog-1.3.1/spdlog/  $SRC_GEN_DIR/spdlog
 
 #copy config
-cp $CORE_DIR/dnp3.cfg $BUILD_DIR
+#cp $CORE_DIR/dnp3.cfg $BUILD_DIR
+#exit 1
 
 #---------------------------------------
 # compile for each platform
@@ -97,9 +100,12 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
         exit 1
     fi
     echo "Generating glueVars..."
-    $BUILD_DIR/glue_generator
+    $BIN_DIR/glue_generator
     echo "Compiling main program..."
-    g++ -std=gnu++11 *.cpp *.o -o $BUILD_DIR/openplc -I $C_LIBS_DIR  -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 *.cpp *.o -o $BIN_DIR/openplc \
+            -I $C_LIBS_DIR \
+            -I $VENDOR_DIR/spdlog-1.3.1 \
+            -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C openplc files"
         echo "Compilation finished with errors!"
@@ -126,7 +132,10 @@ elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     echo "Generating glueVars..."
     $BUILD_DIR/glue_generator
     echo "Compiling main program..."
-    g++ -std=gnu++11 *.cpp *.o -o $BUILD_DIR/openplc -I $C_LIBS_DIR -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 *.cpp *.o -o $BIN_DIR/openplc \
+                        -I $C_LIBS_DIR \
+                        -I $VENDOR_DIR/spdlog-1.3.1/spdlog \
+                        -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"

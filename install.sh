@@ -5,7 +5,9 @@
 HERE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $HERE_DIR/scripts/common.sh
 
-
+mkdir $BUILD_DIR
+mkdir $BIN_DIR
+mkdir $SRC_GEN_DIR
 
 ERROR_MESS="OpenPLC was NOT installed!"
 
@@ -23,7 +25,7 @@ function install_py_deps {
 
 function install_all_libs {
     echo "BUILD_DIR=$BUILD_DIR"
-    mkdir $BUILD_DIR
+
 
     echo ""
     echo "[MATIEC COMPILER]"

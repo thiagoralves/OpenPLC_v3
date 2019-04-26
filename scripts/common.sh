@@ -8,8 +8,9 @@ ROOT_DIR=`realpath $SCRIPTS_DIR/..`
 ETC_DIR="$ROOT_DIR/etc"
 RUNTIME_DIR="$ROOT_DIR/runtime"
 CORE_DIR="$RUNTIME_DIR/core"
-C_LIBS_DIR="$RUNTIME_DIR/lib"
+C_LIBS_DIR="$RUNTIME_DIR/core/lib"
 HARDWARE_DIR="$RUNTIME_DIR/hardware_layers"
+VENDOR_DIR="$RUNTIME_DIR/vendor"
 
 BUILD_DIR="$ROOT_DIR/build"
 BIN_DIR="$ROOT_DIR/build/bin"
