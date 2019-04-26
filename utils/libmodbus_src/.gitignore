@@ -1,0 +1,11 @@
+
+tests/
+build-aux/
+config.h
+config.h.in
+configure
+libmodbus.pc
+libtool
+src/modbus-version.h
+src/win32/modbus.dll.manifest
+stamp-h1

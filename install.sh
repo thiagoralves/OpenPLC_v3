@@ -1,30 +1,20 @@
 #!/bin/bash
-if [ $# -eq 0 ]; then
-    echo ""
-    echo "Error: You must provide a platform name as argument"
-    echo ""
-    echo "Usage: ./install.sh [platform]   where [platform] can be"
-    echo "  win           Install OpenPLC on Windows over Cygwin"
-    echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
-    echo "  docker        Install OpenPLC in a Docker container"
-    echo "  rpi           Install OpenPLC on a Raspberry Pi"
-    echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
-    echo "  custom        Skip all specific package installation and tries to install"
-    echo "                OpenPLC assuming your system already has all dependencies met."
-    echo "                This option can be useful if you're trying to install OpenPLC"
-    echo "                on an unsuported Linux platform or had manually installed"
-    echo "                all the dependency packages before."
-    echo ""
-    exit 1
-fi
 
-set -x 
+#set -x
+
+HERE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source $HERE_DIR/scripts/common.sh
+
+
+
+ERROR_MESS="OpenPLC was NOT installed!"
+
 # arg1: sudo or blank
 function linux_install_deps {
     $1 apt-get update
-    $1 apt-get install -y build-essential pkg-config bison flex autoconf \
-                          automake libtool make git python2.7 python-pip  \
-                          sqlite3 cmake git
+    $1 apt-get install -y build-essential pkg-config bison flex \
+                          autoconf automake libtool make cmake \
+                          sqlite3
 }
 
 function install_py_deps {
@@ -32,78 +22,82 @@ function install_py_deps {
 }
 
 function install_all_libs {
-        echo ""
+    echo "BUILD_DIR=$BUILD_DIR"
+    mkdir $BUILD_DIR
+
+    echo ""
     echo "[MATIEC COMPILER]"
-    cd utils/matiec_src
+    cd $ROOT_DIR/utils/matiec_src
     autoreconf -i
     ./configure
     make
-    cp ./iec2c ../../webserver/
+    cp ./iec2c $BIN_DIR/iec2c
     if [ $? -ne 0 ]; then
         echo "Error compiling MatIEC"
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[ST OPTIMIZER]"
-    cd utils/st_optimizer_src
-    g++ st_optimizer.cpp -o st_optimizer
-    cp ./st_optimizer ../../webserver/
+    cd $ROOT_DIR/utils/st_optimizer_src
+    g++ st_optimizer.cpp -o $BIN_DIR/st_optimizer
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[GLUE GENERATOR]"
-    cd utils/glue_generator_src
-    g++ glue_generator.cpp -o glue_generator
-    cp ./glue_generator ../../webserver/core
+    cd $ROOT_DIR/utils/glue_generator_src
+    g++ glue_generator.cpp -o $BIN_DIR/glue_generator
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[OPEN DNP3]"
-    cd utils/dnp3_src
+    mkdir $BUILD_DIR/dnp3
+    #cd utils/dnp3_src
+    cd $BUILD_DIR/dnp3
     echo "creating swapfile..."
     $1 dd if=/dev/zero of=swapfile bs=1M count=1000
     $1 mkswap swapfile
     $1 swapon swapfile
-    cmake ../dnp3_src
+    #cmake ../dnp3_src
+    cmake $ROOT_DIR/utils/dnp3_src
     make
     $1 make install
     if [ $? -ne 0 ]; then
         echo "Error installing OpenDNP3"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
     $1 ldconfig
     echo "removing swapfile..."
     $1 swapoff swapfile
     $1 rm -f ./swapfile
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[LIBMODBUS]"
-    cd utils/libmodbus_src
+    cd $ROOT_DIR/utils/libmodbus_src
     ./autogen.sh
     ./configure
     $1 make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
     $1 ldconfig
-    cd ../..
+    cd $ROOT_DIR
 
     if [ "$1" == "sudo" ]; then
         echo ""
@@ -123,99 +117,118 @@ WorkingDirectory=$WORKING_DIR\n\
 ExecStart=$WORKING_DIR/start_openplc.sh\n\
 \n\
 [Install]\n\
-WantedBy=multi-user.target" >> openplc.service
-        $1 cp -rf ./openplc.service /lib/systemd/system/
-        rm -rf openplc.service
-        $1 "Enabling OpenPLC Service..."
+WantedBy=multi-user.target" >> $BUILD_DIR/openplc.service
+        $1 cp -rf $BUILD_DIR/openplc.service /lib/systemd/system/
+        rm -rf $BUILD_DIR/openplc.service
+        echo "Enabling OpenPLC Service..."
         $1 systemctl daemon-reload
         $1 systemctl enable openplc
     fi
 }
 
+function print_usage {
+    echo ""
+    echo "Error: You must provide a platform name as argument"
+    echo ""
+    echo "Usage: ./install.sh [platform]  where [platform] can be"
+    echo "  win           Install OpenPLC on Windows over Cygwin"
+    echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
+    echo "  docker        Install OpenPLC in a Docker container"
+    echo "  rpi           Install OpenPLC on a Raspberry Pi"
+    echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
+    echo "  custom        Skip all specific package installation and tries to install"
+    echo "                OpenPLC assuming your system already has all dependencies met."
+    echo "                This option can be useful if you're trying to install OpenPLC"
+    echo "                on an unsuported Linux platform or had manually installed"
+    echo "                all the dependency packages before."
+    echo ""
+    exit 1
+}
+
+##----------------------------------------
+
+if [ $# -eq 0 ]; then
+    print_usage
+fi
 
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
-    cp ./utils/apt-cyg/apt-cyg ./
-    cp ./utils/apt-cyg/wget.exe /bin
-    install apt-cyg /bin
+
+    echo "BUILD_DIR=$BUILD_DIR"
+    mkdir $BUILD_DIR
+
+    #cp ./utils/apt-cyg/apt-cyg ./
+    cp $ROOT_DIR/utils/apt-cyg/wget.exe /bin
+    install $ROOT_DIR/utils/apt-cyg/apt-cyg.sh /bin/apt-cyg
     apt-cyg install lynx
-    rm -f /bin/wget.exe
-    apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3
-    lynx -source https://bootstrap.pypa.io/get-pip.py > get-pip.py
-    python get-pip.py
-    pip install flask
-    pip install flask-login
-    pip install pyserial
+    #rm -f /bin/wget.exe
+    apt-cyg install wget dos2unix gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3
+    lynx -source https://bootstrap.pypa.io/get-pip.py > $BUILD_DIR/get-pip.py
+    python $BUILD_DIR/get-pip.py
+    pip install -r requirements.txt
 
     echo ""
     echo "[MATIEC COMPILER]"
-    cp ./utils/matiec_src/bin_win32/*.* ./webserver/
+    cp $ROOT_DIR/utils/matiec_src/bin_win32/*.* $BIN_DIR
     if [ $? -ne 0 ]; then
         echo "Error compiling MatIEC"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
 
     echo ""
     echo "[ST OPTIMIZER]"
-    cd utils/st_optimizer_src
-    g++ st_optimizer.cpp -o st_optimizer
-    cp ./st_optimizer.exe ../../webserver/
+    cd $ROOT_DIR/utils/st_optimizer_src
+    g++ st_optimizer.cpp -o $BIN_DIR/st_optimizer
+    #cp ./st_optimizer.exe ../../webserver/
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[GLUE GENERATOR]"
-    cd utils/glue_generator_src
-    g++ glue_generator.cpp -o glue_generator
-    cp ./glue_generator.exe ../../webserver/core
+    cd $ROOT_DIR/utils/glue_generator_src
+    g++ glue_generator.cpp -o $BIN_DIR/glue_generator
+    #cp ./glue_generator.exe ../../webserver/core
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
+    # NOTE: dnp3 is not used on windows as it dont compile ;-( (can u help?)
     echo ""
     echo "[OPEN DNP3]"
-    cd webserver/core
-    mv dnp3.cpp dnp3.disabled
+    cp $CORE_DIR/dnp3_dummy.cpp $SRC_GEN/dnp3.cpp
     if [ $? -ne 0 ]; then
         echo "Error disabling OpenDNP3"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
-    mv dnp3_dummy.disabled dnp3_dummy.cpp
-    if [ $? -ne 0 ]; then
-        echo "Error disabling OpenDNP3"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
-    cd ../..
+
 
     echo ""
     echo "[LIBMODBUS]"
-    cd utils/libmodbus_src
+    cd $ROOT_DIR/utils/libmodbus_src
     ./autogen.sh
     ./configure
     make install
     if [ $? -ne 0 ]; then
         echo "Error installing Libmodbus"
-        echo "OpenPLC was NOT installed!"
+        echo "$ERROR_MESS"
         exit 1
     fi
-    cd ../..
+    cd $ROOT_DIR
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
-    ./change_hardware_layer.sh blank
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    #cd webserver/scripts
+    $SCRIPTS_DIR/change_hardware_layer.sh blank
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 elif [ "$1" == "linux" ]; then
@@ -229,10 +242,8 @@ elif [ "$1" == "linux" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 elif [ "$1" == "docker" ]; then
@@ -243,10 +254,8 @@ elif [ "$1" == "docker" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
@@ -261,11 +270,8 @@ elif [ "$1" == "rpi" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
-
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 elif [ "$1" == "neuron" ]; then
@@ -289,10 +295,8 @@ elif [ "$1" == "neuron" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 
@@ -303,25 +307,11 @@ elif [ "$1" == "custom" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    $SCRIPTS_DIR/change_hardware_layer.sh blank_linux
+    $SCRIPTS_DIR/compile_program.sh $BLANK_ST_FILE
 
 
 else
-    echo ""
-    echo "Error: unrecognized platform"
-    echo ""
-    echo "Usage: ./install.sh [platform]   where [platform] can be"
-    echo "  win           Install OpenPLC on Windows over Cygwin"
-    echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
-    echo "  rpi           Install OpenPLC on a Raspberry Pi"
-    echo "  custom        Skip all specific package installation and tries to install"
-    echo "                OpenPLC assuming your system already has all dependencies met."
-    echo "                This option can be useful if you're trying to install OpenPLC"
-    echo "                on an unsuported Linux platform or had manually installed"
-    echo "                all the dependency packages before."
-    echo ""
+    print_usage
     exit 1
 fi

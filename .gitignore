@@ -2,21 +2,78 @@
 # where docs are output to on gitlab.. MUST be named public/
 public/
 
-.sass-cache/
-.idea/
+build/
+swapfile
+
 
 *.pyc
+*.*~
 
-# IDE files for Visual Studio Code and Visual Studio
-CMakeSettings.json
+# IDE files
+*.vscode/
+*.kate-swp
+.sass-cache/
+.idea/
 *.vscode/
 *.vs/
+
+CMakeSettings.json
 
 # Build directories
 **/bin/
 **/build/
 obj/
 
+
 *.o
 *.s
 *.ii
+
+
+## C compiler stuff
+
+Makefile
+Makefile.in
+aclocal.m4
+config.log
+config.status
+.deps/
+.libs/
+autom4te.cache/
+
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+

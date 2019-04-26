@@ -25,7 +25,7 @@ before_script:
 
 script:
   - docker build .
-  - doxygen doxygen.conf
+  #- doxygen doxygen.conf
   
     #deploy:
     #  provider: pages
