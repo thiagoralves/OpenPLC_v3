@@ -233,10 +233,10 @@ if [ "$1" == "win" ]; then
 
 elif [ "$1" == "linux" ]; then
     echo "Installing OpenPLC on Linux"
-    linux_install_deps sudo
+    #linux_install_deps sudo
     
-    install_py_deps
-    install_py_deps sudo
+    #install_py_deps
+    #install_py_deps sudo
 
     install_all_libs sudo
 

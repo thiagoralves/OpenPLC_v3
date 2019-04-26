@@ -37,14 +37,15 @@ fi
 
 
 # Copy cpp files
-cp $CORE_DIR/ladder.h $SRC_GEN_DIR
-cp $CORE_DIR/custom_layer.h $SRC_GEN_DIR
-#cp $CORE_DIR/dnp3.cpp $SRC_GEN_DIR
-cp $CORE_DIR/modbus.cpp $SRC_GEN_DIR
-cp $CORE_DIR/modbus_master.cpp $SRC_GEN_DIR
-cp $CORE_DIR/server.cpp $SRC_GEN_DIR
-cp $CORE_DIR/interactive_server.cpp $SRC_GEN_DIR
-cp $CORE_DIR/main.cpp $SRC_GEN_DIR
+#cp $CORE_DIR/ladder.h $SRC_GEN_DIR
+#cp $CORE_DIR/custom_layer.h $SRC_GEN_DIR
+##cp $CORE_DIR/dnp3.cpp $SRC_GEN_DIR
+#cp $CORE_DIR/modbus.cpp $SRC_GEN_DIR
+#cp $CORE_DIR/modbus_master.cpp $SRC_GEN_DIR
+#cp $CORE_DIR/server.cpp $SRC_GEN_DIR
+#cp $CORE_DIR/interactive_server.cpp $SRC_GEN_DIR
+#cp $CORE_DIR/main.cpp $SRC_GEN_DIR
+cp $CORE_DIR/*.* $SRC_GEN_DIR
 
 #copy config
 cp $CORE_DIR/dnp3.cfg $BUILD_DIR
@@ -71,7 +72,7 @@ if [ "$OPENPLC_PLATFORM" = "win" ]; then
     echo "Generating glueVars..."
     $BUILD_DIR/glue_generator
     echo "Compiling main program..."
-    g++ *.cpp *.o -o $BUILD_DIR/openplc -I $C_LIBS_DIR -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib -lmodbus -w
+    g++ *.cpp *.o -o $BIN_DIR/openplc -I $C_LIBS_DIR -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib -lmodbus -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
