@@ -61,6 +61,11 @@ struct enip_data
 
 thread_local unsigned char enip_session[4];
 
+int respondToError(unsigned char *buffer, int buffer_size, int error_code)
+{
+    return -1;
+}
+
 int parseEnipHeader(unsigned char *buffer, int buffer_size, struct enip_header *header)
 {
     //verify if message is big enough
@@ -92,6 +97,24 @@ int parseEnipHeader(unsigned char *buffer, int buffer_size, struct enip_header *
     return enip_data_size;
 }
 
+int parseEnipData(struct enip_header *header, struct enip_data *data)
+{
+    data->interface_handle = &header->data[0];
+    data->timeout = &header->data[4];
+    data->item_count = &header->data[6];
+    data->item1_id = &header->data[8];
+    data->item1_length = &header->data[10];
+    data->item1_data = &header->data[12];
+    
+    uint16_t item_length = ((uint16_t)data->item1_length[1] << 8) | (uint16_t)data->item1_length[0];
+    
+    data->item2_id = &header->data[12+item_length];
+    data->item2_length = &header->data[14+item_length];
+    data->item2_data = &header->data[16+item_length];
+    
+    return 1;
+}
+
 int registerEnipSession(struct enip_header *header)
 {
     unsigned char r[4];
@@ -114,16 +137,40 @@ int registerEnipSession(struct enip_header *header)
 //-----------------------------------------------------------------------------
 int processEnipMessage(unsigned char *buffer, int buffer_size)
 {
+    int error_code;
     struct enip_header header;
-    if (parseEnipHeader(buffer, buffer_size, &header) < 0)
-        return -1;
+    
+    error_code = parseEnipHeader(buffer, buffer_size, &header);
+    if (error_code < 0)
+        return respondToError(buffer, buffer_size, error_code);
     
     if (header.command[0] == 0x65)
         return registerEnipSession(&header);
     
-    //else if (header.command[0] == 0x6f)
-    //{
+    else if (header.command[0] == 0x6f)
+    {
+        struct enip_data data;
+        error_code = parseEnipData(&header, &data);
+        if (error_code < 0)
+            return respondToError(buffer, buffer_size, error_code);
         
+        if (data.item2_id[0] == 0x91)
+        {
+            //PCCC type 1 - Unknown
+        }
+        else if (data.item2_id[0] == 0xb2)
+        {
+            //PCCC type 2 - Unconnected Data Item
+        }
+        else if (data.item1_id[0] == 0xa1 && data.item2_id[0] == 0xb1)
+        {
+            //PCCC type 3 - Connected Data Item
+        }
+        else
+        {
+            //Unknown type ID. Respond with error_code
+        }
+    }
     
     else
     {
@@ -135,7 +182,7 @@ int processEnipMessage(unsigned char *buffer, int buffer_size)
             p += sprintf(p, "%02x ", (unsigned char)buffer[i]);
         }
         p += sprintf(p, "\n");
-        log(log_msg);
+        printf(log_msg);
         
         return -1;
     }
