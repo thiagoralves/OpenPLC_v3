@@ -93,7 +93,7 @@ void updateTime();
 
 //hardware_layer.cpp
 void initializeHardware();
-void updateBuffersIn();
+uint8_t updateBuffersIn();
 void updateBuffersOut();
 
 //custom_layer.h

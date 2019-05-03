@@ -1,2 +1,17 @@
+# vim temporary files
 *~
 *.swp
+
+# Compilation files
+*.ii
+*.s
+*.o
+*.so
+
+# Python intermediate files
+*.pyc
+
+# Generated scripts and binaries
+start_openplc.sh
+webserver/iec2c
+webserver/st_optimizer

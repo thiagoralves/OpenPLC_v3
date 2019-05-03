@@ -55,7 +55,7 @@ def configure_runtime():
                         openplc_runtime.stop_dnp3()
                 elif (row[0] == "Opcua_port"):
                     if (row[1] != "disabled"):
-                        print("Enabling OPC UA on port" + str(int(row[1])))
+                        print("Enabling OPC UA on port " + str(int(row[1])))
                         openplc_runtime.start_opcua(int(row[1]))
                     else:
                         print('Disabling OPC UA')
@@ -1886,7 +1886,7 @@ if __name__ == '__main__':
                 time.sleep(1)
                 configure_runtime()
             
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+            app.run(debug=False, host='127.0.0.1', threaded=True, port=8080)
         
         except Error as e:
             print("error connecting to the database" + str(e))

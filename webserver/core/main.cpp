@@ -222,13 +222,13 @@ int main(int argc,char **argv)
     //              REAL-TIME INITIALIZATION
     //======================================================
     // Set our thread to real time priority
-    struct sched_param sp;
-    sp.sched_priority = 30;
-    printf("Setting main thread priority to RT\n");
-    if(pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
-    {
-        printf("WARNING: Failed to set main thread to real-time priority\n");
-    }
+    //struct sched_param sp;
+    //sp.sched_priority = 30;
+    //printf("Setting main thread priority to RT\n");
+    //if(pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
+    //{
+    //    printf("WARNING: Failed to set main thread to real-time priority\n");
+    //}
 
     // Lock memory to ensure no swapping is done.
     printf("Locking main thread memory\n");
@@ -242,34 +242,37 @@ int main(int argc,char **argv)
 	printf("Getting current time\n");
 	struct timespec timer_start;
 	clock_gettime(CLOCK_MONOTONIC, &timer_start);
+        uint8_t shouldExecute;
 
 	//======================================================
 	//                    MAIN LOOP
 	//======================================================
 	while(run_openplc)
 	{
-		//make sure the buffer pointers are correct and
-		//attached to the user variables
-		glueVars();
-        
-        querySlaveDevices(); //query data from all slave devices
-		
-		updateBuffersIn(); //read input image
+            //make sure the buffer pointers are correct and
+            //attached to the user variables
+            glueVars();
 
-		pthread_mutex_lock(&bufferLock); //lock mutex
-		updateCustomIn();
-        updateBuffersIn_MB(); //update input image table with data from slave devices
-        handleSpecialFunctions();
-		config_run__(tick++); // execute plc program logic
-		updateCustomOut();
-        updateBuffersOut_MB(); //update slave devices with data from the output image table
-		pthread_mutex_unlock(&bufferLock); //unlock mutex
+            querySlaveDevices(); //query data from all slave devices
+            
+            shouldExecute = updateBuffersIn(); //read input image
 
-		updateBuffersOut(); //write output image
-        
-		updateTime();
+            pthread_mutex_lock(&bufferLock); //lock mutex
+            updateCustomIn();
+            updateBuffersIn_MB(); //update input image table with data from slave devices
+            handleSpecialFunctions();
+            if (shouldExecute) {
+                config_run__(tick++); // execute plc program logic
+            }
+            updateCustomOut();
+            updateBuffersOut_MB(); //update slave devices with data from the output image table
+            pthread_mutex_unlock(&bufferLock); //unlock mutex
 
-		sleep_until(&timer_start, common_ticktime__);
+            updateBuffersOut(); //write output image
+    
+            updateTime();
+
+            sleep_until(&timer_start, common_ticktime__);
 	}
     
     //======================================================

@@ -1,13 +1,14 @@
 #include <Python.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 #include "ladder.h"
 
 #define OPLC_CYCLE              50000000
 
 using namespace std;
+
+static unsigned char log_msg[1000];
 
 /* Booleans */
 static IEC_BOOL last_bool_input[BUFFER_SIZE][8];
@@ -63,8 +64,6 @@ callPythonFunc(PyObject* pObj, const char *funcName, PyObject* pArgs, PyObject *
 void
 opcuaStartServer(int port)
 {
-    time_t timestamp;
-
     Py_Initialize();
     PyObject *pName, *pModule, *pFunc;
     PyObject *pArgs, *pKw, *pValue;
@@ -210,7 +209,8 @@ opcuaStartServer(int port)
             return;
         }
         Py_DECREF(pValue);
-        printf("OPC UA Server Enabled\n");
+        sprintf(log_msg, "OPC UA Server Enabled\n");
+        log(log_msg);
 
         /* Continuously update */
         struct timespec timer_start;
@@ -230,8 +230,8 @@ opcuaStartServer(int port)
                         }
                         Py_DECREF(pValue);
                         if (*bool_input[i][j] != last_bool_input[i][j]) {
-                            timestamp = time(NULL);
-                            printf("%s Bool Input [%d,%d] value changed to %s\n", ctime(&timestamp), i, j, *bool_input[i][j]?"true":"false");
+                            sprintf(log_msg, "Bool Input [%d,%d] value changed to %s\n", i, j, *bool_input[i][j]?"true":"false");
+                            log(log_msg);
                         }
                         last_bool_input[i][j] = *bool_input[i][j];
                     }
@@ -250,8 +250,8 @@ opcuaStartServer(int port)
                         Py_DECREF(pArgs);
                         Py_DECREF(pValue);
                         if (*bool_output[i][j] != last_bool_output[i][j]) {
-                            timestamp = time(NULL);
-                            printf("%s Bool Output [%d,%d] value changed to %s\n", ctime(&timestamp), i, j, *bool_output[i][j]?"true":"false");
+                            sprintf(log_msg, "Bool Output [%d,%d] value changed to %s\n", i, j, *bool_output[i][j]?"true":"false");
+                            log(log_msg);
                         }
                         last_bool_output[i][j] = *bool_output[i][j];
                     }
@@ -259,15 +259,15 @@ opcuaStartServer(int port)
 
                 if (byte_input[i]) {
                     if (*byte_input[i] != last_byte_input[i]) {
-                        timestamp = time(NULL);
-                        printf("%s Byte Input [%d] value changed to %u\n", ctime(&timestamp), i, *byte_input[i]);
+                        sprintf(log_msg, "Byte Input [%d] value changed to %u\n", i, *byte_input[i]);
+                        log(log_msg);
                     }
                     last_byte_input[i] = *byte_input[i];
                 }
                 if (byte_output[i]) {
                     if (*byte_output[i] != last_byte_output[i]) {
-                        timestamp = time(NULL);
-                        printf("%s Byte Output [%d] value changed to %u\n", ctime(&timestamp), i, *byte_output[i]);
+                        sprintf(log_msg, "Byte Output [%d] value changed to %u\n", i, *byte_output[i]);
+                        log(log_msg);
                     }
                     last_byte_output[i] = *byte_output[i];
                 }
@@ -277,8 +277,8 @@ opcuaStartServer(int port)
                     *int_input[i] = (IEC_UINT) PyInt_AsLong(pValue);
                     Py_DECREF(pValue);
                     if (*int_input[i] != last_int_input[i]) {
-                        timestamp = time(NULL);
-                        printf("%s Int Input [%d] value changed to %u\n", ctime(&timestamp), i, *int_input[i]);
+                        sprintf(log_msg, "Int Input [%d] value changed to %u\n", i, *int_input[i]);
+                        log(log_msg);
                     }
                     last_int_input[i] = *int_input[i];
                 }
@@ -290,8 +290,8 @@ opcuaStartServer(int port)
                     Py_DECREF(pArgs);
                     Py_DECREF(pValue);
                     if (*int_output[i] != last_int_output[i]) {
-                        timestamp = time(NULL);
-                        printf("%s Int Output [%d] value changed to %u\n", ctime(&timestamp), i, *int_output[i]);
+                        sprintf(log_msg, "Int Output [%d] value changed to %u\n", i, *int_output[i]);
+                        log(log_msg);
                     }
                     last_int_output[i] = *int_output[i];
                 }

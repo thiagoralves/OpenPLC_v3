@@ -111,6 +111,10 @@ if [ "$1" == "debug" ]; then
     echo ""
     echo "[sysv_ipc]"
     sudo pip install sysv_ipc
+
+    echo ""
+    echo "[jsoncpp]"
+    sudo apt install libjsoncpp-dev
     
     echo ""
     echo "[OPENPLC SERVICE]"

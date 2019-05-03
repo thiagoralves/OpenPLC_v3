@@ -78,7 +78,7 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     echo "Generating glueVars..."
     ./glue_generator
     echo "Compiling main program..."
-    g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -I/usr/include/python2.7 -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lopcuacore -lopcuaprotocol -lopcuaserver -lpython2.7 -w
+    g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -I/usr/include/python2.7 -fpermissive `pkg-config --cflags --libs libmodbus` -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lopcuacore -lopcuaprotocol -lopcuaserver -lpython2.7 -ljsoncpp -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
