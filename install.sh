@@ -61,7 +61,7 @@ function install_all_libs {
     echo ""
     echo "[GLUE GENERATOR]"
     cd utils/glue_generator_src
-    g++ glue_generator.cpp -o glue_generator
+    g++ -std=c++11 glue_generator.cpp -o glue_generator
     cp ./glue_generator ../../webserver/core
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
