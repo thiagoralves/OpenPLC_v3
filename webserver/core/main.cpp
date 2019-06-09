@@ -281,6 +281,7 @@ int main(int argc,char **argv)
     disableOutputs();
     updateCustomOut();
     updateBuffersOut();
+	finalizeHardware();
     printf("Shutting down OpenPLC Runtime...\n");
     exit(0);
 }
