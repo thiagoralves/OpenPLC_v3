@@ -680,6 +680,154 @@ loading logs...
     </script>
 </html>"""
 
+monitoring_head = """
+/* OpenPLC Style */
+        .top {
+            position:absolute;
+            left:0; right:0; top:0;
+            height: 50px;
+            background-color: #1F1F1F;
+            position: fixed;
+            overflow: hidden;
+            z-index: 10
+        }
+        
+        .main {
+            position: absolute;
+            left:0px; top:50px; right:0; bottom:0;
+        }
+        
+        .user {
+            position:absolute;
+            left:75%; right:0; top:0;
+            height: 50px;
+            position: fixed;
+            overflow: hidden;
+            z-index: 11;
+            text-align:right;
+        }
+        
+        .button {
+            background-color: #E02222;
+            border: 1px solid #1F1F1F;
+            border-radius: 4px;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            font-family: "Roboto", sans-serif;
+        }
+        
+        .button:hover {
+            background-color: #B51A1A;
+        }
+        
+        table, h1, h2, h3, p {
+            font-family: "Roboto", sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        td, th {
+            border: 1px solid #cccccc;
+            text-align: left;
+            padding: 8px;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #eeeeee;
+        }
+        
+        tr:hover {
+            cursor: hand;background-color: slategray;
+        }
+        
+        label {
+            font-family: arial, sans-serif;
+        }
+        
+        input[type=text], input[type=password], select, textarea {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: "Roboto", sans-serif;
+        }
+        </style>
+        <body onload='loadData()'>"""
+
+        
+monitoring_tail = """
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    
+    <script>
+        var req;
+        
+        function loadData()
+        {
+            url = 'monitor-update'
+            try
+            {
+                req = new XMLHttpRequest();
+            } catch (e) 
+            {
+                try
+                {
+                    req = new ActiveXObject('Msxml2.XMLHTTP');
+                } catch (e) 
+                {
+                    try 
+                    {
+                        req = new ActiveXObject('Microsoft.XMLHTTP');
+                    } catch (oc) 
+                    {
+                        alert('No AJAX Support');
+                        return;
+                    }
+                }
+            }
+            
+            req.onreadystatechange = processReqChange;
+            req.open('GET', url, true);
+            req.send(null);
+        }
+        
+        function processReqChange()
+        {
+            //If req shows 'complete'
+            if (req.readyState == 4)
+            {
+                mon_table = document.getElementById('monitor_table');
+                
+                //If 'OK'
+                if (req.status == 200)
+                {
+                    //Update table contents
+                    mon_table.innerHTML = req.responseText;
+                    
+                    //Start a new update timer
+                    timeoutID = setTimeout('loadData()', 100);
+                }
+                else
+                {
+                    runtime_logs.value = 'There was a problem retrieving the logs. Error: ' + req.statusText;
+                }
+            }
+        }
+        
+    </script>
+</html>"""
+
 add_user_tail = """
             </div>
             <div style="margin-left:320px; margin-right:70px">
