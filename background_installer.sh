@@ -148,6 +148,7 @@ if [ "$1" == "win" ]; then
     pip install flask
     pip install flask-login
     pip install pyserial
+    pip install pymodbus
 
     echo ""
     echo "[MATIEC COMPILER]"
