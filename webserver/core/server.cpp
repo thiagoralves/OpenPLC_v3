@@ -178,7 +178,7 @@ int listenToClient(int client_fd, unsigned char *buffer)
 //-----------------------------------------------------------------------------
 // Process client's request
 //-----------------------------------------------------------------------------
-void processMessage(unsigned char *buffer, int bufferSize, int client_fd)
+void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int protocol_type)
 {
     if (protocol_type == MODBUS_PROTOCOL)
     {
@@ -249,7 +249,7 @@ void *handleConnections(void *arguments)
 // creates an infinite loop to listen and parse the messages sent by the
 // clients
 //-----------------------------------------------------------------------------
-void startServer(int port)
+void startServer(int port, int protocol_type)
 {
     unsigned char log_msg[1000];
     int socket_fd, client_fd;
@@ -270,7 +270,7 @@ void startServer(int port)
         client_fd = waitForClient(socket_fd, protocol_type); //block until a client connects
         if (client_fd < 0)
         {
-            sprintf(log_msg, "Modbus Server: Error accepting client!\n");
+            sprintf(log_msg, "Server: Error accepting client!\n");
             log(log_msg);
         }
 
@@ -279,7 +279,7 @@ void startServer(int port)
             int arguments[2];
             pthread_t thread;
             int ret = -1;
-            sprintf(log_msg, "Modbus Server: Client accepted! Creating thread for the new client ID: %d...\n", client_fd);
+            sprintf(log_msg, "Server: Client accepted! Creating thread for the new client ID: %d...\n", client_fd);
             log(log_msg);
             arguments[0] = client_fd;
             arguments[1] = protocol_type;
@@ -292,6 +292,6 @@ void startServer(int port)
     }
     close(socket_fd);
     close(client_fd);
-    sprintf(log_msg, "Terminating Modbus thread\r\n");
+    sprintf(log_msg, "Terminating Server thread\r\n");
     log(log_msg);
 }
