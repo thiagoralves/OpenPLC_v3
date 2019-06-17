@@ -26,6 +26,10 @@
 #include <pthread.h>
 #include <stdint.h>
 
+#define MODBUS_PROTOCOL     0
+#define DNP3_PROTOCOL       1
+#define ENIP_PROTOCOL       2
+
 //Internal buffers for I/O and memory. These buffers are defined in the
 //auto-generated glueVars.cpp file
 #define BUFFER_SIZE		1024
@@ -117,7 +121,7 @@ extern int log_index;
 void handleSpecialFunctions();
 
 //server.cpp
-void startServer(int port);
+void startServer(int port, int protocol_type);
 int getSO_ERROR(int fd);
 void closeSocket(int fd);
 bool SetSocketBlockingEnabled(int fd, bool blocking);
@@ -126,12 +130,16 @@ bool SetSocketBlockingEnabled(int fd, bool blocking);
 void startInteractiveServer(int port);
 extern bool run_modbus;
 extern bool run_dnp3;
+extern bool run_enip;
 extern time_t start_time;
 extern time_t end_time;
 
 //modbus.cpp
 int processModbusMessage(unsigned char *buffer, int bufferSize);
 void mapUnusedIO();
+
+//enip.cpp
+int processEnipMessage(unsigned char *buffer, int buffer_size);
 
 //modbus_master.cpp
 void initializeMB();
