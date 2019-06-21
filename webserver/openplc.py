@@ -201,6 +201,28 @@ class runtime:
             except:
                 print("Error connecting to OpenPLC runtime")
     
+    def start_pstorage(self, poll_rate):
+        if (self.status() == "Running"):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect(('localhost', 43628))
+                s.send('start_pstorage(' + str(poll_rate) + ')\n')
+                data = s.recv(1000)
+                s.close()
+            except:
+                print("Error connecting to OpenPLC runtime")
+                
+    def stop_pstorage(self):
+        if (self.status() == "Running"):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect(('localhost', 43628))
+                s.send('stop_pstorage()\n')
+                data = s.recv(1000)
+                s.close()
+            except:
+                print("Error connecting to OpenPLC runtime")
+    
     def logs(self):
         if (self.status() == "Running"):
             try:

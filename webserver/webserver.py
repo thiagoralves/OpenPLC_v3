@@ -61,10 +61,24 @@ def configure_runtime():
                     else:
                         print("Disabling EtherNet/IP")
                         openplc_runtime.stop_enip()
+                elif (row[0] == "Pstorage_polling"):
+                    if (row[1] != "disabled"):
+                        print("Enabling Persistent Storage with polling rate of " + str(int(row[1])) + " seconds")
+                        openplc_runtime.start_pstorage(int(row[1]))
+                    else:
+                        print("Disabling Persistent Storage")
+                        openplc_runtime.stop_pstorage()
+                        delete_persistent_file()
         except Error as e:
             print("error connecting to the database" + str(e))
     else:
         print("Error opening DB")
+
+
+def delete_persistent_file():
+    if (os.path.isfile("persistent.file")):
+        os.remove("persistent.file")
+    print("persistent.file removed!")
 
 
 def generate_mbconfig():
@@ -836,6 +850,7 @@ def compile_program():
         else:
             print("error connecting to the database")
         
+        delete_persistent_file()
         openplc_runtime.compile_program(st_file)
         
         return draw_compiling_page()
@@ -1763,7 +1778,6 @@ def settings():
                 <div style="w3-container">
                     <br>
                     <h2>Settings</h2>
-                    <br>
                     <form id        = "uploadForm"
                         enctype     = "multipart/form-data"
                         action      = "settings"
@@ -1790,6 +1804,8 @@ def settings():
                             dnp3_port = str(row[1])
                         elif (row[0] == "Enip_port"):
                             enip_port = str(row[1])
+                        elif (row[0] == "Pstorage_polling"):
+                            pstorage_poll = str(row[1])
                         elif (row[0] == "Start_run_mode"):
                             start_run = str(row[1])
                         elif (row[0] == "Slave_polling"):
@@ -1861,6 +1877,28 @@ def settings():
                         <br>
                         <br>
                         <label class="container">
+                            <b>Enable Persistent Storage Thread</b>"""
+                            
+                    if (pstorage_poll == 'disabled'):
+                        return_str += """
+                            <input id="pstorage_thread" type="checkbox">
+                            <span class="checkmark"></span>
+                        </label>
+                        <label for='pstorage_thread_poll'><b>Persistent Storage polling rate</b></label>
+                        <input type='text' id='pstorage_thread_poll' name='pstorage_thread_poll' value='10'>"""
+                    else:
+                        return_str += """
+                            <input id="pstorage_thread" type="checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <label for='pstorage_thread_poll'><b>Persistent Storage polling rate</b></label>
+                        <input type='text' id='pstorage_thread_poll' name='pstorage_thread_poll' value='""" + pstorage_poll + "'>"
+                    
+                    return_str += """
+                        <br>
+                        <br>
+                        <br>
+                        <label class="container">
                             <b>Start OpenPLC in RUN mode</b>"""
                             
                     if (start_run == 'false'):
@@ -1878,10 +1916,7 @@ def settings():
                     
                     return_str += """
                         <br>
-                        <br>
-                        <br>
                         <h2>Slave Devices</h2>
-                        <br>
                         <label for='slave_polling_period'><b>Polling Period (ms)</b></label>
                         <input type='text' id='slave_polling_period' name='slave_polling_period' value='""" + slave_polling + "'>"
                     
@@ -1905,6 +1940,7 @@ def settings():
             modbus_port = flask.request.form.get('modbus_server_port')
             dnp3_port = flask.request.form.get('dnp3_server_port')
             enip_port = flask.request.form.get('enip_server_port')
+            pstorage_poll = flask.request.form.get('pstorage_thread_poll')
             start_run = flask.request.form.get('auto_run_text')
             slave_polling = flask.request.form.get('slave_polling_period')
             slave_timeout = flask.request.form.get('slave_timeout')
@@ -1933,6 +1969,13 @@ def settings():
                         conn.commit()
                     else:
                         cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Enip_port'", (str(enip_port),))
+                        conn.commit()
+                        
+                    if (pstorage_poll == None):
+                        cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Pstorage_polling'")
+                        conn.commit()
+                    else:
+                        cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Pstorage_polling'", (str(pstorage_poll),))
                         conn.commit()
                         
                     if (start_run == 'true'):

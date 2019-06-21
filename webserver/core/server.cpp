@@ -84,7 +84,7 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
 // Create the socket and bind it. Returns the file descriptor for the socket
 // created.
 //-----------------------------------------------------------------------------
-int createSocket(int port)
+int createSocket(uint16_t port)
 {
     unsigned char log_msg[1000];
     int socket_fd;
@@ -249,7 +249,7 @@ void *handleConnections(void *arguments)
 // creates an infinite loop to listen and parse the messages sent by the
 // clients
 //-----------------------------------------------------------------------------
-void startServer(int port, int protocol_type)
+void startServer(uint16_t port, int protocol_type)
 {
     unsigned char log_msg[1000];
     int socket_fd, client_fd;
@@ -259,7 +259,7 @@ void startServer(int port, int protocol_type)
     
     if (protocol_type == MODBUS_PROTOCOL)
     {
-        mapUnusedIO();
+        //mapUnusedIO();
         run_server = &run_modbus;
     }
     else if (protocol_type == ENIP_PROTOCOL)

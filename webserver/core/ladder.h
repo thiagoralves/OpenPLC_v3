@@ -121,7 +121,7 @@ extern int log_index;
 void handleSpecialFunctions();
 
 //server.cpp
-void startServer(int port, int protocol_type);
+void startServer(uint16_t port, int protocol_type);
 int getSO_ERROR(int fd);
 void closeSocket(int fd);
 bool SetSocketBlockingEnabled(int fd, bool blocking);
@@ -131,6 +131,8 @@ void startInteractiveServer(int port);
 extern bool run_modbus;
 extern bool run_dnp3;
 extern bool run_enip;
+extern bool run_pstorage;
+extern uint16_t pstorage_polling;
 extern time_t start_time;
 extern time_t end_time;
 
@@ -151,5 +153,5 @@ void updateBuffersOut_MB();
 void dnp3StartServer(int port);
 
 //persistent_storage.cpp
-void *persistentStorage(void *args);
+void startPstorage();
 int readPersistentStorage();
