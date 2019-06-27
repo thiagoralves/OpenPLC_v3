@@ -200,6 +200,7 @@ int main(int argc, char *argv[])
 	}
 	
 	//Finally, this opens/create the file to write the optimized program
+	/*
 	ofstream outfile(argv[2], ios::trunc);
 	if (outfile.is_open())
 	{
@@ -211,4 +212,5 @@ int main(int argc, char *argv[])
 		printf("Couldn't write to output file \"%s\"\r\n", argv[2]);
 		return -1;
 	}
+	*/
 }
