@@ -293,18 +293,15 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "start_enip(", 11) == 0)
     {
         processing_command = true;
-        sprintf(log_msg, "Issued start_enip() command to start on port: %d\n", readCommandArgument(buffer));
-        log(log_msg);
+        spdlog::info("Issued start_enip() command to start on port: {}", readCommandArgument(buffer));
         enip_port = readCommandArgument(buffer);
         if (run_enip)
         {
-            sprintf(log_msg, "EtherNet/IP server already active. Restarting on port: %d\n", enip_port);
-            log(log_msg);
+	    spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
             //Stop Enip server
             run_enip = 0;
             pthread_join(enip_thread, NULL);
-            sprintf(log_msg, "EtherNet/IP server was stopped\n");
-            log(log_msg);
+	    spdlog::info("EtherNet/IP server was stopped");
         }
         //Start Enip server
         run_enip = 1;
@@ -314,14 +311,12 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "stop_enip()", 11) == 0)
     {
         processing_command = true;
-        sprintf(log_msg, "Issued stop_enip() command\n");
-        log(log_msg);
+	    spdlog::info("Issued stop_enip() command");
         if (run_enip)
         {
             run_enip = 0;
             pthread_join(enip_thread, NULL);
-            sprintf(log_msg, "EtherNet/IP server was stopped\n");
-            log(log_msg);
+	    spdlog::info("EtherNet/IP server was stopped");
         }
         processing_command = false;
     }
@@ -339,7 +334,7 @@ void processCommand(unsigned char *buffer, int client_fd)
         processing_command = true;
         time(&end_time);
         count_char = sprintf(buffer, "%llu\n", (unsigned long long)difftime(end_time, start_time));
-        //write(client_fd, buffer, count_char);
+        write(client_fd, buffer, count_char);
         processing_command = false;
         return;
     }
@@ -347,7 +342,7 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         count_char = sprintf(buffer, "Error: unrecognized command\n");
-        //write(client_fd, buffer, count_char);
+        write(client_fd, buffer, count_char);
         processing_command = false;
         return;
     }

@@ -5,7 +5,7 @@
 // You may obtain a copy of the License at
 //
 // http ://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,14 +37,13 @@ Dnp3Publisher::Dnp3Publisher(
 /// Writing to the DNP3 channel happens asynchronously, so completion of this
 /// function doesn't mean anything has been sent.
 /// @return the number of values that were sent to the channel.
-std::uint32_t Dnp3Publisher::WriteToPoints()
-{
+std::uint32_t Dnp3Publisher::WriteToPoints() {
     std::uint32_t num_writes(0);
     asiodnp3::UpdateBuilder builder;
 
-	std::lock_guard<std::mutex> lock(*glue_variables->buffer_lock);
+    std::lock_guard<std::mutex> lock(*glue_variables->buffer_lock);
 
-	spdlog::trace("Writing glue variables to DNP3 points");
+    spdlog::trace("Writing glue variables to DNP3 points");
 
     // Writes data points to the outstation. We support two capabilities here:
     //
@@ -55,16 +54,28 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
     //   it is written to point 5.
 
     // Update Discrete input (Binary input)
-    for (auto i = range.bool_inputs_start; i < range.bool_inputs_end; i++)
-    {
-        builder.Update(Binary(*glue_variables->BoolInputAt(i, 0)), i - range.bool_inputs_offset);
+    for (auto i = range.bool_inputs_start; i < range.bool_inputs_end; i++) {
+        if (glue_variables->BoolInputAt(i, 0) == nullptr) {
+            continue;
+        }
+        auto db_index = i - range.bool_inputs_offset;
+        if (db_index < 0) {
+            continue;
+        }
+        builder.Update(Binary(*glue_variables->BoolInputAt(i, 0)), db_index);
         num_writes += 1;
     }
 
     // Update Coils (Binary Output)
-    for (auto i = range.bool_outputs_start; i < range.bool_outputs_end; i++)
-    {
-        builder.Update(BinaryOutputStatus(*glue_variables->BoolOutputAt(i, 0)), i - range.bool_outputs_offset);
+    for (auto i = range.bool_outputs_start; i < range.bool_outputs_end; i++) {
+        if (glue_variables->BoolOutputAt(i, 0) == nullptr) {
+            continue;
+        }
+        auto db_index = i - range.bool_outputs_offset;
+        if (db_index < 0) {
+            continue;
+        }
+        builder.Update(BinaryOutputStatus(*glue_variables->BoolOutputAt(i, 0)), db_index);
         num_writes += 1;
     }
 
@@ -83,8 +94,7 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
         std::uint16_t point_index = i - range.inputs_offset;
 
         num_writes += 1;
-        switch(glue_variables->inputs[i].type)
-        {
+        switch (glue_variables->inputs[i].type) {
             case IECVT_SINT:
             {
                 IEC_SINT* tval = reinterpret_cast<IEC_SINT*>(value);
@@ -144,24 +154,21 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
         }
     }
 
-	for (auto i = range.outputs_start; i < range.outputs_end; i++)
-    {
-		void* value = glue_variables->outputs[i].value;
-		if (!value)
-        {
-			// If this slot in the glue is not mapped to a memory location, then
-			// it is not a defined address and we must skip it.
-			continue;
-		}
+    for (auto i = range.outputs_start; i < range.outputs_end; i++) {
+        void* value = glue_variables->outputs[i].value;
+        if (!value) {
+            // If this slot in the glue is not mapped to a memory location, then
+            // it is not a defined address and we must skip it.
+            continue;
+        }
 
-		// We allow the user to arbitrarily shift the point index for DNP3. This
-		// might allow someone to have two outstations, both starting at index
-		// 0, but referring to different points.
-		std::uint16_t point_index = i - range.outputs_offset;
+        // We allow the user to arbitrarily shift the point index for DNP3. This
+        // might allow someone to have two outstations, both starting at index
+        // 0, but referring to different points.
+        std::uint16_t point_index = i - range.outputs_offset;
 
-		num_writes += 1;
-		switch (glue_variables->outputs[i].type)
-        {
+        num_writes += 1;
+        switch (glue_variables->outputs[i].type) {
             case IECVT_SINT:
             {
                 IEC_SINT* tval = reinterpret_cast<IEC_SINT*>(value);
@@ -218,8 +225,8 @@ std::uint32_t Dnp3Publisher::WriteToPoints()
                 num_writes -= 1;
                 break;
             }
-		}
-	}
+        }
+    }
 
     outstation->Apply(builder.Build());
 
