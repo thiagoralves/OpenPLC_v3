@@ -5,40 +5,41 @@
 // You may obtain a copy of the License at
 //
 // http ://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_DNP3_H
-#define CORE_DNP3_H
+#ifndef CORE_DNP3_H_
+#define CORE_DNP3_H_
 
 #include <cstdint>
 #include <istream>
 #include <sstream>
+#include <string>
 
 /// Defines an offest mapping for DNP3 to glue variables.
 /// This structure allows you to specify valid ranges for
 /// the glue mapping. This could allow you to divide up
 /// the glue into multiple outstations.
 struct Dnp3Range {
-    std::uint16_t inputs_offset;
     std::uint16_t inputs_start;
     std::uint16_t inputs_end;
+    std::int16_t inputs_offset;
 
-    std::uint16_t outputs_offset;
     std::uint16_t outputs_start;
     std::uint16_t outputs_end;
+    std::int16_t outputs_offset;
 
-    std::uint16_t bool_inputs_offset;
     std::uint16_t bool_inputs_start;
     std::uint16_t bool_inputs_end;
+    std::int16_t bool_inputs_offset;
 
-    std::uint16_t bool_outputs_offset;
     std::uint16_t bool_outputs_start;
     std::uint16_t bool_outputs_end;
+    std::int16_t bool_outputs_offset;
 
     std::string ToString() {
         std::stringstream ss;
@@ -50,4 +51,4 @@ struct Dnp3Range {
     }
 };
 
-#endif // CORE_DNP3_H
+#endif  // CORE_DNP3_H_

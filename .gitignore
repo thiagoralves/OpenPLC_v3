@@ -20,3 +20,6 @@ obj/
 *.o
 *.s
 *.ii
+
+# DNP3 config file
+webserver/core/dnp3.cfg
