@@ -73,6 +73,8 @@ void *modbusThread(void *arg)
     startServer(modbus_port, MODBUS_PROTOCOL);
 }
 
+
+#ifdef OPLC_DNP3
 //-----------------------------------------------------------------------------
 // Start the DNP3 Thread
 //-----------------------------------------------------------------------------
@@ -80,7 +82,7 @@ void *dnp3Thread(void *arg)
 {
     dnp3StartServer(dnp3_port);
 }
-
+#endif
 //-----------------------------------------------------------------------------
 // Start the Enip Thread
 //-----------------------------------------------------------------------------
@@ -260,6 +262,8 @@ void processCommand(unsigned char *buffer, int client_fd)
         }
         processing_command = false;
     }
+
+#ifdef OPLC_DNP3
     else if (strncmp(buffer, "start_dnp3(", 11) == 0)
     {
         processing_command = true;
@@ -290,6 +294,8 @@ void processCommand(unsigned char *buffer, int client_fd)
         }
         processing_command = false;
     }
+#endif
+
     else if (strncmp(buffer, "start_enip(", 11) == 0)
     {
         processing_command = true;
@@ -297,11 +303,11 @@ void processCommand(unsigned char *buffer, int client_fd)
         enip_port = readCommandArgument(buffer);
         if (run_enip)
         {
-	    spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
+	        spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
             //Stop Enip server
             run_enip = 0;
             pthread_join(enip_thread, NULL);
-	    spdlog::info("EtherNet/IP server was stopped");
+	        spdlog::info("EtherNet/IP server was stopped");
         }
         //Start Enip server
         run_enip = 1;
@@ -316,7 +322,7 @@ void processCommand(unsigned char *buffer, int client_fd)
         {
             run_enip = 0;
             pthread_join(enip_thread, NULL);
-	    spdlog::info("EtherNet/IP server was stopped");
+	        spdlog::info("EtherNet/IP server was stopped");
         }
         processing_command = false;
     }

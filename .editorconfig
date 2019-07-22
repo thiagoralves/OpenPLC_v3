@@ -1,2 +1,12 @@
 [*.{cpp}]
 guidelines = 80, 120
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.sh]
+end_of_line = lf
+
+# For the CMake files
+[*.txt]
+indent_style = space
+indent_size = 4
