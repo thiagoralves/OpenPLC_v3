@@ -3,8 +3,11 @@ import subprocess
 import socket
 import errno
 import time
+import os
 from threading import Thread
 from Queue import Queue, Empty
+
+self_path = os.path.dirname(__file__)
 
 intervals = (
     ('weeks', 604800),  # 60 * 60 * 24 * 7
@@ -76,7 +79,7 @@ class runtime:
     
     def start_runtime(self):
         if (self.status() == "Stopped"):
-            a = subprocess.Popen(['./core/openplc'])
+            a = subprocess.Popen(['../runtime/core/openplc'])
             self.runtime_status = "Running"
     
     def stop_runtime(self):
@@ -99,7 +102,11 @@ class runtime:
         global compilation_status_str
         global compilation_object
         compilation_status_str = ""
-        a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        compile_program_path = os.path.abspath(os.path.join(self_path, '..', 'scripts', 'compile_program.sh'))
+        a = subprocess.Popen([compile_program_path, str(st_file)],
+                             cwd=self_path,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
         compilation_object = NonBlockingStreamReader(a.stdout)
     
     def compilation_status(self):

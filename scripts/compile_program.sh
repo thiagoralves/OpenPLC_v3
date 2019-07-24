@@ -7,12 +7,12 @@ fi
 #move into the scripts folder if you're not there already
 cd scripts &>/dev/null
 
-OPENPLC_PLATFORM=$(cat openplc_platform)
-echo "compiling program for"
-echo $OPENPLC_PLATFORM
+OPENPLC_PLATFORM=$(cat ../etc/openplc_platform)
+echo "compiling program for $OPENPLC_PLATFORM"
+echo ""
     
 if [ "$OPENPLC_PLATFORM" = "linux" ]; then
-    cd ../../build
+    cd ../build
     cmake .. -DOPLC_BUILD_SOURCE=ON -Dprogram_name=$1
     make
     if [ $? -ne 0 ]; then
@@ -23,8 +23,8 @@ if [ "$OPENPLC_PLATFORM" = "linux" ]; then
     exit 0
     
 elif [ "$OPENPLC_PLATFORM" = "win" ]; then
-    cd ../../build
-    cmake .. -DOPLC_BUILD_SOURCE=ON -Dprogram_name=$1 -DOPLC_PLATFORM_WIN=ON
+    cd ../build
+    cmake .. -DOPLC_BUILD_SOURCE=ON -Dprogram_name=$1
     make
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
@@ -35,7 +35,7 @@ elif [ "$OPENPLC_PLATFORM" = "win" ]; then
 
 elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     
-    cd ../../build
+    cd ../build
     cmake .. -DOPLC_BUILD_SOURCE=ON -Dprogram_name=$1 -DOPLC_PLATFORM_RPI=ON
     make
     
@@ -47,8 +47,10 @@ elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     echo "Compilation finished successfully!"
     exit 0
 
+
 else
     echo "Error: Undefined platform! OpenPLC can only compile for Windows, Linux and Raspberry Pi environments"
     echo "Compilation finished with errors!"
     exit 1
 fi
+

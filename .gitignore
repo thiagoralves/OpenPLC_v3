@@ -13,8 +13,8 @@ CMakeSettings.json
 *.vs/
 
 # Build directories
-**/bin/
-**/build/
+/bin/
+/build/
 obj/
 
 *.o
@@ -23,3 +23,19 @@ obj/
 
 # DNP3 config file
 webserver/core/dnp3.cfg
+
+# Dependency source files
+utils/
+
+# Intellectual property
+etc/
+
+# Misc
+runtime/glue_generator*
+runtime/iec2c*
+runtime/libgcc*
+runtime/libstdc*
+runtime/st_optimizer*
+runtime/core/openplc*
+runtime/crosscompile_w32.txt
+install_log.txt

@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [ $# -eq 0 ]; then
     echo ""
     echo "Error: You must provide a platform name as argument"
@@ -17,6 +18,14 @@ if [ $# -eq 0 ]; then
     echo ""
     exit 1
 fi
+
+touch etc/Config0.c
+touch etc/Res0.c
+touch etc/glueVars.cpp
+touch etc/oplc_platform
+touch etc/openplc_driver
+touch etc/active_program
+cp webserver/openplc.db ./etc/
 
 # arg1: sudo or blank
 function linux_install_deps {
@@ -45,7 +54,6 @@ function OPLC_background_service {
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
      fileformat=unix
-    cp ./utils/matiec_src/bin_win32/*.* ./webserver/
     cp ./utils/apt-cyg/apt-cyg ./
     cp ./utils/apt-cyg/wget.exe /bin
     install apt-cyg /bin
@@ -59,9 +67,12 @@ if [ "$1" == "win" ]; then
     pip install flask-login
     pip install pyserial
     
+    rm apt-cyg
+    rm get-pip.py
+
     mkdir build
     cd build
-    cmake .. -DOPLC_ALL=ON -DOPLC_PLATFORM_WIN=ON
+    cmake .. -DOPLC_ALL=ON
     make
     
     if [ $? -ne 0 ]; then
@@ -70,7 +81,7 @@ if [ "$1" == "win" ]; then
     fi
     echo "Compilation finished successfully!"
     
-    cd ../webserver/scripts
+    cd ../scripts
     ./change_hardware_layer.sh blank
 
 elif [ "$1" == "linux" ]; then
@@ -97,7 +108,7 @@ elif [ "$1" == "linux" ]; then
         OPLC_background_service sudo
     fi
     
-    cd ../webserver/scripts
+    cd ../scripts
     ./change_hardware_layer.sh blank_linux
 
 elif [ "$1" == "docker" ]; then
@@ -119,7 +130,7 @@ elif [ "$1" == "docker" ]; then
     fi
     echo "Compilation finished successfully!"
     
-    cd ../webserver/scripts
+    cd ../scripts
     ./change_hardware_layer.sh blank_linux
     
 
@@ -146,7 +157,7 @@ elif [ "$1" == "rpi" ]; then
     OPLC_background_service sudo
     fi
     
-    cd ../webserver/scripts
+    cd ../scripts
     ./change_hardware_layer.sh blank_linux
     
 
@@ -181,7 +192,7 @@ elif [ "$1" == "neuron" ]; then
         OPLC_background_service sudo
     fi
     
-    cd ../webserver/scripts
+    cd ../scripts
     ./change_hardware_layer.sh blank_linux
     
 elif [ "$1" == "custom" ]; then
@@ -199,7 +210,7 @@ elif [ "$1" == "custom" ]; then
     fi
     echo "Compilation finished successfully!"
     
-    cd ../webserver/scripts
+    cd ../scripts
     ./change_hardware_layer.sh blank_linux
 
 else

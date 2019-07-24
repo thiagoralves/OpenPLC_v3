@@ -5,3 +5,7 @@
 *.pc.in   text eol=lf
 *.h.in    text eol=lf
 *.am      text eol=lf
+*.mk      text eol=lf
+*.def     text eol=lf
+*.yy      text eol=lf
+*.ll      text eol=lf
