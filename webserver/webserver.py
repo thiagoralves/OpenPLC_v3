@@ -1,3 +1,21 @@
+# -----------------------------------------------------------------------------
+# Copyright 2015 Thiago Alves
+# This file is part of the OpenPLC Software Stack.
+
+# OpenPLC is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# OpenPLC is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with OpenPLC.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------------
+
 import sqlite3
 from sqlite3 import Error
 import os
@@ -1345,8 +1363,9 @@ def hardware():
             with open(program_dir) as f: current_program = f.read()
             with open('../runtime/core/custom_layer.h', 'w+') as f: f.write(custom_layer_code)
             
-            change_hardware_path = os.path.abspath(os.path.join(self_path, '..', 'scripts', 'change_hardware_layer.sh'))
-            subprocess.call([change_hardware_path, hardware_layer], cwd=self_path)
+            scripts_path = os.path.abspath(os.path.join(self_path, '..', 'scripts'))
+            change_hardware_path = os.path.join(scripts_path, 'change_hardware_layer.sh')
+            subprocess.call([change_hardware_path, hardware_layer], cwd=scripts_path)
             return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
         
         return return_str

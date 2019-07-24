@@ -132,85 +132,87 @@ file(GLOB oplc_SRC runtime/core/dnp3_publisher.cpp runtime/core/dnp3_receiver.cp
 # all the right symbols are defined. From this, we can ensure that everything
 # builds nicely together.
 if (OPLC_NOOP_APP)
-    file(GLOB oplcnoop_SRC webserver/example/*.cpp)
-    add_executable(oplcnoop ${oplc_SRC} webserver/example/noop.cpp webserver/core/hardware_layers/blank.cpp webserver/core/main.cpp webserver/core/interactive_server.cpp webserver/core/server.cpp webserver/core/modbus.cpp webserver/core/modbus_master.cpp webserver/core/enip.cpp webserver/example/Config0.cpp)
+    file(GLOB oplcnoop_SRC runtime/example/*.cpp)
+    add_executable(oplcnoop ${oplc_SRC} runtime/example/noop.cpp runtime/hardware_layers/blank.cpp runtime/core/main.cpp runtime/core/interactive_server.cpp runtime/core/server.cpp runtime/core/modbus.cpp runtime/core/modbus_master.cpp runtime/example/Config0.cpp)
     add_dependencies(oplcnoop libmodbus_proj)
     target_link_libraries(oplcnoop LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 
 # Unit tests for the OpenPLC runtime.
 if(OPLC_UNITTEST)
-    file(GLOB oplctest_SRC webserver/test/*.cpp)
-    add_executable(oplctest ${oplctest_SRC} webserver/core/dnp3_publisher.cpp webserver/core/dnp3_receiver.cpp)
+    set(CMAKE_BUILD_TYPE Debug)
+    file(GLOB oplctest_SRC runtime/test/*.cpp)
+    add_executable(oplctest ${oplctest_SRC} runtime/core/dnp3_publisher.cpp runtime/core/dnp3_receiver.cpp)
     target_link_libraries(oplctest LINK_PUBLIC asiodnp3 ${OPLC_PTHREAD})
 endif()
 
 # Default application built for blank (Linux)
 if(OPLC_BLANK_LIB)
-    add_library(oplcblank ${oplc_SRC} webserver/core/hardware_layers/blank.cpp)
+    add_library(oplcblank ${oplc_SRC} runtime/hardware_layers/blank.cpp)
     target_link_libraries(oplcblank LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 
 # Default application built for Neuron
 if(OPLC_NEURON_LIB)
-    add_library(oplcneuron ${oplc_SRC} webserver/core/hardware_layers/neuron.cpp)
+    add_library(oplcneuron ${oplc_SRC} runtime/core/hardware_layers/neuron.cpp)
     target_link_libraries(oplcneuron LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 
 # Default application built for Pixtend
 if(OPLC_PIXTEND_LIB)
-    add_library(oplcpixtend ${oplc_SRC} webserver/core/hardware_layers/pixtend.cpp)
-    target_include_directories(oplcpixtend SYSTEM PUBLIC webserver/test/mock_headers)
+    add_library(oplcpixtend ${oplc_SRC} runtime/hardware_layers/pixtend.cpp)
+    target_include_directories(oplcpixtend SYSTEM PUBLIC runtime/test/mock_headers)
     target_link_libraries(oplcpixtend LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
+
 endif()
 
 # Default application built for Pixtend2L
 if(OPLC_PIXTEND2L_LIB)
-    add_library(oplcpixtend2l ${oplc_SRC} webserver/core/hardware_layers/pixtend2l.cpp)
-    target_include_directories(oplcpixtend2l SYSTEM PUBLIC webserver/test/mock_headers)
+    add_library(oplcpixtend2l ${oplc_SRC} runtime/hardware_layers/pixtend2l.cpp)
+    target_include_directories(oplcpixtend2l SYSTEM PUBLIC runtime/test/mock_headers)
     target_link_libraries(oplcpixtend2l LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 
 
 # Default application built for Pixtend2S
 if(OPLC_PIXTEND2S_LIB)
-    add_library(oplcpixtend2s ${oplc_SRC} webserver/core/hardware_layers/pixtend2s.cpp)
-    target_include_directories(oplcpixtend2s SYSTEM PUBLIC webserver/test/mock_headers)
+    add_library(oplcpixtend2s ${oplc_SRC} runtime/hardware_layers/pixtend2s.cpp)
+    target_include_directories(oplcpixtend2s SYSTEM PUBLIC runtime/test/mock_headers)
     target_link_libraries(oplcpixtend2s LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 
 # Default application built for RaspberryPI
 if(OPLC_RASPERBERRYPI_LIB)
-    add_library(oplcraspberrypi ${oplc_SRC} webserver/core/hardware_layers/raspberrypi.cpp)
-    target_include_directories(oplcraspberrypi SYSTEM PUBLIC webserver/test/mock_headers)
+    add_library(oplcraspberrypi ${oplc_SRC} runtime/hardware_layers/raspberrypi.cpp)
+    target_include_directories(oplcraspberrypi SYSTEM PUBLIC runtime/test/mock_headers)
     target_link_libraries(oplcraspberrypi LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 
 # Default application built for RaspberryPI (Old)
 if(OPLC_RASPERBERRYPIOLD_LIB)
-    add_library(oplcraspberrypiold ${oplc_SRC} webserver/core/hardware_layers/raspberrypi_old.cpp)
-    target_include_directories(oplcraspberrypiold SYSTEM PUBLIC webserver/test/mock_headers)
+    add_library(oplcraspberrypiold ${oplc_SRC} runtime/hardware_layers/raspberrypi_old.cpp)
+    target_include_directories(oplcraspberrypiold SYSTEM PUBLIC runtime/test/mock_headers)
     target_link_libraries(oplcraspberrypiold LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 
 # Default application built for Simulink
 if(OPLC_SIMULINK_LIB)
-    add_library(oplcsimulink ${oplc_SRC} webserver/core/hardware_layers/simulink.cpp)
-    target_include_directories(oplcsimulink SYSTEM PUBLIC webserver/test/mock_headers)
+    add_library(oplcsimulink ${oplc_SRC} runtime/hardware_layers/simulink.cpp)
+    target_include_directories(oplcsimulink SYSTEM PUBLIC runtime/test/mock_headers)
     target_link_libraries(oplcsimulink LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 
 # Default application built for UniPI
 if(OPLC_UNIPI_LIB)
-    add_library(oplcunipi ${oplc_SRC} webserver/core/hardware_layers/unipi.cpp)
-    target_include_directories(oplcunipi SYSTEM PUBLIC webserver/test/mock_headers)
+    add_library(oplcunipi ${oplc_SRC} runtime/hardware_layers/unipi.cpp)
+    target_include_directories(oplcunipi SYSTEM PUBLIC runtime/test/mock_headers)
     target_link_libraries(oplcunipi LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 
 # Default application built for Fischertechnik 
 if(OPLC_FISCHERTECHNIK_LIB)
-    add_library(oplcfischertechnik ${oplc_SRC} webserver/core/hardware_layers/fischertechnik.cpp)
-    target_include_directories(oplcfischertechnik SYSTEM PUBLIC webserver/test/mock_headers)
+    add_library(oplcfischertechnik ${oplc_SRC} runtime/hardware_layers/fischertechnik.cpp)
+    target_include_directories(oplcfischertechnik SYSTEM PUBLIC runtime/test/mock_headers)
     target_link_libraries(oplcfischertechnik LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
 endif()
 

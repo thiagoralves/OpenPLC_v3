@@ -46,7 +46,7 @@ SCENARIO("Commmand line", "[main]") {
         }
 
         WHEN("--help command line arguments") {
-            const char* args[2] = { "glue_generator", "-h" };
+            const char* args[2] = { "glue_generator", "--help" };
             REQUIRE(mainImpl(2, args) == 0);
         }
     }
