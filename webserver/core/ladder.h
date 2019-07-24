@@ -96,9 +96,10 @@ extern GlueVariable oplc_output_vars[];
 //----------------------------------------------------------------------
 
 //MatIEC Compiler
-void config_run__(unsigned long tick);
-void config_init__(void);
-
+extern "C" {
+    void config_run__(unsigned long tick);  
+    void config_init__(void);
+}
 //glueVars.cpp
 void glueVars();
 void updateTime();
@@ -152,8 +153,10 @@ void *querySlaveDevices(void *arg);
 void updateBuffersIn_MB();
 void updateBuffersOut_MB();
 
+#ifdef OPLC_DNP3
 //dnp3.cpp
 void dnp3StartServer(int port);
+#endif
 
 //persistent_storage.cpp
 void *persistentStorage(void *args);

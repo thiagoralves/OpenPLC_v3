@@ -581,7 +581,7 @@ static inline STRING __time_to_string(TIME IN){
     div_t days;
     /*t#5d14h12m18s3.5ms*/
     res = __INIT_STRING;
-    days = div((int &)IN.tv_sec, SECONDS_PER_DAY);
+    days = div((int)IN.tv_sec, SECONDS_PER_DAY);
     if(!days.rem && IN.tv_nsec == 0){
         res.len = snprintf((char*)&res.body, STR_MAX_LEN, "T#%dd", days.quot);
     }else{
