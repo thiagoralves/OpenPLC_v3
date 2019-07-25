@@ -30,8 +30,6 @@
 
 #include "ladder.h"
 
-#define MAX_OUTPUT      16
-#define MAX_MODBUS      100
 #define NET_BUFFER_SIZE 10000
 
 
@@ -129,7 +127,6 @@ int createSocket(int port)
 //-----------------------------------------------------------------------------
 int waitForClient(int socket_fd, int protocol_type)
 {
-    unsigned char log_msg[1000];
     int client_fd;
     struct sockaddr_in client_addr;
     bool *run_server;
@@ -191,7 +188,6 @@ void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int pr
 //-----------------------------------------------------------------------------
 void *handleConnections(void *arguments)
 {
-    unsigned char log_msg[1000];
     int *args = (int *)arguments;
     int client_fd = args[0];
     int protocol_type = args[1];
@@ -204,7 +200,7 @@ void *handleConnections(void *arguments)
     else if (protocol_type == ENIP_PROTOCOL)
         run_server = &run_enip;
 
-	  spdlog::info("Server: Thread created for client ID: {}", client_fd);
+	spdlog::info("Server: Thread created for client ID: {}", client_fd);
 
     while(*run_server)
     {
@@ -242,7 +238,6 @@ void *handleConnections(void *arguments)
 //-----------------------------------------------------------------------------
 void startServer(int port, int protocol_type)
 {
-    unsigned char log_msg[1000];
     int socket_fd, client_fd;
     bool *run_server;
     
@@ -280,5 +275,5 @@ void startServer(int port, int protocol_type)
     }
     close(socket_fd);
     close(client_fd);
-	  spdlog::info("Terminating server thread");
+	spdlog::info("Terminating server thread");
 }

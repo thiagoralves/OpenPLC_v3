@@ -61,7 +61,6 @@ pthread_t enip_thread;
 unsigned char log_buffer[LOG_BUFFER_SIZE];
 std::shared_ptr<buffered_sink> log_sink;
 
-
 //-----------------------------------------------------------------------------
 // Start the Modbus Thread
 //-----------------------------------------------------------------------------
@@ -323,6 +322,36 @@ void processCommand(unsigned char *buffer, int client_fd)
         }
         processing_command = false;
     }
+    else if (strncmp(buffer, "start_enip(", 11) == 0)
+    {
+        processing_command = true;
+        enip_port = readCommandArgument(buffer);
+        spdlog::info("Issued start_enip() command to start on port: {}", enip_port);
+        if (run_enip)
+        {
+            spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
+            //Stop Enip server
+            run_enip = 0;
+            pthread_join(enip_thread, NULL);
+            spdlog::info("EtherNet/IP server was stopped");
+        }
+        //Start Enip server
+        run_enip = 1;
+        pthread_create(&enip_thread, NULL, enipThread, NULL);
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "stop_enip()", 11) == 0)
+    {
+        processing_command = true;
+        spdlog::info("Issued stop_enip() command");
+        if (run_enip)
+        {
+            run_enip = 0;
+            pthread_join(enip_thread, NULL);
+            spdlog::info("EtherNet/IP server was stopped");
+        }
+        processing_command = false;
+    }
     else if (strncmp(buffer, "runtime_logs()", 14) == 0)
     {
         processing_command = true;
@@ -449,7 +478,6 @@ void startInteractiveServer(int port)
 	spdlog::info("Closing socket...");
     closeSocket(socket_fd);
     closeSocket(client_fd);
-
 	spdlog::info("Terminating interactive server thread");
 }
 
