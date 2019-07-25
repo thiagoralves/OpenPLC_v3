@@ -67,7 +67,8 @@ if [ "$1" == "win" ]; then
     pip install flask
     pip install flask-login
     pip install pyserial
-    
+    pip install pymodbus
+
     rm apt-cyg
     rm get-pip.py
 
