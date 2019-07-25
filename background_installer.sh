@@ -60,7 +60,8 @@ if [ "$1" == "win" ]; then
     apt-cyg update
     apt-cyg install lynx
     rm -f /bin/wget.exe
-    apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3 bison
+    apt-cyg remove wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3
+    apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3
     lynx -source https://bootstrap.pypa.io/get-pip.py > get-pip.py
     python get-pip.py
     pip install flask
