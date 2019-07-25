@@ -36,7 +36,10 @@ function linux_install_deps {
 }
 
 function install_py_deps {
-    $1 pip install -r requirements.txt
+    $1 pip install flask
+    $1 pip install flask-login
+    $1 pip install pyserial
+    $1 pip install pymodbus
 }
 
 function OPLC_background_service {
