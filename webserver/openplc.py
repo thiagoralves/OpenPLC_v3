@@ -97,7 +97,7 @@ class runtime:
     
     def start_runtime(self):
         if (self.status() == "Stopped"):
-            a = subprocess.Popen(['../runtime/core/openplc'])
+            self.theprocess = subprocess.Popen(['./runtime/core/openplc'])  # XXX: iPAS
             self.runtime_status = "Running"
     
     def stop_runtime(self):
@@ -109,6 +109,10 @@ class runtime:
                 data = s.recv(1000)
                 s.close()
                 self.runtime_status = "Stopped"
+
+                while self.theprocess.poll() is None:  # XXX: iPAS, to prevent the defunct killed process.
+                    time.sleep(1)  # https://www.reddit.com/r/learnpython/comments/776r96/defunct_python_process_when_using_subprocesspopen/
+
             except socket.error as serr:
                 print("Failed to stop the runtime. Error: " + str(serr))
     

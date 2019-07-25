@@ -30,7 +30,6 @@
 
 #include "ladder.h"
 
-#define MAX_INPUT       16
 #define MAX_OUTPUT      16
 #define MAX_MODBUS      100
 #define NET_BUFFER_SIZE 10000

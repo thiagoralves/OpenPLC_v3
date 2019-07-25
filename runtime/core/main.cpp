@@ -245,5 +245,6 @@ int main(int argc,char **argv)
     updateCustomOut();
     updateBuffersOut();
 	spdlog::debug("Shutting down OpenPLC Runtime...");
+	finalizeHardware();
     exit(0);
 }

@@ -54,6 +54,14 @@ void initializeHardware()
 	}
 }
 
+//-----------------------------------------------------------------------------
+// This function is called by the main OpenPLC routine when it is finalizing.
+// Resource clearing procedures should be here.
+//-----------------------------------------------------------------------------
+void finalizeHardware()
+{
+}
+
 void sendOutput(unsigned char *sendBytes, unsigned char *recvBytes)
 {
 	long serialTimer;

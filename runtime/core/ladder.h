@@ -101,6 +101,7 @@ void updateTime();
 
 //hardware_layer.cpp
 void initializeHardware();
+void finalizeHardware();
 void updateBuffersIn();
 void updateBuffersOut();
 

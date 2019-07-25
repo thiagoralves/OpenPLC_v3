@@ -263,6 +263,14 @@ void initializeHardware()
 }
 
 //-----------------------------------------------------------------------------
+// This function is called by the main OpenPLC routine when it is finalizing.
+// Resource clearing procedures should be here.
+//-----------------------------------------------------------------------------
+void finalizeHardware()
+{
+}
+
+//-----------------------------------------------------------------------------
 // This function is called by the OpenPLC in a loop. Here the internal buffers
 // must be updated to reflect the actual Input state. The mutex bufferLock
 // must be used to protect access to the buffers on a threaded environment.
