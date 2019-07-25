@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissionsand
 # limitations under the License.
 
-if (UNIX)
-    message("PLATFORM: LINUX")
-
-    set(OPLC_PTHREAD pthread)
-    find_package(Threads)
-
-    SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fpermissive")
-
-    set(PLATFORM_EXTENSION "")
+if (WIN32)
+    message("PLATFORM: WINDOWS")
+    set(OPLC_MATIEC OFF)
+    set(PLATFORM_EXTENSION ".exe")
 endif()
