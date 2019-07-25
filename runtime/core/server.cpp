@@ -256,14 +256,14 @@ void startServer(int port, int protocol_type)
         client_fd = waitForClient(socket_fd, protocol_type); //block until a client connects
         if (client_fd < 0)
         {
-			      spdlog::info("Server: Error accepting client!");
+			spdlog::info("Server: Error accepting client!");
         }
         else
         {
             int arguments[2];
             pthread_t thread;
             int ret = -1;
-			      spdlog::info("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
+			spdlog::info("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
             arguments[0] = client_fd;
             arguments[1] = protocol_type;
             ret = pthread_create(&thread, NULL, handleConnections, (void*)arguments);
