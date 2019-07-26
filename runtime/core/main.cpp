@@ -177,7 +177,9 @@ int main(int argc,char **argv)
     //======================================================
     //          PERSISTENT STORAGE INITIALIZATION
     //======================================================
-    //readPersistentStorage();
+    glueVars();
+    mapUnusedIO();
+    readPersistentStorage();
     //pthread_t persistentThread;
     //pthread_create(&persistentThread, NULL, persistentStorage, NULL);
 
