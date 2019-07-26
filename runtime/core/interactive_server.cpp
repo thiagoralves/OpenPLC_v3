@@ -40,11 +40,13 @@
 
 //Global Variables
 bool run_modbus = 0;
-int modbus_port = 502;
+uint16_t modbus_port = 502;
 bool run_dnp3 = 0;
-int dnp3_port = 20000;
+uint16_t dnp3_port = 20000;
 bool run_enip = 0;
-int enip_port = 44818;
+uint16_t enip_port = 44818;
+bool run_pstorage = 0;
+uint16_t pstorage_polling = 10;
 unsigned char server_command[1024];
 int command_index = 0;
 bool processing_command = 0;
@@ -55,12 +57,12 @@ time_t end_time;
 pthread_t modbus_thread;
 pthread_t dnp3_thread;
 pthread_t enip_thread;
+pthread_t pstorage_thread;
 
 //Log Buffer
 #define LOG_BUFFER_SIZE 1000000
 unsigned char log_buffer[LOG_BUFFER_SIZE];
 std::shared_ptr<buffered_sink> log_sink;
-
 
 //-----------------------------------------------------------------------------
 // Start the Modbus Thread
@@ -86,6 +88,14 @@ void *dnp3Thread(void *arg)
 void *enipThread(void *arg)
 {
     startServer(enip_port, ENIP_PROTOCOL);
+}
+
+//-----------------------------------------------------------------------------
+// Start the Persistent Storage Thread
+//-----------------------------------------------------------------------------
+void *pstorageThread(void *arg)
+{
+    startPstorage();
 }
 
 //-----------------------------------------------------------------------------
@@ -323,6 +333,61 @@ void processCommand(unsigned char *buffer, int client_fd)
         }
         processing_command = false;
     }
+    else if (strncmp(buffer, "start_enip(", 11) == 0)
+    {
+        processing_command = true;
+        enip_port = readCommandArgument(buffer);
+        spdlog::info("Issued start_enip() command to start on port: {}", enip_port);
+        if (run_enip)
+        {
+            spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
+            //Stop Enip server
+            run_enip = 0;
+            pthread_join(enip_thread, NULL);
+            spdlog::info("EtherNet/IP server was stopped");
+        }
+        //Start Enip server
+        run_enip = 1;
+        pthread_create(&enip_thread, NULL, enipThread, NULL);
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "stop_enip()", 11) == 0)
+    {
+        processing_command = true;
+        spdlog::info("Issued stop_enip() command");
+        if (run_enip)
+        {
+            run_enip = 0;
+            pthread_join(enip_thread, NULL);
+            spdlog::info("EtherNet/IP server was stopped");
+        }
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "start_pstorage(", 15) == 0)
+    {
+        processing_command = true;
+        pstorage_polling = readCommandArgument(buffer);
+        spdlog::info("Issued start_pstorage() command with polling rate of {} seconds", pstorage_polling);
+        if (run_pstorage)
+        {
+            spdlog::info("Persistent Storage server already active. Changing polling rate to: {}", pstorage_polling);
+        }
+        //Start Enip server
+        run_pstorage = 1;
+        pthread_create(&pstorage_thread, NULL, pstorageThread, NULL);
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "stop_pstorage()", 15) == 0)
+    {
+        processing_command = true;
+        spdlog::info("Issued stop_pstorage() command");
+        if (run_pstorage)
+        {
+            run_pstorage = 0;
+            spdlog::info("Persistent Storage thread was stopped");
+        }
+        processing_command = false;
+    }
     else if (strncmp(buffer, "runtime_logs()", 14) == 0)
     {
         processing_command = true;
@@ -445,11 +510,18 @@ void startInteractiveServer(int port)
             }
         }
     }
+    spdlog::info("Shutting down internal threads\n");
+    run_modbus = 0;
+    run_dnp3 = 0;
+    run_enip = 0;
+    run_pstorage = 0;
+    pthread_join(modbus_thread, NULL);
+    pthread_join(dnp3_thread, NULL);
+    pthread_join(enip_thread, NULL);
 
 	spdlog::info("Closing socket...");
     closeSocket(socket_fd);
     closeSocket(client_fd);
-
 	spdlog::info("Terminating interactive server thread");
 }
 

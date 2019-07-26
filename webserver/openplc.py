@@ -97,7 +97,7 @@ class runtime:
     
     def start_runtime(self):
         if (self.status() == "Stopped"):
-            a = subprocess.Popen(['../runtime/core/openplc'])
+            self.theprocess = subprocess.Popen(['./runtime/core/openplc'])  # XXX: iPAS
             self.runtime_status = "Running"
     
     def stop_runtime(self):
@@ -109,6 +109,10 @@ class runtime:
                 data = s.recv(1000)
                 s.close()
                 self.runtime_status = "Stopped"
+
+                while self.theprocess.poll() is None:  # XXX: iPAS, to prevent the defunct killed process.
+                    time.sleep(1)  # https://www.reddit.com/r/learnpython/comments/776r96/defunct_python_process_when_using_subprocesspopen/
+
             except socket.error as serr:
                 print("Failed to stop the runtime. Error: " + str(serr))
     
@@ -217,6 +221,28 @@ class runtime:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
                 s.send('stop_enip()\n')
+                data = s.recv(1000)
+                s.close()
+            except:
+                print("Error connecting to OpenPLC runtime")
+    
+    def start_pstorage(self, poll_rate):
+        if (self.status() == "Running"):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect(('localhost', 43628))
+                s.send('start_pstorage(' + str(poll_rate) + ')\n')
+                data = s.recv(1000)
+                s.close()
+            except:
+                print("Error connecting to OpenPLC runtime")
+                
+    def stop_pstorage(self):
+        if (self.status() == "Running"):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect(('localhost', 43628))
+                s.send('stop_pstorage()\n')
                 data = s.recv(1000)
                 s.close()
             except:

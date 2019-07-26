@@ -1,17 +1,18 @@
+//-----------------------------------------------------------------------------
 // Copyright 2019 Thiago Alves
+// This file is part of the OpenPLC Software Stack.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 // http ://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissionsand
 // limitations under the License.
-
 
 // This file has all the EtherNet/IP functions supported by the OpenPLC. If any
 // other function is to be added to the project, it must be added here
@@ -24,6 +25,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <string.h>
+#include <spdlog/spdlog.h>
 
 #include "ladder.h"
 
@@ -167,6 +169,7 @@ int processEnipMessage(unsigned char *buffer, int buffer_size)
         {
             //Unknown type ID. Respond with error_code
         }
+        return 0;
     }
     
     else
@@ -179,7 +182,7 @@ int processEnipMessage(unsigned char *buffer, int buffer_size)
             p += sprintf(p, "%02x ", (unsigned char)buffer[i]);
         }
         p += sprintf(p, "\n");
-        printf(log_msg);
+        spdlog::info(log_msg);
         
         return -1;
     }

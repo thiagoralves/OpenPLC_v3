@@ -346,7 +346,8 @@ if(OPLC_MAIN_PROGRAM)
     message("Compile main program")
     
     file(GLOB openplc_main_src ${OPLC_CORE_DIR}/interactive_server.cpp ${OPLC_CORE_DIR}/server.cpp ${OPLC_CORE_DIR}/modbus.cpp 
-                ${OPLC_CORE_DIR}/modbus_master.cpp ${OPLC_CORE_DIR}/hardware_layer.cpp ${OPLC_CORE_DIR}/enip.cpp ${OPLC_CORE_DIR}/main.cpp)
+                ${OPLC_CORE_DIR}/modbus_master.cpp ${OPLC_CORE_DIR}/hardware_layer.cpp ${OPLC_CORE_DIR}/enip.cpp ${OPLC_CORE_DIR}/main.cpp
+                ${OPLC_CORE_DIR}/persistent_storage.cpp)
 
     
     add_executable(openplc ${PROJECT_SOURCE_DIR}/etc/glueVars.cpp ${PROJECT_SOURCE_DIR}/etc/Config0.c  ${PROJECT_SOURCE_DIR}/etc/Res0.c ${openplc_main_src})

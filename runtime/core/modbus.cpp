@@ -111,10 +111,20 @@ void mapUnusedIO()
 	for (int i = 0; i <= MAX_16B_RANGE; i++)
 	{
 		if (i < MIN_16B_RANGE)
-			if (int_output[i] == NULL) int_output[i] = &mb_holding_regs[i];
+        {
+            if (int_output[i] == NULL)
+            {
+                int_output[i] = &mb_holding_regs[i];
+            }
+        }
 
-		if (i >= MIN_16B_RANGE && i <= MAX_16B_RANGE)
-			if (int_memory[i - MIN_16B_RANGE] == NULL) int_memory[i] = &mb_holding_regs[i];
+		else if (i >= MIN_16B_RANGE && i <= MAX_16B_RANGE)
+        {
+			if (int_memory[i - MIN_16B_RANGE] == NULL)
+            {
+                int_memory[i - MIN_16B_RANGE] = &mb_holding_regs[i];
+            }
+        }
 	}
 }
 

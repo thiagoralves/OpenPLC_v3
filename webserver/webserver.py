@@ -27,6 +27,7 @@ import datetime
 import time
 import pages
 import openplc
+import monitoring as monitor
 import sys
 
 import flask 
@@ -80,10 +81,24 @@ def configure_runtime():
                     else:
                         print("Disabling EtherNet/IP")
                         openplc_runtime.stop_enip()
+                elif (row[0] == "Pstorage_polling"):
+                    if (row[1] != "disabled"):
+                        print("Enabling Persistent Storage with polling rate of " + str(int(row[1])) + " seconds")
+                        openplc_runtime.start_pstorage(int(row[1]))
+                    else:
+                        print("Disabling Persistent Storage")
+                        openplc_runtime.stop_pstorage()
+                        delete_persistent_file()
         except Error as e:
             print("error connecting to the database" + str(e))
     else:
         print("Error opening DB")
+
+
+def delete_persistent_file():
+    if (os.path.isfile("persistent.file")):
+        os.remove("persistent.file")
+    print("persistent.file removed!")
 
 
 def generate_mbconfig():
@@ -472,9 +487,12 @@ def start_plc():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
+        monitor.stop_monitor()
         openplc_runtime.start_runtime()
         time.sleep(1)
         configure_runtime()
+        monitor.cleanup()
+        monitor.parse_st(openplc_runtime.project_file)
         return flask.redirect(flask.url_for('dashboard'))
 
 
@@ -486,6 +504,7 @@ def stop_plc():
     else:
         openplc_runtime.stop_runtime()
         time.sleep(1)
+        monitor.stop_monitor()
         return flask.redirect(flask.url_for('dashboard'))
 
 
@@ -504,6 +523,7 @@ def dashboard():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
+        monitor.stop_monitor()
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         return_str = pages.w3_style + pages.dashboard_head + draw_top_div()
         return_str += """
@@ -549,6 +569,7 @@ def programs():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
+        monitor.stop_monitor()
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         list_all = False
         if (flask.request.args.get('list_all') == '1'):
@@ -849,6 +870,7 @@ def compile_program():
         else:
             print("error connecting to the database")
         
+        delete_persistent_file()
         openplc_runtime.compile_program(st_file)
         
         return draw_compiling_page()
@@ -867,6 +889,7 @@ def modbus():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
+        monitor.stop_monitor()
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         return_str = pages.w3_style + pages.style + draw_top_div()
         return_str += """
@@ -1285,15 +1308,101 @@ def monitoring():
         return flask.redirect(flask.url_for('login'))
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        return_str = draw_blank_page()
+        return_str = pages.w3_style + pages.monitoring_head + draw_top_div()
         return_str += """
+            <div class='main'>
+                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
+                    <br>
+                    <br>
+                    <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
+                    <a href='programs' class='w3-bar-item w3-button'><img src='/static/programs-icon-64x64.png' alt='Programs' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
+                    <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
+                    <a href="monitoring" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/monitoring-icon-64x64.png" alt="Monitoring" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Monitoring</p></a>                    
+                    <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
+                    <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
+                    <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
+                    <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
+                    <br>
+                    <br>"""
+        return_str += draw_status()
+        return_str += """
+        </div>
+            <div style="margin-left:320px; margin-right:70px">
+                <div style="w3-container">
+                    <br>
                     <h2>Monitoring</h2>
-                    <p>This feature is not available yet! Check back later...<p>
+                    <p>The table below displays a list of the OpenPLC points used by the currently running program. By clicking in one of the listed points it is possible to see more information about it and also to force it to be a different value.</p>
+                    <div id='monitor_table'>
+                        <table>
+                            <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
+                            <tr style='background-color: white'>
+                                <th>Point Name</th><th>Type</th><th>Location</th><th>Forced</th><th>Value</th>
+                            </tr>"""
+        
+        if (openplc_runtime.status() == "Running"):
+            monitor.start_monitor()
+            data_index = 0
+            for debug_data in monitor.debug_vars:
+                return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
+                return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
+                if (debug_data.type == 'BOOL'):
+                    if (debug_data.value == 0):
+                        return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
+                    else:
+                        return_str += '<img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</td>'
+                else:
+                    percentage = (debug_data.value*100)/65535
+                    return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
+                return_str += '</tr>'
+                data_index += 1
+            return_str += pages.monitoring_tail
+        
+        else:
+            return_str += """
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </body>
 </html>"""
+
+        return return_str
+        
+@app.route('/monitor-update', methods=['GET', 'POST'])
+def monitor_update():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        #if (openplc_runtime.status() == "Compiling"): return 'OpenPLC is compiling new code. Please wait'
+        return_str = """
+                        <table>
+                            <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
+                            <tr style='background-color: white'>
+                                <th>Point Name</th><th>Type</th><th>Location</th><th>Forced</th><th>Value</th>
+                            </tr>"""
+        
+        #if (openplc_runtime.status() == "Running"):
+        if (True):
+            monitor.start_monitor()
+            data_index = 0
+            for debug_data in monitor.debug_vars:
+                return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
+                return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
+                if (debug_data.type == 'BOOL'):
+                    if (debug_data.value == 0):
+                        return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
+                    else:
+                        return_str += '<img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</td>'
+                else:
+                    percentage = (debug_data.value*100)/65535
+                    return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
+                return_str += '</tr>'
+                data_index += 1
+        
+        return_str += """ 
+                        </table>"""
+        
         return return_str
             
             
@@ -1302,6 +1411,7 @@ def hardware():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
+        monitor.stop_monitor()
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         if (flask.request.method == 'GET'):
             driver_path = os.path.abspath(os.path.join(self_path, '..', 'etc', 'openplc_driver'))
@@ -1389,6 +1499,7 @@ def users():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
+        monitor.stop_monitor()
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         return_str = pages.w3_style + pages.style + draw_top_div()
         return_str += """
@@ -1680,6 +1791,7 @@ def settings():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
+        monitor.stop_monitor()
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         if (flask.request.method == 'GET'):
             return_str = pages.w3_style + pages.settings_style + draw_top_div() + pages.settings_head
@@ -1690,7 +1802,6 @@ def settings():
                 <div style="w3-container">
                     <br>
                     <h2>Settings</h2>
-                    <br>
                     <form id        = "uploadForm"
                         enctype     = "multipart/form-data"
                         action      = "settings"
@@ -1717,6 +1828,8 @@ def settings():
                             dnp3_port = str(row[1])
                         elif (row[0] == "Enip_port"):
                             enip_port = str(row[1])
+                        elif (row[0] == "Pstorage_polling"):
+                            pstorage_poll = str(row[1])
                         elif (row[0] == "Start_run_mode"):
                             start_run = str(row[1])
                         elif (row[0] == "Slave_polling"):
@@ -1788,6 +1901,28 @@ def settings():
                         <br>
                         <br>
                         <label class="container">
+                            <b>Enable Persistent Storage Thread</b>"""
+                            
+                    if (pstorage_poll == 'disabled'):
+                        return_str += """
+                            <input id="pstorage_thread" type="checkbox">
+                            <span class="checkmark"></span>
+                        </label>
+                        <label for='pstorage_thread_poll'><b>Persistent Storage polling rate</b></label>
+                        <input type='text' id='pstorage_thread_poll' name='pstorage_thread_poll' value='10'>"""
+                    else:
+                        return_str += """
+                            <input id="pstorage_thread" type="checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <label for='pstorage_thread_poll'><b>Persistent Storage polling rate</b></label>
+                        <input type='text' id='pstorage_thread_poll' name='pstorage_thread_poll' value='""" + pstorage_poll + "'>"
+                    
+                    return_str += """
+                        <br>
+                        <br>
+                        <br>
+                        <label class="container">
                             <b>Start OpenPLC in RUN mode</b>"""
                             
                     if (start_run == 'false'):
@@ -1805,10 +1940,7 @@ def settings():
                     
                     return_str += """
                         <br>
-                        <br>
-                        <br>
                         <h2>Slave Devices</h2>
-                        <br>
                         <label for='slave_polling_period'><b>Polling Period (ms)</b></label>
                         <input type='text' id='slave_polling_period' name='slave_polling_period' value='""" + slave_polling + "'>"
                     
@@ -1832,6 +1964,7 @@ def settings():
             modbus_port = flask.request.form.get('modbus_server_port')
             dnp3_port = flask.request.form.get('dnp3_server_port')
             enip_port = flask.request.form.get('enip_server_port')
+            pstorage_poll = flask.request.form.get('pstorage_thread_poll')
             start_run = flask.request.form.get('auto_run_text')
             slave_polling = flask.request.form.get('slave_polling_period')
             slave_timeout = flask.request.form.get('slave_timeout')
@@ -1862,6 +1995,13 @@ def settings():
                         cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Enip_port'", (str(enip_port),))
                         conn.commit()
                         
+                    if (pstorage_poll == None):
+                        cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Pstorage_polling'")
+                        conn.commit()
+                    else:
+                        cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Pstorage_polling'", (str(pstorage_poll),))
+                        conn.commit()
+                        
                     if (start_run == 'true'):
                         cur.execute("UPDATE Settings SET Value = 'true' WHERE Key = 'Start_run_mode'")
                         conn.commit()
@@ -1890,8 +2030,12 @@ def settings():
 
 @app.route('/logout')
 def logout():
-    flask_login.logout_user()
-    return flask.redirect(flask.url_for('login'))
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        monitor.stop_monitor()
+        flask_login.logout_user()
+        return flask.redirect(flask.url_for('login'))
 
 
 @login_manager.unauthorized_handler

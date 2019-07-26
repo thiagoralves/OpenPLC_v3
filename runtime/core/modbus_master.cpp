@@ -471,7 +471,6 @@ void *querySlaveDevices(void *arg)
                             int_input_buf[int_input_index] = tempBuff[j];
                             int_input_index++;
                         }
-                        int_input_index++;
                         pthread_mutex_unlock(&ioLock);
                     }
 

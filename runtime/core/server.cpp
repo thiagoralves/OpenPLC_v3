@@ -30,9 +30,6 @@
 
 #include "ladder.h"
 
-#define MAX_INPUT       16
-#define MAX_OUTPUT      16
-#define MAX_MODBUS      100
 #define NET_BUFFER_SIZE 10000
 
 
@@ -82,7 +79,7 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
 // Create the socket and bind it. Returns the file descriptor for the socket
 // created.
 //-----------------------------------------------------------------------------
-int createSocket(int port)
+int createSocket(uint16_t port)
 {
     int socket_fd;
     struct sockaddr_in server_addr;
@@ -130,7 +127,6 @@ int createSocket(int port)
 //-----------------------------------------------------------------------------
 int waitForClient(int socket_fd, int protocol_type)
 {
-    unsigned char log_msg[1000];
     int client_fd;
     struct sockaddr_in client_addr;
     bool *run_server;
@@ -192,7 +188,6 @@ void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int pr
 //-----------------------------------------------------------------------------
 void *handleConnections(void *arguments)
 {
-    unsigned char log_msg[1000];
     int *args = (int *)arguments;
     int client_fd = args[0];
     int protocol_type = args[1];
@@ -205,7 +200,7 @@ void *handleConnections(void *arguments)
     else if (protocol_type == ENIP_PROTOCOL)
         run_server = &run_enip;
 
-	  spdlog::info("Server: Thread created for client ID: {}", client_fd);
+	spdlog::info("Server: Thread created for client ID: {}", client_fd);
 
     while(*run_server)
     {
@@ -241,9 +236,8 @@ void *handleConnections(void *arguments)
 // creates an infinite loop to listen and parse the messages sent by the
 // clients
 //-----------------------------------------------------------------------------
-void startServer(int port, int protocol_type)
+void startServer(uint16_t port, int protocol_type)
 {
-    unsigned char log_msg[1000];
     int socket_fd, client_fd;
     bool *run_server;
     
@@ -251,7 +245,7 @@ void startServer(int port, int protocol_type)
     
     if (protocol_type == MODBUS_PROTOCOL)
     {
-        mapUnusedIO();
+        //mapUnusedIO();
         run_server = &run_modbus;
     }
     else if (protocol_type == ENIP_PROTOCOL)
@@ -262,14 +256,14 @@ void startServer(int port, int protocol_type)
         client_fd = waitForClient(socket_fd, protocol_type); //block until a client connects
         if (client_fd < 0)
         {
-			      spdlog::info("Server: Error accepting client!");
+			spdlog::info("Server: Error accepting client!");
         }
         else
         {
             int arguments[2];
             pthread_t thread;
             int ret = -1;
-			      spdlog::info("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
+			spdlog::info("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
             arguments[0] = client_fd;
             arguments[1] = protocol_type;
             ret = pthread_create(&thread, NULL, handleConnections, (void*)arguments);
@@ -281,5 +275,5 @@ void startServer(int port, int protocol_type)
     }
     close(socket_fd);
     close(client_fd);
-	  spdlog::info("Terminating server thread");
+	spdlog::info("Terminating server thread");
 }
