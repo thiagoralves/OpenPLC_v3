@@ -25,7 +25,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # Optional build capabilities
 option(OPLCGLUE_ALL "Build all optional projects (tests)" OFF)
-option(OPLCGLUE_TEST "Build tests" OFF)
+option(OPLCGLUE_TEST "Build tests" ON)
 
 if(OPLCGLUE_ALL)
     message("enabling all optional components")
