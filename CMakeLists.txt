@@ -5,21 +5,18 @@
 # You may obtain a copy of the License at
 #
 # http ://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissionsand
+# See the License for the specific language governing permissions and
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.0.0)
 
 # CMake build for OpenPLC runtime.
 
-# Currently, this CMake file only builds the unit tests for the application - this is
-# not currently used for building the actual runtime  on the system.
-
-project(openplc_program)
+project(openplc_project)
 
 # If we are building libmodbus, we treat it as an external project
 # so include that capability for cmake
@@ -28,363 +25,231 @@ include(ExternalProject)
 # Include settings that are specific to a particular target environment
 include(${PROJECT_SOURCE_DIR}/cmake/settings.cmake)
 
-if(NOT program_name )
+# To build the entire application, we do code generation from ST to C. This
+# is the name of the ST file that we are code generating from.
+if(NOT program_name)
     set(program_name "blank_program.st")
 endif()
-
-message("Program = ${program_name}")
-
-option(WERROR "Set all warnings to errors" ON)
+message("User program = ${program_name}")
 
 # Enable building the application with different set of capabilties
 # depending on the capabilities that we want.
-option(OPLC_ALL "Build all optional capabilities" OFF)
-option(OPLC_BUILD_SOURCE "Build only source files" OFF)
-option(OPLC_ALL_DEPENDENCIES "Build only dependency files" OFF)
-option(OPLC_DNP3_ENABLE "Enable DNP3 in the project" OFF)
-option(OPLC_COMPILE_PROGRAM "Only compile the ST file" OFF)
+
+option(OPLC_ALL "Build all optional capabilities" ON)
+
+option(OPLC_ALL_SUPPORTING_TOOLS "Build required tools" OFF)
+option(OPLC_MATIEC "Build MATIEC compiler" OFF)
+option(OPLC_ST_OPTIMZER "Build ST optimizer" OFF)
+option(OPLC_GLUE_GENERATOR "Build gluerator" OFF)
+
+option(OPLC_ALL_SUPPORTING_LIBRARIES "Build required libraries" OFF)
+option(OPLC_MODBUS "Enable Modbus" OFF)
 option(OPLC_DNP3_OUTSTATION "Enable the DNP3 outstation" OFF)
-option(OPLC_MODBUS "Enable the Modbus" OFF)
-option(OPLC_NOOP_APP "Enable building a demo app" OFF)
-option(OPLC_UNITTEST "Enable unit tests" OFF)
 
-# These options enable building libraries containing the various harware layers.
-# The objective of these builds is to ensure that the code compiles cleanly.
-option(OPLC_BLANK_LIB "Enable buidling the default blank library" OFF)
-option(OPLC_NEURON_LIB "Enable buidling the default Neuron library" OFF)
-option(OPLC_PIXTEND_LIB "Enable buidling the default Pixtend library" OFF)
-option(OPLC_PIXTEND2L_LIB "Enable buidling the default Pixtend2l library" OFF)
-option(OPLC_PIXTEND2S_LIB "Enable buidling the default Pixtend2l library" OFF)
-option(OPLC_RASPERBERRYPI_LIB "Enable buidling the default RaspberryPI library" OFF)
-option(OPLC_RASPERBERRYPIOLD_LIB "Enable buidling the default RaspberryPI OLD library" OFF)
-option(OPLC_SIMULINK_LIB "Enable buidling the default Simulink library" OFF)
-option(OPLC_UNIPI_LIB "Enable buidling the default Unipi library" OFF)
-option(OPLC_FISCHERTECHNIK_LIB "Enable buidling the default fischertechnik library" OFF)
+option(OPLC_BUILD_USER_APPLICATION "Build the user application from ST" ON)
+option(OPLC_ST_TO_C "Build target to convert ST to C" OFF)
+option(OPLC_MAIN_PROGRAM "Only compile the ST file" OFF)
 
-# Flag to build All dependencies and source
+option(OPLC_BUILD_TESTS "Build automated tests" OFF)
+
+# Flag to build all dependencies and source
 if(OPLC_ALL)
-    message("Enabling all optional components")    
-    set(OPLC_ALL_DEPENDENCIES ON)
-    set(OPLC_BUILD_SOURCE ON)
+    message("Enabling all optional components")
+    set(OPLC_ALL_SUPPORTING_TOOLS ON)
+    set(OPLC_ALL_SUPPORTING_LIBRARIES ON)
+    set(OPLC_BUILD_USER_APPLICATION ON)
+    set(OPLC_BUILD_TESTS ON)
 endif()
 
-# Flag to just build the dependencies
-if(OPLC_ALL_DEPENDENCIES)
-    message("Build dependencies")
+# Flag to build the supporting tools
+if(OPLC_ALL_SUPPORTING_TOOLS)
+    message("Build supporting tools enabled")
     set(OPLC_MATIEC ON)
     set(OPLC_ST_OPTIMZER ON)
     set(OPLC_GLUE_GENERATOR ON)
+endif()
+
+# Flag to build the supporting tools
+if(OPLC_ALL_SUPPORTING_LIBRARIES)
+    message("Build supporting libraries enabled")
+    set(OPLC_DNP3_OUTSTATION ON)
     set(OPLC_MODBUS ON)
 endif()
 
-# Flag to build source
-if(OPLC_BUILD_SOURCE)
-    message("Build main")
-    set(OPLC_FILES_GENERATOR ON)
+# Flag to build the user application
+if(OPLC_BUILD_USER_APPLICATION)
+    message("Build main application enabled")
+    set(OPLC_ST_TO_C ON)
     set(OPLC_MAIN_PROGRAM ON)
 endif()
 
-#Flag to build platform specific code
-if(OPLC_BUILD_PLATFORM)
-    set(OPLC_BLANK_LIB ON)
-    set(OPLC_NEURON_LIB ON)
-    set(OPLC_PIXTEND_LIB ON)
-    set(OPLC_PIXTEND2L_LIB ON)
-    set(OPLC_PIXTEND2S_LIB ON)
-    set(OPLC_RASPERBERRYPI_LIB ON)
-    set(OPLC_RASPERBERRYPIOLD_LIB ON)
-    set(OPLC_SIMULINK_LIB ON)
-    set(OPLC_UNIPI_LIB ON)
-    set(OPLC_FISCHERTECHNIK_LIB ON)
+# For reasons that we haven't figured out yet, OpenDNP3 with OpenPLC doesn't compile
+# nicely. If DNP3 is enabled, then disable it now if we are Cygwin
+if(${CYGWIN})
+    if (OPLC_DNP3_OUTSTATION)
+        message(WARNING "DNP3 disabled for building on Cygwin")
+        set(OPLC_DNP3_OUTSTATION OFF)
+    endif()
 endif()
 
-# Flag to enable/disable DNP3 module. DNP3 is not supported on windows yet
-if(OPLC_DNP3_ENABLE)
-    message("Enabling Open DNP3")
-    set(OPLC_DNP3_OUTSTATION ON)
-endif()
-
-set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-# If we have enabled the DNP3 outstation, then build opendnp3. Opendnp3 is
-# CMake based, so we can just add that as a subdirectory and everything will
-# work nicely.
-if(OPLC_DNP3_OUTSTATION)
-    message("Install OpenDNP3")
-    add_subdirectory(utils/dnp3_src bin/dnp3)
-    include_directories(utils/dnp3_src/cpp/libs/include)
-endif()
-
-
-include_directories(runtime/vendor/spdlog-1.3.1)
-include_directories(runtime/vendor/catch2-2.7.0)
-include_directories(runtime/vendor/fakeit-2.0.5)
-include_directories(runtime/core)
-include_directories(runtime/core/lib)
-
-# The OpenPLC core files
-file(GLOB oplc_SRC runtime/core/dnp3_publisher.cpp runtime/core/dnp3_receiver.cpp runtime/core/dnp3.cpp)
-
-# In order to build an OPLC application, we need code generated by the glue
-# generator for a minimal system. In order to ensure that everything builds
-# nicely, we have a empty application that does nothing, but ensures that
-# all the right symbols are defined. From this, we can ensure that everything
-# builds nicely together.
-if (OPLC_NOOP_APP)
-    file(GLOB oplcnoop_SRC runtime/example/*.cpp)
-    add_executable(oplcnoop ${oplc_SRC} runtime/example/noop.cpp runtime/hardware_layers/blank.cpp runtime/core/main.cpp runtime/core/interactive_server.cpp runtime/core/server.cpp runtime/core/modbus.cpp runtime/core/modbus_master.cpp runtime/example/Config0.cpp)
-    add_dependencies(oplcnoop libmodbus_proj)
-    target_link_libraries(oplcnoop LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
-# Unit tests for the OpenPLC runtime.
-if(OPLC_UNITTEST)
-    set(CMAKE_BUILD_TYPE Debug)
-    file(GLOB oplctest_SRC runtime/test/*.cpp)
-    add_executable(oplctest ${oplctest_SRC} runtime/core/dnp3_publisher.cpp runtime/core/dnp3_receiver.cpp)
-    target_link_libraries(oplctest LINK_PUBLIC asiodnp3 ${OPLC_PTHREAD})
-endif()
-
-# Default application built for blank (Linux)
-if(OPLC_BLANK_LIB)
-    add_library(oplcblank ${oplc_SRC} runtime/hardware_layers/blank.cpp)
-    target_link_libraries(oplcblank LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
-# Default application built for Neuron
-if(OPLC_NEURON_LIB)
-    add_library(oplcneuron ${oplc_SRC} runtime/core/hardware_layers/neuron.cpp)
-    target_link_libraries(oplcneuron LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
-# Default application built for Pixtend
-if(OPLC_PIXTEND_LIB)
-    add_library(oplcpixtend ${oplc_SRC} runtime/hardware_layers/pixtend.cpp)
-    target_include_directories(oplcpixtend SYSTEM PUBLIC runtime/test/mock_headers)
-    target_link_libraries(oplcpixtend LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-
-endif()
-
-# Default application built for Pixtend2L
-if(OPLC_PIXTEND2L_LIB)
-    add_library(oplcpixtend2l ${oplc_SRC} runtime/hardware_layers/pixtend2l.cpp)
-    target_include_directories(oplcpixtend2l SYSTEM PUBLIC runtime/test/mock_headers)
-    target_link_libraries(oplcpixtend2l LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
-
-# Default application built for Pixtend2S
-if(OPLC_PIXTEND2S_LIB)
-    add_library(oplcpixtend2s ${oplc_SRC} runtime/hardware_layers/pixtend2s.cpp)
-    target_include_directories(oplcpixtend2s SYSTEM PUBLIC runtime/test/mock_headers)
-    target_link_libraries(oplcpixtend2s LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
-# Default application built for RaspberryPI
-if(OPLC_RASPERBERRYPI_LIB)
-    add_library(oplcraspberrypi ${oplc_SRC} runtime/hardware_layers/raspberrypi.cpp)
-    target_include_directories(oplcraspberrypi SYSTEM PUBLIC runtime/test/mock_headers)
-    target_link_libraries(oplcraspberrypi LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
-# Default application built for RaspberryPI (Old)
-if(OPLC_RASPERBERRYPIOLD_LIB)
-    add_library(oplcraspberrypiold ${oplc_SRC} runtime/hardware_layers/raspberrypi_old.cpp)
-    target_include_directories(oplcraspberrypiold SYSTEM PUBLIC runtime/test/mock_headers)
-    target_link_libraries(oplcraspberrypiold LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
-# Default application built for Simulink
-if(OPLC_SIMULINK_LIB)
-    add_library(oplcsimulink ${oplc_SRC} runtime/hardware_layers/simulink.cpp)
-    target_include_directories(oplcsimulink SYSTEM PUBLIC runtime/test/mock_headers)
-    target_link_libraries(oplcsimulink LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
-# Default application built for UniPI
-if(OPLC_UNIPI_LIB)
-    add_library(oplcunipi ${oplc_SRC} runtime/hardware_layers/unipi.cpp)
-    target_include_directories(oplcunipi SYSTEM PUBLIC runtime/test/mock_headers)
-    target_link_libraries(oplcunipi LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
-# Default application built for Fischertechnik 
-if(OPLC_FISCHERTECHNIK_LIB)
-    add_library(oplcfischertechnik ${oplc_SRC} runtime/hardware_layers/fischertechnik.cpp)
-    target_include_directories(oplcfischertechnik SYSTEM PUBLIC runtime/test/mock_headers)
-    target_link_libraries(oplcfischertechnik LINK_PUBLIC asiodnp3 libmodbus.so ${OPLC_PTHREAD})
-endif()
-
+################################################################################
+# Build definitions for the dependent tools (applications we need to call to
+# build user projects, but not link in)
+################################################################################
 
 # If we have enabled the MATIEC, then build MATIEC. MATIEC is
-# Makefile based
+# Makefile based, so include as an external project.
 if(OPLC_MATIEC)
     # This whole matiec thing isn't nice, but it is how the project has
     # matiec directly included and I don't want to change that now
-    message("Install Matiec")
-    set(MATIEC_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/utils/matiec_src)
-    
+    message("Build and install MATIEC enabled")
+    set(MATIEC_INSTALL_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
+    # Note that MMATIEC's output adds bin and lib directories, so we
+    # want the install directory to be up one from the normal output
+    # directory.
     ExternalProject_Add(matiec_proj
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/utils/matiec_src
         BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND COMMAND autoreconf -i COMMAND ./configure  --prefix=${CMAKE_CURRENT_SOURCE_DIR}/utils/matiec_src/install
+        CONFIGURE_COMMAND COMMAND autoreconf -i COMMAND ./configure --prefix=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         BUILD_COMMAND ${MAKE}
         COMMENT "MATIEC INSTALLED"
     )
 
     include_directories(${MATIEC_INSTALL_DIR}/include)
     link_directories(${MATIEC_INSTALL_DIR}/lib)
+
+    add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/bin/iec2c${PLATFORM_EXTENSION}
+        COMMAND ${CMAKE_COMMAND} -E echo "iec2c dummy target"
+        DEPENDS matiec_proj)
 endif()
 
-# Compile glue generator and move the necessary files into the webserver/core folder
+# Compile glue generator
 if(OPLC_GLUE_GENERATOR)
-    message("Install GLUE GENERATOR")
+    message("Build and install GLUE GENERATOR enabled")
+    # Build the glue generator into the bin folder
     add_subdirectory(utils/glue_generator_src)
-
-    # Copy executable in the core folder
-    add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/runtime/glue_generator${PLATFORM_EXTENSION}
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:glue_generator> ${PROJECT_SOURCE_DIR}/runtime
-        COMMENT "GLUE GENERATOR INSTALLED"
-        DEPENDS glue_generator
-    )
 endif()
 
-# Compile the ST file optimizer and move the necessary files into the webserver folder
+# Compile the ST file optimizer
 if(OPLC_ST_OPTIMZER)
-    message("Install ST OPTIMIZER")
+    message("Build and install ST OPTIMIZER enabled")
     add_subdirectory(utils/st_optimizer_src)
-
-    # Copy executable in the core folder
-    add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/runtime/st_optimizer${PLATFORM_EXTENSION}
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:st_optimizer> ${CMAKE_SOURCE_DIR}/runtime
-        COMMENT "ST OPTIMIZER INSTALLED"
-        DEPENDS st_optimizer
-    )
-
-    if(WIN32)
-        add_custom_target(matiec_proj ALL
-            COMMAND echo "DUMMY MATIEC TARGET"
-        )
-        add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/runtime/iec2c${PLATFORM_EXTENSION} 
-            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/utils/matiec_src/bin_win32/* ${PROJECT_SOURCE_DIR}/runtime
-            DEPENDS matiec_proj)
-    else()
-        add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/runtime/iec2c${PLATFORM_EXTENSION}
-            COMMAND ${CMAKE_COMMAND} -E copy ${MATIEC_INSTALL_DIR}/iec2c${PLATFORM_EXTENSION} ${PROJECT_SOURCE_DIR}/runtime
-            DEPENDS matiec_proj)
-    endif()
-    # Create target which consume the command via DEPENDS.
-    add_custom_target(copy_files ALL
-        DEPENDS ${PROJECT_SOURCE_DIR}/runtime/iec2c${PLATFORM_EXTENSION}
-            ${PROJECT_SOURCE_DIR}/runtime/st_optimizer${PLATFORM_EXTENSION} 
-            ${PROJECT_SOURCE_DIR}/runtime/glue_generator${PLATFORM_EXTENSION}
-    )
 endif()
+
+# We need a custom target to define the build order so that we
+# build these dependent tools before building the main application.
+# We cannot depend on the subdirectory targets directly in most versions
+# of CMake, so we depend on the generated files instead.
+add_custom_target(dependent_tools ALL
+    DEPENDS ${PROJECT_SOURCE_DIR}/bin/iec2c${PLATFORM_EXTENSION}
+    DEPENDS ${PROJECT_SOURCE_DIR}/bin/st_optimizer${PLATFORM_EXTENSION}
+    DEPENDS ${PROJECT_SOURCE_DIR}/bin/glue_generator${PLATFORM_EXTENSION}
+)
+
+################################################################################
+# Build our dependent libraries - these get linked into the OpenPLC application
+################################################################################
 
 # If we have enabled the Modbus, then build Modbus. Modbus is
 # Makefile based
 if(OPLC_MODBUS)
-    # This whole modbus thing isn't nice, but it is how the project has
-    # libmodbus directly included and I don't want to change that now
-    message("Install LIB_MODBUS")
+    message("Build and install LIBMODBUS enabled")
     include_directories(utils/libmodbus_src/src)
     ExternalProject_Add(libmodbus_proj
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/utils/libmodbus_src
         BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure  --prefix=${CMAKE_CURRENT_SOURCE_DIR}/utils/libmodbus_src/install
-        BUILD_COMMAND ${MAKE})
-
-    add_custom_command(TARGET libmodbus_proj POST_BUILD COMMENT "LIB_MODBUS INSTALLED")
-    set(LIBMODBUS_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/utils/libmodbus_src/install)
-    include_directories(${LIBMODBUS_INSTALL_DIR}/include)
-    link_directories(${LIBMODBUS_INSTALL_DIR}/lib)
+        CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure --prefix=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
+        BUILD_COMMAND ${MAKE}
+        COMMENT "LIBMODBUS INSTALLED")
+else()
+    include_directories(utils/libmodbus_src/src)
 endif()
 
-if(OPLC_FILES_GENERATOR)
-    message("Generate C files")
-    
+# If we have enabled the DNP3 outstation, then build opendnp3. Opendnp3 is
+# CMake based, so we can just add that as a subdirectory and everything will
+# work nicely.
+if(OPLC_DNP3_OUTSTATION)
+    message("Build and install OpenDNP3 enabled")
+    add_subdirectory(utils/dnp3_src)
+    include_directories(utils/dnp3_src/cpp/libs/include)
+endif()
+
+################################################################################
+# Build the OpenPLC application
+################################################################################
+
+# This defines the GLOB for compiling the runtime with user files
+add_subdirectory(runtime)
+
+if(OPLC_ST_TO_C)
+    message("Generate C files enabled")
+
     # Dummy output rebuilded everytime. Needed for Config0.c and Res0.c files generation
     add_custom_command(OUTPUT dummy_output
+        COMMAND ${CMAKE_COMMAND} -E make_directory ../etc/src
         COMMAND ./st_optimizer${PLATFORM_EXTENSION} ../etc/st_files/${program_name} ../etc/st_files/${program_name}
-        COMMAND ./iec2c${PLATFORM_EXTENSION} -T ../etc/ ../etc/st_files/${program_name}
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/runtime
-        DEPENDS always_rebuild copy_files
+        COMMAND ./iec2c${PLATFORM_EXTENSION} -I ../runtime/lib -T ../etc/src ../etc/st_files/${program_name}
+        COMMAND ./glue_generator${PLATFORM_EXTENSION} ../etc/src/LOCATED_VARIABLES.h ../etc/src/glueVars.cpp
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/bin
+        DEPENDS always_rebuild dependent_tools
     )
 
-    # Always rebuilded. Used for dependency creation and synchonization during compilation
+    # Always rebuild. Used for dependency creation and synchonization during compilation
     add_custom_command(OUTPUT always_rebuild
-        COMMAND cmake -E echo
+        COMMAND ${CMAKE_COMMAND} -E echo
     )
 
     # Matiec compilation is skipped for windows platform
-    if(WIN32)
-        add_custom_target(files_generator
-            DEPENDS dummy_output
-            BYPRODUCTS ${PROJECT_SOURCE_DIR}/runtime/core/glueVars.c
-            COMMAND echo "Generating glueVars..."
-        )
-    else()
-        add_custom_target(files_generator
-            DEPENDS matiec_proj dummy_output
-            BYPRODUCTS ${PROJECT_SOURCE_DIR}/runtime/core/glueVars.c
-            COMMAND echo "Generating glueVars..."
-        )
-    endif()
+    set(files_generator_deps "dummy_output")
+    list(APPEND files_generator_deps "matiec_proj")
 
-    add_custom_command(TARGET files_generator POST_BUILD
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/etc
-        COMMAND ./../runtime/glue_generator 
-        COMMAND echo "Compiling main program..."
-        DEPENDS ${PROJECT_SOURCE_DIR}/runtime/core/glueVars.c
+    add_custom_target(files_generator
+        DEPENDS dummy_output
+        BYPRODUCTS ${PROJECT_SOURCE_DIR}/etc/src/glueVars.cpp ${PROJECT_SOURCE_DIR}/etc/src/Config0.c ${PROJECT_SOURCE_DIR}/etc/src/Res0.c
+        COMMAND echo "Generating glueVars..."
     )
 endif()
 
-
 if(OPLC_MAIN_PROGRAM)
-    set(OPLC_CORE_DIR ${PROJECT_SOURCE_DIR}/runtime/core)
-    message("Compile main program")
-    
-    file(GLOB openplc_main_src ${OPLC_CORE_DIR}/interactive_server.cpp ${OPLC_CORE_DIR}/server.cpp ${OPLC_CORE_DIR}/modbus.cpp 
-                ${OPLC_CORE_DIR}/modbus_master.cpp ${OPLC_CORE_DIR}/hardware_layer.cpp ${OPLC_CORE_DIR}/enip.cpp ${OPLC_CORE_DIR}/main.cpp
-                ${OPLC_CORE_DIR}/persistent_storage.cpp)
+    message("Compile main program enabled")
 
-    
-    add_executable(openplc ${PROJECT_SOURCE_DIR}/etc/glueVars.cpp ${PROJECT_SOURCE_DIR}/etc/Config0.c  ${PROJECT_SOURCE_DIR}/etc/Res0.c ${openplc_main_src})
+    set(OPLC_USER_DIR ${PROJECT_SOURCE_DIR}/etc/src)
+    file(GLOB oplc_SRC runtime/core/*.cpp)
+
+    include_directories(${OPLC_USER_DIR})
+    include_directories(runtime/core)
+    include_directories(runtime/core/lib)
+    include_directories(runtime/vendor/spdlog-1.3.1)
+    include_directories(./include)
+
+    # The makefile based project put their libs here
+    link_directories(./lib)
+
+    add_executable(openplc ${oplc_SRC} ${OPLC_USER_DIR}/Config0.c ${OPLC_USER_DIR}/Res0.c ${OPLC_USER_DIR}/glueVars.cpp)
+
     target_include_directories(openplc SYSTEM PUBLIC ${OPLC_CORE_DIR}/lib)
-    
+
     set_target_properties(openplc PROPERTIES SUFFIX "")
     set_target_properties(openplc PROPERTIES OUTPUT_NAME "openplc")
-    set_target_properties(openplc PROPERTIES PREFIX "")    
+    set_target_properties(openplc PROPERTIES PREFIX "")
 
-    if(OPLC_DNP3_ENABLE)
-        target_sources(openplc PRIVATE ${OPLC_CORE_DIR}/dnp3.cpp ${OPLC_CORE_DIR}/dnp3_publisher.cpp ${OPLC_CORE_DIR}/dnp3_receiver.cpp)
-    endif()
+    add_dependencies(openplc files_generator)
 
-    add_dependencies(openplc files_generator libmodbus_proj)
-    if(OPLC_DNP3_ENABLE)
-        add_dependencies(openplc opendnp3)
-        target_compile_definitions(openplc PRIVATE OPLC_DNP3)
-    endif()
-    
-    if(WIN32)
-        target_include_directories(openplc SYSTEM PRIVATE /usr/local/include/modbus)
-        target_link_libraries(openplc pthread modbus)
-    else()
-        target_link_libraries(openplc pthread libmodbus.so)
-    endif()
-
-    if(OPLC_DNP3_ENABLE)
+    target_link_libraries(openplc ${OPLC_PTHREAD} modbus)
+    if (OPLC_DNP3_OUTSTATION)
+        add_definitions(-DOPLC_DNP3_OUTSTATION)
         target_link_libraries(openplc asiodnp3 asiopal opendnp3 openpal)
     endif()
+
     if(OPLC_PLATFORM_RPI)
         target_link_libraries(openplc wiringPi rt)
     endif()
 
     # -fpermissive will allow some nonconforming code to compile
     add_compile_options(openplc -fpermissive)
-    add_custom_command(TARGET openplc POST_BUILD 
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:openplc> ${OPLC_CORE_DIR} 
-        COMMENT "MAIN COMPILED")
+
     file(WRITE ${PROJECT_SOURCE_DIR}/etc/active_program ${program_name})
 endif()

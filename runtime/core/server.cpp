@@ -137,7 +137,7 @@ int waitForClient(int socket_fd, int protocol_type)
     else if (protocol_type == ENIP_PROTOCOL)
         run_server = &run_enip;
 
-    spdlog::info("Server: waiting for new client...");
+    spdlog::debug("Server: waiting for new client...");
 
     client_len = sizeof(client_addr);
     while (*run_server)
@@ -200,7 +200,7 @@ void *handleConnections(void *arguments)
     else if (protocol_type == ENIP_PROTOCOL)
         run_server = &run_enip;
 
-	spdlog::info("Server: Thread created for client ID: {}", client_fd);
+	spdlog::debug("Server: Thread created for client ID: {}", client_fd);
 
     while(*run_server)
     {
@@ -213,7 +213,7 @@ void *handleConnections(void *arguments)
             // something has  gone wrong or the client has closed connection
             if (messageSize == 0)
             {
-				        spdlog::info("Server: client ID: {} has closed the connection", client_fd);
+				        spdlog::debug("Server: client ID: {} has closed the connection", client_fd);
             }
             else
             {
@@ -263,7 +263,7 @@ void startServer(uint16_t port, int protocol_type)
             int arguments[2];
             pthread_t thread;
             int ret = -1;
-			spdlog::info("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
+			spdlog::debug("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
             arguments[0] = client_fd;
             arguments[1] = protocol_type;
             ret = pthread_create(&thread, NULL, handleConnections, (void*)arguments);

@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissionsand
 # limitations under the License.
 
+option(WERROR "Set all warnings to errors" ON)
+set(CMAKE_CXX_STANDARD 14)
+
 get_filename_component(settings_cmake_dir "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
 include("${settings_cmake_dir}/inc/posix.cmake")

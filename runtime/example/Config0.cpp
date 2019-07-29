@@ -17,10 +17,12 @@
 // of the ability to compile everything together, which is useful since
 // much of this is only determined when we have a structured text input file.
 
+extern "C" {
 void config_init__(void)
 {}
 
 void config_run__(unsigned long tick)
 {}
+}
 
 unsigned long long common_ticktime__ = 50000000ULL; /*ns*/

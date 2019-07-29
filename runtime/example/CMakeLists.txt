@@ -9,18 +9,21 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissionsand
+# See the License for the specific language governing permissions and
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.0.0)
 
-project(st_optimizer LANGUAGES CXX VERSION 0.0.1)
+# This project builds a simple example application
+if (NOT ${CYGWIN})
+    include_directories(../core/lib)
 
-# CMake build for ST Optimizer
-option(WERROR "Set all warnings to errors" ON)
+    file(GLOB oplc_example_SRC *.cpp)
+    file(GLOB oplc_SRC ../core/*.cpp)
+    add_executable(oplcexample ${oplc_example_SRC} ${oplc_SRC})
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-
-# The main application that we always build
-add_executable(st_optimizer st_optimizer.cpp)
+    target_link_libraries(oplcexample pthread ${LIBMODBUS})
+    if(OPLC_DNP3_OUTSTATION)
+        target_link_libraries(oplcexample asiodnp3 asiopal opendnp3 openpal)
+    endif()
+endif()

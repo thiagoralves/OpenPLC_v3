@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
+#ifdef OPLC_DNP3_OUTSTATION
+
 #include "catch.hpp"
 
 #include "dnp3_receiver.h"
@@ -175,3 +177,5 @@ SCENARIO("dnp3 receiver", "Receiver") {
         }
     }
 }
+
+#endif  // OPLC_DNP3_OUTSTATION

@@ -54,6 +54,20 @@ function OPLC_background_service {
     $1 systemctl enable openplc.service
 }
 
+function cmake_build_and_test {
+    echo ""
+    echo "Building the application"
+    mkdir build
+    cd build
+    cmake .. -DOPLC_ALL=ON
+    make
+
+    echo "Executing platform tests"
+    cd ../bin
+    ./gg_unit_test
+    ./oplc_unit_test
+}
+
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
      fileformat=unix
@@ -75,10 +89,7 @@ if [ "$1" == "win" ]; then
     rm apt-cyg
     rm get-pip.py
 
-    mkdir build
-    cd build
-    cmake .. -DOPLC_ALL=ON
-    make
+    cmake_build_and_test
     
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
@@ -94,14 +105,8 @@ elif [ "$1" == "linux" ]; then
     linux_install_deps sudo
     install_py_deps
     install_py_deps sudo
-    
-    mkdir build
-    cd build
-    cmake .. -DOPLC_ALL_DEPENDENCIES=ON -DOPLC_DNP3_ENABLE=ON
-    make
-    sudo ldconfig
-    cmake .. -DOPLC_BUILD_SOURCE=ON -DOPLC_DNP3_ENABLE=ON
-    make    
+
+    cmake_build_and_test
 
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
@@ -121,13 +126,7 @@ elif [ "$1" == "docker" ]; then
     linux_install_deps
     install_py_deps
     
-    mkdir build
-    cd build
-    cmake .. -DOPLC_ALL_DEPENDENCIES=ON -DOPLC_DNP3_ENABLE=ON
-    make
-    ldconfig
-    cmake .. -DOPLC_BUILD_SOURCE=ON -DOPLC_DNP3_ENABLE=ON
-    make    
+    cmake_build_and_test   
     
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
@@ -146,11 +145,7 @@ elif [ "$1" == "rpi" ]; then
     install_py_deps
     install_py_deps sudo 
     
-    cmake .. -DOPLC_ALL_DEPENDENCIES=ON -DOPLC_DNP3_ENABLE=ON
-    make
-    sudo ldconfig
-    cmake .. -DOPLC_BUILD_SOURCE=ON -DOPLC_DNP3_ENABLE=ON
-    make    
+    cmake_build_and_test   
     
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
@@ -181,11 +176,7 @@ elif [ "$1" == "neuron" ]; then
     install_py_deps
     install_py_deps sudo
     
-    cmake .. -DOPLC_ALL_DEPENDENCIES=ON -DOPLC_DNP3_ENABLE=ON
-    make
-    sudo ldconfig
-    cmake .. -DOPLC_BUILD_SOURCE=ON -DOPLC_DNP3_ENABLE=ON
-    make    
+    cmake_build_and_test  
     
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
@@ -203,11 +194,7 @@ elif [ "$1" == "neuron" ]; then
 elif [ "$1" == "custom" ]; then
     echo "Installing OpenPLC on Custom Platform"
     
-    cmake .. -DOPLC_ALL_DEPENDENCIES=ON -DOPLC_DNP3_ENABLE=ON
-    make
-    ldconfig
-    cmake .. -DOPLC_BUILD_SOURCE=ON -DOPLC_DNP3_ENABLE=ON
-    make    
+    cmake_build_and_test  
 
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"

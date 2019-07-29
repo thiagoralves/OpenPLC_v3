@@ -1,5 +1,8 @@
+import os
 import time, threading
 from pymodbus.client.sync import ModbusTcpClient
+
+self_path = os.path.dirname(__file__)
 
 class debug_var():
     name = ''
@@ -14,7 +17,7 @@ mb_client = None
 
 def parse_st(st_file):
     global debug_vars
-    filepath = './st_files/' + st_file
+    filepath = os.path.join(self_path, '..', 'etc', 'st_files', st_file)
     
     st_program = open(filepath, 'r')
     

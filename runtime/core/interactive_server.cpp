@@ -70,16 +70,18 @@ std::shared_ptr<buffered_sink> log_sink;
 void *modbusThread(void *arg)
 {
     startServer(modbus_port, MODBUS_PROTOCOL);
+    return nullptr;
 }
 
 
-#ifdef OPLC_DNP3
+#ifdef OPLC_DNP3_OUTSTATION
 //-----------------------------------------------------------------------------
 // Start the DNP3 Thread
 //-----------------------------------------------------------------------------
 void *dnp3Thread(void *arg)
 {
     dnp3StartServer(dnp3_port);
+    return nullptr;
 }
 #endif
 //-----------------------------------------------------------------------------
@@ -88,6 +90,7 @@ void *dnp3Thread(void *arg)
 void *enipThread(void *arg)
 {
     startServer(enip_port, ENIP_PROTOCOL);
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -96,6 +99,7 @@ void *enipThread(void *arg)
 void *pstorageThread(void *arg)
 {
     startPstorage();
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -174,7 +178,7 @@ int waitForClient_interactive(int socket_fd)
     struct sockaddr_in client_addr;
     socklen_t client_len;
 
-	spdlog::info("Interactive Server: waiting for new client...");
+	spdlog::debug("Interactive Server: waiting for new client...");
 
     client_len = sizeof(client_addr);
     while (run_openplc)
@@ -208,7 +212,7 @@ int listenToClient_interactive(int client_fd, unsigned char *buffer)
 //-----------------------------------------------------------------------------
 void processCommand(unsigned char *buffer, int client_fd)
 {
-    spdlog::info("Process command received {}", buffer);
+    spdlog::debug("Process command received {}", buffer);
 
     int count_char = 0;
     
@@ -269,10 +273,10 @@ void processCommand(unsigned char *buffer, int client_fd)
         }
         processing_command = false;
     }
-
-#ifdef OPLC_DNP3
+#ifdef OPLC_DNP3_OUTSTATION
     else if (strncmp(buffer, "start_dnp3(", 11) == 0)
     {
+
         processing_command = true;
 		dnp3_port = readCommandArgument(buffer);
 		spdlog::info("Issued start_dnp3() command to start on port: {}", dnp3_port);
@@ -301,8 +305,7 @@ void processCommand(unsigned char *buffer, int client_fd)
         }
         processing_command = false;
     }
-#endif
-
+#endif  // OPLC_DNP3_OUTSTATION
     else if (strncmp(buffer, "start_enip(", 11) == 0)
     {
         processing_command = true;
@@ -447,7 +450,7 @@ void *handleConnections_interactive(void *arguments)
     unsigned char buffer[1024];
     int messageSize;
 
-	spdlog::info("Interactive Server: Thread created for client ID: {}", client_fd);
+	spdlog::debug("Interactive Server: Thread created for client ID: {}", client_fd);
 
     while(run_openplc)
     {
@@ -460,7 +463,7 @@ void *handleConnections_interactive(void *arguments)
             // something has  gone wrong or the client has closed connection
             if (messageSize == 0)
             {
-				spdlog::info("Interactive Server: client ID: {} has closed the connection", client_fd);
+				spdlog::debug("Interactive Server: client ID: {} has closed the connection", client_fd);
             }
             else
             {
@@ -474,7 +477,7 @@ void *handleConnections_interactive(void *arguments)
 
     spdlog::debug("Closing client socket and calling pthread_exit in interactive_server.cpp");
     closeSocket(client_fd);
-	spdlog::info("Terminating interactive server connections");
+	spdlog::debug("Terminating interactive server connections");
     pthread_exit(NULL);
 }
 
@@ -501,7 +504,7 @@ void startInteractiveServer(int port)
             pthread_t thread;
             int ret = -1;
 
-			spdlog::info("Interactive Server: Client accepted! Creating thread for the new client ID: {}", client_fd);
+			spdlog::debug("Interactive Server: Client accepted! Creating thread for the new client ID: {}", client_fd);
             arguments[0] = client_fd;
             ret = pthread_create(&thread, NULL, handleConnections_interactive, arguments);
             if (ret==0) 
@@ -522,7 +525,7 @@ void startInteractiveServer(int port)
 	spdlog::info("Closing socket...");
     closeSocket(socket_fd);
     closeSocket(client_fd);
-	spdlog::info("Terminating interactive server thread");
+	spdlog::debug("Terminating interactive server thread");
 }
 
 void initializeLogging(int argc,char **argv)

@@ -16,10 +16,11 @@
 // This supplies a single function that you can use to start the outstation
 // and configuration according to a configuration file.
 
-#include <stdio.h>
-#include <time.h>
-#include <signal.h>
+#ifdef OPLC_DNP3_OUTSTATION
 
+#include <cstdio>
+#include <ctime>
+#include <csignal>
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -56,7 +57,6 @@ int offset_do = 0;
 int offset_ai = 0;
 int offset_ao = 0;
 
-using namespace std;
 using namespace opendnp3;
 using namespace openpal;
 using namespace asiopal;
@@ -79,22 +79,22 @@ static inline void trim(std::string& s) {
 /// @param cfg_stream The stream to read for configuration settings
 /// @return The configuration represented by the stream and any defaults and
 ///         the range mapping.
-pair<OutstationStackConfig, Dnp3Range> create_config(istream& cfg_stream) {
+std::pair<asiodnp3::OutstationStackConfig, Dnp3Range> create_config(std::istream& cfg_stream) {
     // We need to know the size of the database (number of points) before
     // we can do anything. To avoid doing two passes of the stream, read
     // everything into a map, then get the database size, and finally
     // process the remaining items
-    map<string, string> cfg_values;
-    string line;
+    std::map<std::string, std::string> cfg_values;
+    std::string line;
     while (getline(cfg_stream, line)) {
         // Skip comment lines or those that are not a key-value pair
         auto pos = line.find('=');
-        if (pos == string::npos || line[0] == '#') {
+        if (pos == std::string::npos || line[0] == '#') {
             continue;
         }
 
-        string token = line.substr(0, pos);
-        string value = line.substr(pos + 1);
+        std::string token = line.substr(0, pos);
+        std::string value = line.substr(pos + 1);
         trim(token);
         trim(value);
 
@@ -109,7 +109,7 @@ pair<OutstationStackConfig, Dnp3Range> create_config(istream& cfg_stream) {
         cfg_values.erase(db_size);
     }
 
-    auto config = OutstationStackConfig(DatabaseSizes::AllTypes(default_size));
+    auto config = asiodnp3::OutstationStackConfig(DatabaseSizes::AllTypes(default_size));
     Dnp3Range range = { 0, OPLCGLUE_INPUT_SIZE, 0, 0, OPLCGLUE_OUTPUT_SIZE, 0, 0, 0, 0, 0, 0, 0};
 
     // Finally, handle the remaining items
@@ -167,7 +167,7 @@ pair<OutstationStackConfig, Dnp3Range> create_config(istream& cfg_stream) {
             exit(1);
         }
     }
-    return make_pair(config, range);
+    return std::make_pair(config, range);
 }
 
 /// Start the DNP3 server running on the specified port and configured using
@@ -178,10 +178,10 @@ pair<OutstationStackConfig, Dnp3Range> create_config(istream& cfg_stream) {
 /// @param cfg_stream_fn An input stream to read configuration information from. This will be reset
 ///                      once use of the stream has been completed.
 /// @param run A signal for running this server. This server terminates when this signal is false.
-void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>>& cfg_stream, const bool* run) {
+void dnp3StartServer(int port, std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream, const bool* run) {
     const uint32_t FILTERS = levels::NORMAL;
 
-    pair<OutstationStackConfig, Dnp3Range> config_range(create_config(*cfg_stream));
+    std::pair<asiodnp3::OutstationStackConfig, Dnp3Range> config_range(create_config(*cfg_stream));
 
     // We are done with the file, so release the unique ptr. Normally this
     // will close the reference to the file
@@ -246,10 +246,12 @@ void dnp3StartServer(int port, unique_ptr<istream, std::function<void(istream*)>
 /// DNP3 server is started.
 /// @param port The port to run against.
 void dnp3StartServer(int port) {
-    unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new ifstream("dnp3.cfg"), [](istream* s)
+    std::unique_ptr<std::istream, std::function<void(std::istream*)>> cfg_stream(new std::ifstream("dnp3.cfg"), [](std::istream* s)
         {
-            reinterpret_cast<ifstream*>(s)->close();
+            reinterpret_cast<std::ifstream*>(s)->close();
             delete s;
         });
     dnp3StartServer(port, cfg_stream, &run_dnp3);
 }
+
+#endif  // OPLC_DNP3_OUTSTATION

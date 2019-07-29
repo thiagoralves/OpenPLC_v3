@@ -57,13 +57,13 @@ void startPstorage()
     if (ps == NULL)
     {
 		spdlog::error("Persistent Storage: Error creating persistent memory file!");
-        return 0;
+        return;
     }
 
     if (fwrite(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, ps) < BUFFER_SIZE)
     {
 		spdlog::error("Persistent Storage: Error writing to persistent memory file!");
-        return 0;
+        return;
     }
     fclose(ps);
     
@@ -95,13 +95,13 @@ void startPstorage()
 			if (fd == NULL)
 			{
 				spdlog::error("Persistent Storage: Error creating persistent memory file!");
-				return 0;
+				return;
 			}
 
 			if (fwrite(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, fd) < BUFFER_SIZE)
 			{
 				spdlog::error("Persistent Storage: Error writing to persistent memory file!");
-				return 0;
+				return;
 			}
 			fclose(fd);
 		}
@@ -144,4 +144,5 @@ int readPersistentStorage()
 			if (int_memory[i] != NULL) *int_memory[i] = persistentBuffer[i];
 		}
 	}
+	return 0;
 }

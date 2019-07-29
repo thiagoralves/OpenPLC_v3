@@ -545,6 +545,8 @@ void *querySlaveDevices(void *arg)
         }
         sleepms(polling_period);
     }
+
+	return 0;
 }
 
 //-----------------------------------------------------------------------------
