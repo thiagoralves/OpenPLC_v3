@@ -23,9 +23,9 @@
 
 struct GlueVariables;
 struct GlueRange;
-//namespace asiodnp3 {
-//class IOutstation;
-//}
+namespace asiodnp3 {
+class IOutstation;
+}
 
 /// The publisher defines the interface between the glue arrays
 /// of variables that are read from PLC application and written to
