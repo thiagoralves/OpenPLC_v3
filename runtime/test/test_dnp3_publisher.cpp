@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
+#ifdef OPLC_DNP3_OUTSTATION
+
 #include <memory>
 #include <asiodnp3/IOutstation.h>
 
@@ -213,3 +215,5 @@ SCENARIO("dnp3 publisher", "WriteToPoints") {
         }
     }
 }
+
+#endif  // OPLC_DNP3_OUTSTATION

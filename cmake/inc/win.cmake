@@ -14,6 +14,11 @@
 
 if (WIN32)
     message("PLATFORM: WINDOWS")
-    set(OPLC_MATIEC OFF)
     set(PLATFORM_EXTENSION ".exe")
+endif()
+
+if(${CYGWIN})
+    add_definitions(-D_WIN32_WINNT=0x0501)
+    add_definitions(-D__USE_W32_SOCKETS)
+    add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif()

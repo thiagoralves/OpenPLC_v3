@@ -1,4 +1,22 @@
-.vs/
+# Ignored directories
+.git/
+.exe/
+**/.vs/
 .vscode/
+
+.deps/
 bin/
-build/
+bin_win32/
+**/build/
+out/
+
+# Ignored file types
+*.a
+*.dll
+*.exe
+*.pyc
+*.so
+*.o
+
+# VS generated files
+*.CoreCompileInputs.cache

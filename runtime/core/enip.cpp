@@ -174,8 +174,8 @@ int processEnipMessage(unsigned char *buffer, int buffer_size)
     
     else
     {
-        unsigned char log_msg[1000];
-        unsigned char *p = log_msg;
+        char log_msg[1000];
+        char *p = log_msg;
         p += sprintf(p, "Unknown EtherNet/IP request: ");
         for (int i = 0; i < buffer_size; i++)
         {

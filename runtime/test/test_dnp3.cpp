@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
+#ifdef OPLC_DNP3_OUTSTATION
+
 #include <cstdint>
 #include <utility>
 #include <mutex>
@@ -100,3 +102,5 @@ SCENARIO("dnp3StartServer", "")
 		dnp3StartServer(20000, cfg_stream, &run_dnp3);
 	}
 }
+
+#endif  // OPLC_DNP3_OUTSTATION

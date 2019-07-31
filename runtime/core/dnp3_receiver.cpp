@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
+#ifdef OPLC_DNP3_OUTSTATION
+
 #include <spdlog/spdlog.h>
 
 #include "dnp3_receiver.h"
@@ -240,3 +242,5 @@ void Dnp3Receiver::Start() {
 void Dnp3Receiver::End() {
     spdlog::info("DNP3 Receiver Stopped");
 }
+
+#endif  // OPLC_DNP3_OUTSTATION

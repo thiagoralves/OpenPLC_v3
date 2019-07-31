@@ -78,6 +78,7 @@ void sleepms(int milliseconds)
 void *interactiveServerThread(void *arg)
 {
     startInteractiveServer(43628);
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------

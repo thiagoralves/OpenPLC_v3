@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
+#ifdef OPLC_DNP3_OUTSTATION
+
 #include <asiodnp3/IOutstation.h>
 #include <asiodnp3/UpdateBuilder.h>
 #include <spdlog/spdlog.h>
@@ -232,3 +234,5 @@ std::uint32_t Dnp3Publisher::WriteToPoints() {
 
     return num_writes;
 }
+
+#endif  // OPLC_DNP3_OUTSTATION
