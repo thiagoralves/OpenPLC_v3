@@ -26,6 +26,10 @@
 #include "ladder.h"
 #include "custom_layer.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 //-----------------------------------------------------------------------------
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
@@ -81,4 +85,6 @@ void updateBuffersOut()
 
 	**************************************************/
 }
+
+/** @}*/
 

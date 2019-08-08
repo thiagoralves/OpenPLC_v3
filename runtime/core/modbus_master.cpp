@@ -36,6 +36,10 @@
 
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define MB_TCP				1
 #define MB_RTU				2
 #define MAX_MB_IO			400
@@ -627,3 +631,5 @@ void updateBuffersOut_MB()
 
 	pthread_mutex_unlock(&ioLock);
 }
+
+/** @}*/

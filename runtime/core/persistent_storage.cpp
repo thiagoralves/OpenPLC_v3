@@ -28,6 +28,10 @@
 
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 //-----------------------------------------------------------------------------
 // Main function for the thread. Should create a buffer for the persistent
 // data, compare it with the actual data and write back to the persistent
@@ -146,3 +150,5 @@ int readPersistentStorage()
 	}
 	return 0;
 }
+
+/** @}*/

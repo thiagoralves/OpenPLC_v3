@@ -22,6 +22,10 @@
 #include "dnp3.h"
 #include "glue.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 /// The receiver defines the interface between the DNP3 channel
 /// and the glue arrays that are written to from DNP3.
 class Dnp3Receiver : public opendnp3::ICommandHandler {
@@ -67,3 +71,5 @@ class Dnp3Receiver : public opendnp3::ICommandHandler {
 };
 
 #endif  //  CORE_DNP3_RECEIVER_H_
+
+/** @}*/

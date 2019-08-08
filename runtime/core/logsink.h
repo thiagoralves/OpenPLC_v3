@@ -22,6 +22,10 @@
 #include <mutex>
 #include <string>
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 /// Implementes a fixed-size in-memory buffer for log messages. This
 /// buffer automatically resets itself when it fills up. This sink allows
 /// use to query logs in memory so that they can be provided to a front
@@ -87,3 +91,5 @@ private:
 };
 
 #endif // CORE_LOGSINK_H
+
+/** @}*/

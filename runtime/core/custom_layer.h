@@ -6,6 +6,10 @@
 // in here by clicking on the "Restore Original Code" button above.
 //-----------------------------------------------------------------------------
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 //-----------------------------------------------------------------------------
 // These are the ignored I/O vectors. If you want to override how OpenPLC
 // handles a particular input or output, you must put them in the ignored
@@ -62,3 +66,5 @@ void updateCustomOut()
     // must also add those I/Os to the ignored vectors, otherwise OpenPLC
     // will try to control your I2C pins and your I2C message won't work.
 }
+
+/** @}*/

@@ -29,6 +29,10 @@
 
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define ENIP_MIN_LENGTH     28
 
 struct enip_header
@@ -187,3 +191,5 @@ int processEnipMessage(unsigned char *buffer, int buffer_size)
         return -1;
     }
 }
+
+/** @}*/

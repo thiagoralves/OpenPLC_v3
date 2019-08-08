@@ -26,6 +26,10 @@
 
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define MAX_DISCRETE_INPUT              8192
 #define MAX_COILS                       8192
 #define MAX_HOLD_REGS                   8192
@@ -883,3 +887,5 @@ int processModbusMessage(unsigned char *buffer, int bufferSize)
 
 	return MessageLength;
 }
+
+/** @}*/

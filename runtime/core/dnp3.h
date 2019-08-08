@@ -20,6 +20,10 @@
 #include <sstream>
 #include <string>
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 /// Defines an offest mapping for DNP3 to glue variables.
 /// This structure allows you to specify valid ranges for
 /// the glue mapping. This could allow you to divide up

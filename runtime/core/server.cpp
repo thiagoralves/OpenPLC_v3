@@ -30,6 +30,10 @@
 
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define NET_BUFFER_SIZE 10000
 
 
@@ -277,3 +281,5 @@ void startServer(uint16_t port, int protocol_type)
     close(client_fd);
 	spdlog::info("Terminating server thread");
 }
+
+/** @}*/

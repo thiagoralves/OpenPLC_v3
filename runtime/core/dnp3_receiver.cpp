@@ -21,6 +21,10 @@
 using namespace opendnp3;
 using namespace std;
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 /// Maps the DNP3 index to the index in our glue variables, returning index or < 0
 /// if the value is not in the range of mapped glue variables.
 /// @param start The start index of valid ranges.
@@ -244,3 +248,5 @@ void Dnp3Receiver::End() {
 }
 
 #endif  // OPLC_DNP3_OUTSTATION
+
+/** @}*/

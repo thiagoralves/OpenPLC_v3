@@ -49,6 +49,11 @@
 #include "dnp3_publisher.h"
 #include "dnp3_receiver.h"
 
+
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define OPLC_CYCLE              50000000
 
 // Initial offset parameters (yurgen1975)
@@ -255,3 +260,5 @@ void dnp3StartServer(int port) {
 }
 
 #endif  // OPLC_DNP3_OUTSTATION
+
+/** @}*/

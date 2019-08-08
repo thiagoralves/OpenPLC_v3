@@ -21,6 +21,10 @@
 
 #include "iec_types.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 1024
 #endif
@@ -163,3 +167,5 @@ struct GlueVariables {
 };
 
 #endif // CORE_GLUE_H
+
+/** @}*/

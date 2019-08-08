@@ -38,6 +38,10 @@
 #include "ladder.h"
 #include "logsink.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 //Global Variables
 bool run_modbus = 0;
 uint16_t modbus_port = 502;
@@ -533,3 +537,5 @@ void initializeLogging(int argc,char **argv)
     log_sink.reset(new buffered_sink(log_buffer, LOG_BUFFER_SIZE));
     spdlog::default_logger()->sinks().push_back(log_sink);
 }
+
+/** @}*/

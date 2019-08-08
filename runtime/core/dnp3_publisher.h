@@ -21,6 +21,10 @@
 #include "dnp3.h"
 #include "iec_types.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 struct GlueVariables;
 struct GlueRange;
 namespace asiodnp3 {
@@ -60,3 +64,5 @@ class Dnp3Publisher {
 };
 
 #endif  // CORE_DNP3_PUBLISHER_H_
+
+/** @}*/
