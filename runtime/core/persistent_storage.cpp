@@ -28,11 +28,15 @@
 
 #include "ladder.h"
 
-//-----------------------------------------------------------------------------
-// Main function for the thread. Should create a buffer for the persistent
-// data, compare it with the actual data and write back to the persistent
-// file if the data has changed
-//-----------------------------------------------------------------------------
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Main function for the thread. Should create a buffer for the persistent
+/// data, compare it with the actual data and write back to the persistent
+/// file if the data has changed
+////////////////////////////////////////////////////////////////////////////////-
 void startPstorage()
 {
     unsigned char log_msg[1000];
@@ -110,12 +114,14 @@ void startPstorage()
 	}
 }
 
-//-----------------------------------------------------------------------------
-// This function reads the contents from persistent.file into OpenPLC internal
-// buffers. Must be called when OpenPLC is initializing. If persistent storage
-// is disabled, the persistent.file will not be found and the function will
-// exit gracefully.
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief This function reads the contents from persistent.file into OpenPLC
+/// internal buffers.
+///
+/// Must be called when OpenPLC is initializing. If persistent storage is
+///  disabled, the persistent.file will not be found and the function will
+///  exit gracefully.
+////////////////////////////////////////////////////////////////////////////////-
 int readPersistentStorage()
 {
     unsigned char log_msg[1000];
@@ -146,3 +152,5 @@ int readPersistentStorage()
 	}
 	return 0;
 }
+
+/** @}*/

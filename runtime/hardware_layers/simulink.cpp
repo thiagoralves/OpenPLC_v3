@@ -35,6 +35,10 @@
 #include "ladder.h"
 #include "custom_layer.h"
 
+/** @addtogroup simulink  Simulink
+  * \ingroup hardware_layers
+  *  @{ */
+
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
@@ -196,3 +200,5 @@ void updateBuffersOut()
 	// Interface program is already filling the OpenPLC buffers with the
 	// data that is being received.
 }
+
+/** @} */

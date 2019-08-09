@@ -38,6 +38,10 @@
 #include "ladder.h"
 #include "logsink.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 //Global Variables
 bool run_modbus = 0;
 uint16_t modbus_port = 502;
@@ -64,9 +68,10 @@ pthread_t pstorage_thread;
 unsigned char log_buffer[LOG_BUFFER_SIZE];
 std::shared_ptr<buffered_sink> log_sink;
 
-//-----------------------------------------------------------------------------
-// Start the Modbus Thread
-//-----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Start the Modbus Thread
+/// @param *arg
+///////////////////////////////////////////////////////////////////////////////
 void *modbusThread(void *arg)
 {
     startServer(modbus_port, MODBUS_PROTOCOL);
@@ -75,36 +80,40 @@ void *modbusThread(void *arg)
 
 
 #ifdef OPLC_DNP3_OUTSTATION
-//-----------------------------------------------------------------------------
-// Start the DNP3 Thread
-//-----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Start the DNP3 Thread
+/// @param *arg
+///////////////////////////////////////////////////////////////////////////////
 void *dnp3Thread(void *arg)
 {
     dnp3StartServer(dnp3_port);
     return nullptr;
 }
 #endif
-//-----------------------------------------------------------------------------
-// Start the Enip Thread
-//-----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Start the Enip Thread
+/// @param *arg
+///////////////////////////////////////////////////////////////////////////////
 void *enipThread(void *arg)
 {
     startServer(enip_port, ENIP_PROTOCOL);
     return nullptr;
 }
 
-//-----------------------------------------------------------------------------
-// Start the Persistent Storage Thread
-//-----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Start the Persistent Storage Thread
+/// @param *arg
+///////////////////////////////////////////////////////////////////////////////
 void *pstorageThread(void *arg)
 {
     startPstorage();
     return nullptr;
 }
 
-//-----------------------------------------------------------------------------
-// Read the argument from a command function
-//-----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Read the argument from a command function
+/// @param *command
+///////////////////////////////////////////////////////////////////////////////
 int readCommandArgument(unsigned char *command)
 {
     int i = 0;
@@ -124,10 +133,11 @@ int readCommandArgument(unsigned char *command)
     return atoi(argument);
 }
 
-//-----------------------------------------------------------------------------
-// Create the socket and bind it. Returns the file descriptor for the socket
-// created.
-//-----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Create the socket and bind it.
+/// @param port
+/// @return the file descriptor for the socket
+///////////////////////////////////////////////////////////////////////////////
 int createSocket_interactive(int port)
 {
     int socket_fd;
@@ -168,10 +178,11 @@ int createSocket_interactive(int port)
     return socket_fd;
 }
 
-//-----------------------------------------------------------------------------
-// Blocking call. Wait here for the client to connect. Returns the file
-// descriptor to communicate with the client.
-//-----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Blocking call. Wait here for the client to connect.
+/// @param socket_fd
+/// @return the file descriptor descriptor to communicate with the client.
+///////////////////////////////////////////////////////////////////////////////
 int waitForClient_interactive(int socket_fd)
 {
     int client_fd;
@@ -195,11 +206,14 @@ int waitForClient_interactive(int socket_fd)
     return client_fd;
 }
 
-//-----------------------------------------------------------------------------
-// Blocking call. Holds here until something is received from the client.
-// Once the message is received, it is stored on the buffer and the function
-// returns the number of bytes received.
-//-----------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////
+/// @brief Blocking call. Holds here until something is received from the client.
+/// Once the message is received, it is stored on the buffer and the function
+/// returns the number of bytes received.
+/// @param client_fd
+/// @param *buffer
+/// @return the number of bytes received.
+///////////////////////////////////////////////////////////////////////////////
 int listenToClient_interactive(int client_fd, unsigned char *buffer)
 {
     bzero(buffer, 1024);
@@ -207,9 +221,11 @@ int listenToClient_interactive(int client_fd, unsigned char *buffer)
     return n;
 }
 
-//-----------------------------------------------------------------------------
-// Process client's commands for the interactive server
-//-----------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////
+/// @brief Process client's commands for the interactive server
+/// @param *buffer
+/// @param client_fd
+/////////////////////////////////////////////////////////////////////////////////
 void processCommand(unsigned char *buffer, int client_fd)
 {
     spdlog::debug("Process command received {}", buffer);
@@ -422,9 +438,12 @@ void processCommand(unsigned char *buffer, int client_fd)
     write(client_fd, buffer, count_char);
 }
 
-//-----------------------------------------------------------------------------
-// Process client's request
-//-----------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////
+/// @brief Process client's request
+/// @param *buffer
+/// @param bufferSize
+/// @param client_fd
+/////////////////////////////////////////////////////////////////////////////////////
 void processMessage_interactive(unsigned char *buffer, int bufferSize, int client_fd)
 {
     for (int i = 0; i < bufferSize; i++)
@@ -441,9 +460,10 @@ void processMessage_interactive(unsigned char *buffer, int bufferSize, int clien
     }
 }
 
-//-----------------------------------------------------------------------------
-// Thread to handle requests for each connected client
-//-----------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////
+/// @brief  Thread to handle requests for each connected client
+/// @param *arguments
+/////////////////////////////////////////////////////////////////////////////////////
 void *handleConnections_interactive(void *arguments)
 {
     int client_fd = *(int *)arguments;
@@ -481,11 +501,12 @@ void *handleConnections_interactive(void *arguments)
     pthread_exit(NULL);
 }
 
-//-----------------------------------------------------------------------------
-// Function to start the server. It receives the port number as argument and
-// creates an infinite loop to listen and parse the messages sent by the
-// clients
-//-----------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////
+/// @brief Function to start the server. It receives the port number as argument and
+/// creates an infinite loop to listen and parse the messages sent by the
+/// clients
+/// @param port
+/////////////////////////////////////////////////////////////////////////////////////
 void startInteractiveServer(int port)
 {
     int socket_fd, client_fd;
@@ -533,3 +554,5 @@ void initializeLogging(int argc,char **argv)
     log_sink.reset(new buffered_sink(log_buffer, LOG_BUFFER_SIZE));
     spdlog::default_logger()->sinks().push_back(log_sink);
 }
+
+/** @}*/

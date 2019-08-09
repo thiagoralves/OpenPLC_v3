@@ -12,8 +12,14 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
+/** @addtogroup example_app
+  *  @{ */
+
+
 // A simple application that defines the items normally that are provided
 // by the glue generator and MATIEC. This allows us to do a simple check
 // of the ability to compile everything together, which is useful since
 // much of this is only determined when we have a structured text input file.
 // Since our appliction is empty, there are no located variables.
+
+/** @} */

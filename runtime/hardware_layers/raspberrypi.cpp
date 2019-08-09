@@ -31,6 +31,10 @@
 #include "ladder.h"
 #include "custom_layer.h"
 
+/** @addtogroup raspberrypi  Raspberry Pi
+  * \ingroup hardware_layers
+  *  @{ */
+
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
@@ -143,3 +147,5 @@ void updateBuffersOut()
     		if (int_output[i] != NULL) pwmWrite(analogOutBufferPinMask[i], (*int_output[i] / 64));
 	}
 }
+
+/** @} */

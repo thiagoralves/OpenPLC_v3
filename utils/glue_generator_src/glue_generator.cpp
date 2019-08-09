@@ -23,6 +23,16 @@
 
 using namespace std;
 
+/**
+ * \defgroup glue_generator Glue Generator
+ * @brief Glue generator produces a binding headers for connecting the MATIEC Structured Text to C application code to the OpenPLC runtime.
+ *
+ */
+
+/** \addtogroup glue_generator
+ *  @{
+ */
+
 /// Defines the information we need about a particular variable
 /// in order to generate the glue structures.
 struct IecVar {
@@ -403,3 +413,5 @@ int main(int argc, char *argv[]) {
     return mainImpl(argc, argv);
 }
 #endif  // OPLCGLUE_OMIT_MAIN
+
+/** @}*/

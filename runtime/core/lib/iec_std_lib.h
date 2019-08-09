@@ -15,6 +15,9 @@
  * used in safety-critical situations without a full and competent review.
  */
 
+/** @addtogroup openplc_runtime_libs
+  *  @{ */
+
 /****
  * IEC 61131-3 standard function library
  */
@@ -740,3 +743,5 @@ __ANY(__move_)
 #include "iec_std_FB.h"
 
 #endif /* _IEC_STD_LIB_H */
+
+/** @}*/

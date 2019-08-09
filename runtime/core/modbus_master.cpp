@@ -36,6 +36,10 @@
 
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define MB_TCP				1
 #define MB_RTU				2
 #define MAX_MB_IO			400
@@ -81,9 +85,13 @@ uint8_t num_devices;
 uint16_t polling_period = 100;
 uint16_t timeout = 1000;
 
-//-----------------------------------------------------------------------------
-// Finds the data between the separators on the line provided
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief  Finds the data between the separators on the line provided
+/// \param *line
+/// \param *buf
+/// \param separator1
+/// \param separator2
+////////////////////////////////////////////////////////////////////////////////
 void getData(char *line, char *buf, char separator1, char separator2)
 {
 	int i=0, j=0;
@@ -104,9 +112,11 @@ void getData(char *line, char *buf, char separator1, char separator2)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Get the number of the Modbus device
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief  Get the number of the Modbus device
+/// \param *line
+/// \return int with no
+////////////////////////////////////////////////////////////////////////////////
 int getDeviceNumber(char *line)
 {
 	char temp[5];
@@ -123,9 +133,11 @@ int getDeviceNumber(char *line)
 	return(atoi(temp));
 }
 
-//-----------------------------------------------------------------------------
-// get the type of function or parameter for the Modbus device
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief get the type of function or parameter for the Modbus device
+/// \param *line
+/// \param *parameter
+////////////////////////////////////////////////////////////////////////////////
 void getFunction(char *line, char *parameter)
 {
 	int i = 0, j = 0;
@@ -145,6 +157,9 @@ void getFunction(char *line, char *parameter)
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Parses the mbconfig.cfg file
+////////////////////////////////////////////////////////////////////////////////
 void parseConfig()
 {
 	string line;
@@ -334,9 +349,9 @@ void parseConfig()
 }
 
 
-//-----------------------------------------------------------------------------
-// Thread to poll each slave device
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Thread to poll each slave device
+////////////////////////////////////////////////////////////////////////////////
 void *querySlaveDevices(void *arg)
 {
     while (run_openplc)
@@ -549,10 +564,10 @@ void *querySlaveDevices(void *arg)
 	return 0;
 }
 
-//-----------------------------------------------------------------------------
-// This function is called by the main OpenPLC routine when it is initializing.
-// Modbus master initialization procedures are here.
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief This function is called by the main OpenPLC routine when it is
+/// initializing. Modbus master initialization procedures are here.
+////////////////////////////////////////////////////////////////////////////////
 void initializeMB()
 {
 	parseConfig();
@@ -593,10 +608,10 @@ void initializeMB()
     }
 }
 
-//-----------------------------------------------------------------------------
-// This function is called by the OpenPLC in a loop. Here the internal buffers
-// must be updated to reflect the actual Input state.
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief This function is called by the OpenPLC in a loop. Here the internal
+/// buffers must be updated to reflect the actual Input state.
+////////////////////////////////////////////////////////////////////////////////
 void updateBuffersIn_MB()
 {
 	pthread_mutex_lock(&ioLock);
@@ -611,10 +626,10 @@ void updateBuffersIn_MB()
 }
 
 
-//-----------------------------------------------------------------------------
-// This function is called by the OpenPLC in a loop. Here the internal buffers
-// must be updated to reflect the actual Output state.
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief This function is called by the OpenPLC in a loop. Here the internal buffers
+/// must be updated to reflect the actual Output state.
+////////////////////////////////////////////////////////////////////////////////
 void updateBuffersOut_MB()
 {
 	pthread_mutex_lock(&ioLock);
@@ -627,3 +642,5 @@ void updateBuffersOut_MB()
 
 	pthread_mutex_unlock(&ioLock);
 }
+
+/** @}*/

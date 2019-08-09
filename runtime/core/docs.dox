@@ -1,0 +1,5 @@
+/**
+ * \defgroup openplc_runtime OpenPLC Runtime
+ * @brief The OpenPLC runtime is the primary application that executes Structured Text application code and produces/consumes application defined IO.
+ *
+ */

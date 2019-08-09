@@ -23,7 +23,12 @@
 
 using namespace opendnp3;
 
-/// Initialize a new instance of the publisher.
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
+
+// Initialize a new instance of the publisher.
 Dnp3Publisher::Dnp3Publisher(
     std::shared_ptr<asiodnp3::IOutstation> outstation,
     std::shared_ptr<GlueVariables> glue_variables,
@@ -236,3 +241,5 @@ std::uint32_t Dnp3Publisher::WriteToPoints() {
 }
 
 #endif  // OPLC_DNP3_OUTSTATION
+
+/** @}*/

@@ -40,6 +40,10 @@
 #include "ladder.h"
 #include "custom_layer.h"
 
+/** @addtogroup pixtend2s  Pixtend2s
+  * \ingroup hardware_layers
+  *  @{ */
+
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
@@ -720,3 +724,5 @@ void updateBuffersOut()
     // PWM1BL - PWM1BH     
     if (byte_output[7] != NULL) OutputData.byPWM1B = *byte_output[7];
 }
+
+/** @} */

@@ -1,0 +1,6 @@
+/** \defgroup hardware_layers Hardware Layers
+  * \brief Hardware Layers
+  *
+  * The hardware_layers/ directory contains the following drivers.
+  *
+  **/

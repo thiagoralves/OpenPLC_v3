@@ -22,6 +22,10 @@
 #include <cstdint>
 #include <mutex>
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define MODBUS_PROTOCOL     0
 #define DNP3_PROTOCOL       1
 #define ENIP_PROTOCOL       2
@@ -159,3 +163,5 @@ void dnp3StartServer(int port);
 //persistent_storage.cpp
 void startPstorage();
 int readPersistentStorage();
+
+/** @}*/

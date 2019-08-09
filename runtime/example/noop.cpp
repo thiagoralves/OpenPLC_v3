@@ -21,6 +21,10 @@
 
 #include "iec_std_lib.h"
 
+/** @addtogroup example_app
+  *  @{ */
+
+
 TIME __CURRENT_TIME;
 extern unsigned long long common_ticktime__;
 
@@ -114,3 +118,5 @@ void updateTime()
 		__CURRENT_TIME.tv_sec += 1;
 	}
 }
+
+/** @} */

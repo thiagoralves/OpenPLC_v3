@@ -29,6 +29,10 @@
 
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define ENIP_MIN_LENGTH     28
 
 struct enip_header
@@ -129,11 +133,13 @@ int registerEnipSession(struct enip_header *header)
 }
 
 
-//-----------------------------------------------------------------------------
-// This function must parse and process the client request and write back the
-// response for it. The return value is the size of the response message in
-// bytes.
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief This function must parse and process the client request and write
+/// back the response for it.
+/// \param *buffer
+/// \param buffer_size
+/// \return size of the response message in bytes.
+////////////////////////////////////////////////////////////////////////////////
 int processEnipMessage(unsigned char *buffer, int buffer_size)
 {
     int error_code;
@@ -187,3 +193,5 @@ int processEnipMessage(unsigned char *buffer, int buffer_size)
         return -1;
     }
 }
+
+/** @}*/
