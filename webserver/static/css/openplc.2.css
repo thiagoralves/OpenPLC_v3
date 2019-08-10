@@ -24,7 +24,7 @@ body {
       background-color: #BE2929; }
     #mainmav li a.active {
       background-color: #E02222;
-      background-image: url(images/arrow.png);
+      background-image: url(../images/arrow.png);
       background-repeat: no-repeat;
       background-position: right center; }
 
@@ -61,3 +61,5 @@ body {
     padding: 4px;
     font-size: 1.4em;
     background-color: #eeeeee; }
+
+/*# sourceMappingURL=openplc.2.css.map */
