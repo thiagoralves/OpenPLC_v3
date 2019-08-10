@@ -48,7 +48,7 @@ from . import ut
 # -----------------------------------------------------
 DB_FILE = "openplc.db"
 
-def db_connection():
+def db_connect():
     global DB_FILE
     try:
         conn = sqlite3.connect(DB_FILE)
@@ -67,7 +67,7 @@ def db_query(sql, args=(), single=False, as_list=False):
     :param as_list: True returns a row in a list, otherwise a dict
     :return: rows/row, err
     """
-    conn = db_connection()
+    conn = db_connect()
     if not conn:
         return None, "Cannot connect db"
     try:
@@ -111,7 +111,7 @@ def db_insert(table, flds):
     sql += ",".join(["?" for i in range(0, len(keys))])
     sql += ");"
 
-    conn = db_connection()
+    conn = db_connect()
     if not conn:
         return None, "Cannot connect db"
 
@@ -138,7 +138,7 @@ def db_update(table, flds, p_name, p_id):
     vals = [flds[k] for k in keys]
     vals.append(p_id)
 
-    conn = db_connection()
+    conn = db_connect()
     if not conn:
         return "Cannot connect db"
     try:
@@ -152,7 +152,7 @@ def db_update(table, flds, p_name, p_id):
         return str(e)
 
 def db_execute(sql, vars):
-    conn = db_connection()
+    conn = db_connect()
     if not conn:
         return None, "Cannot connect db"
     try:
@@ -226,7 +226,8 @@ def user_loader(user_id):
 
 @login_manager.unauthorized_handler
 def unauthorized_handler():
-    return 'Unauthorized'
+    ctx = make_context("unauthorized")
+    return render_template('unauthorized.html', c=ctx)
 
 
 #------------------------------------------------------------------
@@ -246,6 +247,14 @@ def get_settings():
 def get_setting(key):
     dic = get_settings()
     return dic.get(key)
+
+def set_setting(key, value):
+    if get_setting(key) == None:
+        sql = "INSERT into Settings(key, value)values(?,?)"
+        return db_execute(sql, (key, value,))
+
+    sql = "UPDATE Settings SET Value = ? WHERE Key = '%s' " % key
+    return db_execute(sql, (value,))
 
 DEVICE_PROTOCOLS = [
     {'protocol': 'Uno', 'label': 'Arduino Uno'},
@@ -1321,25 +1330,19 @@ def delete_user():
             return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.'
 
 @app.route('/settings', methods=['GET', 'POST'])
+@login_required
 def p_settings():
 
     ctx = make_context("settings")
 
 
+
+
     if request.method == 'POST':
 
-        conn = db_connection()
-        cur = conn.cursor()
-
-        modbus_port = request.form.get('modbus_port', "disabled")
-        sql = "UPDATE Settings SET Value = ? WHERE Key = 'Modbus_port'"
-        cur.execute(sql, (modbus_port,))
-        conn.commit()
-
-        dnp3_port = request.form.get('dnp3_port', "disabled")
-        sql = "UPDATE Settings SET Value = ? WHERE Key = 'Dnp3_port'"
-        cur.execute(sql, [dnp3_port])
-        conn.commit()
+        set_setting("Modbus_port", request.form.get('modbus_port', "disabled"))
+        set_setting("Dnp3_port", request.form.get('dnp3_port', "disabled"))
+        set_setting("Enip_port", request.form.get('enip_port', "disabled"))
 
     ctx.settings = get_settings()
 
@@ -1588,37 +1591,10 @@ def settingsxd():
                 return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.'
         
 
-@app.route('/logout')
-def logout():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        monitor.stop_monitor()
-        flask_login.logout_user()
-        return flask.redirect(flask.url_for('login'))
 
 
-@login_manager.unauthorized_handler
-def unauthorized_handler():
-    return 'Unauthorized'
-    
-#----------------------------------------------------------------------------
-#Creates a connection with the SQLite database.
-#----------------------------------------------------------------------------
-""" Create a connection to the database file """
-def create_connection(db_file):
-   try:
-      conn = sqlite3.connect(db_file)
-      return conn
-   except Error as e:
-      print(e)
 
-   return None
 
-#----------------------------------------------------------------------------
-#Main dummy function. Only displays a message and exits. The app keeps
-#running on the background by Flask
-#----------------------------------------------------------------------------
 def start_server(address="127.0.0.1", port=8080,
                  database=DB_FILE,
                  workspace=None,
@@ -1648,25 +1624,22 @@ def start_server(address="127.0.0.1", port=8080,
             prog, err = db_query("SELECT * FROM Programs WHERE File=?", (st_file,), single=True)
 
 
-    print("st_file=", st_file)
-    print(prog, err)
     if prog:
         openplc_runtime.program = prog
         openplc_runtime.project_file = st_file
 
     ## Startup runtime at startup
-    print(get_settings())
     start_run = get_setting("Start_run_mode")
-    if start_run != 'true':
+    if start_run == 'true':
         print("Initializing OpenPLC in RUN mode...")
         openplc_runtime.start_runtime()
         time.sleep(1)
         configure_runtime()
 
-
-    import logging
-    log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
+    if debug:
+        import logging
+        log = logging.getLogger('werkzeug')
+        log.setLevel(logging.ERROR)
 
     socketio.run(app, host=address, port=port, debug=debug)
     #app.run(debug=debug, host=address, threaded=False, port=port)
