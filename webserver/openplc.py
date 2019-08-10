@@ -27,7 +27,7 @@ from threading import Thread
 from Queue import Queue, Empty
 
 
-from . import HERE_PATH, ROOT_PATH
+from . import HERE_DIR, ROOT_DIR, SCRIPTS_DIR
 
 intervals = (
     ('weeks', 604800),  # 60 * 60 * 24 * 7
@@ -155,7 +155,7 @@ class Runtime:
                 time.sleep(1) # https://www.reddit.com/r/learnpython/comments/776r96/defunct_python_process_when_using_subprocesspopen/
 
     # -- Compile --------------------------------------------------------
-    def compile_program(self, st_file):
+    def compile_program(self, st_file_name):
         if self.is_running():
             self.stop_runtime()
             
@@ -163,9 +163,10 @@ class Runtime:
         global compilation_status_str
         global compilation_object
         compilation_status_str = ""
-        compile_program_path = os.path.abspath(os.path.join(ROOT_PATH, 'scripts', 'compile_program.sh'))
-        a = subprocess.Popen([compile_program_path, str(st_file)],
-                             cwd=HERE_PATH,
+        compile_program_script = os.path.abspath(os.path.join(SCRIPTS_DIR, 'compile_program.sh'))
+        print("ST_FILE====", st_file_name)
+        a = subprocess.Popen([compile_program_script, str(st_file_name)],
+                             cwd=HERE_DIR,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         compilation_object = NonBlockingStreamReader(a.stdout, self.websock)

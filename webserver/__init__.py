@@ -1,11 +1,11 @@
 
 import os
 
-HERE_PATH = os.path.abspath(os.path.dirname(__file__))
-ROOT_PATH = os.path.abspath(os.path.join(HERE_PATH, ".."))
-ETC_PATH = os.path.abspath(os.path.join(ROOT_PATH, "etc"))
-SCRIPTS_PATH = os.path.abspath(os.path.join(ROOT_PATH, "scripts"))
+HERE_DIR = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(HERE_DIR, ".."))
+ETC_DIR = os.path.abspath(os.path.join(ROOT_DIR, "etc"))
+SCRIPTS_DIR = os.path.abspath(os.path.join(ROOT_DIR, "scripts"))
 
-CURR_PLATFORM_FILE = os.path.abspath(os.path.join(ETC_PATH, 'openplc_platform'))
-CURR_DRIVER_FILE = os.path.abspath(os.path.join(ETC_PATH, 'openplc_driver'))
-CURR_PROGRAM_FILE = os.path.abspath(os.path.join(ETC_PATH, 'active_program'))
+CURR_PLATFORM_FILE = os.path.abspath(os.path.join(ETC_DIR, 'openplc_platform'))
+CURR_DRIVER_FILE = os.path.abspath(os.path.join(ETC_DIR, 'openplc_driver'))
+CURR_PROGRAM_FILE = os.path.abspath(os.path.join(ETC_DIR, 'active_program'))

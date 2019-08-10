@@ -2,7 +2,7 @@ import os
 import time, threading
 from pymodbus.client.sync import ModbusTcpClient
 
-from . import HERE_PATH, ROOT_PATH
+from . import HERE_DIR, ROOT_DIR
 
 class debug_var():
     name = ''

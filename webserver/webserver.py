@@ -35,13 +35,13 @@ from flask_login import current_user, login_required
 
 from flask_socketio import SocketIO
 
-from . import HERE_PATH, ROOT_PATH, ETC_PATH, SCRIPTS_PATH, CURR_PROGRAM_FILE, CURR_DRIVER_FILE
+from . import HERE_DIR, ROOT_DIR, ETC_DIR, SCRIPTS_DIR, CURR_PROGRAM_FILE, CURR_DRIVER_FILE
 from . import openplc
 from . import pages
 from . import monitoring as monitor
 from . import ut
 
-WORK_DIR = None
+#WORK_DIR = None
 
 # -----------------------------------------------------
 # Database stuff
@@ -166,7 +166,7 @@ def db_execute(sql, vars):
         return str(e)
 
 #------------------------------------------------
-# Flask app
+# Flask app and socketio
 app = flask.Flask(__name__)
 app.secret_key = "openplciscool1234564561" #str(os.urandom(16))
 
@@ -183,6 +183,8 @@ def ws_connect():
 @socketio.on('disconnect')
 def ws_disconnect():
     print('Client disconnected')
+
+
 
 #------------------------------------------------
 #  Login + Security
@@ -321,7 +323,7 @@ def generate_mbconfig():
 # ------------
 """
         def mb_line(idx, name, val):
-            return 'device%s.%s = "%s"\n';
+            return 'device%s.%s = "%s"\n' % (idx, name, val);
 
         mbconfig += mb_line(device_idx,'name', row["dev_name"])
         mbconfig += mb_line(device_idx, 'slave_id', row["slave_id"])
@@ -339,7 +341,7 @@ def generate_mbconfig():
 
         mbconfig += mb_line(device_idx, 'IP_Port', row["ip_port"])
 
-        mbconfig += mb_line(device_idx, 'RTU_Baud_Rate', row["baud_reate"])
+        mbconfig += mb_line(device_idx, 'RTU_Baud_Rate', row["baud_rate"])
         mbconfig += mb_line(device_idx, 'RTU_Parity', row["parity"])
         mbconfig += mb_line(device_idx, 'RTU_Data_Bits', row["data_bits"])
         mbconfig += mb_line(device_idx, 'RTU_Stop_Bits', row["stop_bits"])
@@ -360,7 +362,8 @@ def generate_mbconfig():
         mbconfig += mb_line(device_idx, 'Holding_Registers_Size', row["hr_write_size"])
 
     print(mbconfig)
-    with open('./mbconfig.cfg', 'w+') as f:
+    cnf_file = os.path.join(ETC_DIR, "mbconfig.cfg")
+    with open(cnf_file, 'w+') as f:
         f.write(mbconfig)
         f.close()
     return None
@@ -832,15 +835,14 @@ def p_program_edit(prog_id):
         vars['File'] = prog_file.filename
 
         if prog_id == 0:
-            prog_id, err = db_insert("Programs", vars)
+            ctx.prog_id, err = db_insert("Programs", vars)
 
         else:
             db_update("Programs", vars, "Prog_id", prog_id)
 
-        st_dir = os.path.join(WORK_DIR, "st_files")
-        if not os.path.exists(st_dir):
-            os.makedirs(st_dir)
-        save_path = os.path.join(st_dir, "%s" % prog_id)
+        ## FIXME this needs to be somewhere else
+        st_dir = os.path.join(ETC_DIR, "st_files")
+        save_path = os.path.join(st_dir, "prog.%s.st" % prog_id)
         prog_file.save(save_path)
 
 
@@ -1039,7 +1041,7 @@ def upload_program_action():
             return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.'
         
 
-@app.route('/compile-program', methods=['GET', 'POST'])
+@app.route('/deadcompile-program', methods=['GET', 'POST'])
 def compile_program():
     global openplc_runtime
     if (flask_login.current_user.is_authenticated == False):
@@ -1075,22 +1077,20 @@ def compile_program():
 @login_required
 def p_program_compile(prog_id):
 
-    # load information about the program being compiled into the openplc_runtime object
+    # The compile is triggered nbu the socketio below
     ctx = make_context("compiling")
     ctx.prog_id = prog_id
 
 
     sql = "SELECT * FROM Programs WHERE Prog_id=?"
     row, ctx.error = db_query(sql, [str(prog_id)], single=True)
-    print ctx.error
+    #print ctx.error
     ctx.program = row
 
     openplc_runtime.project_name = row["name"]
     openplc_runtime.project_description = row["description"]
     openplc_runtime.project_file = row["file"]
 
-    st_file = os.path.join(WORK_DIR, "st_files", str(row["prog_id"]) )
-    #openplc_runtime.compile_program(st_file)
 
     return render_template("compiling.html", c=ctx)
 
@@ -1106,9 +1106,10 @@ def ws_xcommand(data):
     openplc_runtime.project_file = row["file"]
 
     socketio.emit("xmessage", {"data": "Starting Compile\n"})
-    st_file = os.path.join(WORK_DIR, "st_files", str(row["prog_id"]) )
+    #st_file = os.path.join(ETC_DIR, "st_files", str(row["prog_id"]) )
+    st_file_name = "prog.%s.st" % prog_id
 
-    openplc_runtime.compile_program(st_file)
+    openplc_runtime.compile_program(st_file_name)
 
 
     #print("xcommand", data)
@@ -1210,7 +1211,8 @@ def p_slave_edit(dev_id):
         else:
             err = db_update("Slave_dev", vals, "dev_id", dev_id)
         print(err)
-        redirect(url_for("p_slaves"))
+        generate_mbconfig()
+        return redirect(url_for("p_slaves"))
 
 
     ctx.device = {}
@@ -1382,7 +1384,7 @@ def p_hardware():
     monitor.stop_monitor()
 
     ctx = make_context("hardware")
-    custom_layer_file = os.path.join(ROOT_PATH, "runtime", "core", "custom_layer.h")
+    custom_layer_file = os.path.join(ROOT_DIR, "runtime", "core", "custom_layer.h")
 
     if request.method == "POST":
 
@@ -1399,9 +1401,9 @@ def p_hardware():
             f.close()
 
         #scripts_path = os.path.abspath(os.path.join(self_path, '..', 'scripts'))
-        change_hardware_script = os.path.join(SCRIPTS_PATH, 'change_hardware_layer.sh')
+        change_hardware_script = os.path.join(SCRIPTS_DIR, 'change_hardware_layer.sh')
         print(change_hardware_script)
-        subprocess.call([change_hardware_script, hardware_layer], cwd=SCRIPTS_PATH)
+        subprocess.call([change_hardware_script, hardware_layer], cwd=SCRIPTS_DIR)
         #return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
         #redirect(??)
         #TODO CALL compile
@@ -1898,7 +1900,7 @@ def start_server(address="127.0.0.1", port=8080,
     WORK_DIR = workspace
 
     #Load information about current program on the openplc_runtime object
-    program_dir = os.path.abspath(os.path.join(ETC_PATH, 'active_program'))
+    program_dir = os.path.abspath(os.path.join(ETC_DIR, 'active_program'))
     file = open(program_dir, "r")
     st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
