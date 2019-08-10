@@ -114,6 +114,8 @@ class Runtime:
         #self.project_description = ""
         self.runtime_status = RStatus.STOPPED
 
+        self.compileStreamReader = None
+
 
     def send_cmd(self, cmd, recv_bytes=1000):
         try:
@@ -170,13 +172,13 @@ class Runtime:
                              cwd=HERE_DIR,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
-        compilation_object = NonBlockingStreamReader(a.stdout, self.websock)
+        self.compileStreamReader = NonBlockingStreamReader(a.stdout, self.websock)
     
     def compilation_status(self):
         global compilation_status_str
         global compilation_object
         while True:
-            line = compilation_object.readline()
+            line = self.compileStreamReader.readline()
             if not line: break
             compilation_status_str += line
         return compilation_status_str

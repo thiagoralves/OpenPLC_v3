@@ -720,11 +720,11 @@ def ws_xcommand(data):
     #print("xcommand", data)
     #emit('xmessage', {'pong': data['ping']})
 
-@app.route('/compilation-logs', methods=['GET', 'POST'])
-@login_required
-def p_compilation_logs():
-
-    return openplc_runtime.compilation_status()
+# @app.route('/compilation-logs', methods=['GET', 'POST'])
+# @login_required
+# def p_compilation_logs():
+#
+#     return openplc_runtime.compilation_status()
 
 
 @app.route('/slaves', methods=['GET', 'POST'])
@@ -743,7 +743,7 @@ def p_slaves():
 
         for row in rows:
 
-            #calculate di
+            ## calculate di
             di = "-"
             if row["di_size"] != 0:
                 di = "%IX" + str(100 + (counter_di/8)) + "." + str(counter_di%8) + " to "
@@ -751,7 +751,7 @@ def p_slaves():
                 di += "%IX" + str(100 + ((counter_di-1)/8)) + "." + str((counter_di-1)%8)
             row["di"] = di
 
-            #calculate do
+            ## calculate do
             do = "-"
             if row["coil_size"] != 0:
                 do = "%QX" + str(100 + (counter_do/8)) + "." + str(counter_do%8) + " to "
@@ -759,7 +759,7 @@ def p_slaves():
                 do += "%QX" + str(100 + ((counter_do-1)/8)) + "." + str((counter_do-1)%8)
             row["do"] = do
 
-            #calculate ai
+            ## calculate ai
             ai = "-"
             if row["ir_size"] + row["hr_read_size"] != 0:
                 ai = "%IW" + str(100 + counter_ai) + " to "
@@ -767,7 +767,7 @@ def p_slaves():
                 ai += "%IW" + str(100 + (counter_ai-1))
             row["ai"] = ai
 
-            #calculate ao
+            ## calculate ao
             ao = "-"
             if row["hr_write_size"] != 0:
                 ao = "%QW" + str(100 + counter_ao) + " to "
