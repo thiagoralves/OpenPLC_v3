@@ -6,13 +6,30 @@
 
 {% block content %}
 
+<table  class="table table-bordered table-sm" style="max-width: 50%">
+<col width="50%"><col width="50%">
+<tr>
+    <th class="table-dark text-right">Status:</th>
+    <th><span class="{{runtime.status()}}">{{runtime.status()}}</span></th>
+</tr>
+<tr>
+    <th class="table-dark text-right">Program:</th>
+    <th>{{runtime.project_name}}</th>
+</tr>
+<tr>
+    <th class="table-dark text-right">Description:</th>
+    <th>{{runtime.project_description}}</th>
+</tr>
+<tr>
+    <th class="table-dark text-right">File:</th>
+    <th>{{runtime.project_file}}</th>
+</tr>
+<tr>
+    <th class="table-dark text-right">Runtime:</th>
+    <th>{{runtime.exec_time()}}</th>
+</tr>
+</table>
 
-<p style="font-family:'Roboto', sans-serif; font-size:16px;"><b>Status: <span class="{{runtime.status()}}">{{runtime.status()}}</span></b></p>
-
-<p style="font-family:'Roboto', sans-serif; font-size:16px"><b>Program:</b> {{runtime.project_name}}</p>
-<p style="font-family:'Roboto', sans-serif; font-size:16px"><b>Description:</b> {{runtime.project_description}}</p>
-<p style="font-family:'Roboto', sans-serif; font-size:16px"><b>File:</b> {{runtime.project_file}}</p>
-<p style="font-family:'Roboto', sans-serif; font-size:16px"><b>Runtime:</b> {{runtime.exec_time()}}</p>
 
 
 <br>

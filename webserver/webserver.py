@@ -43,9 +43,9 @@ from . import ut
 
 #WORK_DIR = None
 
-# -----------------------------------------------------
+#-----------------------------------------------------------------------
 # Database stuff
-# -----------------------------------------------------
+#-----------------------------------------------------------------------
 DB_FILE = "openplc.db"
 
 def db_connect():
@@ -165,8 +165,32 @@ def db_execute(sql, vars):
     except Error as e:
         return str(e)
 
-#------------------------------------------------
+#-----------------------------------------------------------------------
+# Settings
+#-----------------------------------------------------------------------
+def get_settings():
+    rows, err = db_query("SELECT * FROM Settings")
+    dic = {}
+    for r in rows:
+        dic[r['key'].lower()] = r['value']
+    return dic
+
+def get_setting(key):
+    dic = get_settings()
+    return dic.get(key)
+
+def set_setting(key, value):
+    if get_setting(key) == None:
+        sql = "INSERT into Settings(key, value)values(?,?)"
+        return db_execute(sql, (key, value,))
+
+    sql = "UPDATE Settings SET Value = ? WHERE Key = '%s' " % key
+    return db_execute(sql, (value,))
+
+
+#-----------------------------------------------------------------------
 # Flask app and socketio
+#-----------------------------------------------------------------------
 app = flask.Flask(__name__)
 app.secret_key = "openplciscool1234564561" #str(os.urandom(16))
 
@@ -186,8 +210,9 @@ def ws_disconnect():
 
 
 
-#------------------------------------------------
+#-----------------------------------------------------------------------
 #  Login + Security
+#-----------------------------------------------------------------------
 login_manager = flask_login.LoginManager()
 login_manager.login_view = "/login" # FIXME
 login_manager.init_app(app)
@@ -230,40 +255,13 @@ def unauthorized_handler():
     return render_template('unauthorized.html', c=ctx)
 
 
-#------------------------------------------------------------------
+#-----------------------------------------------------------------------
 #  OpenPLC Runtime
-#------------------------------------------------------------------
+#-----------------------------------------------------------------------
 openplc_runtime = openplc.Runtime(socketio)
 
 monitor = monitoring.Monitor(socketio)
 
-def get_settings():
-    rows, err = db_query("SELECT * FROM Settings")
-    dic = {}
-    for r in rows:
-        dic[r['key'].lower()] = r['value']
-    return dic
-
-def get_setting(key):
-    dic = get_settings()
-    return dic.get(key)
-
-def set_setting(key, value):
-    if get_setting(key) == None:
-        sql = "INSERT into Settings(key, value)values(?,?)"
-        return db_execute(sql, (key, value,))
-
-    sql = "UPDATE Settings SET Value = ? WHERE Key = '%s' " % key
-    return db_execute(sql, (value,))
-
-DEVICE_PROTOCOLS = [
-    {'protocol': 'Uno', 'label': 'Arduino Uno'},
-    {'protocol': 'Mega', 'label': 'Arduino Mega'},
-    {'protocol': 'ESP32', 'label': 'ESP32'},
-    {'protocol': 'ESP8266', 'label': 'ESP8266'},
-    {'protocol': 'TCP', 'label': 'Generic Modbus TCP Device'},
-    {'protocol': 'RTU', 'label': 'Generic Modbus RTU Device'}
-]
 
 def configure_runtime():
     global openplc_runtime
@@ -488,10 +486,10 @@ def p_dashboard():
 
 
 #---------------- runtime --------------------------------
-
 @app.route('/runtime/start')
 @login_required
-def start_plc():
+def p_runtime_start():
+
     global openplc_runtime
 
     monitor.stop_monitor()
@@ -505,31 +503,26 @@ def start_plc():
 
 @app.route('/runtime/stop')
 @login_required
-def stop_plc():
+def p_runtime_stop():
+
     global openplc_runtime
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        openplc_runtime.stop_runtime()
-        time.sleep(1)
-        monitor.stop_monitor()
-        return flask.redirect(flask.url_for('dashboard'))
+
+    openplc_runtime.stop_runtime()
+    time.sleep(1)
+    monitor.stop_monitor()
+    return redirect(url_for('p_dashboard'))
 
 
 @app.route('/runtime/logs')
 @login_required
-def runtime_logs():
-    global openplc_runtime
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        return openplc_runtime.logs()
+def p_runtime_logs():
+      return openplc_runtime.logs()
 
 
 
 
 
-#-----------------
+#-----------------------------------------------------------------------------------
 # Progam related
 @app.route('/programs', methods=['GET'])
 @login_required
@@ -553,9 +546,6 @@ def p_programs():
 @app.route('/program/<int:prog_id>', methods=['GET', 'POST'])
 @login_required
 def p_program_edit(prog_id):
-
-    if openplc_runtime.is_compiling():
-        return draw_compiling_page()
 
     ctx = make_context("programs")
     ctx.prog_id = prog_id
@@ -587,71 +577,11 @@ def p_program_edit(prog_id):
 
     ctx.program, ctx.error = db_query("SELECT * FROM Programs WHERE Prog_ID = ?", [str(prog_id)], single=True)
 
-    st_path = os.path.join(WORK_DIR, "st_files", str(prog_id))
+    st_path = os.path.join(ETC_DIR, "st_files", "prog.%s.st" % prog_id)
     ctx.st_source, err = ut.read_file(st_path)
 
-    return render_template("program_reload.html", c=ctx)
+    return render_template("program_edit.html", c=ctx)
 
-
-@app.route('/reload-program', methods=['GET', 'POST'])
-def reload_program():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        prog_id = flask.request.args.get('table_id')
-        return_str = pages.w3_style + pages.style + draw_top_div()
-        return_str += """
-            <div class='main'>
-                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-                    <br>
-                    <br>
-                    <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-                    <a href="programs" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Programs</p></a>
-                    <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
-                    <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-                    <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-                    <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
-                    <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-                    <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-                    <br>
-                    <br>"""
-        return_str += draw_status()
-        return_str += """
-            </div>
-            <div style="margin-left:320px; margin-right:70px">
-                <div style="w3-container">
-                    <br>
-                    <h2>Program Info</h2>
-                    <br>"""
-        database = "../etc/openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("SELECT * FROM Programs WHERE Prog_ID = ?", (int(prog_id),))
-                row = cur.fetchone()
-                cur.close()
-                conn.close()
-                return_str += "<label for='prog_name'><b>Name</b></label><input type='text' id='prog_name' name='program_name' value='" + str(row[1]) + "' disabled>"
-                return_str += "<label for='prog_descr'><b>Description</b></label><textarea type='text' rows='10' style='resize:vertical' id='prog_descr' name='program_descr' disabled>" + str(row[2]) + "</textarea>"
-                return_str += "<label for='prog_file'><b>File</b></label><input type='text' id='prog_file' name='program_file' value='" + str(row[3]) + "' disabled>"
-                return_str += "<label for='prog_date'><b>Date Uploaded</b></label><input type='text' id='prog_date' name='program_date' value='" + time.strftime('%b %d, %Y - %I:%M%p', time.localtime(row[4])) + "' disabled>"
-                return_str += "<br><br><center><a href='compile-program?file=" + str(row[3]) + "' class='button' style='width: 310px; height: 53px; margin: 0px 20px 0px 20px;'><b>Reload program</b></a><a href='remove-program?id=" + str(prog_id) + "' class='button' style='width: 310px; height: 53px; margin: 0px 20px 0px 20px;'><b>Remove program</b></a></center>"
-                return_str += """
-                </div>
-            </div>
-        </div>
-    </body>
-</html>"""
-
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return_str += 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        else:
-            return_str += 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.'
-        
-        return return_str
 
 
 @app.route('/program/<int:prog_id>/remove', methods=['GET', 'POST'])
@@ -749,68 +679,6 @@ def upload_program():
         return return_str
 
 
-@app.route('/upload-program-action', methods=['GET', 'POST'])
-def upload_program_action():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        prog_name = flask.request.form['prog_name']
-        prog_descr = flask.request.form['prog_descr']
-        prog_file = flask.request.form['prog_file']
-        epoch_time = flask.request.form['epoch_time']
-        
-        database = "../etc/openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("INSERT INTO Programs (Name, Description, File, Date_upload) VALUES (?, ?, ?, ?)", (prog_name, prog_descr, prog_file, epoch_time))
-                conn.commit()
-                cur.close()
-                conn.close()
-                #Redirect back to the compiling page
-                return '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/compile-program?file=' + prog_file + '"></head></html>'
-            
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        else:
-            return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.'
-        
-
-@app.route('/deadcompile-program', methods=['GET', 'POST'])
-def compile_program():
-    global openplc_runtime
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        st_file = flask.request.args.get('file')
-        
-        #load information about the program being compiled into the openplc_runtime object
-        database = "../etc/openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
-                row = cur.fetchone()
-                openplc_runtime.project_name = str(row[1])
-                openplc_runtime.project_description = str(row[2])
-                openplc_runtime.project_file = str(row[3])
-                cur.close()
-                conn.close()
-            except Error as e:
-                print("error connecting to the database" + str(e))
-        else:
-            print("error connecting to the database")
-        
-        delete_persistent_file()
-        openplc_runtime.compile_program(st_file)
-        
-        return draw_compiling_page()
-
 @app.route('/program/<int:prog_id>/compile', methods=['GET', 'POST'])
 @login_required
 def p_program_compile(prog_id):
@@ -849,24 +717,19 @@ def ws_xcommand(data):
 
     openplc_runtime.compile_program(st_file_name)
 
-
     #print("xcommand", data)
     #emit('xmessage', {'pong': data['ping']})
 
 @app.route('/compilation-logs', methods=['GET', 'POST'])
-def compilation_logs():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        return openplc_runtime.compilation_status()
+@login_required
+def p_compilation_logs():
+
+    return openplc_runtime.compilation_status()
 
 
 @app.route('/slaves', methods=['GET', 'POST'])
 @login_required
 def p_slaves():
-
-        if (openplc_runtime.status() == "Compiling"):
-            return draw_compiling_page()
 
         ctx = make_context("slaves")
 
@@ -916,6 +779,15 @@ def p_slaves():
 
         return render_template("slaves.html", c=ctx)
 
+DEVICE_PROTOCOLS = [
+    {'protocol': 'Uno', 'label': 'Arduino Uno'},
+    {'protocol': 'Mega', 'label': 'Arduino Mega'},
+    {'protocol': 'ESP32', 'label': 'ESP32'},
+    {'protocol': 'ESP8266', 'label': 'ESP8266'},
+    {'protocol': 'TCP', 'label': 'Generic Modbus TCP Device'},
+    {'protocol': 'RTU', 'label': 'Generic Modbus RTU Device'}
+]
+
 IO_PREFIXES = [
     {"prefix": "di", "label": "Discrete Inputs (%IX100.0)"},
     {"prefix": "coil", "label": "Coils (%QX100.0)"},
@@ -927,8 +799,6 @@ IO_PREFIXES = [
 @app.route('/slave/<int:dev_id>', methods=['GET', 'POST'])
 @login_required
 def p_slave_edit(dev_id):
-
-    if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
     ctx = make_context("slaves")
     ctx.dev_id = dev_id
