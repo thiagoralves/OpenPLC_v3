@@ -71,4 +71,10 @@ textarea {
 .form-control {
   background-color: #FFF8D3; }
 
+.flag_true {
+  color: green; }
+
+.flag_false {
+  color: #990000; }
+
 /*# sourceMappingURL=openplc.2.css.map */

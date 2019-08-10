@@ -1252,14 +1252,49 @@ def p_slave_remove(dev_id):
 
     return redirect(url_for('p_slaves'))
 
-@app.route('/monitoring2', methods=['GET', 'POST'])
+@app.route('/monitoring', methods=['GET', 'POST'])
+@login_required
 def p_monitoring():
 
     ctx = make_context("monitoring")
 
+    ctx.debug_vars = []
+
+    ctx.debug_vars.append(dict(name="foo", type="BOOL", location="s", value=0, forced="r"))
+    ctx.debug_vars.append(dict(name="foo", type="BOOL", location="s", value=1))
+    ctx.debug_vars.append(dict(name="foo", type="BOsOL", location="s", value=1200))
+    ctx.debug_vars.append(dict(name="foo", type="BOsOL", location="s", value=13454))
+
+    if openplc_runtime.is_running():
+        monitor.start_monitor()
+
+        ctx.debug_vars = monitor.debug_vars
+
+
+        # data_index = 0
+        #
+        # for debug_data in monitor.debug_vars:
+        #     return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(
+        #         data_index) + '\'">'
+        #     return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
+        #     if (debug_data.type == 'BOOL'):
+        #         if (debug_data.value == 0):
+        #             return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
+        #         else:
+        #             return_str += '<img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</td>'
+        #     else:
+        #         percentage = (debug_data.value * 100) / 65535
+        #         return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(
+        #             int(percentage)) + '%"><p style="margin-top:10px">' + str(
+        #             debug_data.value) + '</p></div></div></td>'
+        #     return_str += '</tr>'
+        #     data_index += 1
+        # return_str += pages.monitoring_tail
+
+
     return render_template("monitoring.html", c=ctx)
             
-@app.route('/monitoring', methods=['GET', 'POST'])
+@app.route('/monitoring2', methods=['GET', 'POST'])
 def monitoring():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
