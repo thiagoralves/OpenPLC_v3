@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with OpenPLC.  If not, see <http://www.gnu.org/licenses/>.
 # ----------------------------------------------------------------------------
+from __future__ import absolute_import
 
 # Use this for OpenPLC console: http://eyalarubas.com/python-subproc-nonblock.html
 import subprocess
@@ -24,6 +25,7 @@ import time
 import os
 from threading import Thread
 from Queue import Queue, Empty
+
 
 from . import HERE_PATH, ROOT_PATH
 

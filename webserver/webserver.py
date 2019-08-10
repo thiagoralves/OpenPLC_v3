@@ -16,6 +16,7 @@
 # along with OpenPLC.  If not, see <http://www.gnu.org/licenses/>.
 # ----------------------------------------------------------------------------
 
+
 import sqlite3
 from sqlite3 import Error
 import os
@@ -25,78 +26,238 @@ import serial.tools.list_ports
 import random
 import datetime
 import time
-import pages
-import openplc
-import monitoring as monitor
 import sys
 
 import flask 
 import flask_login
 
-self_path = os.path.dirname(__file__)
+from . import HERE_PATH, ROOT_PATH, ETC_PATH
+from . import pages
+from . import openplc
+from . import monitoring as monitor
 
+
+# -----------------------------------------------------
+# Database stuff
+# -----------------------------------------------------
+DB_FILE = "openplc.db"
+
+def db_connection():
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        return conn
+    except Error as e:
+        print(e)
+    return None
+
+def db_query(sql, args=(), single=False, as_list=False):
+    """ Opens db, execute query, close then return results.
+    Querying is one function atmo, as issues with multithread app.
+
+    :param sql: str with sql and :params placeholders
+    :param args: dict with arg values
+    :param single: return only one row
+    :param as_list: True returns a row in a list, otherwise a dict
+    :return: rows/row, err
+    """
+    conn = db_connection()
+    if not conn:
+        return None, "Cannot connect db"
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, args)
+
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        ## This is a workaround until schema changes maybe, converts to dict
+        col_names = [c[0].lower() for c in cur.description]
+        row_dict = []
+        for ridx, row in enumerate(rows):
+            d = {}
+            for cidx, cn in enumerate(col_names):
+                d[cn] = row[cidx]
+            row_dict.append(d)
+
+        if not single:
+            return rows if as_list else row_dict, None
+
+        if len(rows) == 0:
+            return None, "No Rows"
+
+        if len(rows) > 1:
+            return None, "More than one row"
+
+        return rows[0] if as_list else row_dict[0], None
+
+    except Error as e:
+        print("error connecting to the database" + str(e))
+        return None, str(e)
+
+
+def db_insert(table, flds):
+    sql = "insert into %s (" % table
+    keys = sorted(flds.keys())
+    sql += ",".join(keys)
+    sql += ") values ("
+    sql += ",".join(["?" for i in range(0, len(keys))])
+    sql += ");"
+
+    conn = db_connection()
+    if not conn:
+        return None, "Cannot connect db"
+
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, [flds[k] for k in keys])
+        conn.commit()
+
+        ## get inserted id
+        sql = "select last_insert_rowid()"
+        cur.execute(sql)
+        row = cur.fetchone()
+        return row[0], None
+
+    except Error as e:
+        return None, str(e)
+
+
+def db_update(table, flds, p_name, p_id):
+    sql = "update %s set " % table
+    keys = sorted(flds.keys())
+    sql += ",".join(["%s=?" % k for k in keys])
+    sql += " where %s = ?;" % p_name
+    vals = [flds[k] for k in keys]
+    vals.append(p_id)
+
+    conn = db_connection()
+    if not conn:
+        return "Cannot connect db"
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, vals)
+        conn.commit()
+        return None
+
+    except Error as e:
+        print("error connecting to the database" + str(e))
+        return str(e)
+
+
+
+#------------------------------------------------
+# Flask app
 app = flask.Flask(__name__)
-app.secret_key = str(os.urandom(16))
+app.secret_key = "openplciscool1234564561" #str(os.urandom(16))
+
+app.config['SECRET_KEY'] = app.secret_key
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+
+#------------------------------------------------
+#  Login + Security
 login_manager = flask_login.LoginManager()
+login_manager.login_view = "/login" # FIXME
 login_manager.init_app(app)
 
+class User:
+    def __init__(self):
+
+        self.is_active = True
+        self.is_authenticated = True
+
+        self.user_id = None
+        self.username = None
+        self.name = None
+        self.pict_file = None
+
+    def get_id(self):
+        return self.user_id
+
+@login_manager.user_loader
+def user_loader(user_id):
+    """Get user details for flask admin"""
+    sql = "SELECT user_id, username, name, pict_file FROM Users "
+    sql += ' where user_id=? '
+    row, err = db_query(sql, [user_id], single=True)
+    if err:
+        print(err)
+        return None
+
+    user = User()
+    user.user_id = "%s" % row["user_id"]
+    user.username = row["username"]
+    user.name = row["name"]
+    user.pict_file = str(row["pict_file"])
+    return user
+
+
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    return 'Unauthorized'
+
+
+#------------------------------------------------------------------
+#  OpenPLC Runtime
+#------------------------------------------------------------------
 openplc_runtime = openplc.runtime()
 
-class User(flask_login.UserMixin):
-    pass
-
+DEVICE_PROTOCOLS = [
+    {'protocol': 'Uno', 'label': 'Arduino Uno'},
+    {'protocol': 'Mega', 'label': 'Arduino Mega'},
+    {'protocol': 'ESP32', 'label': 'ESP32'},
+    {'protocol': 'ESP8266', 'label': 'ESP8266'},
+    {'protocol': 'TCP', 'label': 'Generic Modbus TCP Device'},
+    {'protocol': 'RTU', 'label': 'Generic Modbus RTU Device'}
+]
 
 def configure_runtime():
     global openplc_runtime
-    database = "../etc/openplc.db"
-    conn = create_connection(database)
-    if (conn != None):
-        try:
-            print("Openning database")
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM Settings")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
 
-            for row in rows:
-                if (row[0] == "Modbus_port"):
-                    if (row[1] != "disabled"):
-                        print("Enabling Modbus on port " + str(int(row[1])))
-                        openplc_runtime.start_modbus(int(row[1]))
-                    else:
-                        print("Disabling Modbus")
-                        openplc_runtime.stop_modbus()
-                elif (row[0] == "Dnp3_port"):
-                    if (row[1] != "disabled"):
-                        print("Enabling DNP3 on port " + str(int(row[1])))
-                        openplc_runtime.start_dnp3(int(row[1]))
-                    else:
-                        print("Disabling DNP3")
-                        openplc_runtime.stop_dnp3()
-                elif (row[0] == "Enip_port"):
-                    if (row[1] != "disabled"):
-                        print("Enabling EtherNet/IP on port " + str(int(row[1])))
-                        openplc_runtime.start_enip(int(row[1]))
-                    else:
-                        print("Disabling EtherNet/IP")
-                        openplc_runtime.stop_enip()
-                elif (row[0] == "Pstorage_polling"):
-                    if (row[1] != "disabled"):
-                        print("Enabling Persistent Storage with polling rate of " + str(int(row[1])) + " seconds")
-                        openplc_runtime.start_pstorage(int(row[1]))
-                    else:
-                        print("Disabling Persistent Storage")
-                        openplc_runtime.stop_pstorage()
-                        delete_persistent_file()
-        except Error as e:
-            print("error connecting to the database" + str(e))
-    else:
-        print("Error opening DB")
+    rows, err = db_query("SELECT * FROM Settings")
+    if err:
+        print(err)
+        # TODO error handling
+        return
+
+    for row in rows:
+        if row[0] == "Modbus_port":
+            if row[1] != "disabled":
+                print("Enabling Modbus on port " + str(int(row[1])))
+                openplc_runtime.start_modbus(int(row[1]))
+            else:
+                print("Disabling Modbus")
+                openplc_runtime.stop_modbus()
+
+        elif row[0] == "Dnp3_port":
+            if row[1] != "disabled":
+                print("Enabling DNP3 on port " + str(int(row[1])))
+                openplc_runtime.start_dnp3(int(row[1]))
+            else:
+                print("Disabling DNP3")
+                openplc_runtime.stop_dnp3()
+
+        elif row[0] == "Enip_port":
+            if row[1] != "disabled":
+                print("Enabling EtherNet/IP on port " + str(int(row[1])))
+                openplc_runtime.start_enip(int(row[1]))
+            else:
+                print("Disabling EtherNet/IP")
+                openplc_runtime.stop_enip()
+
+        elif row[0] == "Pstorage_polling":
+            if row[1] != "disabled":
+                print("Enabling Persistent Storage with polling rate of " + str(int(row[1])) + " seconds")
+                openplc_runtime.start_pstorage(int(row[1]))
+            else:
+                print("Disabling Persistent Storage")
+                openplc_runtime.stop_pstorage()
+                delete_persistent_file()
 
 
 def delete_persistent_file():
-    if (os.path.isfile("persistent.file")):
+    if os.path.isfile("persistent.file"):
         os.remove("persistent.file")
     print("persistent.file removed!")
 
@@ -2059,49 +2220,60 @@ def create_connection(db_file):
 #Main dummy function. Only displays a message and exits. The app keeps
 #running on the background by Flask
 #----------------------------------------------------------------------------
-def main():
-   print("Starting the web interface...")
-   
-if __name__ == '__main__':
+def start_server(address="127.0.0.1", port=8080,
+                 database=DB_FILE,
+                 debug=False):
+    print("Starting the web interface...")
+
+    DB_FILE = database
+    if not os.path.exists(DB_FILE):
+        s = "The database file `%s` does not exist\n" % DB_FILE
+        print(s)
+        return
+
+
     #Load information about current program on the openplc_runtime object
-    program_dir = os.path.abspath(os.path.join(self_path, '..', 'etc', 'active_program'))
+    program_dir = os.path.abspath(os.path.join(ETC_PATH, 'active_program'))
     file = open(program_dir, "r")
     st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
     
-    reload(sys)
-    sys.setdefaultencoding('UTF8')
+
+    #sys.setdefaultencoding('UTF8')
     
-    database = "../etc/openplc.db"
-    conn = create_connection(database)
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
-            #cur.execute("SELECT * FROM Programs")
-            row = cur.fetchone()
-            openplc_runtime.project_name = str(row[1])
-            openplc_runtime.project_description = str(row[2])
-            openplc_runtime.project_file = str(row[3])
-            
-            cur.execute("SELECT * FROM Settings")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-            
-            for row in rows:
-                if (row[0] == "Start_run_mode"):
-                    start_run = str(row[1])
-                    
-            if (start_run == 'true'):
-                print("Initializing OpenPLC in RUN mode...")
-                openplc_runtime.start_runtime()
-                time.sleep(1)
-                configure_runtime()
-            
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
-        
-        except Error as e:
-            print("error connecting to the database" + str(e))
-    else:
-        print("error connecting to the database")
+    # database = "../etc/openplc.db"
+    # conn = create_connection(database)
+    # if (conn != None):
+    #     try:
+    #         cur = conn.cursor()
+    #         cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
+    #         #cur.execute("SELECT * FROM Programs")
+    #         row = cur.fetchone()
+    #         openplc_runtime.project_name = str(row[1])
+    #         openplc_runtime.project_description = str(row[2])
+    #         openplc_runtime.project_file = str(row[3])
+    #
+    #         cur.execute("SELECT * FROM Settings")
+    #         rows = cur.fetchall()
+    #         cur.close()
+    #         conn.close()
+    #
+    #         for row in rows:
+    #             if (row[0] == "Start_run_mode"):
+    #                 start_run = str(row[1])
+    #
+    #         if (start_run == 'true'):
+    #             print("Initializing OpenPLC in RUN mode...")
+    #             openplc_runtime.start_runtime()
+    #             time.sleep(1)
+    #             configure_runtime()
+    #
+    #         app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+    #
+    #     except Error as e:
+    #         print("error connecting to the database" + str(e))
+    # else:
+    #     print("error connecting to the database")
+
+    #socketio.run(app, host=args.address, port=args.port, debug=True)
+    app.run(debug=debug, host=address, threaded=False, port=port)
