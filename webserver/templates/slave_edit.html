@@ -7,7 +7,6 @@
 
 {% block content %}
 
-{{c.device}}
 
 <form id="slave_form" action="/slave/{{c.dev_id}}" method="POST" onsubmit="return validateForm()">
 <div class="row">
@@ -107,16 +106,18 @@
 
     </div>
 </div>
-     <center><input type="submit" class="btn btn-primary"  value='Save device'></center>
+ <center><input type="submit" class="btn btn-primary"  value='Save device'></center>
 </form>
 
+{## Delete Form ==============================#}
 <form action="/slave/{{c.dev_id}}/remove" method="POST" onsubmit="return confirm('Are you sure ?');">
     <input type="hidden" name="dev_id" value="{{c.dev_id}}">
     <input type="hidden" name="action" value="do_delete">
     <div class="form-group">
-                <input type="submit" class="btn btn-danger" value='Remove Slave' sonclick="checkDelete();">
-            </div>
+        <input type="submit" class="btn btn-danger" value='Remove Slave' sonclick="checkDelete();">
+     </div>
 </form>
+
 <script type="text/javascript" src="/static/openplc_js/slave_edit.js"></script>
 
 {% endblock content %}

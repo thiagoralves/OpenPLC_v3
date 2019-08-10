@@ -852,7 +852,6 @@ def p_slave_remove(dev_id):
 
     if request.method == "POST":
         xid = int(request.form.get('dev_id'))
-
         if xid == dev_id and request.form.get('action') == "do_delete":
             err = db_execute("DELETE FROM Slave_dev WHERE dev_id = ?", [dev_id])
             generate_mbconfig()
@@ -988,16 +987,15 @@ def p_user_edit(user_id):
 @app.route('/user/<int:user_id>/delete', methods=['GET', 'POST'])
 def p_user_delete(user_id):
 
+    row, err = db_query("SELECT user_id, username, name FROM Users WHERE user_id = ?", (int(user_id),), single=True)
 
+    if current_user.user_id != str(row["user_id"]):
+        # make sure dont delet eourselves
+        xid = int(request.form.get('user_id'))
+        if xid == user_id and request.form.get('action') == "do_delete":
+            err = db_execute("DssELETE FROM Users WHERE user_id = ?", (int(user_id),))
 
-    row, err = db_query("SELECT username FROM Users WHERE user_id = ?", (int(user_id),))
-    print("ID+++++++", flask_login.current_user.id)
-    if flask_login.current_user.id == row[0]:
-        oops()
-
-    err = db_execute("DELETE FROM Users WHERE user_id = ?", (int(user_id),))
-
-    redirect(url_for('p_users'))
+    return redirect(url_for('p_users'))
 
 
 @app.route('/settings', methods=['GET', 'POST'])

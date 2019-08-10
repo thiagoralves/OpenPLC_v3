@@ -61,6 +61,14 @@ body {
     padding: 4px;
     font-size: 1.4em;
     background-color: #eeeeee; }
+  .content fieldset {
+    margin-bottom: 10px;
+    border-left: 2px solid #dddddd;
+    border-bottom: 2px solid #dddddd;
+    padding-left: 10px;
+    #box-shadow: 3px 3px red; }
+    .content fieldset legend {
+      font-size: 1.1em; }
 
 textarea {
   width: 100%;

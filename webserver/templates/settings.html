@@ -17,11 +17,13 @@
                 {% if c.settings.modbus_port != "disabled"%}checked{%endif%}>
             <label class="form-check-label" for="modbus_enabled">Enable</label>
          </div>
-         <div class="form-group">
-            <label for='modbus_port'>Port</label>
-            <input type='number' id='modbus_port' name='modbus_port' class="form-control"
+         <div class="form-group row">
+            <label for='modbus_port' class="col-sm-1 col-form-label text-right">Port</label>
+             <div class="col-sm-4">
+                <input type='number' id='modbus_port' name='modbus_port' class="form-control"
                    value='{% if c.settings.modbus_port != "disabled"%}{{c.settings.modbus_port}}{%else%}502{%endif%}'
                    min="0" max="65535">
+             </div>
          </div>
 
      </fieldset>
@@ -35,11 +37,13 @@
                 {% if c.settings.dnp3_port != "disabled"%}checked{%endif%}>
             <label class="form-check-label" for="dnp3_enabled">Enable</label>
          </div>
-         <div class="form-group">
-            <label for='dnp3_port'>Port</label>
-            <input type='number' id='dnp3_port' name='dnp3_port' class="form-control"
+         <div class="form-group row">
+            <label for='dnp3_port' class="col-sm-1 col-form-label text-right">Port</label>
+             <div class="col-sm-4">
+                <input type='number' id='dnp3_port' name='dnp3_port' class="form-control"
                    value='{% if c.settings.dnp3_port != "disabled"%}{{c.settings.dnp3_port}}{%else%}20000{%endif%}'
                    min="0" max="65535" >
+             </div>
          </div>
 
      </fieldset>
@@ -52,11 +56,13 @@
                 {% if c.settings.dnp3_port != "disabled"%}checked{%endif%}>
             <label class="form-check-label" for="enip_enabled">Enable</label>
          </div>
-         <div class="form-group">
-            <label for='dnp3_port'>Port</label>
-            <input type='number' id='enip_port' name='enip_port' class="form-control"
+         <div class="form-group row">
+            <label for='dnp3_port' class="col-sm-1 col-form-label text-right">Port</label>
+             <div class="col-sm-4">
+                <input type='number' id='enip_port' name='enip_port' class="form-control"
                    value='{% if c.settings.enip_port != "disabled"%}{{c.settings.enip_port}}{%else%}44818{%endif%}'
                    min="0" max="65535" >
+             </div>
          </div>
 
      </fieldset>
@@ -64,14 +70,18 @@
       <fieldset>
          <legend>Slave Devices</legend>
 
-         <div class="form-group">
-            <label for='slave_polling_period'>Polling Period (ms)</label>
-            <input type='number' class="form-control" id='slave_polling_period' name='slave_polling_period' value='100' min="1" max="30000">
+         <div class="form-group row">
+            <label for='slave_polling_period' class="col-sm-3 col-form-label text-right">Polling Period (ms)</label>
+             <div class="col-sm-4">
+                <input type='number' class="form-control" id='slave_polling_period' name='slave_polling_period' value='100' min="1" max="30000">
+             </div>
          </div>
 
-          <div class="form-group">
-            <label for='slave_polling_period'>Timeout (ms)</label>
-            <input type='number' class="form-control" id='slave_timeout' name='slave_timeout' value='1000' min="500" max="30000" step="100">
+          <div class="form-group row">
+            <label for='slave_polling_period' class="col-sm-3 col-form-label text-right">Timeout (ms)</label>
+              <div class="col-sm-4">
+                <input type='number' class="form-control" id='slave_timeout' name='slave_timeout' value='1000' min="500" max="30000" step="100">
+              </div>
          </div>
 
 
