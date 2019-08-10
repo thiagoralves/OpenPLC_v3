@@ -243,6 +243,10 @@ def get_settings():
         dic[r['key'].lower()] = r['value']
     return dic
 
+def get_setting(key):
+    dic = get_settings()
+    return dic.get(key)
+
 DEVICE_PROTOCOLS = [
     {'protocol': 'Uno', 'label': 'Arduino Uno'},
     {'protocol': 'Mega', 'label': 'Arduino Mega'},
@@ -254,46 +258,39 @@ DEVICE_PROTOCOLS = [
 
 def configure_runtime():
     global openplc_runtime
+    print("COFNIG_RUNTIME")
 
-    rows, err = db_query("SELECT * FROM Settings")
-    if err:
-        print(err)
-        # TODO error handling
-        return
+    sett = get_settings()
 
-    for row in rows:
-        if row[0] == "Modbus_port":
-            if row[1] != "disabled":
-                print("Enabling Modbus on port " + str(int(row[1])))
-                openplc_runtime.start_modbus(int(row[1]))
-            else:
-                print("Disabling Modbus")
-                openplc_runtime.stop_modbus()
 
-        elif row[0] == "Dnp3_port":
-            if row[1] != "disabled":
-                print("Enabling DNP3 on port " + str(int(row[1])))
-                openplc_runtime.start_dnp3(int(row[1]))
-            else:
-                print("Disabling DNP3")
-                openplc_runtime.stop_dnp3()
+    if sett["modbus_port"] != "disabled":
+        print("Enabling Modbus on port " + sett["modbus_port"])
+        openplc_runtime.start_modbus(int(sett["modbus_port"]))
+    else:
+        print("Disabling Modbus")
+        openplc_runtime.stop_modbus()
 
-        elif row[0] == "Enip_port":
-            if row[1] != "disabled":
-                print("Enabling EtherNet/IP on port " + str(int(row[1])))
-                openplc_runtime.start_enip(int(row[1]))
-            else:
-                print("Disabling EtherNet/IP")
-                openplc_runtime.stop_enip()
+    if sett["dnp3_port"] != "disabled":
+        print("Enabling DNP3 on port " + sett["dnp3_port"])
+        openplc_runtime.start_dnp3(int(sett["dnp3_port"]))
+    else:
+        print("Disabling DNP3")
+        openplc_runtime.stop_dnp3()
 
-        elif row[0] == "Pstorage_polling":
-            if row[1] != "disabled":
-                print("Enabling Persistent Storage with polling rate of " + str(int(row[1])) + " seconds")
-                openplc_runtime.start_pstorage(int(row[1]))
-            else:
-                print("Disabling Persistent Storage")
-                openplc_runtime.stop_pstorage()
-                delete_persistent_file()
+    if sett["enip_port"] != "disabled":
+        print("Enabling EtherNet/IP on port " + sett["enip_port"])
+        openplc_runtime.start_enip(int(sett["enip_port"]))
+    else:
+        print("Disabling EtherNet/IP")
+        openplc_runtime.stop_enip()
+
+    if sett["pstorage_polling"] != "disabled":
+        print("Enabling Persistent Storage with polling rate of " + sett["pstorage_polling"] + " seconds")
+        openplc_runtime.start_pstorage(int(sett["pstorage_polling"]))
+    else:
+        print("Disabling Persistent Storage")
+        openplc_runtime.stop_pstorage()
+        delete_persistent_file()
 
 
 def delete_persistent_file():
@@ -362,92 +359,13 @@ def generate_mbconfig():
         mbconfig += mb_line(device_idx, 'Holding_Registers_Start', row["hr_write_start"])
         mbconfig += mb_line(device_idx, 'Holding_Registers_Size', row["hr_write_size"])
 
-    print(mbconfig)
     cnf_file = os.path.join(ETC_DIR, "mbconfig.cfg")
     with open(cnf_file, 'w+') as f:
         f.write(mbconfig)
         f.close()
     return None
 
-# ### OLDE
-# def generate_mbconfig():
-#     database = "../etc/openplc.db"
-#     conn = create_connection(database)
-#     if (conn != None):
-#         try:
-#             cur = conn.cursor()
-#             cur.execute("SELECT COUNT(*) FROM Slave_dev")
-#             row = cur.fetchone()
-#             num_devices = int(row[0])
-#             mbconfig = 'Num_Devices = "' + str(num_devices) + '"'
-#             cur.close()
-#
-#             cur=conn.cursor()
-#             cur.execute("SELECT * FROM Settings")
-#             rows = cur.fetchall()
-#             cur.close()
-#
-#             for row in rows:
-#                 if (row[0] == "Slave_polling"):
-#                     slave_polling = str(row[1])
-#                 elif (row[0] == "Slave_timeout"):
-#                     slave_timeout = str(row[1])
-#
-#             mbconfig += '\nPolling_Period = "' + slave_polling + '"'
-#             mbconfig += '\nTimeout = "' + slave_timeout + '"'
-#
-#             cur = conn.cursor()
-#             cur.execute("SELECT * FROM Slave_dev")
-#             rows = cur.fetchall()
-#             cur.close()
-#             conn.close()
-#
-#             device_counter = 0
-#             for row in rows:
-#                 mbconfig += """
-# # ------------
-# #   DEVICE """
-#                 mbconfig += str(device_counter)
-#                 mbconfig += """
-# # ------------
-# """
-#                 mbconfig += 'device' + str(device_counter) + '.name = "' + str(row[1]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.slave_id = "' + str(row[3]) + '"\n'
-#                 if (str(row[2]) == 'ESP32' or str(row[2]) == 'ESP8266' or str(row[2]) == 'TCP'):
-#                     mbconfig += 'device' + str(device_counter) + '.protocol = "TCP"\n'
-#                     mbconfig += 'device' + str(device_counter) + '.address = "' + str(row[9]) + '"\n'
-#                 else:
-#                     mbconfig += 'device' + str(device_counter) + '.protocol = "RTU"\n'
-#                     if (str(row[4]).startswith("COM")):
-#                         port_name = "/dev/ttyS" + str(int(str(row[4]).split("COM")[1]) - 1)
-#                     else:
-#                         port_name = str(row[4])
-#                     mbconfig += 'device' + str(device_counter) + '.address = "' + port_name + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.IP_Port = "' + str(row[10]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.RTU_Parity = "' + str(row[6]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
-#
-#                 mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.Coils_Start = "' + str(row[13]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.Coils_Size = "' + str(row[14]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.Input_Registers_Start = "' + str(row[15]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.Input_Registers_Size = "' + str(row[16]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Start = "' + str(row[17]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Size = "' + str(row[18]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
-#                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
-#                 device_counter += 1
-#
-#             with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
-#
-#         except Error as e:
-#             print("error connecting to the database" + str(e))
-#     else:
-#         print("Error opening DB")
-                
+
 
 #-----------------------------------------------------------------
 #=  Template Stuff
@@ -465,6 +383,7 @@ Nav = [
     {"label": "Settings", "page": "settings", "icon": "fa-cog"},
     {"label": "Logout", "page": "logout", "icon": "fa-sign-out"},
 ]
+
 def nav_icon(page, default="fa-stop"):
     if page:
         for n in Nav:
@@ -490,203 +409,11 @@ def make_context(page, **kwargs):
 
 
 
-
-    
-def draw_compiling_page():
-    return_str = draw_blank_page()
-    return_str += """
-                    <h2>Compiling program</h2>
-                    <textarea id='mytextarea' style='height:500px; resize:vertical'>
-loading logs...
-                    </textarea>
-                    <br><br><center><a href='dashboard' id='dashboard_button' class='button' style='background-color: #EDEDED; pointer-events: none; width: 310px; height: 53px; margin: 0px 20px 0px 20px;'><b>Go to Dashboard</b></a></center>
-                </div>
-            </div>
-        </div>
-    </body>
-    
-    <script>
-        (function (global)
-        {
-            if(typeof (global) === "undefined")
-            {
-                throw new Error("window is undefined");
-            }
-            
-            var _hash = "!";
-            var noBackPlease = function () 
-            {
-                global.location.href += "#";
-
-                // making sure we have the fruit available for juice....
-                // 50 milliseconds for just once do not cost much (^__^)
-                global.setTimeout(function () 
-                {
-                    global.location.href += "!";
-                }, 50);
-            };
-            
-            // Earlier we had setInerval here....
-            global.onhashchange = function () 
-            {
-                if (global.location.hash !== _hash) 
-                {
-                    global.location.hash = _hash;
-                }
-            };
-
-            global.onload = function () 
-            {
-                loadData();
-                noBackPlease();
-                
-                // disables backspace on page except on input fields and textarea..
-                document.body.onkeydown = function (e) 
-                {
-                    var elm = e.target.nodeName.toLowerCase();
-                    if (e.which === 8 && (elm !== 'input' && elm  !== 'textarea')) 
-                    {
-                        e.preventDefault();
-                    }
-                    // stopping event bubbling up the DOM tree..
-                    e.stopPropagation();
-                };
-            };
-        })(window);
-        
-        var req;
-        
-        function loadData()
-        {
-            url = 'compilation-logs'
-            try
-            {
-                req = new XMLHttpRequest();
-            } catch (e) 
-            {
-                try
-                {
-                    req = new ActiveXObject('Msxml2.XMLHTTP');
-                } catch (e) 
-                {
-                    try 
-                    {
-                        req = new ActiveXObject('Microsoft.XMLHTTP');
-                    } catch (oc) 
-                    {
-                        alert('No AJAX Support');
-                        return;
-                    }
-                }
-            }
-            
-            req.onreadystatechange = processReqChange;
-            req.open('GET', url, true);
-            req.send(null);
-        }
-        
-        function processReqChange()
-        {
-            //If req shows 'complete'
-            if (req.readyState == 4)
-            {
-                compilation_logs = document.getElementById('mytextarea');
-                dashboard_button = document.getElementById('dashboard_button');
-                
-                //If 'OK'
-                if (req.status == 200)
-                {
-                    //Update textarea text
-                    compilation_logs.value = req.responseText;
-                    if ((req.responseText.search("Compilation finished with errors!") != -1) || (req.responseText.search("Compilation finished successfully!") != -1))
-                    {
-                        dashboard_button.style.background='#E02222'
-                        dashboard_button.style.pointerEvents='auto'
-                    }
-                    
-                    //Start a new update timer
-                    timeoutID = setTimeout('loadData()', 1000);
-                }
-                else
-                {
-                    compilation_logs.value = 'There was a problem retrieving the logs. Error: ' + req.statusText;
-                }
-            }
-        }
-    </script>
-</html>"""
-    return return_str
-
-#
-# @login_manager.user_loader
-# def user_loader(username):
-#     database = "../etc/openplc.db"
-#     conn = create_connection(database)
-#     if (conn != None):
-#         try:
-#             cur = conn.cursor()
-#             cur.execute("SELECT username, password, name, pict_file FROM Users")
-#             rows = cur.fetchall()
-#             cur.close()
-#             conn.close()
-#
-#             for row in rows:
-#                 if (row[0] == username):
-#                     user = User()
-#                     user.id = row[0]
-#                     user.name = row[2]
-#                     user.pict_file = str(row[3])
-#                     return user
-#             return
-#
-#         except Error as e:
-#             print("error connecting to the database" + str(e))
-#             return
-#     else:
-#         return
-
-
-# @login_manager.request_loader
-# def request_loader(request):
-#     username = request.form.get('username')
-#
-#     database = "../etc/openplc.db"
-#     conn = create_connection(database)
-#     if (conn != None):
-#         try:
-#             cur = conn.cursor()
-#             cur.execute("SELECT username, password, name, pict_file FROM Users")
-#             rows = cur.fetchall()
-#             cur.close()
-#             conn.close()
-#
-#             for row in rows:
-#                 if (row[0] == username):
-#                     user = User()
-#                     user.id = row[0]
-#                     user.name = row[2]
-#                     user.pict_file = str(row[3])
-#                     user.is_authenticated = (request.form['password'] == row[1])
-#                     return user
-#             return
-#
-#         except Error as e:
-#             print("error connecting to the database" + str(e))
-#             return
-#     else:
-#         return
-
-#
-# @app.before_request
-# def before_request():
-#     flask.session.permanent = True
-#     app.permanent_session_lifetime = datetime.timedelta(minutes=5)
-#     flask.session.modified = True
-        
 #=========================================================================
 # http handlers
 # - HTML page handlers with "p_" prefix
-# - ajax request  with 2ax_" prefix)
+# - ajax handlers with "ax_" prefix)
+# - websocket handlers with "ws_" prefix)
 #=========================================================================
 
 
@@ -753,22 +480,22 @@ def p_dashboard():
 
 #---------------- runtime --------------------------------
 
-@app.route('/start_plc')
+@app.route('/runtime/start')
+@login_required
 def start_plc():
     global openplc_runtime
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        monitor.stop_monitor()
-        openplc_runtime.start_runtime()
-        time.sleep(1)
-        configure_runtime()
-        monitor.cleanup()
-        monitor.parse_st(openplc_runtime.project_file)
-        return flask.redirect(flask.url_for('dashboard'))
+
+    monitor.stop_monitor()
+    openplc_runtime.start_runtime()
+    time.sleep(1)
+    configure_runtime()
+    monitor.cleanup()
+    monitor.parse_st(openplc_runtime.project_file)
+    return redirect(url_for('p_dashboard'))
 
 
-@app.route('/stop_plc')
+@app.route('/runtime/stop')
+@login_required
 def stop_plc():
     global openplc_runtime
     if (flask_login.current_user.is_authenticated == False):
@@ -780,7 +507,8 @@ def stop_plc():
         return flask.redirect(flask.url_for('dashboard'))
 
 
-@app.route('/runtime_logs')
+@app.route('/runtime/logs')
+@login_required
 def runtime_logs():
     global openplc_runtime
     if (flask_login.current_user.is_authenticated == False):
@@ -1896,6 +1624,7 @@ def start_server(address="127.0.0.1", port=8080,
                  workspace=None,
                  debug=False):
 
+    ## Set & check db
     global DB_FILE
     DB_FILE = database
     if not os.path.exists(DB_FILE):
@@ -1903,56 +1632,41 @@ def start_server(address="127.0.0.1", port=8080,
         print(s)
         return
 
-    global WORK_DIR
-    WORK_DIR = workspace
+    #global WORK_DIR
+    #WORK_DIR = workspace
 
-    #Load information about current program on the openplc_runtime object
-    program_dir = os.path.abspath(os.path.join(ETC_DIR, 'active_program'))
-    file = open(program_dir, "r")
-    st_file = file.read()
-    st_file = st_file.replace('\r','').replace('\n','')
-    
-    print("db=", database)
-    #sys.setdefaultencoding('UTF8')
-    
-    # database = "../etc/openplc.db"
-    # conn = create_connection(database)
-    # if (conn != None):
-    #     try:
-    #         cur = conn.cursor()
-    #         cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
-    #         #cur.execute("SELECT * FROM Programs")
-    #         row = cur.fetchone()
-    #         openplc_runtime.project_name = str(row[1])
-    #         openplc_runtime.project_description = str(row[2])
-    #         openplc_runtime.project_file = str(row[3])
-    #
-    #         cur.execute("SELECT * FROM Settings")
-    #         rows = cur.fetchall()
-    #         cur.close()
-    #         conn.close()
-    #
-    #         for row in rows:
-    #             if (row[0] == "Start_run_mode"):
-    #                 start_run = str(row[1])
-    #
-    #         if (start_run == 'true'):
-    #             print("Initializing OpenPLC in RUN mode...")
-    #             openplc_runtime.start_runtime()
-    #             time.sleep(1)
-    #             configure_runtime()
-    #
-    #         app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
-    #
-    #     except Error as e:
-    #         print("error connecting to the database" + str(e))
-    # else:
-    #     print("error connecting to the database")
+    ## Load information about current program on the openplc_runtime object
+    prog = None
+    st_file, err = ut.read_file(CURR_PROGRAM_FILE)
+    if st_file and err == None:
+        st_file = st_file.strip()
+        ## This is a hack to get prog_id
+        if st_file[0:5] == "prog.":
+            prog_id = st_file.split(".")[1]
+            prog, err = db_query("SELECT * FROM Programs WHERE Prog_ID=?", (prog_id,), single=True)
+        else:
+            prog, err = db_query("SELECT * FROM Programs WHERE File=?", (st_file,), single=True)
+
+
+    print("st_file=", st_file)
+    print(prog, err)
+    if prog:
+        openplc_runtime.program = prog
+        openplc_runtime.project_file = st_file
+
+    ## Startup runtime at startup
+    print(get_settings())
+    start_run = get_setting("Start_run_mode")
+    if start_run != 'true':
+        print("Initializing OpenPLC in RUN mode...")
+        openplc_runtime.start_runtime()
+        time.sleep(1)
+        configure_runtime()
+
 
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
 
     socketio.run(app, host=address, port=port, debug=debug)
-
     #app.run(debug=debug, host=address, threaded=False, port=port)

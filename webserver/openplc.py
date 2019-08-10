@@ -109,6 +109,7 @@ class Runtime:
         self.websock = websock
 
         self.program = None
+        self.project_file = ""
         #self.project_name = ""
         #self.project_description = ""
         self.runtime_status = RStatus.STOPPED
@@ -139,7 +140,7 @@ class Runtime:
     # -- Runtime --------------------------------------------------------
     def start_runtime(self):
         if self.status() == RStatus.STOPPED:
-            openplc_path = os.path.abspath(os.path.join(ROOT_PATH, 'bin', 'openplc'))
+            openplc_path = os.path.abspath(os.path.join(ROOT_DIR, 'bin', 'openplc'))
             self.theprocess = subprocess.Popen([openplc_path])  # XXX: iPAS
             self.runtime_status = RStatus.RUNNING
     

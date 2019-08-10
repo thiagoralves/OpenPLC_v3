@@ -12,26 +12,7 @@ class debug_var():
     value = 0
 
 
-def parse_st(st_file):
-    global debug_vars
-    filepath = os.path.join(ETC_DIR,  'st_files', st_file)
-    
-    st_program = open(filepath, 'r')
-    
-    for line in st_program.readlines():
-        if line.find(' AT ') > 0:
-            debug_data = debug_var()
-            tmp = line.strip().split(' ')
-            debug_data.name = tmp[0]
-            debug_data.location = tmp[2]
-            debug_data.type = tmp[4].split(';')[0]
-            debug_vars.append(debug_data)
-    
-    for debugs in debug_vars:
-        print('Name: ' + debugs.name)
-        print('Location: ' + debugs.location)
-        print('Type: ' + debugs.type)
-        print('')
+
 
 
 
@@ -45,7 +26,28 @@ class Monitor:
         self.debug_vars = []
         self.mb_client = None
         self.monitor_active = False
-    
+
+    def parse_st(self, st_file):
+        #global debug_vars
+        filepath = os.path.join(ETC_DIR, 'st_files', st_file)
+
+        st_program = open(filepath, 'r')
+
+        for line in st_program.readlines():
+            if line.find(' AT ') > 0:
+                debug_data = debug_var()
+                tmp = line.strip().split(' ')
+                debug_data.name = tmp[0]
+                debug_data.location = tmp[2]
+                debug_data.type = tmp[4].split(';')[0]
+                self.append(debug_data)
+
+        for debugs in self.debug_vars:
+            print('Name: ' + debugs.name)
+            print('Location: ' + debugs.location)
+            print('Type: ' + debugs.type)
+            print('')
+
     def modbus_monitor(self):
 
         for debug_data in self.debug_vars:
