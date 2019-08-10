@@ -38,13 +38,31 @@
                 <label dclass="custom-file-label" for="file">Choose <b>.st</b> file to upload</label>
             </div>
             <div class="form-group">
-                <input type="submit" class="btn btn-success" value='Create Program' class="btn btn-success">
+                <input type="submit" class="btn btn-success" value='Create Program'>
             </div>
+
+
+
         </form>
+
+         <form action="/program/{{c.prog_id}}/remove" method="POST" onsubmit="return checkDelete();">
+             <input type="hidden" name="prog_id" value="{{c.program.prog_id}}">
+             <input type="hidden" name="action" value="do_delete">
+             <div class="form-group">
+
+                <input type="submit" class="btn btn-danger" value='Remove Program' sonclick="checkDelete();">
+            </div>
+         </form>
     </div>
     <div class="tab-pane" id="source" role="tabpanel" aria-labelledby="source-tab">
         <textarea style="width: 100%; height: 500px; font-size: 10pt; font-family: monospace;"
             >{{c.st_source}}</textarea>
     </div>
 </div>
+
+<script>
+function checkDelete(){
+    return confirm("Are you sure?")
+}
+</script>
 {% endblock content %}

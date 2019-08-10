@@ -150,7 +150,19 @@ def db_update(table, flds, p_name, p_id):
         print("error connecting to the database" + str(e))
         return str(e)
 
+def db_execute(sql, vars):
+    conn = db_connection()
+    if not conn:
+        return None, "Cannot connect db"
+    try:
+        print("db_execute", sql, vars)
+        cur = conn.cursor()
+        cur.execute(sql,vars)
+        conn.commit()
+        return None
 
+    except Error as e:
+        return str(e)
 
 #------------------------------------------------
 # Flask app
@@ -630,7 +642,7 @@ def p_login():
                 user.pict_file = row['pict_file']
                 print(user)
                 flask_login.login_user(user, remember=True, fresh=True, )
-                return flask.redirect(flask.url_for('p_dashboard'))
+                return redirect(flask.url_for('p_dashboard'))
 
     return render_template("login.html", c=ctx)
 
@@ -719,7 +731,7 @@ def p_programs():
 
     return render_template("programs.html", c=ctx)
 
-@app.route('/program/<int:prog_id>/edit', methods=['GET', 'POST'])
+@app.route('/program/<int:prog_id>', methods=['GET', 'POST'])
 @login_required
 def p_program_edit(prog_id):
 
@@ -745,7 +757,7 @@ def p_program_edit(prog_id):
             prog_id, err = db_insert("Programs", vars)
 
         else:
-            db_insert("Programs", vars, "Prog_id", prog_id)
+            db_update("Programs", vars, "Prog_id", prog_id)
 
         st_dir = os.path.join(WORK_DIR, "st_files")
         if not os.path.exists(st_dir):
@@ -824,29 +836,19 @@ def reload_program():
         return return_str
 
 
-@app.route('/remove-program', methods=['GET', 'POST'])
-def remove_program():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        prog_id = flask.request.args.get('id')
-        database = "../etc/openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("DELETE FROM Programs WHERE Prog_ID = ?", (int(prog_id),))
-                conn.commit()
-                cur.close()
-                conn.close()
-                return flask.redirect(flask.url_for('programs'))
-                
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        else:
-            return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.'
+@app.route('/program/<int:prog_id>/remove', methods=['GET', 'POST'])
+@login_required
+def p_program_remove(prog_id):
+
+    if request.method == "POST":
+        xprog_id = int(request.form.get('prog_id'))
+
+        if xprog_id == prog_id and request.form.get('action') == "do_delete":
+            err = db_execute("DELETE FROM Programs WHERE Prog_ID = ?", [prog_id])
+            print(err)
+
+    return redirect(url_for('p_programs'))
+
 
 
 @app.route('/upload-program', methods=['GET', 'POST'])
