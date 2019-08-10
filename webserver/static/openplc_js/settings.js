@@ -1,4 +1,3 @@
-"use strict";
 var modbus_checkbox = document.getElementById('modbus_enabled');
 var modbus_port = document.getElementById('modbus_port');
 var dnp3_checkbox = document.getElementById('dnp3_enabled');

@@ -1,4 +1,3 @@
-"use strict";
 var tcpdiv = document.getElementById("tcp-stuff");
 var rtudiv = document.getElementById("rtu-stuff");
 var frm = document.getElementById('slave_form');
@@ -22,7 +21,7 @@ var aor_size = document.getElementById("hr_read_size");
 var aow_start = document.getElementById("hr_write_start");
 var aow_size = document.getElementById("hr_write_size");
 window.onload = function () {
-    updateFormWidgets();
+    //updateFormWidgets();
     //LoadValuesFromDB()
 };
 function turnElementOn(element) {
@@ -37,9 +36,10 @@ function turnElementOff(element) {
     //element.style.color = "#9C9C9C"
 }
 dev_type.onchange = function () {
-    updateFormWidgets();
+    //updateFormWidgets();
 };
 function updateFormWidgets() {
+    ssss;
     // switch all elements off, then enable on option below
     for (var _i = 0, _a = [dev_port, slave_id, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size]; _i < _a.length; _i++) {
         var ele = _a[_i];

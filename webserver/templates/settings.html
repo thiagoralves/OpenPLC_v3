@@ -19,7 +19,7 @@
          </div>
          <div class="form-group">
             <label for='modbus_port'>Port</label>
-            <input type='number' id='modbus_port' name='modbus_port'
+            <input type='number' id='modbus_port' name='modbus_port' class="form-control"
                    value='{% if c.settings.modbus_port != "disabled"%}{{c.settings.modbus_port}}{%else%}502{%endif%}'
                    min="0" max="65535">
          </div>
@@ -37,7 +37,7 @@
          </div>
          <div class="form-group">
             <label for='dnp3_port'>Port</label>
-            <input type='number' id='dnp3_port' name='dnp3_port'
+            <input type='number' id='dnp3_port' name='dnp3_port' class="form-control"
                    value='{% if c.settings.dnp3_port != "disabled"%}{{c.settings.dnp3_port}}{%else%}20000{%endif%}'
                    min="0" max="65535" >
          </div>
@@ -74,6 +74,6 @@
 
 </form>
 
-<script type="text/javascript" src="/static/js/settings.js"></script>
+<script type="text/javascript" src="/static/openplc_js/settings.js"></script>
 
 {% endblock content %}

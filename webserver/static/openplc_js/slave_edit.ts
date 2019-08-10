@@ -29,7 +29,7 @@ var aow_start = document.getElementById("hr_write_start") as HTMLInputElement;
 var aow_size = document.getElementById("hr_write_size") as HTMLInputElement;
 
 window.onload = function(){
-    updateFormWidgets();
+    //updateFormWidgets();
     //LoadValuesFromDB()
 }
 
@@ -50,12 +50,12 @@ function turnElementOff(element: any)
 
 dev_type.onchange = function()
 {
-    updateFormWidgets();
+    //updateFormWidgets();
 }
 
 function updateFormWidgets()
 {
-    
+    ssss
     // switch all elements off, then enable on option below
     for(let ele of [dev_port, slave_id, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size]){
         turnElementOff(ele);

@@ -175,6 +175,15 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 socketio = SocketIO(app)
 
+@socketio.on('connect')
+def ws_connect():
+    print("client connected")
+    socketio.emit('xmessage', {'data': 'Connected'})
+
+@socketio.on('disconnect')
+def ws_disconnect():
+    print('Client disconnected')
+
 #------------------------------------------------
 #  Login + Security
 login_manager = flask_login.LoginManager()
@@ -221,7 +230,7 @@ def unauthorized_handler():
 #------------------------------------------------------------------
 #  OpenPLC Runtime
 #------------------------------------------------------------------
-openplc_runtime = openplc.runtime()
+openplc_runtime = openplc.Runtime(socketio)
 
 
 def get_settings():
@@ -1084,6 +1093,26 @@ def p_program_compile(prog_id):
     #openplc_runtime.compile_program(st_file)
 
     return render_template("compiling.html", c=ctx)
+
+@socketio.on('compile')
+def ws_xcommand(data):
+
+    prog_id = data['prog_id']
+    sql = "SELECT * FROM Programs WHERE Prog_id=?"
+    row, error = db_query(sql, [str(prog_id)], single=True)
+
+    openplc_runtime.project_name = row["name"]
+    openplc_runtime.project_description = row["description"]
+    openplc_runtime.project_file = row["file"]
+
+    socketio.emit("xmessage", {"data": "Starting Compile\n"})
+    st_file = os.path.join(WORK_DIR, "st_files", str(row["prog_id"]) )
+
+    openplc_runtime.compile_program(st_file)
+
+
+    #print("xcommand", data)
+    #emit('xmessage', {'pong': data['ping']})
 
 @app.route('/compilation-logs', methods=['GET', 'POST'])
 def compilation_logs():

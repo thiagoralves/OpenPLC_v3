@@ -53,12 +53,12 @@ class NonBlockingStreamReader:
 
     end_of_stream = False
     
-    def __init__(self, stream):
+    def __init__(self, stream, websock):
         '''
         stream: the stream to read from.
                 Usually a process' stdout or stderr.
         '''
-
+        self.websock = websock
         self._s = stream
         self._q = Queue()
 
@@ -72,7 +72,9 @@ class NonBlockingStreamReader:
                 line = stream.readline()
                 if line:
                     queue.put(line)
+                    self.websock.emit("xmessage", {"data": line})
                     if (line.find("Compilation finished with errors!") >= 0 or line.find("Compilation finished successfully!") >= 0):
+                        self.websock.emit("xmessage", {"done": "1"})
                         self.end_of_stream = True
                 else:
                     self.end_of_stream = True
@@ -97,15 +99,20 @@ class RStatus:
     COMPILING = "Compiling"
     UNKNOWN = "Unknown"
 
-class runtime:
+class Runtime:
 
     host = "localhost"
     port = 43628
 
-    project_file = ""
-    project_name = ""
-    project_description = ""
-    runtime_status = RStatus.STOPPED
+    def __init__(self, websock):
+
+        self.websock = websock
+
+        self.program = None
+        #self.project_name = ""
+        #self.project_description = ""
+        self.runtime_status = RStatus.STOPPED
+
 
     def send_cmd(self, cmd, recv_bytes=1000):
         try:
@@ -161,7 +168,7 @@ class runtime:
                              cwd=HERE_PATH,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
-        compilation_object = NonBlockingStreamReader(a.stdout)
+        compilation_object = NonBlockingStreamReader(a.stdout, self.websock)
     
     def compilation_status(self):
         global compilation_status_str
