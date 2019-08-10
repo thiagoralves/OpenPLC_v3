@@ -122,6 +122,13 @@ class runtime:
             e = "Error connecting to OpenPLC runtime"
             return None, e
 
+    def is_running(self):
+        return self.runtime_status == RStatus.RUNNING
+
+    def is_compiling(self):
+        #return True
+        return self.status() == RStatus.COMPILING
+
     # -- Runtime --------------------------------------------------------
     def start_runtime(self):
         if self.status() == RStatus.STOPPED:
@@ -130,7 +137,7 @@ class runtime:
             self.runtime_status = RStatus.RUNNING
     
     def stop_runtime(self):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd("quit()")
             if err:
                 print(err)
@@ -142,7 +149,7 @@ class runtime:
 
     # -- Compile --------------------------------------------------------
     def compile_program(self, st_file):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             self.stop_runtime()
             
         self.is_compiling = True
@@ -183,59 +190,59 @@ class runtime:
 
     # -- modbus --------------------------------------------------------
     def start_modbus(self, port_num):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('start_modbus(%s)' % port_num)
             if err:
                 print(err)
 
     def stop_modbus(self):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('stop_modbus()')
             if err:
                 print(err)
 
     # -- dnp3 --------------------------------------------------------
     def start_dnp3(self, port_num):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('start_dnp3(%s)' % port_num)
             if err:
                 print(err)
         
     def stop_dnp3(self):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('stop_dnp3()')
             if err:
                 print(err)
 
     # -- enip --------------------------------------------------------
     def start_enip(self, port_num):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('start_enip(%s)' % port_num)
             if err:
                 print(err)
                 
     def stop_enip(self):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('stop_enip()')
             if err:
                 print(err)
 
     # -- storage --------------------------------------------------------
     def start_pstorage(self, poll_rate):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('start_pstorage(%s)' % poll_rate)
             if err:
                 print(err)
                 
     def stop_pstorage(self):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('stop_pstorage()')
             if err:
                 print(err)
 
     # -- utils --------------------------------------------------------
     def logs(self):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('runtime_logs()', 1000000)
             if err is not None:
                 return data
@@ -244,7 +251,7 @@ class runtime:
 
         
     def exec_time(self):
-        if self.status() == RStatus.RUNNING:
+        if self.is_running():
             data, err = self.send_cmd('exec_time()', 10000)
             if err is not None:
                 return display_time(int(data), 4)

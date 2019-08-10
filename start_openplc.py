@@ -15,7 +15,9 @@ parser.add_argument("-p", "--port",
                     action="store", type=int,
                     default=8080)
 
-#parser.add_argument("workspace", help="Workspace directory", action="store", type=str)
+parser.add_argument("-w", "--workspace",
+                    help="Workspace directory for projects",
+                    action="store", type=str)
 
 parser.add_argument("-d", "--database",
                     help="database file",
@@ -28,4 +30,5 @@ args = parser.parse_args()
 webserver.start_server(address=args.address,
                        port=args.port,
                        database=args.database,
+                       workspace=args.workspace,
                        debug=True)
