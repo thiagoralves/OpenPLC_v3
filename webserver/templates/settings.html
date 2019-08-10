@@ -4,8 +4,9 @@
 {% set title = "Settings" %}
 
 
-
 {% block content %}
+
+{{c.defaultSettings}}
 
  <form id="settingsForm" action="/settings" method="POST">
 
@@ -23,7 +24,9 @@
                 <input type='number' id='modbus_port' name='modbus_port' class="form-control"
                    value='{% if c.settings.modbus_port != "disabled"%}{{c.settings.modbus_port}}{%else%}502{%endif%}'
                    min="0" max="65535">
+                    <a href="">Default: {{c.defaultSettings.modbus_port}}</a>
              </div>
+
          </div>
 
      </fieldset>
@@ -33,7 +36,8 @@
          <legend>DNP3 Server</legend>
 
          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="dnp3_enabled"
+            <input class="form-check-input" type="checkbox"
+                   id="dnp3_enabled" name="dnp3_enabled"
                 {% if c.settings.dnp3_port != "disabled"%}checked{%endif%}>
             <label class="form-check-label" for="dnp3_enabled">Enable</label>
          </div>
@@ -41,7 +45,7 @@
             <label for='dnp3_port' class="col-sm-1 col-form-label text-right">Port</label>
              <div class="col-sm-4">
                 <input type='number' id='dnp3_port' name='dnp3_port' class="form-control"
-                   value='{% if c.settings.dnp3_port != "disabled"%}{{c.settings.dnp3_port}}{%else%}20000{%endif%}'
+                   value='{{c.settings.dnp3_port}}'
                    min="0" max="65535" >
              </div>
          </div>
@@ -60,12 +64,33 @@
             <label for='dnp3_port' class="col-sm-1 col-form-label text-right">Port</label>
              <div class="col-sm-4">
                 <input type='number' id='enip_port' name='enip_port' class="form-control"
-                   value='{% if c.settings.enip_port != "disabled"%}{{c.settings.enip_port}}{%else%}44818{%endif%}'
+                   value='{{c.settings.enip_port}}'
+                   min="0" max="65535" >
+             </div>
+             <div class="col-sm-4">
+                 <a href="">Default: {{c.defaultSettings.dnp3_port}}</a>
+             </div>
+         </div>
+     </fieldset>
+
+     <fieldset>
+         <legend>Persistent Storage</legend>
+
+         <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="pstorage_enabled"
+                {% if c.settings.pstorage_enabled != "disabled"%}checked{%endif%}>
+            <label class="form-check-label" for="pstorage_enabled">Enable</label>
+         </div>
+         <div class="form-group row">
+            <label for='pstorage_polling' class="col-sm-1 col-form-label text-right">Port</label>
+             <div class="col-sm-4">
+                <input type='number' id='pstorage_polling' name='pstorage_polling' class="form-control"
+                   value='{{c.settings.pstorage_polling}}'
                    min="0" max="65535" >
              </div>
          </div>
-
      </fieldset>
+
 
       <fieldset>
          <legend>Slave Devices</legend>

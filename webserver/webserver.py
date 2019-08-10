@@ -165,28 +165,6 @@ def db_execute(sql, vars):
     except Error as e:
         return str(e)
 
-#-----------------------------------------------------------------------
-# Settings
-#-----------------------------------------------------------------------
-def get_settings():
-    rows, err = db_query("SELECT * FROM Settings")
-    dic = {}
-    for r in rows:
-        dic[r['key'].lower()] = r['value']
-    return dic
-
-def get_setting(key):
-    dic = get_settings()
-    return dic.get(key)
-
-def set_setting(key, value):
-    if get_setting(key) == None:
-        sql = "INSERT into Settings(key, value)values(?,?)"
-        return db_execute(sql, (key, value,))
-
-    sql = "UPDATE Settings SET Value = ? WHERE Key = '%s' " % key
-    return db_execute(sql, (value,))
-
 
 #-----------------------------------------------------------------------
 # Flask app and socketio
@@ -253,6 +231,78 @@ def user_loader(user_id):
 def unauthorized_handler():
     ctx = make_context("unauthorized")
     return render_template('unauthorized.html', c=ctx)
+
+
+
+#-----------------------------------------------------------------------
+# Settings
+#-----------------------------------------------------------------------
+defaultSettings = dict(
+    modbus_enabled="false",
+    modbus_port=502,
+
+    dnp3_enabled="false",
+    dnp3_port=20000,
+
+    enip_enabled="false",
+    enip_port=20000,
+
+    Pstorage_enabled="false",
+    Pstorage_polling=10,
+
+    Start_run_mode="false",
+    Slave_polling=100,
+    Slave_timeout=1000
+)
+
+def check_settings():
+    """Make sure default settings are in db, run at startup"""
+    curr_setts = get_settings()
+    for key, value in defaultSettings.items():
+        if not key.lower() in curr_setts:
+            sql = "INSERT into Settings(key, value)values(?,?)"
+            err = db_execute(sql, (key, value,))
+            print(err)
+
+def get_settings():
+    """Returs dict of settings"""
+    rows, err = db_query("SELECT * FROM Settings")
+    dic = {}
+    for r in rows:
+        dic[r['key'].lower()] = r['value']
+    return dic
+
+def get_setting(key):
+    """Return setting for key, or default"""
+    return get_settings().get(key, defaultSettings.get(key))
+
+def set_setting(key, value):
+    """Sets the Key (currently maybe case sensitive)"""
+    if get_setting(key) == None:
+        sql = "INSERT into Settings(key, value)values(?,?)"
+        return db_execute(sql, (key, value,))
+
+    sql = "UPDATE Settings SET Value = ? WHERE Key = '%s' " % key
+    return db_execute(sql, (value,))
+
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def p_settings():
+
+    ctx = make_context("settings")
+
+    if request.method == 'POST':
+
+
+        set_setting("modbus_port", request.form.get('modbus_port', "disabled"))
+        set_setting("Dnp3_port", request.form.get('dnp3_port', "disabled"))
+        set_setting("Enip_port", request.form.get('enip_port', "disabled"))
+        # TODO
+
+    ctx.settings = get_settings()
+    ctx.defaultSettings = defaultSettings
+
+    return render_template("settings.html", c=ctx)
 
 
 #-----------------------------------------------------------------------
@@ -998,23 +1048,6 @@ def p_user_delete(user_id):
     return redirect(url_for('p_users'))
 
 
-@app.route('/settings', methods=['GET', 'POST'])
-@login_required
-def p_settings():
-
-    ctx = make_context("settings")
-
-    if request.method == 'POST':
-
-        set_setting("Modbus_port", request.form.get('modbus_port', "disabled"))
-        set_setting("Dnp3_port", request.form.get('dnp3_port', "disabled"))
-        set_setting("Enip_port", request.form.get('enip_port', "disabled"))
-        # TODO
-
-    ctx.settings = get_settings()
-
-    return render_template("settings.html", c=ctx)
-
 
 @app.route('/settingx', methods=['GET', 'POST'])
 def settingsxd():
@@ -1277,6 +1310,8 @@ def start_server(address="127.0.0.1", port=8080,
 
     #global WORK_DIR
     #WORK_DIR = workspace
+
+    check_settings()
 
     ## Load information about current program on the openplc_runtime object
     prog = None
