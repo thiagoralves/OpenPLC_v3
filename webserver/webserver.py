@@ -16,7 +16,6 @@
 # along with OpenPLC.  If not, see <http://www.gnu.org/licenses/>.
 # ----------------------------------------------------------------------------
 
-
 import sqlite3
 from sqlite3 import Error
 import os
@@ -28,8 +27,11 @@ import datetime
 import time
 import sys
 
-import flask 
+import flask
+from flask import redirect, request, render_template, url_for
+
 import flask_login
+from flask_login import current_user, login_required
 
 from . import HERE_PATH, ROOT_PATH, ETC_PATH
 from . import pages
@@ -341,7 +343,45 @@ def generate_mbconfig():
         print("Error opening DB")
                 
 
-    
+#-----------------------------------------------------------------
+#=  Template Stuff
+#-----------------------------------------------------------------
+
+# site navigation; Note selected is passed a {{c.page}}
+# see https://fontawesome.bootstrapcheatsheets.com/ for icons
+Nav = [
+    {"label": "Dashboard", "page": "dashboard", "icon": "fa-home"},
+    {"label": "Programs", "page": "programs", "icon": "fa-braille"},
+    {"label": "Slave Devices", "page": "slaves", "icon": "fa-sitemap"},
+    {"label": "Monitoring", "page": "monitoring", "icon": "fa-signal"},
+    {"label": "Hardware", "page": "hardware", "icon": "fa-microchip"},
+    {"label": "Users", "page": "users", "icon": "fa-users"},
+    {"label": "Settings", "page": "settings", "icon": "fa-cog"},
+    {"label": "Logout", "page": "logout", "icon": "fa-sign-out"},
+]
+def nav_icon(page, default="fa-stop"):
+    if page:
+        for n in Nav:
+            if n['page'] == page:
+                return n['icon']
+    return default
+
+@app.context_processor
+def inject_template_vars():
+    # Put the runtime and navigation into template context
+    return dict(nav=Nav, runtime=openplc_runtime)
+
+class TemplateContext(object):
+    pass
+
+def make_context(page, **kwargs):
+    c = TemplateContext()
+    c.error = None
+    c.page = page
+    c.icon = nav_icon(page)
+    return c
+
+
 def draw_top_div():
     global openplc_runtime
     top_div = ("<div class='top'>"
@@ -527,71 +567,71 @@ loading logs...
 </html>"""
     return return_str
 
-    
-@login_manager.user_loader
-def user_loader(username):
-    database = "../etc/openplc.db"
-    conn = create_connection(database)
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT username, password, name, pict_file FROM Users")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-
-            for row in rows:
-                if (row[0] == username):
-                    user = User()
-                    user.id = row[0]
-                    user.name = row[2]
-                    user.pict_file = str(row[3])
-                    return user
-            return
-                    
-        except Error as e:
-            print("error connecting to the database" + str(e))
-            return
-    else:
-        return
-
-
-@login_manager.request_loader
-def request_loader(request):
-    username = request.form.get('username')
-    
-    database = "../etc/openplc.db"
-    conn = create_connection(database)
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT username, password, name, pict_file FROM Users")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-
-            for row in rows:
-                if (row[0] == username):
-                    user = User()
-                    user.id = row[0]
-                    user.name = row[2]
-                    user.pict_file = str(row[3])
-                    user.is_authenticated = (request.form['password'] == row[1])
-                    return user
-            return
-                    
-        except Error as e:
-            print("error connecting to the database" + str(e))
-            return
-    else:
-        return
+#
+# @login_manager.user_loader
+# def user_loader(username):
+#     database = "../etc/openplc.db"
+#     conn = create_connection(database)
+#     if (conn != None):
+#         try:
+#             cur = conn.cursor()
+#             cur.execute("SELECT username, password, name, pict_file FROM Users")
+#             rows = cur.fetchall()
+#             cur.close()
+#             conn.close()
+#
+#             for row in rows:
+#                 if (row[0] == username):
+#                     user = User()
+#                     user.id = row[0]
+#                     user.name = row[2]
+#                     user.pict_file = str(row[3])
+#                     return user
+#             return
+#
+#         except Error as e:
+#             print("error connecting to the database" + str(e))
+#             return
+#     else:
+#         return
 
 
-@app.before_request
-def before_request():
-    flask.session.permanent = True
-    app.permanent_session_lifetime = datetime.timedelta(minutes=5)
-    flask.session.modified = True
+# @login_manager.request_loader
+# def request_loader(request):
+#     username = request.form.get('username')
+#
+#     database = "../etc/openplc.db"
+#     conn = create_connection(database)
+#     if (conn != None):
+#         try:
+#             cur = conn.cursor()
+#             cur.execute("SELECT username, password, name, pict_file FROM Users")
+#             rows = cur.fetchall()
+#             cur.close()
+#             conn.close()
+#
+#             for row in rows:
+#                 if (row[0] == username):
+#                     user = User()
+#                     user.id = row[0]
+#                     user.name = row[2]
+#                     user.pict_file = str(row[3])
+#                     user.is_authenticated = (request.form['password'] == row[1])
+#                     return user
+#             return
+#
+#         except Error as e:
+#             print("error connecting to the database" + str(e))
+#             return
+#     else:
+#         return
+
+#
+# @app.before_request
+# def before_request():
+#     flask.session.permanent = True
+#     app.permanent_session_lifetime = datetime.timedelta(minutes=5)
+#     flask.session.modified = True
         
 @app.route('/')
 def index():
@@ -602,44 +642,40 @@ def index():
 
 
 @app.route('/login', methods=['GET', 'POST'])
-def login():
-    if flask.request.method == 'GET':
-        return pages.login_head + pages.login_body
+def p_login():
+    # This is login page.. so if auth, goto dashboard
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
 
-    username = flask.request.form['username']
-    password = flask.request.form['password']
-    
-    database = "../etc/openplc.db"
-    conn = create_connection(database)
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT username, password, name, pict_file FROM Users")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
+    ctx = make_context("login")
 
-            for row in rows:
-                if (row[0] == username):
-                    if (row[1] == password):
-                        user = User()
-                        user.id = row[0]
-                        user.name = row[2]
-                        user.pict_file = str(row[3])
-                        flask_login.login_user(user)
-                        return flask.redirect(flask.url_for('dashboard'))
-                    else:
-                        return pages.login_head + pages.bad_login_body
-                        
-            return pages.login_head + pages.bad_login_body
-                    
-        except Error as e:
-            print("error connecting to the database" + str(e))
-            return 'Error opening DB'
-    else:
-        return 'Error opening DB'
+    if request.method == "POST":
+        username = request.form['oplc_username']
+        password = request.form['oplc_secret']
 
-    return pages.login_head + pages.bad_login_body
+        if username and password:
+
+            sql = "SELECT user_id, username, password, name, pict_file FROM Users"
+            sql += " where username=? and password=? "
+            row, err = db_query(sql, (username, password), single=True)
+            if err:
+                ctx.error = err
+
+            if not row:
+                ctx.error = "Incorrect User or Password "
+
+            else:
+                # Login User
+                user = User()
+                user.user_id = unicode(row['user_id'])
+                user.username = row['username']
+                user.name = row['name']
+                user.pict_file = row['pict_file']
+                print(user)
+                flask_login.login_user(user, remember=True, fresh=True, )
+                return flask.redirect(flask.url_for('dashboard'))
+
+    return render_template("login.html", c=ctx)
 
 
 @app.route('/start_plc')

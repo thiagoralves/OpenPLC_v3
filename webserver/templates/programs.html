@@ -1,0 +1,48 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "Programs" %}
+
+
+
+{% block content %}
+
+<p>Here you can upload a new program to OpenPLC or revert back to a previous uploaded program shown on the table.</p>
+
+<table class="table table-bordered table-hover">
+    <thead class="thead-light">
+        <tr style='background-color: white'>
+            <th>&nbsp;</th><th>Program Name</th><th>File</th><th>Date Uploaded</th><th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in c.programs %}
+          <tr ddonclick="document.location='reload-program?table_id={{row[0]}}'">
+                <td width="10"><a class="btn btn-primary btn-sm" href="/program/{{row.prog_id}}/compile">Run</a></td>
+                <td>{{row.name}}</td>
+                <td>{{row.file}}</td>
+                <td>{{row.date_upload}}</td>
+                <td width="10"><a class="btn btn-success btn-sm" href="/program/{{row.prog_id}}/edit">Edit</a></td>
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="/program/0" class="btn btn-primary">New Program</a>
+
+
+
+{# TODO error check before submiting for file #}
+{#
+ <h2>Upload Program</h2>
+<form id="uploadForm" action="/program/upload" method="post" enctype="multipart/form-data">
+     <div class="form-group">
+            <input type="file" dclass="custom-file-input" id="file" name="file" accept=".st" required>
+            <label class="custom-file-label" for="file">Choose <b>.st</b> file to upload</label>
+     </div>
+    <div class="form-group">
+        <input type="submit" value="Upload" name="submit" class="btn btn-success">
+    </div>
+
+</form>
+#}
+{% endblock content %}

@@ -1,0 +1,40 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "Slave Devices" %}
+
+
+
+{% block content %}
+
+<p>List of Slave devices attached to OpenPLC.</p>
+
+<div class="alert alert-warning">
+    <b>Note:</b> Slave devices are attached to address 100 onward (i.e. %IX100.0, %IW100, %QX100.0, and %QW100)
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead  class="thead-light">
+        <tr>
+            <th>Device Name</th><th>Device Type</th><th>DI</th><th>DO</th><th>AI</th><th>AO</th><th>-</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in c.devices %}
+        <tr>
+            <td>{{row.dev_name}}</td>
+            <td>{{row.dev_type}}</td>
+            <td>{{row.di}}</td>
+            <td>{{row.do}}</td>
+            <td>{{row.ai}}</td>
+            <td>{{row.ao}}</td>
+            <td><a href="/slave/{{row.dev_id}}" class="btn">Edit</a></td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+</table>
+
+<center><a href="/slave/0" class="btn btn-success" ><b>Add new device</b></a></center>
+
+{% endblock content %}

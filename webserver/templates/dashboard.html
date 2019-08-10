@@ -1,0 +1,28 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "Dashboard" %}
+
+
+{% block content %}
+
+
+<p style="font-family:'Roboto', sans-serif; font-size:16px;"><b>Status: <span class="{{runtime.status()}}">{{runtime.status()}}</span></b></p>
+
+<p style="font-family:'Roboto', sans-serif; font-size:16px"><b>Program:</b> {{runtime.project_name}}</p>
+<p style="font-family:'Roboto', sans-serif; font-size:16px"><b>Description:</b> {{runtime.project_description}}</p>
+<p style="font-family:'Roboto', sans-serif; font-size:16px"><b>File:</b> {{runtime.project_file}}</p>
+<p style="font-family:'Roboto', sans-serif; font-size:16px"><b>Runtime:</b> {{runtime.exec_time()}}</p>
+
+
+<br>
+<br>
+<h2>Runtime Logs</h2>
+<textarea wrap='off' spellcheck='false' id='mytextarea'>
+loading logs...
+</textarea>
+<div class='tooltip' style='margin: 5px 0px 0px 0px'>
+    <button class='button' style='height:45px; padding-top:10px' onclick='copyClipboard()' onmouseout='outFunc()'><span class='tooltiptext' id='myTooltip'>Copy to clipboard</span>Copy logs</button>
+</div>
+
+{% endblock content %}

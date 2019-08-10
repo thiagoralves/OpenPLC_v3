@@ -1,0 +1,50 @@
+
+{% extends "BASE.html" %}
+
+
+{% block content %}
+
+<ul class="nav nav-tabs" id="tabs" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" id="details-tab" data-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="true">Details</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="source-tab" data-toggle="tab" href="#source" role="tab" aria-controls="source" aria-selected="false">.st source</a>
+  </li>
+
+</ul>
+
+<div class="tab-content" id="myTabContent">
+    <div class="tab-pane active" id="details" role="tabpanel" aria-labelledby="details-tab">
+
+        <form action="/program/{{c.prog_id}}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for='name'>Name</label>
+                <input type='text' class="form-control" id='name' name='name'
+                       value="{{c.program.name}}"  required  minlength="2">
+            </div>
+
+            <div class="form-group">
+                <label for='description'>Description</label>
+                <textarea class="form-control" id='description' name="description">{{c.program.description}}</textarea>
+
+            </div>
+            <div class="form-group">
+                <label for="file_name">File</label>
+                <input type='text' class="form-control" id='file_name' name='file'   value="{{c.program.file}}" readonly>
+            </div>
+            <div class="form-group">
+                <input type="file" dclass="custom-file-input" id="file" name="file" accept=".st" required>
+                <label dclass="custom-file-label" for="file">Choose <b>.st</b> file to upload</label>
+            </div>
+            <div class="form-group">
+                <input type="submit" class="btn btn-success" value='Create Program' class="btn btn-success">
+            </div>
+        </form>
+    </div>
+    <div class="tab-pane" id="source" role="tabpanel" aria-labelledby="source-tab">
+        <textarea style="width: 100%; height: 500px; font-size: 10pt; font-family: monospace;"
+            >{{c.st_source}}</textarea>
+    </div>
+</div>
+{% endblock content %}

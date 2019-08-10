@@ -1,0 +1,81 @@
+
+/* this .css file is compiled from the .scss file, modifications to css will be lost! */
+
+
+@import 'mixins';
+
+$body_bg: #343A40;
+
+.spacer {
+    margin-top: 10px;
+}
+
+
+body {
+    background-color: $body_bg;
+}
+
+// Main Nav on left
+#mainmav {
+    background-color: #343A40;
+
+    li {
+        font-family: Arial, sans-serif;
+        padding: 0;
+        margin: 0;
+        a {
+            color: white;
+            background-color: $body_bg;
+            font-weight: normal;
+            font-size: 1.5em;
+            border-radius: 0;
+            padding: 4px 0 4px 20px;
+            margin: 0;
+        }
+
+        a:hover {
+            background-color: #BE2929;
+        }
+
+        a.active {
+            background-color: #E02222;
+            // include arrow bg
+            background-image: url(images/arrow.png);
+            background-repeat: no-repeat;
+            background-position: right center;
+        }
+    }
+
+}
+
+.content_wrapper {
+    background-color: white;
+    //margin: 0;
+    //padding: 0;
+    min-height: 800px;
+}
+
+.content_wrapper h1 {
+    @include horizontal_gradient(white, $body_bg, 80%);
+    font-size: 1.8em;
+    color: #444444;
+    margin: 0;
+    padding: 5px 20px;
+    //border-bottom: 1px solid #dddddd;
+}
+
+.content {
+    margin: 20px;
+
+
+    h2 {
+        margin-top: 10px;
+        padding: 4px;
+        font-size: 1.4em;
+        background-color: #eeeeee;
+
+    }
+
+}
+
+

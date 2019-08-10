@@ -1,0 +1,26 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "System Login" %}
+
+{% block content %}
+
+
+<div style="max-width: 300px">
+<form action='login' method='POST'>
+
+    <div class="form-group">
+        <label for="oplc_username">Login ID</label>
+        <input type='text' name='oplc_username' id='oplc_username' placeholder='' class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="oplc_secret">Password</label>
+        <input type='password' name='oplc_secret' id='oplc_secret' placeholder=''  class="form-control">
+    </div>
+    <div class="form-group">
+        <input class="btn btn-success" type="submit" value="Login">
+    </div>
+</form>
+</div>
+
+{% endblock content %}
