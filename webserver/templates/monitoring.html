@@ -6,7 +6,15 @@
 
 {% block content %}
 
+<p>The table below displays a list of the OpenPLC points used by the currently
+    running program. By clicking in one of the listed points it is
+    possible to see more information about it and also to force it to be a different value.
+</p>
+<table  class="table table-bordered table-hover">
+<col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
+<tr >
+    <th>Point Name</th><th>Type</th><th>Location</th><th>Forced</th><th>Value</th>
+</tr>
 
-
-
+</table>
 {% endblock content %}

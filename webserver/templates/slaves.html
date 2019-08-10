@@ -7,6 +7,7 @@
 
 {% block content %}
 
+<div class="float-right"></div>
 <p>List of Slave devices attached to OpenPLC.</p>
 
 <div class="alert alert-warning">
@@ -16,7 +17,7 @@
 <table class="table table-bordered table-hover">
     <thead  class="thead-light">
         <tr>
-            <th>Device Name</th><th>Device Type</th><th>DI</th><th>DO</th><th>AI</th><th>AO</th><th>-</th>
+            <th>Device Name</th><th>Device Type</th><th>DI</th><th>DO</th><th>AI</th><th>AO</th><th><a href="/slave/0" class="btn btn-primary btn-sm" ><b>New</b></a></th>
         </tr>
     </thead>
     <tbody>
@@ -28,13 +29,13 @@
             <td>{{row.do}}</td>
             <td>{{row.ai}}</td>
             <td>{{row.ao}}</td>
-            <td><a href="/slave/{{row.dev_id}}" class="btn">Edit</a></td>
+            <td><a class="btn btn-success btn-sm" href="/slave/{{row.dev_id}}" class="btn">Edit</a></td>
         </tr>
         {% endfor %}
 
     </tbody>
 </table>
 
-<center><a href="/slave/0" class="btn btn-success" ><b>Add new device</b></a></center>
+
 
 {% endblock content %}

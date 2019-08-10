@@ -33,6 +33,8 @@ from flask import redirect, request, render_template, url_for
 import flask_login
 from flask_login import current_user, login_required
 
+from flask_socketio import SocketIO
+
 from . import HERE_PATH, ROOT_PATH, ETC_PATH, SCRIPTS_PATH, CURR_PROGRAM_FILE, CURR_DRIVER_FILE
 from . import openplc
 from . import pages
@@ -50,7 +52,6 @@ def db_connection():
     global DB_FILE
     try:
         conn = sqlite3.connect(DB_FILE)
-        print("CONNECT:", DB_FILE)
         return conn
     except Error as e:
         print("db_connection():", e)
@@ -172,6 +173,7 @@ app.secret_key = "openplciscool1234564561" #str(os.urandom(16))
 app.config['SECRET_KEY'] = app.secret_key
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+socketio = SocketIO(app)
 
 #------------------------------------------------
 #  Login + Security
@@ -287,84 +289,151 @@ def delete_persistent_file():
         os.remove("persistent.file")
     print("persistent.file removed!")
 
-
 def generate_mbconfig():
-    database = "../etc/openplc.db"
-    conn = create_connection(database)
-    if (conn != None):
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT COUNT(*) FROM Slave_dev")
-            row = cur.fetchone()
-            num_devices = int(row[0])
-            mbconfig = 'Num_Devices = "' + str(num_devices) + '"'
-            cur.close()
-            
-            cur=conn.cursor()
-            cur.execute("SELECT * FROM Settings")
-            rows = cur.fetchall()
-            cur.close()
-                    
-            for row in rows:
-                if (row[0] == "Slave_polling"):
-                    slave_polling = str(row[1])
-                elif (row[0] == "Slave_timeout"):
-                    slave_timeout = str(row[1])
-                    
-            mbconfig += '\nPolling_Period = "' + slave_polling + '"'
-            mbconfig += '\nTimeout = "' + slave_timeout + '"'
-            
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM Slave_dev")
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-            
-            device_counter = 0
-            for row in rows:
-                mbconfig += """
+
+    rows, err = db_query("SELECT * FROM Slave_dev")
+    if err:
+        print "errr=", err
+        #TODO
+        return err
+
+
+    mbconfig = 'Num_Devices = "%s"' % len(rows)
+
+    for device_counter_int, row in enumerate(rows):
+
+        device_idx = str(device_counter_int)
+
+        mbconfig += """
 # ------------
 #   DEVICE """
-                mbconfig += str(device_counter)
-                mbconfig += """
+        mbconfig += device_idx
+        mbconfig += """
 # ------------
 """
-                mbconfig += 'device' + str(device_counter) + '.name = "' + str(row[1]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.slave_id = "' + str(row[3]) + '"\n'
-                if (str(row[2]) == 'ESP32' or str(row[2]) == 'ESP8266' or str(row[2]) == 'TCP'):
-                    mbconfig += 'device' + str(device_counter) + '.protocol = "TCP"\n'
-                    mbconfig += 'device' + str(device_counter) + '.address = "' + str(row[9]) + '"\n'
-                else:
-                    mbconfig += 'device' + str(device_counter) + '.protocol = "RTU"\n'
-                    if (str(row[4]).startswith("COM")):
-                        port_name = "/dev/ttyS" + str(int(str(row[4]).split("COM")[1]) - 1)
-                    else:
-                        port_name = str(row[4])
-                    mbconfig += 'device' + str(device_counter) + '.address = "' + port_name + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.IP_Port = "' + str(row[10]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Parity = "' + str(row[6]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
-                
-                mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Coils_Start = "' + str(row[13]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Coils_Size = "' + str(row[14]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Input_Registers_Start = "' + str(row[15]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Input_Registers_Size = "' + str(row[16]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Start = "' + str(row[17]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Size = "' + str(row[18]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
-                device_counter += 1
-                
-            with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
-            
-        except Error as e:
-            print("error connecting to the database" + str(e))
-    else:
-        print("Error opening DB")
+        def mb_line(idx, name, val):
+            return 'device%s.%s = "%s"\n';
+
+        mbconfig += mb_line(device_idx,'name', row["dev_name"])
+        mbconfig += mb_line(device_idx, 'slave_id', row["slave_id"])
+
+        if row["dev_type"] in ['ESP32', 'ESP8266', 'TCP']:
+            mbconfig += mb_line(device_idx, 'protocol',"TCP")
+            mbconfig += mb_line(device_idx, 'address', row["ip_address"])
+        else:
+            mbconfig += mb_line(device_idx, 'protocol', "RTU")
+            if str(row["com_port"]).startswith("COM"):
+                port_name = "/dev/ttyS" + str(int(str(row["com_port"]).split("COM")[1]) - 1)
+            else:
+                port_name = row["com_port"]
+            mbconfig += mb_line(device_idx, 'address', port_name)
+
+        mbconfig += mb_line(device_idx, 'IP_Port', row["ip_port"])
+
+        mbconfig += mb_line(device_idx, 'RTU_Baud_Rate', row["baud_reate"])
+        mbconfig += mb_line(device_idx, 'RTU_Parity', row["parity"])
+        mbconfig += mb_line(device_idx, 'RTU_Data_Bits', row["data_bits"])
+        mbconfig += mb_line(device_idx, 'RTU_Stop_Bits', row["stop_bits"])
+
+        mbconfig += mb_line(device_idx, 'Discrete_Inputs_Start', row["di_start"])
+        mbconfig += mb_line(device_idx, 'Discrete_Inputs_Size', row["di_size"])
+
+        mbconfig += mb_line(device_idx, 'Coils_Start', row["coil_start"])
+        mbconfig += mb_line(device_idx, 'Coils_Size', row["coil_size"])
+
+        mbconfig += mb_line(device_idx, 'Input_Registers_Start', row["ir_start"])
+        mbconfig += mb_line(device_idx, 'Input_Registers_Size', row["ir_size"])
+
+        mbconfig += mb_line(device_idx, 'Holding_Registers_Read_Start', row["hr_read_start"])
+        mbconfig += mb_line(device_idx, 'Holding_Registers_Read_Size', row["hr_read_size"])
+
+        mbconfig += mb_line(device_idx, 'Holding_Registers_Start', row["hr_write_start"])
+        mbconfig += mb_line(device_idx, 'Holding_Registers_Size', row["hr_write_size"])
+
+    print(mbconfig)
+    with open('./mbconfig.cfg', 'w+') as f:
+        f.write(mbconfig)
+        f.close()
+    return None
+
+# ### OLDE
+# def generate_mbconfig():
+#     database = "../etc/openplc.db"
+#     conn = create_connection(database)
+#     if (conn != None):
+#         try:
+#             cur = conn.cursor()
+#             cur.execute("SELECT COUNT(*) FROM Slave_dev")
+#             row = cur.fetchone()
+#             num_devices = int(row[0])
+#             mbconfig = 'Num_Devices = "' + str(num_devices) + '"'
+#             cur.close()
+#
+#             cur=conn.cursor()
+#             cur.execute("SELECT * FROM Settings")
+#             rows = cur.fetchall()
+#             cur.close()
+#
+#             for row in rows:
+#                 if (row[0] == "Slave_polling"):
+#                     slave_polling = str(row[1])
+#                 elif (row[0] == "Slave_timeout"):
+#                     slave_timeout = str(row[1])
+#
+#             mbconfig += '\nPolling_Period = "' + slave_polling + '"'
+#             mbconfig += '\nTimeout = "' + slave_timeout + '"'
+#
+#             cur = conn.cursor()
+#             cur.execute("SELECT * FROM Slave_dev")
+#             rows = cur.fetchall()
+#             cur.close()
+#             conn.close()
+#
+#             device_counter = 0
+#             for row in rows:
+#                 mbconfig += """
+# # ------------
+# #   DEVICE """
+#                 mbconfig += str(device_counter)
+#                 mbconfig += """
+# # ------------
+# """
+#                 mbconfig += 'device' + str(device_counter) + '.name = "' + str(row[1]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.slave_id = "' + str(row[3]) + '"\n'
+#                 if (str(row[2]) == 'ESP32' or str(row[2]) == 'ESP8266' or str(row[2]) == 'TCP'):
+#                     mbconfig += 'device' + str(device_counter) + '.protocol = "TCP"\n'
+#                     mbconfig += 'device' + str(device_counter) + '.address = "' + str(row[9]) + '"\n'
+#                 else:
+#                     mbconfig += 'device' + str(device_counter) + '.protocol = "RTU"\n'
+#                     if (str(row[4]).startswith("COM")):
+#                         port_name = "/dev/ttyS" + str(int(str(row[4]).split("COM")[1]) - 1)
+#                     else:
+#                         port_name = str(row[4])
+#                     mbconfig += 'device' + str(device_counter) + '.address = "' + port_name + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.IP_Port = "' + str(row[10]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.RTU_Parity = "' + str(row[6]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
+#
+#                 mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.Coils_Start = "' + str(row[13]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.Coils_Size = "' + str(row[14]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.Input_Registers_Start = "' + str(row[15]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.Input_Registers_Size = "' + str(row[16]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Start = "' + str(row[17]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Read_Size = "' + str(row[18]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Start = "' + str(row[19]) + '"\n'
+#                 mbconfig += 'device' + str(device_counter) + '.Holding_Registers_Size = "' + str(row[20]) + '"\n'
+#                 device_counter += 1
+#
+#             with open('./mbconfig.cfg', 'w+') as f: f.write(mbconfig)
+#
+#         except Error as e:
+#             print("error connecting to the database" + str(e))
+#     else:
+#         print("Error opening DB")
                 
 
 #-----------------------------------------------------------------
@@ -993,6 +1062,28 @@ def compile_program():
         
         return draw_compiling_page()
 
+@app.route('/program/<int:prog_id>/compile', methods=['GET', 'POST'])
+@login_required
+def p_program_compile(prog_id):
+
+    # load information about the program being compiled into the openplc_runtime object
+    ctx = make_context("compiling")
+    ctx.prog_id = prog_id
+
+
+    sql = "SELECT * FROM Programs WHERE Prog_id=?"
+    row, ctx.error = db_query(sql, [str(prog_id)], single=True)
+    print ctx.error
+    ctx.program = row
+
+    openplc_runtime.project_name = row["name"]
+    openplc_runtime.project_description = row["description"]
+    openplc_runtime.project_file = row["file"]
+
+    st_file = os.path.join(WORK_DIR, "st_files", str(row["prog_id"]) )
+    #openplc_runtime.compile_program(st_file)
+
+    return render_template("compiling.html", c=ctx)
 
 @app.route('/compilation-logs', methods=['GET', 'POST'])
 def compilation_logs():
@@ -1085,58 +1176,57 @@ def p_slave_edit(dev_id):
         for fld in fnames:
             vals[fld] = request.form.get(fld)
         print(vals)
-        dev_id, err = db_insert("Slave_dev", vals)
-
-    if request.method == 'GET':
-
-        ctx.device = {}
-        if dev_id > 0:
-            ctx.device, ctx.error = db_query("select * from slave_dev where dev_id=?", [dev_id], single=True)
-
-        ctx.DEVICE_PROTOCOLS = DEVICE_PROTOCOLS
-        ctx.IO_PREFIXES = IO_PREFIXES
-
-        #= ports for  serial devices
-        ctx.ports = []
-        is_cygwin = platform.system().startswith("CYGWIN")
-        ports = [comport.device for comport in serial.tools.list_ports.comports()]
-        for port in ports:
-            if is_cygwin:
-                port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
-            else:
-                port_name = port
-
-            ctx.ports.append(port_name)
-
-
-        return render_template("slave_edit.html", c=ctx)
-
-
-
-@app.route('/delete-device', methods=['GET', 'POST'])
-def delete_device():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        devid_db = flask.request.args.get('dev_id')
-        database = "../etc/openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("DELETE FROM Slave_dev WHERE dev_id = ?", (int(devid_db),))
-                conn.commit()
-                cur.close()
-                conn.close()
-                generate_mbconfig()
-                return flask.redirect(flask.url_for('modbus'))
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+        if dev_id == 0:
+            dev_id, err = db_insert("Slave_dev", vals)
         else:
-            return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.'
+            err = db_update("Slave_dev", vals, "dev_id", dev_id)
+        print(err)
+        redirect(url_for("p_slaves"))
 
+
+    ctx.device = {}
+    if dev_id > 0:
+        ctx.device, ctx.error = db_query("select * from slave_dev where dev_id=?", [dev_id], single=True)
+
+    ctx.DEVICE_PROTOCOLS = DEVICE_PROTOCOLS
+    ctx.IO_PREFIXES = IO_PREFIXES
+
+    #= ports for  serial devices
+    ctx.ports = []
+    is_cygwin = platform.system().startswith("CYGWIN")
+    ports = [comport.device for comport in serial.tools.list_ports.comports()]
+    for port in ports:
+        if is_cygwin:
+            port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
+        else:
+            port_name = port
+
+        ctx.ports.append(port_name)
+
+
+    return render_template("slave_edit.html", c=ctx)
+
+
+@app.route('/slave/<int:dev_id>/remove', methods=['GET', 'POST'])
+@login_required
+def p_slave_remove(dev_id):
+
+    if request.method == "POST":
+        xid = int(request.form.get('dev_id'))
+
+        if xid == dev_id and request.form.get('action') == "do_delete":
+            err = db_execute("DELETE FROM Slave_dev WHERE dev_id = ?", [dev_id])
+            print(err)
+            generate_mbconfig()
+
+    return redirect(url_for('p_slaves'))
+
+@app.route('/monitoring2', methods=['GET', 'POST'])
+def p_monitoring():
+
+    ctx = make_context("monitoring")
+
+    return render_template("monitoring.html", c=ctx)
             
 @app.route('/monitoring', methods=['GET', 'POST'])
 def monitoring():
@@ -1144,7 +1234,7 @@ def monitoring():
         return flask.redirect(flask.url_for('login'))
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        return_str = pages.w3_style + pages.monitoring_head + draw_top_div()
+        return_str = "" #pages.w3_style + pages.monitoring_head + draw_top_div()
         return_str += """
             <div class='main'>
                 <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
@@ -1160,7 +1250,7 @@ def monitoring():
                     <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
                     <br>
                     <br>"""
-        return_str += draw_status()
+        #return_str += draw_status()
         return_str += """
         </div>
             <div style="margin-left:320px; margin-right:70px">
@@ -1821,8 +1911,10 @@ def start_server(address="127.0.0.1", port=8080,
     # else:
     #     print("error connecting to the database")
 
-    #socketio.run(app, host=args.address, port=args.port, debug=True)
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
-    app.run(debug=debug, host=address, threaded=False, port=port)
+
+    socketio.run(app, host=address, port=port, debug=debug)
+
+    #app.run(debug=debug, host=address, threaded=False, port=port)

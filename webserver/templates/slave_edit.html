@@ -7,6 +7,7 @@
 
 {% block content %}
 
+{{c.device}}
 
 <form id="slave_form" action="/slave/{{c.dev_id}}" method="POST" onsubmit="return validateForm()">
 <div class="row">
@@ -80,19 +81,25 @@
     <div class="col">
 
         {% for rec in c.IO_PREFIXES %}
+
         <fieldset>
             <legend>{{rec.label}}</legend>
             <div class="form-group row">
-                <label for='{{rec.prefix}}_start' class="col-sm-4 col-form-label">Start Address:</label>
 
+                {% set fstart = rec.prefix + "_start" %}
+                <label for='{{fstart}}' class="col-sm-4 col-form-label">Start Address:</label>
                 <div class="col-sm-2">
-                    <input type='text' class="form-control" required
-                           id='{{rec.prefix}}_start' name='{{rec.prefix}}_start'>
+                    <input type='text' class="form-control" required value="{{c.device[fstart]}}"
+                           id='{{fstart}}' name='{{fstart}}'>
                 </div>
-                <label for='{{rec.prefix}}_size' class="col-sm-2 col-form-label">Size:</label>
+
+                {% set fsize = rec.prefix + "_size" %}
+                <label for='{{fsize}}' class="col-sm-2 col-form-label">Size:</label>
                 <div class="col-sm-3">
-                    <input type='number' class="form-control" required min="8" max="9999"
-                           id='{{rec.prefix}}_size' name='{{rec.prefix}}_size'>
+                    <input type='number' class="form-control"
+                           value="{{c.device[fsize]}}"
+                           required min="8" max="9999"
+                           id='{{fsize}}' name='{{fsize}}'>
                 </div>
             </div>
         </fieldset>
@@ -103,7 +110,13 @@
      <center><input type="submit" class="btn btn-primary"  value='Save device'></center>
 </form>
 
-
-<script type="text/javascript" src="/static/openplc_js/slave_edit.js"></script>
+<form action="/slave/{{c.dev_id}}/remove" method="POST" onsubmit="return confirm('Are you sure ?');">
+    <input type="hidden" name="dev_id" value="{{c.dev_id}}">
+    <input type="hidden" name="action" value="do_delete">
+    <div class="form-group">
+                <input type="submit" class="btn btn-danger" value='Remove Program' sonclick="checkDelete();">
+            </div>
+</form>
+<script type="text/javascript" src="/stsatic/openplc_js/slave_edit.js"></script>
 
 {% endblock content %}
