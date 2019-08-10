@@ -11,9 +11,6 @@ class debug_var():
     forced = 'No'
     value = 0
 
-#debug_vars = []
-#monitor_active = False
-
 
 def parse_st(st_file):
     global debug_vars
@@ -37,8 +34,7 @@ def parse_st(st_file):
         print('')
 
 
-def cleanup():
-    del debug_vars[:]
+
 
 
 class Monitor:
@@ -105,3 +101,6 @@ class Monitor:
         if self.monitor_active != False:
             self.monitor_active = False
             self.mb_client.close()
+
+    def cleanup(self):
+        del self.debug_vars[:]
