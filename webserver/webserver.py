@@ -813,12 +813,12 @@ def p_slave_edit(dev_id):
         vals = {}
         for fld in fnames:
             vals[fld] = request.form.get(fld)
-        print(vals)
+
         if dev_id == 0:
             dev_id, err = db_insert("Slave_dev", vals)
         else:
             err = db_update("Slave_dev", vals, "dev_id", dev_id)
-        print(err)
+
         generate_mbconfig()
         return redirect(url_for("p_slaves"))
 
@@ -855,7 +855,6 @@ def p_slave_remove(dev_id):
 
         if xid == dev_id and request.form.get('action') == "do_delete":
             err = db_execute("DELETE FROM Slave_dev WHERE dev_id = ?", [dev_id])
-            print(err)
             generate_mbconfig()
 
     return redirect(url_for('p_slaves'))
@@ -873,108 +872,6 @@ def p_monitoring():
 
     return render_template("monitoring.html", c=ctx)
             
-@app.route('/monitoring2', methods=['GET', 'POST'])
-def monitoring():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        return_str = "" #pages.w3_style + pages.monitoring_head + draw_top_div()
-        return_str += """
-            <div class='main'>
-                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
-                    <br>
-                    <br>
-                    <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-                    <a href='programs' class='w3-bar-item w3-button'><img src='/static/programs-icon-64x64.png' alt='Programs' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
-                    <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
-                    <a href="monitoring" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/monitoring-icon-64x64.png" alt="Monitoring" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Monitoring</p></a>                    
-                    <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-                    <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
-                    <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-                    <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-                    <br>
-                    <br>"""
-        #return_str += draw_status()
-        return_str += """
-        </div>
-            <div style="margin-left:320px; margin-right:70px">
-                <div style="w3-container">
-                    <br>
-                    <h2>Monitoring</h2>
-                    <p>The table below displays a list of the OpenPLC points used by the currently running program. By clicking in one of the listed points it is possible to see more information about it and also to force it to be a different value.</p>
-                    <div id='monitor_table'>
-                        <table>
-                            <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
-                            <tr style='background-color: white'>
-                                <th>Point Name</th><th>Type</th><th>Location</th><th>Forced</th><th>Value</th>
-                            </tr>"""
-
-        if (openplc_runtime.status() == "Running"):
-            monitor.start_monitor()
-            data_index = 0
-            for debug_data in monitor.debug_vars:
-                return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
-                return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
-                if (debug_data.type == 'BOOL'):
-                    if (debug_data.value == 0):
-                        return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
-                    else:
-                        return_str += '<img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</td>'
-                else:
-                    percentage = (debug_data.value*100)/65535
-                    return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
-                return_str += '</tr>'
-                data_index += 1
-            return_str += pages.monitoring_tail
-
-        else:
-            return_str += """
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </body>
-</html>"""
-
-        return return_str
-
-@app.route('/monitor-update', methods=['GET', 'POST'])
-def monitor_update():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        #if (openplc_runtime.status() == "Compiling"): return 'OpenPLC is compiling new code. Please wait'
-        return_str = """
-                        <table>
-                            <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
-                            <tr style='background-color: white'>
-                                <th>Point Name</th><th>Type</th><th>Location</th><th>Forced</th><th>Value</th>
-                            </tr>"""
-        
-        #if (openplc_runtime.status() == "Running"):
-        if (True):
-            monitor.start_monitor()
-            data_index = 0
-            for debug_data in monitor.debug_vars:
-                return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
-                return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
-                if (debug_data.type == 'BOOL'):
-                    if (debug_data.value == 0):
-                        return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
-                    else:
-                        return_str += '<img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</td>'
-                else:
-                    percentage = (debug_data.value*100)/65535
-                    return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
-                return_str += '</tr>'
-                data_index += 1
-        
-        return_str += """ 
-                        </table>"""
-        
-        return return_str
 
 HARDWARE_LAYERS = [
     {"value": "blank", "label": "Blank"},
@@ -1014,12 +911,9 @@ def p_hardware():
             f.write(custom_layer_code)
             f.close()
 
-        #scripts_path = os.path.abspath(os.path.join(self_path, '..', 'scripts'))
         change_hardware_script = os.path.join(SCRIPTS_DIR, 'change_hardware_layer.sh')
-        print(change_hardware_script)
+
         subprocess.call([change_hardware_script, hardware_layer], cwd=SCRIPTS_DIR)
-        #return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
-        #redirect(??)
         #TODO CALL compile
 
     ctx.HARDWARE_LAYERS = HARDWARE_LAYERS
@@ -1034,98 +928,25 @@ def p_hardware():
     return render_template("hardware.html", c=ctx)
 
 
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        if (flask.request.method == 'GET'):
-            driver_path = os.path.abspath(os.path.join(self_path, '..', 'etc', 'openplc_driver'))
-            with open(driver_path) as f: current_driver = f.read().rstrip()
-            return_str = pages.w3_style + pages.hardware_style + draw_top_div() + pages.hardware_head
-            return_str += draw_status()
-            return_str += """
-            </div>
-            <div style="margin-left:320px; margin-right:70px">
-                <div style="w3-container">
-                    <br>
-                    <h2>Hardware</h2>
-                    <p>OpenPLC controls inputs and outputs through a piece of code called hardware layer (also known as driver). Therefore, to properly handle the inputs and outputs of your board, you must select the appropriate hardware layer for it. The Blank hardware layer is the default option on OpenPLC, which provides no support for native inputs and outputs.</p>
-                    <!-- <p>This section allows you to change the hardware layer used by OpenPLC. It is also possible to augment the current hardware layer through the hardware layer code box. -->
-                    <p><b>OpenPLC Hardware Layer</b><p>
-                    <form   id    = "uploadForm"
-                        enctype   =  "multipart/form-data"
-                        action    =  "hardware"
-                        method    =  "post">
-                        <select id='hardware_layer' name='hardware_layer' style="width:400px;height:30px;font-size: 16px;font-family: 'Roboto', sans-serif;">"""
-            if (current_driver == "blank"): return_str += "<option selected='selected' value='blank'>Blank</option>"
-            else: return_str += "<option value='blank'>Blank</option>"
-            if (current_driver == "blank_linux"): return_str += "<option selected='selected' value='blank_linux'>Blank Linux</option>"
-            else: return_str += "<option value='blank_linux'>Blank with DNP3 (Linux only)</option>"
-            if (current_driver == "fischertechnik"): return_str += "<option selected='selected' value='fischertechnik'>Fischertechnik</option>"
-            else: return_str += "<option value='fischertechnik'>Fischertechnik</option>"
-            if (current_driver == "neuron"): return_str += "<option selected='selected' value='neuron'>Neuron</option>"
-            else: return_str += "<option value='neuron'>Neuron</option>"
-            if (current_driver == "pixtend"): return_str += "<option selected='selected' value='pixtend'>PiXtend</option>"
-            else: return_str += "<option value='pixtend'>PiXtend</option>"
-            if (current_driver == "pixtend_2s"): return_str += "<option selected='selected' value='pixtend_2s'>PiXtend 2s</option>"
-            else: return_str += "<option value='pixtend_2s'>PiXtend 2s</option>"
-            if (current_driver == "pixtend_2l"): return_str += "<option selected='selected' value='pixtend_2l'>PiXtend 2l</option>"
-            else: return_str += "<option value='pixtend_2l'>PiXtend 2l</option>"
-            if (current_driver == "rpi"): return_str += "<option selected='selected' value='rpi'>Raspberry Pi</option>"
-            else: return_str += "<option value='rpi'>Raspberry Pi</option>"
-            if (current_driver == "rpi_old"): return_str += "<option selected='selected' value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
-            else: return_str += "<option value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
-            if (current_driver == "simulink"): return_str += "<option selected='selected' value='simulink'>Simulink</option>"
-            else: return_str += "<option value='simulink'>Simulink</option>"
-            if (current_driver == "simulink_linux"): return_str += "<option selected='selected' value='simulink_linux'>Simulink with DNP3 (Linux only)</option>"
-            else: return_str += "<option value='simulink_linux'>Simulink with DNP3 (Linux only)</option>"
-            if (current_driver == "unipi"): return_str += "<option selected='selected' value='unipi'>UniPi v1.1</option>"
-            else: return_str += "<option value='unipi'>UniPi v1.1</option>"
-            return_str += """
-                        </select>
-                        <br>
-                        <br>
-                        <p><b>Hardware Layer Code Box</b><p>
-                        <p>The Hardware Layer Code Box allows you to extend the functionality of the current driver by adding custom code to it, such as reading I2C, SPI and 1-Wire sensors, or controling port expanders to add more outputs to your hardware</p>
-                        <textarea wrap="off" spellcheck="false" name="custom_layer_code" id="custom_layer_code">"""
-            with open('../runtime/core/custom_layer.h') as f: return_str += f.read()
-            return_str += pages.hardware_tail
-            
-        else:
-            hardware_layer = flask.request.form['hardware_layer']
-            custom_layer_code = flask.request.form['custom_layer_code']
-            program_dir = os.path.abspath(os.path.join(self_path, '..', 'etc', 'active_program'))
-            with open(program_dir) as f: current_program = f.read()
-            with open('../runtime/core/custom_layer.h', 'w+') as f: f.write(custom_layer_code)
-            
-            scripts_path = os.path.abspath(os.path.join(self_path, '..', 'scripts'))
-            change_hardware_path = os.path.join(scripts_path, 'change_hardware_layer.sh')
-            subprocess.call([change_hardware_path, hardware_layer], cwd=scripts_path)
-            return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
-        
-        return return_str
-
 
 @app.route('/restore_custom_hardware')
-def restore_custom_hardware():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        
-        #Restore the original custom layer code
-        with open('../runtime/core/custom_layer.original') as f: original_code = f.read()
-        with open('../runtime/core/custom_layer.h', 'w+') as f: f.write(original_code)
-        return flask.redirect(flask.url_for('hardware'))
+@login_required
+def p_restore_custom_hardware():
+
+    # Restore the original custom layer code
+    with open( os.path.join(ROOT_DIR, 'runtime', 'core','custom_layer.original'), "r") as f:
+        original_code = f.read()
+        f.close()
+    with open(os.path.join(ROOT_DIR, 'runtime', 'core','custom_layer'),'w+') as f:
+        f.write(original_code)
+        f.close()
+    return redirect(url_for('p_hardware'))
         
 
 #----------------------- Users pages ------------
 @app.route('/users')
 @login_required
 def p_users():
-
-    if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
     ctx = make_context("users")
 
@@ -1138,11 +959,7 @@ def p_users():
 @login_required
 def p_user_edit(user_id):
 
-
-    if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-
     ctx = make_context("users")
-
     ctx.user_id = user_id
     ctx.user = {}
 
@@ -1168,36 +985,20 @@ def p_user_edit(user_id):
     return render_template("user_edit.html", c=ctx)
 
 
-@app.route('/delete-user', methods=['GET', 'POST'])
-def delete_user():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        user_id = flask.request.args.get('user_id')
-        database = "../etc/openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("SELECT username FROM Users WHERE user_id = ?", (int(user_id),))
-                row = cur.fetchone()
-                if (flask_login.current_user.id == row[0]):
-                    cur.close()
-                    conn.close()
-                    return draw_blank_page() + "<h2>Error</h2><p>You cannot delete yourself!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
-                else:
-                    cur = conn.cursor()
-                    cur.execute("DELETE FROM Users WHERE user_id = ?", (int(user_id),))
-                    conn.commit()
-                    cur.close()
-                    conn.close()
-                    return flask.redirect(flask.url_for('users'))
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        else:
-            return 'Error connecting to the database. Make sure that your ../etc/openplc.db file is not corrupt.'
+@app.route('/user/<int:user_id>/delete', methods=['GET', 'POST'])
+def p_user_delete(user_id):
+
+
+
+    row, err = db_query("SELECT username FROM Users WHERE user_id = ?", (int(user_id),))
+    print("ID+++++++", flask_login.current_user.id)
+    if flask_login.current_user.id == row[0]:
+        oops()
+
+    err = db_execute("DELETE FROM Users WHERE user_id = ?", (int(user_id),))
+
+    redirect(url_for('p_users'))
+
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -1205,14 +1006,12 @@ def p_settings():
 
     ctx = make_context("settings")
 
-
-
-
     if request.method == 'POST':
 
         set_setting("Modbus_port", request.form.get('modbus_port', "disabled"))
         set_setting("Dnp3_port", request.form.get('dnp3_port', "disabled"))
         set_setting("Enip_port", request.form.get('enip_port', "disabled"))
+        # TODO
 
     ctx.settings = get_settings()
 
