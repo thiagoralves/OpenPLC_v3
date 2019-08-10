@@ -2,7 +2,7 @@ import os
 import time, threading
 from pymodbus.client.sync import ModbusTcpClient
 
-self_path = os.path.dirname(__file__)
+from . import HERE_PATH, ROOT_PATH
 
 class debug_var():
     name = ''
@@ -17,7 +17,7 @@ mb_client = None
 
 def parse_st(st_file):
     global debug_vars
-    filepath = os.path.join(self_path, '..', 'etc', 'st_files', st_file)
+    filepath = os.path.join(ROOT_PATH, 'etc', 'st_files', st_file)
     
     st_program = open(filepath, 'r')
     
@@ -82,14 +82,14 @@ def modbus_monitor():
             print('hi')
             
     
-    if (monitor_active == True):
+    if monitor_active == True:
         threading.Timer(0.5, modbus_monitor).start()
     
 def start_monitor():
     global monitor_active
     global mb_client
     
-    if (monitor_active != True):
+    if monitor_active != True:
         monitor_active = True
         mb_client = ModbusTcpClient('127.0.0.1')
         
@@ -99,6 +99,6 @@ def stop_monitor():
     global monitor_active
     global mb_client
     
-    if (monitor_active != False):
+    if monitor_active != False:
         monitor_active = False
         mb_client.close()

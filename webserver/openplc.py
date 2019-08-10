@@ -25,7 +25,7 @@ import os
 from threading import Thread
 from Queue import Queue, Empty
 
-HERE_PATH = os.path.dirname(__file__)
+from . import HERE_PATH, ROOT_PATH
 
 intervals = (
     ('weeks', 604800),  # 60 * 60 * 24 * 7
@@ -123,7 +123,7 @@ class runtime:
     # -- Runtime --------------------------------------------------------
     def start_runtime(self):
         if self.status() == RStatus.STOPPED:
-            openplc_path = os.path.abspath(os.path.join(HERE_PATH, '..', 'bin', 'openplc'))
+            openplc_path = os.path.abspath(os.path.join(ROOT_PATH, 'bin', 'openplc'))
             self.theprocess = subprocess.Popen([openplc_path])  # XXX: iPAS
             self.runtime_status = RStatus.RUNNING
     
@@ -147,7 +147,7 @@ class runtime:
         global compilation_status_str
         global compilation_object
         compilation_status_str = ""
-        compile_program_path = os.path.abspath(os.path.join(HERE_PATH, '..', 'scripts', 'compile_program.sh'))
+        compile_program_path = os.path.abspath(os.path.join(ROOT_PATH, 'scripts', 'compile_program.sh'))
         a = subprocess.Popen([compile_program_path, str(st_file)],
                              cwd=HERE_PATH,
                              stdout=subprocess.PIPE,
@@ -204,7 +204,8 @@ class runtime:
             data, err = self.send_cmd('stop_dnp3()')
             if err:
                 print(err)
-                
+
+    # -- enip --------------------------------------------------------
     def start_enip(self, port_num):
         if self.status() == RStatus.RUNNING:
             data, err = self.send_cmd('start_enip(%s)' % port_num)
@@ -217,6 +218,7 @@ class runtime:
             if err:
                 print(err)
 
+    # -- storage --------------------------------------------------------
     def start_pstorage(self, poll_rate):
         if self.status() == RStatus.RUNNING:
             data, err = self.send_cmd('start_pstorage(%s)' % poll_rate)
@@ -228,7 +230,8 @@ class runtime:
             data, err = self.send_cmd('stop_pstorage()')
             if err:
                 print(err)
-    
+
+    # -- utils --------------------------------------------------------
     def logs(self):
         if self.status() == RStatus.RUNNING:
             data, err = self.send_cmd('runtime_logs()', 1000000)
