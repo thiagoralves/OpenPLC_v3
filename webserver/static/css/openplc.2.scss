@@ -78,4 +78,16 @@ body {
 
 }
 
+$form_element_bg:  #E1E1E1;
+
+textarea {
+    width: 100%;
+    font-size: 9pt;
+    font-family: monospace;
+    background-color: $form_element_bg;
+}
+.form-control {
+    background-color: $form_element_bg;
+}
+
 

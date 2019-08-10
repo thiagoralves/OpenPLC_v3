@@ -62,4 +62,13 @@ body {
     font-size: 1.4em;
     background-color: #eeeeee; }
 
+textarea {
+  width: 100%;
+  font-size: 9pt;
+  font-family: monospace;
+  background-color: #E1E1E1; }
+
+.form-control {
+  background-color: #E1E1E1; }
+
 /*# sourceMappingURL=openplc.2.css.map */

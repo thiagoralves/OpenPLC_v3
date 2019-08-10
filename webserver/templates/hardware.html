@@ -6,6 +6,41 @@
 
 {% block content %}
 
+<p>OpenPLC controls inputs and outputs through a piece of code called hardware layer (also known as driver). Therefore, to
+    properly handle the inputs and outputs of your board, you must select the appropriate
+    hardware layer for it. The Blank hardware layer is the default option on OpenPLC, which
+    provides no support for native inputs and outputs.
+</p>
 
+
+
+
+<form id="uploadForm" enctype="multipart/form-data" action="/hardware" method="post">
+
+<div class="form-group">
+    <label for='hardware_layer'><b>Select Hardware Layer</b></label>
+    <select  class="form-control" id='hardware_layer' name='hardware_layer' required >
+    {% for hl in c.HARDWARE_LAYERS %}
+        <option value="{{hl.value}}"
+                {% if c.current_driver == hl.value %}selected{% endif %}>{{hl.label}}</option>
+    {% endfor %}
+    </select>
+</div>
+
+<div class="form-group">
+    <label for='hardware_layer'><b>Hardware Layer Custom Code</b></label>
+    <div class="alert alert-info">The Hardware Layer Custom Box below allows you to extend the functionality of the current driver by
+        adding custom code to it, such as reading I2C, SPI and 1-Wire sensors, or controling port expanders to
+        add more outputs to your hardware</div>
+
+    <textarea swrap="off" spellcheck="false" style="min-height: 300px"
+              name="custom_layer_code" id="custom_layer_code">{{c.custom_layer_code}}</textarea>
+</div>
+
+<div class="form-group">
+    <input type="submit" class="btn btn-success" value='Save' class="btn btn-success">
+</div>
+
+ </form>
 
 {% endblock content %}

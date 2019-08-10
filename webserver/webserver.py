@@ -33,7 +33,7 @@ from flask import redirect, request, render_template, url_for
 import flask_login
 from flask_login import current_user, login_required
 
-from . import HERE_PATH, ROOT_PATH, ETC_PATH
+from . import HERE_PATH, ROOT_PATH, ETC_PATH, SCRIPTS_PATH, CURR_PROGRAM_FILE, CURR_DRIVER_FILE
 from . import openplc
 from . import pages
 from . import monitoring as monitor
@@ -1238,7 +1238,21 @@ def monitor_update():
                         </table>"""
         
         return return_str
-            
+
+HARDWARE_LAYERS = [
+    {"value": "blank", "label": "Blank"},
+    {"value": "blank_linux", "label": "Blank with DNP3 (Linux only)"},
+    {"value": "fischertechnik", "label": "Fischertechnik"},
+    {"value": "neuron", "label": "Neuron"},
+    {"value": "pixtend", "label": "PiXtend"},
+    {"value": "pixtend_2s", "label": "PiXtend 2s"},
+    {"value": "pixtend_2l", "label": "PiXtend 2l"},
+    {"value": "rpi", "label": "Raspberry Pi"},
+    {"value": "rpi_old", "label": "Raspberry Pi - Old Model (2011 model B)"},
+    {"value": "simulink", "label": "Simulink"},
+    {"value": "simulink_linux", "label": "Simulink with DNP3 (Linux only)"},
+    {"value": "unipi", "label": "UniPi v1.1"},
+]
             
 @app.route('/hardware', methods=['GET', 'POST'])
 @login_required
@@ -1247,11 +1261,38 @@ def p_hardware():
     monitor.stop_monitor()
 
     ctx = make_context("hardware")
+    custom_layer_file = os.path.join(ROOT_PATH, "runtime", "core", "custom_layer.h")
 
-    if request.method == "GET":
-        driver_path = os.path.abspath(os.path.join(ETC_PATH,  'openplc_driver'))
-        with open(driver_path) as f:
-            current_driver = f.read().rstrip()
+    if request.method == "POST":
+
+        hardware_layer = request.form['hardware_layer']
+        custom_layer_code = request.form['custom_layer_code']
+        print("hardware_layer==", hardware_layer)
+
+        with open(CURR_PROGRAM_FILE) as f:
+            current_program = f.read()
+            f.close()
+
+        with open(custom_layer_file, 'w+') as f:
+            f.write(custom_layer_code)
+            f.close()
+
+        #scripts_path = os.path.abspath(os.path.join(self_path, '..', 'scripts'))
+        change_hardware_script = os.path.join(SCRIPTS_PATH, 'change_hardware_layer.sh')
+        print(change_hardware_script)
+        subprocess.call([change_hardware_script, hardware_layer], cwd=SCRIPTS_PATH)
+        #return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
+        #redirect(??)
+        #TODO CALL compile
+
+    ctx.HARDWARE_LAYERS = HARDWARE_LAYERS
+
+    ctx.current_driver = None
+    with open(CURR_DRIVER_FILE) as f:
+        ctx.current_driver = f.read().rstrip()
+
+    ctx.custom_layer_code, ctx.error = ut.read_file(custom_layer_file)
+
 
     return render_template("hardware.html", c=ctx)
 
@@ -1293,7 +1334,7 @@ def p_hardware():
             if (current_driver == "pixtend_2s"): return_str += "<option selected='selected' value='pixtend_2s'>PiXtend 2s</option>"
             else: return_str += "<option value='pixtend_2s'>PiXtend 2s</option>"
             if (current_driver == "pixtend_2l"): return_str += "<option selected='selected' value='pixtend_2l'>PiXtend 2l</option>"
-            else: return_str += "<option value='pixtend_2l'>PiXtend 2l</option>"  
+            else: return_str += "<option value='pixtend_2l'>PiXtend 2l</option>"
             if (current_driver == "rpi"): return_str += "<option selected='selected' value='rpi'>Raspberry Pi</option>"
             else: return_str += "<option value='rpi'>Raspberry Pi</option>"
             if (current_driver == "rpi_old"): return_str += "<option selected='selected' value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
@@ -1779,4 +1820,7 @@ def start_server(address="127.0.0.1", port=8080,
     #     print("error connecting to the database")
 
     #socketio.run(app, host=args.address, port=args.port, debug=True)
+    import logging
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
     app.run(debug=debug, host=address, threaded=False, port=port)

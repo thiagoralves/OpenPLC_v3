@@ -21,10 +21,42 @@
 // to the OpenPLC internal buffers in order to update I/O state.
 // Thiago Alves, Dec 2015
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <wiringPi.h>
+#include <wiringSerial.h>
 #include <mutex>
 
 #include "ladder.h"
 #include "custom_layer.h"
+
+#if !defined(ARRAY_SIZE)
+    #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#endif
+
+#define MAX_INPUT 		14
+#define MAX_OUTPUT 		11
+#define MAX_ANALOG_OUT	1
+
+/********************I/O PINS CONFIGURATION*********************
+ * A good source for RaspberryPi I/O pins information is:
+ * http://pinout.xyz
+ *
+ * The buffers below works as an internal mask, so that the
+ * OpenPLC can access each pin sequentially
+****************************************************************/
+//inBufferPinMask: pin mask for each input, which
+//means what pin is mapped to that OpenPLC input
+int inBufferPinMask[MAX_INPUT] = { 8, 9, 7, 0, 2, 3, 12, 13, 14, 21, 22, 23, 24, 25 };
+
+//outBufferPinMask: pin mask for each output, which
+//means what pin is mapped to that OpenPLC output
+int outBufferPinMask[MAX_OUTPUT] =	{ 15, 16, 4, 5, 6, 10, 11, 26, 27, 28, 29 };
+
+//analogOutBufferPinMask: pin mask for the analog PWM
+//output of the RaspberryPi
+int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 1 };
 
 //-----------------------------------------------------------------------------
 // This function is called by the main OpenPLC routine when it is initializing.
@@ -32,6 +64,35 @@
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
+	wiringPiSetup();
+	//piHiPri(99);
+
+	//set pins as input
+	for (int i = 0; i < MAX_INPUT; i++)
+	{
+	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+	    {
+		    pinMode(inBufferPinMask[i], INPUT);
+		    if (i != 0 && i != 1) //pull down can't be enabled on the first two pins
+		    {
+			    pullUpDnControl(inBufferPinMask[i], PUD_DOWN); //pull down enabled
+		    }
+	    }
+	}
+
+	//set pins as output
+	for (int i = 0; i < MAX_OUTPUT; i++)
+	{
+	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+	    	pinMode(outBufferPinMask[i], OUTPUT);
+	}
+
+	//set PWM pins as output
+	for (int i = 0; i < MAX_ANALOG_OUT; i++)
+	{
+	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
+    		pinMode(analogOutBufferPinMask[i], PWM_OUTPUT);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -44,41 +105,41 @@ void finalizeHardware()
 
 //-----------------------------------------------------------------------------
 // This function is called by the OpenPLC in a loop. Here the internal buffers
-// must be updated to reflect the actual Input state. The mutex bufferLock
+// must be updated to reflect the actual state of the input pins. The mutex buffer_lock
 // must be used to protect access to the buffers on a threaded environment.
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
 	std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
 
-	/*********READING AND WRITING TO I/O**************
-
-	*bool_input[0][0] = read_digital_input(0);
-	write_digital_output(0, *bool_output[0][0]);
-
-	*int_input[0] = read_analog_input(0);
-	write_analog_output(0, *int_output[0]);
-
-	**************************************************/
+	//INPUT
+	for (int i = 0; i < MAX_INPUT; i++)
+	{
+	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+    		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = digitalRead(inBufferPinMask[i]);
+	}
 }
 
 //-----------------------------------------------------------------------------
 // This function is called by the OpenPLC in a loop. Here the internal buffers
-// must be updated to reflect the actual Output state. The mutex bufferLock
+// must be updated to reflect the actual state of the output pins. The mutex buffer_lock
 // must be used to protect access to the buffers on a threaded environment.
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
 	std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
 
-	/*********READING AND WRITING TO I/O**************
+	//OUTPUT
+	for (int i = 0; i < MAX_OUTPUT; i++)
+	{
+	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+    		if (bool_output[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
+	}
 
-	*bool_input[0][0] = read_digital_input(0);
-	write_digital_output(0, *bool_output[0][0]);
-
-	*int_input[0] = read_analog_input(0);
-	write_analog_output(0, *int_output[0]);
-
-	**************************************************/
+	//ANALOG OUT (PWM)
+	for (int i = 0; i < MAX_ANALOG_OUT; i++)
+	{
+	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
+    		if (int_output[i] != NULL) pwmWrite(analogOutBufferPinMask[i], (*int_output[i] / 64));
+	}
 }
-
