@@ -16,7 +16,7 @@
 # along with OpenPLC.  If not, see <http://www.gnu.org/licenses/>.
 # ----------------------------------------------------------------------------
 
-#Use this for OpenPLC console: http://eyalarubas.com/python-subproc-nonblock.html
+# Use this for OpenPLC console: http://eyalarubas.com/python-subproc-nonblock.html
 import subprocess
 import socket
 import errno
@@ -25,7 +25,7 @@ import os
 from threading import Thread
 from Queue import Queue, Empty
 
-self_path = os.path.dirname(__file__)
+HERE_PATH = os.path.dirname(__file__)
 
 intervals = (
     ('weeks', 604800),  # 60 * 60 * 24 * 7
@@ -89,45 +89,67 @@ class NonBlockingStreamReader:
 
 class UnexpectedEndOfStream(Exception): pass
 
+class RStatus:
+    STOPPED = "Stopped"
+    RUNNING = "Running"
+    COMPILING = "Compiling"
+    UNKNOWN = "Unknown"
+
 class runtime:
+
+    host = "localhost"
+    port = 43628
+
     project_file = ""
     project_name = ""
     project_description = ""
-    runtime_status = "Stopped"
-    
+    runtime_status = RStatus.STOPPED
+
+    def send_cmd(self, cmd, recv_bytes=1000):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((self.host, self.port))
+            s.send('%s\n' % cmd)
+            data = s.recv(recv_bytes)
+            s.close()
+            return data, None
+        except socket.error as serr:
+            e = "OpenPLC Runtime is not running. Error: " + str(serr)
+            return None, e
+        except Exception as e:
+            e = "Error connecting to OpenPLC runtime"
+            return None, e
+
+    # -- Runtime --------------------------------------------------------
     def start_runtime(self):
-        if (self.status() == "Stopped"):
-            openplc_path = os.path.abspath(os.path.join(self_path, '..', 'bin', 'openplc'))
+        if self.status() == RStatus.STOPPED:
+            openplc_path = os.path.abspath(os.path.join(HERE_PATH, '..', 'bin', 'openplc'))
             self.theprocess = subprocess.Popen([openplc_path])  # XXX: iPAS
-            self.runtime_status = "Running"
+            self.runtime_status = RStatus.RUNNING
     
     def stop_runtime(self):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('quit()\n')
-                data = s.recv(1000)
-                s.close()
-                self.runtime_status = "Stopped"
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd("quit()")
+            if err:
+                print(err)
+                return
+            self.runtime_status = RStatus.STOPPED
 
-                while self.theprocess.poll() is None:  # XXX: iPAS, to prevent the defunct killed process.
-                    time.sleep(1)  # https://www.reddit.com/r/learnpython/comments/776r96/defunct_python_process_when_using_subprocesspopen/
+            while self.theprocess.poll() is None:  # XXX: iPAS, to prevent the defunct killed process.
+                time.sleep(1) # https://www.reddit.com/r/learnpython/comments/776r96/defunct_python_process_when_using_subprocesspopen/
 
-            except socket.error as serr:
-                print("Failed to stop the runtime. Error: " + str(serr))
-    
+    # -- Compile --------------------------------------------------------
     def compile_program(self, st_file):
-        if (self.status() == "Running"):
+        if self.status() == RStatus.RUNNING:
             self.stop_runtime()
             
         self.is_compiling = True
         global compilation_status_str
         global compilation_object
         compilation_status_str = ""
-        compile_program_path = os.path.abspath(os.path.join(self_path, '..', 'scripts', 'compile_program.sh'))
+        compile_program_path = os.path.abspath(os.path.join(HERE_PATH, '..', 'scripts', 'compile_program.sh'))
         a = subprocess.Popen([compile_program_path, str(st_file)],
-                             cwd=self_path,
+                             cwd=HERE_PATH,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         compilation_object = NonBlockingStreamReader(a.stdout)
@@ -142,141 +164,85 @@ class runtime:
         return compilation_status_str
     
     def status(self):
-        if ('compilation_object' in globals()):
-            if (compilation_object.end_of_stream == False):
-                return "Compiling"
+        if 'compilation_object' in globals():
+            if compilation_object.end_of_stream == False:
+                return RStatus.COMPILING
         
-        #If it is running, make sure that it really is running
-        if (self.runtime_status == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('exec_time()\n')
-                data = s.recv(10000)
-                s.close()
-                self.runtime_status = "Running"
-            except socket.error as serr:
-                print("OpenPLC Runtime is not running. Error: " + str(serr))
-                self.runtime_status = "Stopped"
-        
-        return self.runtime_status
-    
-    def start_modbus(self, port_num):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('start_modbus(' + str(port_num) + ')\n')
-                data = s.recv(1000)
-                s.close()
-            except:
-                print("Error connecting to OpenPLC runtime")
-                
-    def stop_modbus(self):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('stop_modbus()\n')
-                data = s.recv(1000)
-                s.close()
-            except:
-                print("Error connecting to OpenPLC runtime")
+        # If it is running, make sure that it really is running
+        if self.runtime_status == RStatus.RUNNING:
+            data, err = self.send_cmd("exec_time()")
+            if err:
+                print(err)
+                self.runtime_status = RStatus.STOPPED
+                return
+            self.runtime_status = RStatus.RUNNING
 
+        return self.runtime_status
+
+    # -- modbus --------------------------------------------------------
+    def start_modbus(self, port_num):
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('start_modbus(%s)' % port_num)
+            if err:
+                print(err)
+
+    def stop_modbus(self):
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('stop_modbus()')
+            if err:
+                print(err)
+
+    # -- dnp3 --------------------------------------------------------
     def start_dnp3(self, port_num):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('start_dnp3(' + str(port_num) + ')\n')
-                data = s.recv(1000)
-                s.close()
-            except:
-                print("Error connecting to OpenPLC runtime")
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('start_dnp3(%s)' % port_num)
+            if err:
+                print(err)
         
     def stop_dnp3(self):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('stop_dnp3()\n')
-                data = s.recv(1000)
-                s.close()
-            except:
-                print("Error connecting to OpenPLC runtime")
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('stop_dnp3()')
+            if err:
+                print(err)
                 
     def start_enip(self, port_num):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('start_enip(' + str(port_num) + ')\n')
-                data = s.recv(1000)
-                s.close()
-            except:
-                print("Error connecting to OpenPLC runtime")
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('start_enip(%s)' % port_num)
+            if err:
+                print(err)
                 
     def stop_enip(self):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('stop_enip()\n')
-                data = s.recv(1000)
-                s.close()
-            except:
-                print("Error connecting to OpenPLC runtime")
-    
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('stop_enip()')
+            if err:
+                print(err)
+
     def start_pstorage(self, poll_rate):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('start_pstorage(' + str(poll_rate) + ')\n')
-                data = s.recv(1000)
-                s.close()
-            except:
-                print("Error connecting to OpenPLC runtime")
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('start_pstorage(%s)' % poll_rate)
+            if err:
+                print(err)
                 
     def stop_pstorage(self):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('stop_pstorage()\n')
-                data = s.recv(1000)
-                s.close()
-            except:
-                print("Error connecting to OpenPLC runtime")
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('stop_pstorage()')
+            if err:
+                print(err)
     
     def logs(self):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('runtime_logs()\n')
-                data = s.recv(1000000)
-                s.close()
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('runtime_logs()', 1000000)
+            if err is not None:
                 return data
-            except:
-                print("Error connecting to OpenPLC runtime")
-            
-            return "Error connecting to OpenPLC runtime"
-        else:
-            return "OpenPLC Runtime is not running"
+
+            return err
+
         
     def exec_time(self):
-        if (self.status() == "Running"):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 43628))
-                s.send('exec_time()\n')
-                data = s.recv(10000)
-                s.close()
+        if self.status() == RStatus.RUNNING:
+            data, err = self.send_cmd('exec_time()', 10000)
+            if err is not None:
                 return display_time(int(data), 4)
-            except:
-                print("Error connecting to OpenPLC runtime")
-            
-            return "Error connecting to OpenPLC runtime"
-        else:
-            return "N/A"
+            print(err)
+            return err
+        return "N/A"
