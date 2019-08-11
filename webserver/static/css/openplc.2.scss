@@ -84,12 +84,12 @@ body {
         padding-left: 10px;
         legend {
             font-size:1.1em;
-        }
-        #box-shadow: 3px 3px red;
-    }
 
+        }
+    }
 }
 
+// background color for form elements
 $form_element_bg:  #FFF8D3;
 
 textarea {
@@ -108,5 +108,15 @@ textarea {
 .flag_false {
     color: #990000;
 }
+
+
+
+.openlc_dashboard {
+    color: purple !important;
+}
+.openlc_slaves {
+    color: orange;
+}
+
 
 

@@ -7,18 +7,19 @@
 
 {% block content %}
 
-<p>Here you can upload a new program to OpenPLC or revert back to a previous uploaded program shown on the table.</p>
+<p>Create or upload new progarms with st.files</p>
 
 <table class="table table-bordered table-hover table-sm">
-    <thead class="thead-light">
+    <thead class="thead-dark">
         <tr style='background-color: white'>
-            <th>&nbsp;</th><th>Program Name</th><th>File</th><th>Date Uploaded</th><th>&nbsp;</th>
+            <th>&nbsp;</th><th>Program Name</th><th>File</th><th>Date Uploaded</th>
+            <th><a href="/program/0" class="btn btn-primary btn-sm">New</a></th>
         </tr>
     </thead>
     <tbody>
         {% for row in c.programs %}
           <tr ddonclick="document.location='reload-program?table_id={{row[0]}}'">
-                <td width="10"><a class="btn btn-primary btn-sm" href="/program/{{row.prog_id}}/compile">Run</a></td>
+                <td width="10"><a class="btn btn-warning btn-sm" href="/program/{{row.prog_id}}/compile">Run</a></td>
                 <td>{{row.name}}</td>
                 <td>{{row.file}}</td>
                 <td>{{row.date_upload}}</td>
@@ -27,7 +28,7 @@
         {% endfor %}
     </tbody>
 </table>
-<a href="/program/0" class="btn btn-primary">New Program</a>
+
 
 
 

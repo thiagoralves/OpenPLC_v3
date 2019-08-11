@@ -5,10 +5,11 @@
 
 {% block content %}
 
-<table class="table table-bordered table-hover">
-    <thead class="thead-light">
+<table class="table table-bordered table-hover table-sm">
+    <thead class="thead-dark">
         <tr style='background-color: white'>
-            <th>Login</th><th>Full Name</th><th>Email</th><th>&nbsp;</th>
+            <th>Login</th><th>Full Name</th><th>Email</th>
+            <th><a href="/user/0" class="btn btn-primary btn-sm">New</a></th>
         </tr>
     </thead>
     <tbody>
@@ -23,7 +24,7 @@
     </tbody>
 </table>
 
-<a href="/user/0" class="btn btn-primary">New user</a>
+
 
 {% endblock content %}
 

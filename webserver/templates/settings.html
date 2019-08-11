@@ -4,12 +4,14 @@
 {% set title = "Settings" %}
 
 
+
 {% block content %}
 
-{{c.defaultSettings}}
+
 
  <form id="settingsForm" action="/settings" method="POST">
 
+     {#--- modbus ----------------- #}
      <fieldset>
          <legend>Modbus Server</legend>
 
@@ -24,14 +26,14 @@
                 <input type='number' id='modbus_port' name='modbus_port' class="form-control"
                    value='{% if c.settings.modbus_port != "disabled"%}{{c.settings.modbus_port}}{%else%}502{%endif%}'
                    min="0" max="65535">
-                    <a href="">Default: {{c.defaultSettings.modbus_port}}</a>
              </div>
-
+              <div class="col-sm-4">
+                 <a href="">Default: {{c.defaultSettings.modbus_port}}</a>
+             </div>
          </div>
-
      </fieldset>
 
-
+{#--- modbus ----------------- #}
      <fieldset>
          <legend>DNP3 Server</legend>
 
@@ -48,12 +50,15 @@
                    value='{{c.settings.dnp3_port}}'
                    min="0" max="65535" >
              </div>
+              <div class="col-sm-4">
+                 <a href="">Default: {{c.defaultSettings.dnp3_port}}</a>
+             </div>
          </div>
 
      </fieldset>
 
      <fieldset>
-         <legend>Enable EtherNet/IP Server</legend>
+         <legend>EtherNet/IP Server</legend>
 
          <div class="form-check">
             <input class="form-check-input" type="checkbox" id="enip_enabled"
@@ -68,7 +73,7 @@
                    min="0" max="65535" >
              </div>
              <div class="col-sm-4">
-                 <a href="">Default: {{c.defaultSettings.dnp3_port}}</a>
+                 <a href="">Default: {{c.defaultSettings.enip_port}}</a>
              </div>
          </div>
      </fieldset>

@@ -11,23 +11,24 @@
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 
-
+    {# js libs #}
     <script src="/static/bootstrap/jquery-3.2.1.slim.min.js"></script>
     <script src="/static/bootstrap/bootstrap.min.js"></script>
 
+    {# css libs #}
     <link rel="stylesheet" href="/static/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="/static/font-awesome-4.7.0/css/font-awesome.min.css">
 
+    {# == OpenPLC custom ====================== #}
     <link rel="stylesheet" href="/static/css/openplc.2.css">
 
-
-
-
 </head>
+
+
 <body>
 
 
-{# --------------- Page Top + bar #}
+{# --------------- Page Top + bar --------------- #}
 <nav class="navbar navbar-expand-md navbar-dark bg-dark">
     <a class="navbar-brand" href="/"><img src='/static/openplc_logo.gif' height="40" alt='OpenPLC'></a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topbar" aria-controls="topbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,19 +58,21 @@
 </nav>
 
 
-{# ------------------------- main body #}
+{# ------------------------- main body --------------- #}
 <div class="sscontainer-fluid spacer">
 
     <div class="row no-gutters">
+
+
+        {# --- Main Navigation left col if auth  ------------------- #}
         <div class="col-md-3">
 
-            {# --- Main Navigation left panel  #}
             {% if current_user.is_authenticated %}
 
                 {# authenticated, so show menu/nav #}
                 <ul class="nav nav-pills flex-column" id="mainmav">
                     {% for n in nav -%}
-                    <li class="nav-item">
+                    <li class="nav-item {{ "openplc_" + n.page}}">{{ "openplc_" + n.page}}
                         <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"
                              ><i class="fa {{n.icon}}"></i>&nbsp;{{n.label}}</a>
                     </li>
@@ -77,13 +80,13 @@
                 </ul>
 
             {% else %}
-                {# Not auth so show logo etc #}
-                {#<img src="/static/openplc_logo.gif" width="100" style="background-color: red">
-                <h5>Probably the first fully open source Programable Logic Controller</h5> #}
-
+                <h5>Maybe in all probably the first fully open source Programable Logic Controller</h5> #}
             {% endif %}
 
         </div>
+
+        {# --- Content in right col  ------------------- #}
+
         <div class="col-md-9 content_wrapper">
             <h1><i class="fa {{c.icon}}"></i>&nbsp;{%if c.title %}{{c.title}}{%else%}{{title}}{%endif%}</h1>
             <div class="content">{% block content %}## content##{% endblock content %}</div>

@@ -425,7 +425,7 @@ def generate_mbconfig():
 
 
 #-----------------------------------------------------------------
-#=  Template Stuff
+#=  Template Html and Stuff
 #-----------------------------------------------------------------
 
 # site navigation; Note selected is passed a {{c.page}}
@@ -450,7 +450,7 @@ def nav_icon(page, default="fa-stop"):
 
 @app.context_processor
 def inject_template_vars():
-    # Put the runtime and navigation into template context
+    # automagically put the runtime and navigation into template context
     return dict(nav=Nav, runtime=openplc_runtime)
 
 class TemplateContext(object):
