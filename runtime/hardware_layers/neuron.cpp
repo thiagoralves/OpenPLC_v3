@@ -33,6 +33,10 @@
 #include "ladder.h"
 #include "custom_layer.h"
 
+/** @addtogroup neuron  Neuron
+  * \ingroup hardware_layers
+  *  @{ */
+
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
@@ -349,3 +353,5 @@ void updateBuffersOut()
         i++;
     }
 }
+
+/** @} */

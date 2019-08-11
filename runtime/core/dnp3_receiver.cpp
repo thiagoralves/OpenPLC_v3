@@ -21,25 +21,33 @@
 using namespace opendnp3;
 using namespace std;
 
-/// Maps the DNP3 index to the index in our glue variables, returning index or < 0
-/// if the value is not in the range of mapped glue variables.
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Maps the DNP3 index to the index in our glue variables, returning
+/// index or < 0 if the value is not in the range of mapped glue variables.
 /// @param start The start index of valid ranges.
 /// @param end One past the last valid index.
 /// @param offset The offset defined for this set of values.
 /// @param dnp3_index The index of the point for DNP3.
 /// @return Non-negative glue index if the dnp3 index is valid, otherwise negative.
+////////////////////////////////////////////////////////////////////////////////
 inline int16_t mapDnp3IndexToGlueIndex(uint16_t start, uint16_t stop, uint16_t offset, uint16_t dnp3_index) {
     int16_t glue_index = dnp3_index + offset;
     return glue_index >= start && glue_index < stop ? glue_index : -1;
 }
 
-/// Map the DNP3 index to a command status value. The status value is successful
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Map the DNP3 index to a command status value. The status value is successful
 /// if the index maps to something in the valid range, otherwise, maps to out of range.
 /// @param start The start index of valid ranges.
 /// @param end One past the last valid index.
 /// @param offset The offset defined for this set of values.
 /// @param dnp3_index The index of the point for DNP3.
 /// @return CommandStatus::SUCCESS if the DNP3 index is in range, otherwise, CommandStatus::OUT_OF_RANGE.
+////////////////////////////////////////////////////////////////////////////////
 inline CommandStatus mapDnp3IndexToStatus(uint16_t start, uint16_t stop, uint16_t offset, uint16_t dnp3_index) {
     return mapDnp3IndexToGlueIndex(start, stop, offset, dnp3_index) >= 0 ? CommandStatus::SUCCESS : CommandStatus::OUT_OF_RANGE;
 }
@@ -244,3 +252,5 @@ void Dnp3Receiver::End() {
 }
 
 #endif  // OPLC_DNP3_OUTSTATION
+
+/** @}*/

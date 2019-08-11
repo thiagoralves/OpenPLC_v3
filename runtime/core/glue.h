@@ -21,15 +21,23 @@
 
 #include "iec_types.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 1024
 #endif
 
-/// Defines the type of a glue variable (so that we can read and
-/// write). This definition must be consistent with what is produced
-/// by the glue generator.
+
 #ifndef OPLC_IEC_GLUE_VALUE_TYPE
 #define OPLC_IEC_GLUE_VALUE_TYPE
+
+/// @brief Defines the type of a glue variable (so that we can read and
+/// write). This definition must be consistent with what is produced
+/// by the /// Defines the type of a glue variable (so that we can read and
+/// write). This definition must be consistent with what is produced
+/// by the @ref glue_generator.
 enum IecGlueValueType {
     IECVT_BOOL,
     IECVT_BYTE,
@@ -52,8 +60,12 @@ enum IecGlueValueType {
 
 #ifndef OPLC_GLUE_VARIABLE
 #define OPLC_GLUE_VARIABLE
-/// Defines the mapping for a glued variable. This definition must be consistent
-/// with what is produced by the glue generator.
+
+//////////////////////////////////////////////////////////////////////////////////
+/// @brief Defines the mapping for a glued variable.
+///
+/// This definition must be consistent with what is produced by the @ref glue_generator.
+//////////////////////////////////////////////////////////////////////////////////
 struct GlueVariable {
     /// The type of the glue variable.
     IecGlueValueType type;
@@ -62,9 +74,11 @@ struct GlueVariable {
 };
 #endif // OPLC_GLUE_VARIABLE
 
-/// Defines a collection of buffers by which we exchange data
-/// between the runtime and peripherals/middleware. Except for
-/// the boolean buffers, each is an array of the same length
+//////////////////////////////////////////////////////////////////////////////////
+/// @brief Defines a collection of buffers by which we exchange data
+/// between the runtime and peripherals/middleware.
+///
+/// Except for the boolean buffers, each is an array of the same length
 /// where each value points to a memory location for data
 /// exchange. That is, the values of the arrays only indirectly
 /// indicate the held value.
@@ -82,6 +96,7 @@ struct GlueVariable {
 /// implementation of the communcation driver.
 ///
 /// A value that is not mapped is marked with NULL and must not be used.
+//////////////////////////////////////////////////////////////////////////////////
 struct GlueVariables {
 
 	GlueVariables(
@@ -113,7 +128,7 @@ struct GlueVariables {
 		outputs(copy.outputs)
 	{}
 
-    ///  Mutex for this structure
+    /// @brief Mutex for this structure
     std::mutex* buffer_lock;
 
     // Booleans - these are mapped separately because they have an additional
@@ -127,7 +142,7 @@ struct GlueVariables {
 	/// must have a length of 8.
     IEC_BOOL** bool_outputs;
 
-	/// Gets the boolean input at the specified primary and secondary index.
+	/// @brief Gets the boolean input at the specified primary and secondary index.
 	/// @param prim The primary (first) index in the 2-D array
 	/// @param sec The secondary index in the 2-D array.
 	/// @return A pointer to the boolean value.
@@ -136,7 +151,7 @@ struct GlueVariables {
 		return this->bool_inputs[idx];
 	}
 
-	/// Gets the boolean output at the specified primary and secondary index.
+	/// @brief Gets the boolean output at the specified primary and secondary index.
 	/// @param prim The primary (first) index in the 2-D array
 	/// @param sec The secondary index in the 2-D array.
 	/// @return A pointer to the boolean value.
@@ -145,21 +160,23 @@ struct GlueVariables {
 		return this->bool_outputs[idx];
 	}
 
-    /// The size of the inputs array.  You can index up to inputs_size - 1
+    /// @brief The size of the inputs array.  You can index up to inputs_size - 1
     /// in the array.
     const std::uint16_t inputs_size;
 
-    /// The input glue variables array. The number of items in the array is
+    /// @brief The input glue variables array. The number of items in the array is
     /// given by inputs_size.
     GlueVariable* const inputs;
 
-    /// The size of the outputs array. You can index up to outputs_size - 1
+    /// @brief The size of the outputs array. You can index up to outputs_size - 1
     /// in the array.
     const std::uint16_t outputs_size;
 
-    /// The output glue variables array. The number of items in the array is
+    /// @brief The output glue variables array. The number of items in the array is
     /// given by outputs_size.
     GlueVariable* const outputs;
 };
 
 #endif // CORE_GLUE_H
+
+/** @}*/

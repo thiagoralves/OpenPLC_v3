@@ -21,19 +21,25 @@
 #include "dnp3.h"
 #include "iec_types.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 struct GlueVariables;
 struct GlueRange;
 namespace asiodnp3 {
 class IOutstation;
 }
 
-/// The publisher defines the interface between the glue arrays
+////////////////////////////////////////////////////////////////////////////////
+/// \brief The publisher defines the interface between the glue arrays
 /// of variables that are read from PLC application and written to
 /// the DNP3 channel. This published all of the available glue
 /// information over DNP3, incuding inputs, outputs, memory.
+////////////////////////////////////////////////////////////////////////////////
 class Dnp3Publisher {
  public:
-    /// Constructs a new instance of the publihser object.
+    /// \brief Constructs a new instance of the publihser object.
     /// @param outstation The outstation that is ourselves
     /// @param glue_variables The buffers that we use for data transfer
     Dnp3Publisher(
@@ -41,7 +47,8 @@ class Dnp3Publisher {
         std::shared_ptr<GlueVariables> glue_variables,
         Dnp3Range range);
 
-    /// Publish the values from the in-memory buffers to DNP3 points.
+    /// \brief Publish the values from the in-memory buffers to DNP3 points.
+    ///
     /// Writing to the points executes asynchronously. This function returns
     /// once the points have been queued to write but in general will return
     /// before the write has actually happened.
@@ -60,3 +67,5 @@ class Dnp3Publisher {
 };
 
 #endif  // CORE_DNP3_PUBLISHER_H_
+
+/** @}*/

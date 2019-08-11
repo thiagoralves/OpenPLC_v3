@@ -18,6 +18,9 @@
  *
  */
 
+/** @addtogroup openplc_runtime_libs
+  *  @{ */
+
 #ifndef IEC_TYPES_ALL_H
 #define IEC_TYPES_ALL_H
 
@@ -181,3 +184,5 @@ static inline USINT __get_type_enum_size(__IEC_types_enum t){
 }
 
 #endif /*IEC_TYPES_ALL_H*/
+
+/** @}*/

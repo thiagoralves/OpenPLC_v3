@@ -49,6 +49,11 @@
 #include "dnp3_publisher.h"
 #include "dnp3_receiver.h"
 
+
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define OPLC_CYCLE              50000000
 
 // Initial offset parameters (yurgen1975)
@@ -62,7 +67,7 @@ using namespace openpal;
 using namespace asiopal;
 using namespace asiodnp3;
 
-/// Trim from both ends (in place), removing only whitespace.
+/// @brief Trim from both ends (in place), removing only whitespace.
 /// @param s The string to trim
 static inline void trim(std::string& s) {
     // Trim from the left
@@ -74,7 +79,7 @@ static inline void trim(std::string& s) {
         std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
 }
 
-/// Create the outstation stack configuration using the configration settings
+/// @brief Create the outstation stack configuration using the configration settings
 /// as specified in the stream.
 /// @param cfg_stream The stream to read for configuration settings
 /// @return The configuration represented by the stream and any defaults and
@@ -170,8 +175,10 @@ std::pair<asiodnp3::OutstationStackConfig, Dnp3Range> create_config(std::istream
     return std::make_pair(config, range);
 }
 
-/// Start the DNP3 server running on the specified port and configured using
-/// the specified stream.
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Start the DNP3 server running on the specified port and configured
+/// using the specified stream.
+///
 /// The stream is specified as a function so that this function will close the
 /// stream as soon as it is done with the stream.
 /// @param port The port to listen on
@@ -242,9 +249,11 @@ void dnp3StartServer(int port, std::unique_ptr<std::istream, std::function<void(
     spdlog::info("DNP3 Server deactivated");
 }
 
-/// Function to begin DNP3 server functions. This is the normal way that the
-/// DNP3 server is started.
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Function to begin DNP3 server functions. This is the normal way that
+/// the DNP3 server is started.
 /// @param port The port to run against.
+////////////////////////////////////////////////////////////////////////////////
 void dnp3StartServer(int port) {
     std::unique_ptr<std::istream, std::function<void(std::istream*)>> cfg_stream(new std::ifstream("dnp3.cfg"), [](std::istream* s)
         {
@@ -255,3 +264,5 @@ void dnp3StartServer(int port) {
 }
 
 #endif  // OPLC_DNP3_OUTSTATION
+
+/** @}*/

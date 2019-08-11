@@ -26,6 +26,10 @@
 
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define MAX_DISCRETE_INPUT              8192
 #define MAX_COILS                       8192
 #define MAX_HOLD_REGS                   8192
@@ -74,9 +78,9 @@ int MessageLength;
 
 
 
-//-----------------------------------------------------------------------------
-// Concatenate two bytes into an int
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Concatenate two bytes into an int
+////////////////////////////////////////////////////////////////////////////////
 int word(unsigned char byte1, unsigned char byte2)
 {
 	int returnValue;
@@ -85,10 +89,10 @@ int word(unsigned char byte1, unsigned char byte2)
 	return returnValue;
 }
 
-//-----------------------------------------------------------------------------
-// This function sets the internal NULL OpenPLC buffers to point to valid
-// positions on the Modbus buffer
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief This function sets the internal NULL OpenPLC buffers to point to
+/// valid positions on the Modbus buffer
+////////////////////////////////////////////////////////////////////////////////
 void mapUnusedIO()
 {
 	std::lock_guard<std::mutex> guard(bufferLock);
@@ -128,9 +132,12 @@ void mapUnusedIO()
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Response to a Modbus Error
-//-----------------------------------------------------------------------------
+
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Response to a Modbus Error
+/// \param *buffer
+/// \param mb_error
+////////////////////////////////////////////////////////////////////////////////
 void ModbusError(unsigned char *buffer, int mb_error)
 {
 	buffer[4] = 0;
@@ -140,9 +147,11 @@ void ModbusError(unsigned char *buffer, int mb_error)
 	MessageLength = 9;
 }
 
-//-----------------------------------------------------------------------------
-// Implementation of Modbus/TCP Read Coils
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Implementation of Modbus/TCP Read Coils
+/// \param *buffer
+/// \param bufferSize
+////////////////////////////////////////////////////////////////////////////////
 void ReadCoils(unsigned char *buffer, int bufferSize)
 {
 	int Start, ByteDataLength, CoilDataLength;
@@ -206,9 +215,11 @@ void ReadCoils(unsigned char *buffer, int bufferSize)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Implementation of Modbus/TCP Read Discrete Inputs
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Implementation of Modbus/TCP Read Discrete Inputs
+/// \param *buffer
+/// \param bufferSize
+////////////////////////////////////////////////////////////////////////////////
 void ReadDiscreteInputs(unsigned char *buffer, int bufferSize)
 {
 	int Start, ByteDataLength, InputDataLength;
@@ -272,9 +283,11 @@ void ReadDiscreteInputs(unsigned char *buffer, int bufferSize)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Implementation of Modbus/TCP Read Holding Registers
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Implementation of Modbus/TCP Read Holding Registers
+/// \param *buffer
+/// \param bufferSize
+////////////////////////////////////////////////////////////////////////////////
 void ReadHoldingRegisters(unsigned char *buffer, int bufferSize)
 {
 	int Start, WordDataLength, ByteDataLength;
@@ -412,9 +425,11 @@ void ReadHoldingRegisters(unsigned char *buffer, int bufferSize)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Implementation of Modbus/TCP Read Input Registers
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Implementation of Modbus/TCP Read Input Registers
+/// \param *buffer
+/// \param bufferSize
+////////////////////////////////////////////////////////////////////////////////
 void ReadInputRegisters(unsigned char *buffer, int bufferSize)
 {
 	int Start, WordDataLength, ByteDataLength;
@@ -476,9 +491,11 @@ void ReadInputRegisters(unsigned char *buffer, int bufferSize)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Implementation of Modbus/TCP Write Coil
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Implementation of Modbus/TCP Write Coil
+/// \param *buffer
+/// \param bufferSize
+////////////////////////////////////////////////////////////////////////////////
 void WriteCoil(unsigned char *buffer, int bufferSize)
 {
 	int Start;
@@ -529,9 +546,11 @@ void WriteCoil(unsigned char *buffer, int bufferSize)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Implementation of Modbus/TCP Write Holding Register
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Implementation of Modbus/TCP Write Holding Register
+/// \param *buffer
+/// \param bufferSize
+////////////////////////////////////////////////////////////////////////////////
 void WriteRegister(unsigned char *buffer, int bufferSize)
 {
 	int Start;
@@ -637,9 +656,11 @@ void WriteRegister(unsigned char *buffer, int bufferSize)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Implementation of Modbus/TCP Write Multiple Coils
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Implementation of Modbus/TCP Write Multiple Coils
+/// \param *buffer
+/// \param bufferSize
+////////////////////////////////////////////////////////////////////////////////
 void WriteMultipleCoils(unsigned char *buffer, int bufferSize)
 {
 	int Start, ByteDataLength, CoilDataLength;
@@ -695,9 +716,11 @@ void WriteMultipleCoils(unsigned char *buffer, int bufferSize)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Implementation of Modbus/TCP Write Multiple Registers
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Implementation of Modbus/TCP Write Multiple Registers
+/// \param *buffer
+/// \param bufferSize
+////////////////////////////////////////////////////////////////////////////////
 void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 {
 	int Start, WordDataLength, ByteDataLength;
@@ -812,11 +835,13 @@ void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// This function must parse and process the client request and write back the
-// response for it. The return value is the size of the response message in
-// bytes.
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief This function must parse and process the client request and write
+/// back theresponse for it.
+/// \param *buffer
+/// \param bufferSize
+/// \return size of the response message in bytes
+////////////////////////////////////////////////////////////////////////////////
 int processModbusMessage(unsigned char *buffer, int bufferSize)
 {
 	MessageLength = 0;
@@ -883,3 +908,5 @@ int processModbusMessage(unsigned char *buffer, int bufferSize)
 
 	return MessageLength;
 }
+
+/** @}*/

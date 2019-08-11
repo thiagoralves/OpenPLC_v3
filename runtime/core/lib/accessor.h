@@ -1,3 +1,8 @@
+
+
+/** @addtogroup openplc_runtime_libs
+  *  @{ */
+
 #ifndef __ACCESSOR_H
 #define __ACCESSOR_H
 
@@ -134,3 +139,5 @@
 	if (!(prefix name.flags & __IEC_FORCE_FLAG)) *(prefix name.value) suffix = new_value
 
 #endif //__ACCESSOR_H
+
+/** @}*/

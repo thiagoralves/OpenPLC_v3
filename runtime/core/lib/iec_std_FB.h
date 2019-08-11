@@ -1,5 +1,6 @@
 
-
+/** @addtogroup openplc_runtime_libs
+  *  @{ */
 /****
  * IEC 61131-3 standard function block library
  */
@@ -1892,3 +1893,5 @@ __end:
 
 
 #endif //_IEC_STD_FB_H
+
+/** @}*/

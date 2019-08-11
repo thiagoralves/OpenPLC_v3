@@ -30,12 +30,16 @@
 
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define NET_BUFFER_SIZE 10000
 
 
-//-----------------------------------------------------------------------------
-// Verify if all errors were cleared on a socket
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Verify if all errors were cleared on a socket
+////////////////////////////////////////////////////////////////////////////////
 int getSO_ERROR(int fd) 
 {
    int err = 1;
@@ -47,9 +51,9 @@ int getSO_ERROR(int fd)
    return err;
 }
 
-//-----------------------------------------------------------------------------
-// Properly close a socket
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Properly close a socket
+////////////////////////////////////////////////////////////////////////////////
 void closeSocket(int fd) 
 {
    if (fd >= 0) 
@@ -63,9 +67,9 @@ void closeSocket(int fd)
    }
 }
 
-//-----------------------------------------------------------------------------
-// Set or Reset the O_NONBLOCK flag from sockets
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Set or Reset the O_NONBLOCK flag from sockets
+////////////////////////////////////////////////////////////////////////////////
 bool SetSocketBlockingEnabled(int fd, bool blocking)
 {
    if (fd < 0) return false;
@@ -75,10 +79,11 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
    return (fcntl(fd, F_SETFL, flags) == 0) ? true : false;
 }
 
-//-----------------------------------------------------------------------------
-// Create the socket and bind it. Returns the file descriptor for the socket
-// created.
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Create the socket and bind it.
+/// @param port
+/// @return the file descriptor for the socket created
+////////////////////////////////////////////////////////////////////////////////
 int createSocket(uint16_t port)
 {
     int socket_fd;
@@ -121,10 +126,12 @@ int createSocket(uint16_t port)
     return socket_fd;
 }
 
-//-----------------------------------------------------------------------------
-// Blocking call. Wait here for the client to connect. Returns the file
-// descriptor to communicate with the client.
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Blocking call. Wait here for the client to connect.
+/// @param socket_fd
+/// @param protocol_type
+/// @return  file descriptor to communicate with the client
+////////////////////////////////////////////////////////////////////////////////
 int waitForClient(int socket_fd, int protocol_type)
 {
     int client_fd;
@@ -154,11 +161,13 @@ int waitForClient(int socket_fd, int protocol_type)
     return client_fd;
 }
 
-//-----------------------------------------------------------------------------
-// Blocking call. Holds here until something is received from the client.
-// Once the message is received, it is stored on the buffer and the function
-// returns the number of bytes received.
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Blocking call. Holds here until something is received from the client.
+/// Once the message is received, it is stored on the buffer and the function
+/// @param client_fd
+/// @param buffer
+/// @return  the number of bytes received.
+////////////////////////////////////////////////////////////////////////////////
 int listenToClient(int client_fd, unsigned char *buffer)
 {
     bzero(buffer, NET_BUFFER_SIZE);
@@ -166,9 +175,13 @@ int listenToClient(int client_fd, unsigned char *buffer)
     return n;
 }
 
-//-----------------------------------------------------------------------------
-// Process client's request
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Process client's request
+/// @param *buffer
+/// @param bufferSize
+/// @param client_fd
+/// @param protocol_type
+////////////////////////////////////////////////////////////////////////////////
 void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int protocol_type)
 {
     if (protocol_type == MODBUS_PROTOCOL)
@@ -183,9 +196,9 @@ void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int pr
     }
 }
 
-//-----------------------------------------------------------------------------
-// Thread to handle requests for each connected client
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Thread to handle requests for each connected client
+////////////////////////////////////////////////////////////////////////////////
 void *handleConnections(void *arguments)
 {
     int *args = (int *)arguments;
@@ -231,11 +244,16 @@ void *handleConnections(void *arguments)
     pthread_exit(NULL);
 }
 
-//-----------------------------------------------------------------------------
-// Function to start the server. It receives the port number as argument and
-// creates an infinite loop to listen and parse the messages sent by the
-// clients
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Function to start the server.
+///
+/// It receives the port number as argument and
+/// creates an infinite loop to listen and parse the messages sent by the
+/// clients
+/// @param port
+/// @param protocol_type
+/// @see stopServer()
+////////////////////////////////////////////////////////////////////////////////
 void startServer(uint16_t port, int protocol_type)
 {
     int socket_fd, client_fd;
@@ -277,3 +295,5 @@ void startServer(uint16_t port, int protocol_type)
     close(client_fd);
 	spdlog::info("Terminating server thread");
 }
+
+/** @}*/

@@ -1,3 +1,7 @@
+
+/** @addtogroup openplc_runtime_libs
+  *  @{ */
+
 #ifndef IEC_TYPES_H
 #define IEC_TYPES_H
 
@@ -81,3 +85,5 @@ typedef struct {
 } /* __attribute__((packed)) */ IEC_STRING;  /* packed is gcc specific! */
 
 #endif /*IEC_TYPES_H*/
+
+/** @}*/

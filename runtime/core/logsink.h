@@ -22,27 +22,35 @@
 #include <mutex>
 #include <string>
 
-/// Implementes a fixed-size in-memory buffer for log messages. This
-/// buffer automatically resets itself when it fills up. This sink allows
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Implements a fixed-size in-memory buffer for log messages.
+///
+/// This buffer automatically resets itself when it fills up. This sink allows
 /// use to query logs in memory so that they can be provided to a front
 /// end in an efficient (but not necessarily complete) manner.
+////////////////////////////////////////////////////////////////////////////////
 class buffered_sink : public spdlog::sinks::base_sink <std::mutex>
 {
 public:
-	/// Initialize a new instance of the sink with the provided buffer.
+	/// \brief Initialize a new instance of the sink with the provided buffer.
+	///
 	/// We require supplying the buffer as an argument so that in normal use
 	/// this can be statically allocated, but for the purpose of testing
 	/// the size is easy to configure.
-	/// @param buffer The buffer to write this. this sink maintains a mutex
+	/// \param buffer The buffer to write this. this sink maintains a mutex
 	///               will only read/write the buffer when the lock is acquired.
-	/// @param buffer_size The number of characters in the buffer.
+	/// \param buffer_size The number of characters in the buffer.
 	buffered_sink(unsigned char* buffer, std::uint32_t buffer_size) :
 		buffer(buffer),
 		buffer_size(buffer_size)
 	{}
 
-    /// Gets the data from this sink.
-	/// @return The data formatted as a string.
+    /// \brief Gets the data from this sink.
+	/// \return The data formatted as a string.
     std::string data() {
         return std::string(reinterpret_cast<char*>(this->buffer));
     }
@@ -87,3 +95,5 @@ private:
 };
 
 #endif // CORE_LOGSINK_H
+
+/** @}*/

@@ -41,6 +41,10 @@
 #include "ladder.h"
 #include "custom_layer.h"
 
+/** @addtogroup pixtend2l Pixtend2l
+  * \ingroup hardware_layers
+  *  @{ */
+
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
@@ -816,3 +820,5 @@ void updateBuffersOut()
     // PWM2 - PWM2Ctrl0 - 5
     if (byte_output[inum] != NULL) OutputData.byPWM2Ctrl0 = *byte_output[inum];
 }
+
+/** @} */

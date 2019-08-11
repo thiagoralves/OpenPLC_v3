@@ -20,10 +20,17 @@
 #include <sstream>
 #include <string>
 
-/// Defines an offest mapping for DNP3 to glue variables.
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Defines an offest mapping for DNP3 to glue variables.
+///
 /// This structure allows you to specify valid ranges for
 /// the glue mapping. This could allow you to divide up
 /// the glue into multiple outstations.
+////////////////////////////////////////////////////////////////////////////////
 struct Dnp3Range {
     std::uint16_t inputs_start;
     std::uint16_t inputs_end;

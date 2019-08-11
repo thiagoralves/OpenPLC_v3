@@ -15,6 +15,9 @@
  * used in safety-critical situations without a full and competent review.
  */
 
+/** @addtogroup openplc_runtime_libs
+  *  @{ */
+
 /****
  * IEC 61131-3 standard function library
  */
@@ -1575,3 +1578,5 @@ static inline DT CONCAT_DATE_TOD(EN_ENO_PARAMS, DATE IN1, TOD IN2){
 
 
 #endif /* _IEC_STD_FUNCTIONS_H */
+
+/** @}*/

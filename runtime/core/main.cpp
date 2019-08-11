@@ -32,6 +32,10 @@
 #include "iec_types.h"
 #include "ladder.h"
 
+/** \addtogroup openplc_runtime
+ *  @{
+ */
+
 #define OPLC_CYCLE          50000000
 
 extern int opterr;
@@ -44,10 +48,12 @@ static int tick = 0;
 std::mutex bufferLock; //mutex for the internal buffers
 uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
 
-//-----------------------------------------------------------------------------
-// Helper function - Makes the running thread sleep for the ammount of time
-// in milliseconds
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Helper function - Makes the running thread sleep for the amount of
+/// time in milliseconds
+/// \param ts
+/// \param delay in milliseconds
+////////////////////////////////////////////////////////////////////////////////
 void sleep_until(struct timespec *ts, int delay)
 {
     ts->tv_nsec += delay;
@@ -59,10 +65,11 @@ void sleep_until(struct timespec *ts, int delay)
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ts,  NULL);
 }
 
-//-----------------------------------------------------------------------------
-// Helper function - Makes the running thread sleep for the ammount of time
-// in milliseconds
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief  Helper function - Makes the running thread sleep for the ammount of
+/// time in milliseconds
+/// \param milliseconds to sleep
+////////////////////////////////////////////////////////////////////////////////
 void sleepms(int milliseconds)
 {
 	struct timespec ts;
@@ -71,19 +78,23 @@ void sleepms(int milliseconds)
 	nanosleep(&ts, NULL);
 }
 
-//-----------------------------------------------------------------------------
-// Interactive Server Thread. Creates the server to listen to commands on
-// localhost
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief  Interactive Server Thread. Creates the server to listen to commands
+/// on localhost
+////////////////////////////////////////////////////////////////////////////////
 void *interactiveServerThread(void *arg)
 {
     startInteractiveServer(43628);
     return nullptr;
 }
 
-//-----------------------------------------------------------------------------
-// Verify if pin is present in one of the ignored vectors
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Verify if pin is present in one of the ignored vectors
+/// \param
+/// \param
+/// \param
+/// \return
+////////////////////////////////////////////////////////////////////////////////
 bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
 {
     for (int i = 0; i < vector_size; i++)
@@ -95,9 +106,9 @@ bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
     return true;
 }
 
-//-----------------------------------------------------------------------------
-// Disable all outputs
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Disables all outputs
+////////////////////////////////////////////////////////////////////////////////
 void disableOutputs()
 {
     //Disable digital outputs
@@ -122,9 +133,9 @@ void disableOutputs()
     }
 }
 
-//-----------------------------------------------------------------------------
-// Special Functions
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Special Functions
+////////////////////////////////////////////////////////////////////////////////
 void handleSpecialFunctions()
 {
     //current time [%ML1024]
@@ -251,3 +262,5 @@ int main(int argc,char **argv)
 	finalizeHardware();
     exit(0);
 }
+
+/** @}*/

@@ -32,6 +32,10 @@
 #include "ladder.h"
 #include "custom_layer.h"
 
+/** @addtogroup unipi  Uni Pi
+  * \ingroup hardware_layers
+  *  @{ */
+
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
@@ -240,3 +244,5 @@ void updateBuffersOut()
 	    if(int_output[0] != NULL) pwmWrite(ANALOG_OUT_PIN, (*int_output[0] / 64));
 
 }
+
+/** @} */
