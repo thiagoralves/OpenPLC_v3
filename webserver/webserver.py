@@ -36,134 +36,133 @@ from flask_login import current_user, login_required
 from flask_socketio import SocketIO
 
 from . import HERE_DIR, ROOT_DIR, ETC_DIR, SCRIPTS_DIR, CURR_PROGRAM_FILE, CURR_DRIVER_FILE
+from . import model
 from . import openplc
 from . import pages
 from . import monitoring
 from . import ut
 
-#WORK_DIR = None
-
 #-----------------------------------------------------------------------
 # Database stuff
 #-----------------------------------------------------------------------
-DB_FILE = "openplc.db"
-
-def db_connect():
-    global DB_FILE
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        return conn
-    except Error as e:
-        print("db_connection():", e)
-    return None
-
-def db_query(sql, args=(), single=False, as_list=False):
-    """ Opens db, execute query, close then return results.
-    Querying is one function atmo, as issues with multithread app.
-
-    :param sql: str with sql and :params placeholders
-    :param args: dict with arg values
-    :param single: return only one row
-    :param as_list: True returns a row in a list, otherwise a dict
-    :return: rows/row, err
-    """
-    conn = db_connect()
-    if not conn:
-        return None, "Cannot connect db"
-    try:
-        cur = conn.cursor()
-        cur.execute(sql, args)
-
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
-
-        ## This is a workaround until schema changes maybe, converts to dict
-        col_names = [c[0].lower() for c in cur.description]
-        row_dict = []
-        for ridx, row in enumerate(rows):
-            d = {}
-            for cidx, cn in enumerate(col_names):
-                d[cn] = row[cidx]
-            row_dict.append(d)
-
-        if not single:
-            return rows if as_list else row_dict, None
-
-        if len(rows) == 0:
-            return None, "No Rows"
-
-        if len(rows) > 1:
-            return None, "More than one row"
-
-        return rows[0] if as_list else row_dict[0], None
-
-    except Error as e:
-        print("error connecting to the database: " + str(e))
-        return None, str(e)
-
-
-def db_insert(table, flds):
-    sql = "insert into %s (" % table
-    keys = sorted(flds.keys())
-    sql += ",".join(keys)
-    sql += ") values ("
-    sql += ",".join(["?" for i in range(0, len(keys))])
-    sql += ");"
-
-    conn = db_connect()
-    if not conn:
-        return None, "Cannot connect db"
-
-    try:
-        cur = conn.cursor()
-        cur.execute(sql, [flds[k] for k in keys])
-        conn.commit()
-
-        ## get inserted id
-        sql = "select last_insert_rowid()"
-        cur.execute(sql)
-        row = cur.fetchone()
-        return row[0], None
-
-    except Error as e:
-        return None, str(e)
-
-
-def db_update(table, flds, p_name, p_id):
-    sql = "update %s set " % table
-    keys = sorted(flds.keys())
-    sql += ",".join(["%s=?" % k for k in keys])
-    sql += " where %s = ?;" % p_name
-    vals = [flds[k] for k in keys]
-    vals.append(p_id)
-
-    conn = db_connect()
-    if not conn:
-        return "Cannot connect db"
-    try:
-        cur = conn.cursor()
-        cur.execute(sql, vals)
-        conn.commit()
-        return None
-
-    except Error as e:
-        print("error connecting to the database" + str(e))
-        return str(e)
-
-def db_execute(sql, vars):
-    conn = db_connect()
-    if not conn:
-        return None, "Cannot connect db"
-    try:
-        print("db_execute", sql, vars)
-        cur = conn.cursor()
-        cur.execute(sql,vars)
-        conn.commit()
-        return None
-
-    except Error as e:
-        return str(e)
+# DB_FILE = "openplc.db"
+#
+# def db_connect():
+#     global DB_FILE
+#     try:
+#         conn = sqlite3.connect(DB_FILE)
+#         return conn
+#     except Error as e:
+#         print("db_connection():", e)
+#     return None
+#
+# def db_query(sql, args=(), single=False, as_list=False):
+#     """ Opens db, execute query, close then return results.
+#     Querying is one function atmo, as issues with multithread app.
+#
+#     :param sql: str with sql and :params placeholders
+#     :param args: dict with arg values
+#     :param single: return only one row
+#     :param as_list: True returns a row in a list, otherwise a dict
+#     :return: rows/row, err
+#     """
+#     conn = db_connect()
+#     if not conn:
+#         return None, "Cannot connect db"
+#     try:
+#         cur = conn.cursor()
+#         cur.execute(sql, args)
+#
+#         rows = cur.fetchall()
+#         cur.close()
+#         conn.close()
+#
+#         ## This is a workaround until schema changes maybe, converts to dict
+#         col_names = [c[0].lower() for c in cur.description]
+#         row_dict = []
+#         for ridx, row in enumerate(rows):
+#             d = {}
+#             for cidx, cn in enumerate(col_names):
+#                 d[cn] = row[cidx]
+#             row_dict.append(d)
+#
+#         if not single:
+#             return rows if as_list else row_dict, None
+#
+#         if len(rows) == 0:
+#             return None, "No Rows"
+#
+#         if len(rows) > 1:
+#             return None, "More than one row"
+#
+#         return rows[0] if as_list else row_dict[0], None
+#
+#     except Error as e:
+#         print("error connecting to the database: " + str(e))
+#         return None, str(e)
+#
+#
+# def db_insert(table, flds):
+#     sql = "insert into %s (" % table
+#     keys = sorted(flds.keys())
+#     sql += ",".join(keys)
+#     sql += ") values ("
+#     sql += ",".join(["?" for i in range(0, len(keys))])
+#     sql += ");"
+#
+#     conn = db_connect()
+#     if not conn:
+#         return None, "Cannot connect db"
+#
+#     try:
+#         cur = conn.cursor()
+#         cur.execute(sql, [flds[k] for k in keys])
+#         conn.commit()
+#
+#         ## get inserted id
+#         sql = "select last_insert_rowid()"
+#         cur.execute(sql)
+#         row = cur.fetchone()
+#         return row[0], None
+#
+#     except Error as e:
+#         return None, str(e)
+#
+#
+# def db_update(table, flds, p_name, p_id):
+#     sql = "update %s set " % table
+#     keys = sorted(flds.keys())
+#     sql += ",".join(["%s=?" % k for k in keys])
+#     sql += " where %s = ?;" % p_name
+#     vals = [flds[k] for k in keys]
+#     vals.append(p_id)
+#
+#     conn = db_connect()
+#     if not conn:
+#         return "Cannot connect db"
+#     try:
+#         cur = conn.cursor()
+#         cur.execute(sql, vals)
+#         conn.commit()
+#         return None
+#
+#     except Error as e:
+#         print("error connecting to the database" + str(e))
+#         return str(e)
+#
+# def db_execute(sql, vars):
+#     conn = db_connect()
+#     if not conn:
+#         return None, "Cannot connect db"
+#     try:
+#         print("db_execute", sql, vars)
+#         cur = conn.cursor()
+#         cur.execute(sql,vars)
+#         conn.commit()
+#         return None
+#
+#     except Error as e:
+#         return str(e)
 
 
 #-----------------------------------------------------------------------
@@ -211,16 +210,15 @@ class User:
 
 @login_manager.user_loader
 def user_loader(user_id):
-    """Get user details for flask admin"""
-    sql = "SELECT user_id, username, name, pict_file FROM Users "
-    sql += ' where user_id=? '
-    row, err = db_query(sql, [user_id], single=True)
+    """Get user details for logged in user"""
+    print("user_id=", user_id)
+    row, err = model.get_user(user_id=user_id)
     if err:
         print(err)
         return None
 
     user = User()
-    user.user_id = "%s" % row["user_id"]
+    user.user_id = row["user_id"]
     user.username = row["username"]
     user.name = row["name"]
     user.pict_file = str(row["pict_file"])
@@ -255,35 +253,16 @@ defaultSettings = dict(
     Slave_timeout=1000
 )
 
-def check_settings():
+def sscheck_settings():
     """Make sure default settings are in db, run at startup"""
-    curr_setts = get_settings()
+    curr_setts = model.get_settings()
     for key, value in defaultSettings.items():
         if not key.lower() in curr_setts:
             sql = "INSERT into Settings(key, value)values(?,?)"
             err = db_execute(sql, (key, value,))
             print(err)
 
-def get_settings():
-    """Returs dict of settings"""
-    rows, err = db_query("SELECT * FROM Settings")
-    dic = {}
-    for r in rows:
-        dic[r['key'].lower()] = r['value']
-    return dic
 
-def get_setting(key):
-    """Return setting for key, or default"""
-    return get_settings().get(key, defaultSettings.get(key))
-
-def set_setting(key, value):
-    """Sets the Key (currently maybe case sensitive)"""
-    if get_setting(key) == None:
-        sql = "INSERT into Settings(key, value)values(?,?)"
-        return db_execute(sql, (key, value,))
-
-    sql = "UPDATE Settings SET Value = ? WHERE Key = '%s' " % key
-    return db_execute(sql, (value,))
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -317,33 +296,33 @@ def configure_runtime():
     global openplc_runtime
     print("COFNIG_RUNTIME")
 
-    sett = get_settings()
+    sett = model.settings
 
 
-    if sett["modbus_port"] != "disabled":
-        print("Enabling Modbus on port " + sett["modbus_port"])
-        openplc_runtime.start_modbus(int(sett["modbus_port"]))
+    if sett["modbus_enabled"]:
+        print("Enabling Modbus on port %s " % sett["modbus_port"])
+        openplc_runtime.start_modbus( sett["modbus_port"] )
     else:
         print("Disabling Modbus")
         openplc_runtime.stop_modbus()
 
-    if sett["dnp3_port"] != "disabled":
-        print("Enabling DNP3 on port " + sett["dnp3_port"])
-        openplc_runtime.start_dnp3(int(sett["dnp3_port"]))
+    if sett["dnp3_enabled"]:
+        print("Enabling DNP3 on port %s " %  sett["dnp3_port"])
+        openplc_runtime.start_dnp3( sett["dnp3_port"] )
     else:
         print("Disabling DNP3")
         openplc_runtime.stop_dnp3()
 
-    if sett["enip_port"] != "disabled":
-        print("Enabling EtherNet/IP on port " + sett["enip_port"])
-        openplc_runtime.start_enip(int(sett["enip_port"]))
+    if sett["enip_enabled"]:
+        print("Enabling EtherNet/IP on port %s " %  sett["enip_port"])
+        openplc_runtime.start_enip( sett["enip_port"] )
     else:
         print("Disabling EtherNet/IP")
         openplc_runtime.stop_enip()
 
-    if sett["pstorage_polling"] != "disabled":
-        print("Enabling Persistent Storage with polling rate of " + sett["pstorage_polling"] + " seconds")
-        openplc_runtime.start_pstorage(int(sett["pstorage_polling"]))
+    if sett["pstorage_enabled"]:
+        print("Enabling Persistent Storage with polling rate of %s seconds" %  sett["pstorage_polling"])
+        openplc_runtime.start_pstorage( sett["pstorage_polling"] )
     else:
         print("Disabling Persistent Storage")
         openplc_runtime.stop_pstorage()
@@ -487,28 +466,28 @@ def p_login():
     if request.method == "POST":
         username = request.form['oplc_username']
         password = request.form['oplc_secret']
+        #action = request.form['action']
+        #if action != "do_login":
+        #    krash()
 
         if username and password:
 
-            sql = "SELECT user_id, username, password, name, pict_file FROM Users"
-            sql += " where username=? and password=? "
-            row, err = db_query(sql, (username, password), single=True)
+            rec, err = model.auth_user(username=username, password=password)
             if err:
                 ctx.error = err
-
-            if not row:
+            if not rec:
                 ctx.error = "Incorrect User or Password "
 
             else:
                 # Login User
                 user = User()
-                user.user_id = str(row['user_id'])
-                user.username = row['username']
-                user.name = row['name']
-                user.pict_file = row['pict_file']
+                user.user_id = str(rec['user_id'])
+                user.username = rec['username']
+                user.name = rec['name']
+                user.pict_file = rec['pict_file']
                 print(user)
                 flask_login.login_user(user, remember=True, fresh=True, )
-                return redirect(flask.url_for('p_dashboard'))
+                return redirect(url_for('p_dashboard'))
 
     return render_template("login.html", c=ctx)
 
@@ -1296,43 +1275,42 @@ def settingsxd():
 
 
 def start_server(address="127.0.0.1", port=8080,
-                 database=DB_FILE,
                  workspace=None,
                  debug=False):
 
-    ## Set & check db
-    global DB_FILE
-    DB_FILE = database
-    if not os.path.exists(DB_FILE):
-        s = "The database file `%s` does not exist\n" % DB_FILE
-        print(s)
-        return
 
-    #global WORK_DIR
-    #WORK_DIR = workspace
+    workspace = os.path.abspath(workspace)
+    if not os.path.exists(workspace):
+        print("ERROR: No workspace directory at `%s`" % workspace)
+        sys.exit(0)
+    if not os.path.isdir(workspace):
+        print("ERROR: Workspace argument is not a directory `%s`" % workspace)
+        sys.exit(0)
+    model.WORK_DIR = workspace
 
-    check_settings()
+    print("WORK_DIR=", model.WORK_DIR)
+    model.load_settings()
 
     ## Load information about current program on the openplc_runtime object
-    prog = None
-    st_file, err = ut.read_file(CURR_PROGRAM_FILE)
-    if st_file and err == None:
-        st_file = st_file.strip()
-        ## This is a hack to get prog_id
-        if st_file[0:5] == "prog.":
-            prog_id = st_file.split(".")[1]
-            prog, err = db_query("SELECT * FROM Programs WHERE Prog_ID=?", (prog_id,), single=True)
-        else:
-            prog, err = db_query("SELECT * FROM Programs WHERE File=?", (st_file,), single=True)
+    # prog = None
+    # st_file, err = ut.read_file(CURR_PROGRAM_FILE)
+    # if st_file and err == None:
+    #     st_file = st_file.strip()
+    #     ## This is a hack to get prog_id
+    #     if st_file[0:5] == "prog.":
+    #         prog_id = st_file.split(".")[1]
+    #         prog, err = db_query("SELECT * FROM Programs WHERE Prog_ID=?", (prog_id,), single=True)
+    #     else:
+    #         prog, err = db_query("SELECT * FROM Programs WHERE File=?", (st_file,), single=True)
 
 
-    if prog:
-        openplc_runtime.program = prog
-        openplc_runtime.project_file = st_file
+    # if prog:
+    #     openplc_runtime.program = prog
+    #     openplc_runtime.project_file = st_file
 
     ## Startup runtime at startup
-    start_run = get_setting("Start_run_mode")
-    if start_run == 'true':
+    start_run = model.settings.get("start_run_mode")
+    if start_run:
         print("Initializing OpenPLC in RUN mode...")
         openplc_runtime.start_runtime()
         time.sleep(1)

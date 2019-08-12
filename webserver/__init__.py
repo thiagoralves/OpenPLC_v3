@@ -9,3 +9,7 @@ SCRIPTS_DIR = os.path.abspath(os.path.join(ROOT_DIR, "scripts"))
 CURR_PLATFORM_FILE = os.path.abspath(os.path.join(ETC_DIR, 'openplc_platform'))
 CURR_DRIVER_FILE = os.path.abspath(os.path.join(ETC_DIR, 'openplc_driver'))
 CURR_PROGRAM_FILE = os.path.abspath(os.path.join(ETC_DIR, 'active_program'))
+
+
+# set at startup from whell var
+WORK_DIR = None

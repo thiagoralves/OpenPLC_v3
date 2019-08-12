@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
+import sys
 import argparse
 from webserver import webserver
 
@@ -19,16 +22,18 @@ parser.add_argument("-w", "--workspace",
                     help="Workspace directory for projects",
                     action="store", type=str)
 
-parser.add_argument("-d", "--database",
-                    help="database file",
-                    action="store", type=str,
-                    default="openplc.db")
+parser.add_argument("-d", "--debug",
+                    help="Switch on debugging",
+                    action="store_true")
 
 args = parser.parse_args()
 
+if args.workspace == None:
+    print("ERROR: Need a workspace")
+    parser.print_help()
+    sys.exit()
 
 webserver.start_server(address=args.address,
                        port=args.port,
-                       database=args.database,
                        workspace=args.workspace,
-                       debug=True)
+                       debug=args.debug)

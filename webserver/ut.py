@@ -20,33 +20,14 @@ def write_file(file_path, contents):
     return "OOPS in write_file()"
 
 
-def to_yaml(data):
-    import yaml
-    try:
-        yaml_str = yaml.safe_dump(data, default_flow_style=False )
-        return yaml_str, None
-
-    except Exception as e:
-        return None, "Error: %s" % str(e)
+def read_json(file_path):
+    with open(file_path, "r") as f:
+        try:
+            return json.load(f), None
+        except Exception as e:
+            return None, str(e)
 
 
-
-def write_yaml_file(file_path, data):
-    """Saves python data in a :ref:`json` encoded file
-
-    :param file_path: The relative or absolute path of file to save.
-    :type file_path: str
-    :param data: The python data to save
-    :type data: dict or list
-    :return: `Error` message if write error, otherwise `None`
-    """
-    with open(file_path, "w") as f:
-        yaml_str, err = to_yaml(data)
-        if err:
-            return err
-        f.write(yaml_str)
-        f.close()
-    return None
 
 def to_json(data, minify=False):
     """Serializes python data to a :ref:`json` string
@@ -127,6 +108,18 @@ def delete_dir_contents(dir_path):
         #print "f=", f
         pass #os.remove(f)
 
+
+def list_dir(*args):
+    """return list of files in a dir"""
+
+    fullpath = ""
+    for a in args:
+        fullpath = os.path.join(fullpath, a)
+    print(fullpath)
+    try:
+        return os.listdir(fullpath), None
+    except Exception as e:
+        return None, str(e)
 
 
 def to_int(obj):
