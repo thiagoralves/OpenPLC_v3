@@ -1,5 +1,8 @@
 
 import os
+import sys
+
+PY3 = sys.version_info[0] < 3
 
 HERE_DIR = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(HERE_DIR, ".."))

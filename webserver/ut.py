@@ -4,6 +4,8 @@ import os
 import glob
 import json
 
+import urllib2
+
 
 def read_file(file_path):
     if not os.path.exists(file_path):
@@ -137,6 +139,16 @@ def to_int(obj):
         pass
     return None
 
+
+def http_fetch(url, plain=False):
+
+    try:
+        contents = urllib2.urlopen(url).read()
+        if plain:
+            return contents, None
+        return json.loads(contents), None
+    except Exception as e:
+        return None, str(e)
 
 
 

@@ -5,7 +5,18 @@ import bcrypt
 
 from . import ut
 
+#-----------------------------------------------------------------------
+# Workspace related
+#-----------------------------------------------------------------------
 WORK_DIR = None
+
+def init_workspace():
+
+    schema = os.path.join(WORK_DIR, "__schema__")
+    if not os.path.exists(schema):
+        os.mkdir(schema)
+
+
 
 
 #-----------------------------------------------------------------------
@@ -125,6 +136,7 @@ def save_program(prog_id, rec):
     file_path = os.path.join(WORK_DIR, "programs", "%s.json" % prog_id)
     return ut.write_json_file(file_path, rec)
 
+
 #-----------------------------------------------------------------------
 # Devices & Slaves related
 #-----------------------------------------------------------------------
@@ -135,3 +147,25 @@ def get_devices():
 def get_device(dev_id):
     file_path = os.path.join(WORK_DIR, "devices", "%s.json" % dev_id)
     return ut.read_json_file(file_path)
+
+
+#-----------------------------------------------------------------------
+# Schema related
+#-----------------------------------------------------------------------
+SCHEMA_INDEX = "https://openplcproject.gitlab.io/openplc_schema/json/index.json"
+
+def fetch_schema():
+    schema_dir = os.path.join(WORK_DIR, "__schema__")
+
+    ## get index
+    url_list, err = ut.http_fetch(SCHEMA_INDEX)
+    if err:
+        return err
+    fn = os.path.join(schema_dir, os.path.basename(SCHEMA_INDEX))
+    ut.write_json_file(fn, url_list)
+
+    ## get files listed in index
+    for url in url_list:
+        schema, err = ut.http_fetch(url)
+        fn = os.path.join(schema_dir, os.path.basename(url))
+        ut.write_json_file(fn, schema)

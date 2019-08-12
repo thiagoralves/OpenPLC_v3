@@ -1259,9 +1259,12 @@ def start_server(address="127.0.0.1", port=8080,
         print("ERROR: Workspace argument is not a directory `%s`" % workspace)
         sys.exit(0)
     model.WORK_DIR = workspace
+    model.init_workspace()
 
     print("WORK_DIR=", model.WORK_DIR)
     model.load_settings()
+
+    #model.fetch_schema()
 
     ## Load information about current program on the openplc_runtime object
     # prog = None
