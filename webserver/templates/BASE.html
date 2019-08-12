@@ -72,7 +72,7 @@
                 {# authenticated, so show menu/nav #}
                 <ul class="nav nav-pills flex-column" id="mainmav">
                     {% for n in nav -%}
-                    <li class="nav-item {{ "openplc_" + n.page}}">{{ "openplc_" + n.page}}
+                    <li class="nav-item {{ "openplc_" + n.page}}">
                         <a href="/{{n.page}}" class="nav-link{% if n.page == c.page %} active{%endif%}"
                              ><i class="fa {{n.icon}}"></i>&nbsp;{{n.label}}</a>
                     </li>

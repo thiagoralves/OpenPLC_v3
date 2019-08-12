@@ -36,12 +36,13 @@
             </div>
 
             <div class="form-group">
-                <input type="file" dclass="custom-file-input" id="file" name="file" accept=".st" required>
+                <input type="file" dclass="custom-file-input" id="file" name="file" accept=".st">
                 <label dclass="custom-file-label" for="file">Choose <b>.st</b> file to upload</label>
             </div>
 
             <div class="form-group">
-                <input type="submit" class="btn btn-success" value='Create Program'>
+                <input type="submit" class="btn btn-success"
+                       value='{% if c.is_new %}Create{% else %}Update{%endif%} Program'>
             </div>
 
         </form>
@@ -52,7 +53,7 @@
              <input type="hidden" name="action" value="do_delete">
 
              <div class="form-group">
-                <input type="submit" class="btn btn-danger" value='Remove Program' sonclick="checkDelete();">
+                <input type="submit" class="btn btn-danger" value='Remove Program'>
             </div>
 
          </form>

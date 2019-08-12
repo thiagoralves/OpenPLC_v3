@@ -24,10 +24,15 @@ import errno
 import time
 import os
 from threading import Thread
-from Queue import Queue, Empty
 
 
-from . import HERE_DIR, ROOT_DIR, SCRIPTS_DIR
+from . import HERE_DIR, ROOT_DIR, SCRIPTS_DIR, PY3
+
+if PY3:
+    pass
+else:
+    from Queue import Queue, Empty
+
 
 intervals = (
     ('weeks', 604800),  # 60 * 60 * 24 * 7

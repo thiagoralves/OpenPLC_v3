@@ -3,8 +3,14 @@
 import os
 import glob
 import json
+import uuid
 
-import urllib2
+
+from . import PY3
+if PY3:
+    import urllib.request
+else:
+    import urllib2
 
 
 def read_file(file_path):
@@ -142,16 +148,29 @@ def to_int(obj):
 
 def http_fetch(url, plain=False):
 
-    try:
-        contents = urllib2.urlopen(url).read()
-        if plain:
-            return contents, None
-        return json.loads(contents), None
-    except Exception as e:
-        return None, str(e)
+    if PY3:
+        try:
+            contents = urllib.request.urlopen(url).read()
+            if plain:
+                return contents, None
+            return json.loads(contents), None
+
+        except Exception as e:
+            return None, str(e)
+    else:
+        try:
+            contents = urllib2.urlopen(url).read()
+            if plain:
+                return contents, None
+            return json.loads(contents), None
+
+        except Exception as e:
+            return None, str(e)
 
 
-
+def gen_uuid():
+    # return base64.b64encode(os.urandom(32))[:8]
+    return str(uuid.uuid4().hex)[:8]
 
 
 

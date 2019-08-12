@@ -16,6 +16,9 @@
 # along with OpenPLC.  If not, see <http://www.gnu.org/licenses/>.
 # ----------------------------------------------------------------------------
 
+from __future__ import print_function
+
+
 import sqlite3
 from sqlite3 import Error
 import os
@@ -26,6 +29,7 @@ import random
 import datetime
 import time
 import sys
+import logging
 
 import flask
 from flask import redirect, request, render_template, url_for
@@ -254,13 +258,14 @@ def p_settings():
     if request.method == 'POST':
 
 
+
         set_setting("modbus_port", request.form.get('modbus_port', "disabled"))
         set_setting("Dnp3_port", request.form.get('dnp3_port', "disabled"))
         set_setting("Enip_port", request.form.get('enip_port', "disabled"))
         # TODO
 
-    ctx.settings = get_settings()
-    ctx.defaultSettings = defaultSettings
+    ctx.settings = model.settings
+    ctx.defaultSettings = model.defaultSettings
 
     return render_template("settings.html", c=ctx)
 
@@ -319,7 +324,7 @@ def generate_mbconfig():
 
     rows, err = db_query("SELECT * FROM Slave_dev")
     if err:
-        print "errr=", err
+        print("errr=", err)
         #TODO
         return err
 
@@ -553,34 +558,45 @@ def p_program_edit(prog_id):
     ctx.prog_id = prog_id
     ctx.program = {}
     ctx.title = "New Program" if prog_id == 0 else "Progam Detail"
+    ctx.is_new = prog_id == "new"
 
     if request.method == "POST":
 
-        prog_file = request.files['file']
+        prog_file = request.files.get('file')
 
-        vars = {}
-        vars["Name"] = request.form["name"]
-        vars["Description"] = request.form["description"]
-        vars["Date_upload"] = str(int(time.time()))
-        vars['File'] = prog_file.filename
-
-        if prog_id == 0:
-            ctx.prog_id, err = db_insert("Programs", vars)
+        print(request.form)
+        if ctx.is_new:
+            prog_id = ut.gen_uuid()
+            rec = {}
+            rec['prog_id'] = prog_id
 
         else:
-            model.save_program(prog_id, vars)
+            rec, ctx.error = model.get_program(prog_id)
+
+
+
+        rec["name"] = request.form["name"]
+        rec["description"] = request.form["description"]
+        #vars["date_upload"] = str(int(time.time()))
+        #vars['File'] = prog_file.filename
+
+
+        model.save_program(prog_id, rec)
 
         ## FIXME this needs to be somewhere else
         st_dir = os.path.join(ETC_DIR, "st_files")
         save_path = os.path.join(st_dir, "prog.%s.st" % prog_id)
-        prog_file.save(save_path)
+        #prog_file.save(save_path)
 
 
+    if ctx.is_new:
+        ctx.program = dict(prog_id=prog_id)
+        ctx.st_source = None
+    else:
+        ctx.program, ctx.error = model.get_program(prog_id)
 
-    ctx.program, ctx.error = model.get_program(prog_id)
-
-    st_path = os.path.join(ETC_DIR, "st_files", "prog.%s.st" % prog_id)
-    ctx.st_source, err = ut.read_file(st_path)
+        st_path = os.path.join(ETC_DIR, "st_files", "prog.%s.st" % prog_id)
+        ctx.st_source, err = ut.read_file(st_path)
 
     return render_template("program_edit.html", c=ctx)
 
@@ -1248,6 +1264,7 @@ def settingsxd():
 
 def start_server(address="127.0.0.1", port=8080,
                  workspace=None,
+                 request_log=False,
                  debug=False):
 
 
@@ -1291,10 +1308,15 @@ def start_server(address="127.0.0.1", port=8080,
         time.sleep(1)
         configure_runtime()
 
-    if debug:
-        import logging
-        log = logging.getLogger('werkzeug')
-        log.setLevel(logging.ERROR)
+    # WTF
+    # if request_log:
+    # log = logging.getLogger('werkzeug')
+    # log.setLevel(logging.ERROR)
+    # log.disabled = not request_log
+    # app.logger.disabled = not request_log
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    logging.getLogger('socketio').setLevel(logging.ERROR)
+    logging.getLogger('engineio').setLevel(logging.ERROR)
 
     socketio.run(app, host=address, port=port, debug=debug)
     #app.run(debug=debug, host=address, threaded=False, port=port)

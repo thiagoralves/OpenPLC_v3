@@ -163,9 +163,11 @@ def fetch_schema():
         return err
     fn = os.path.join(schema_dir, os.path.basename(SCHEMA_INDEX))
     ut.write_json_file(fn, url_list)
+    print(SCHEMA_INDEX)
 
     ## get files listed in index
     for url in url_list:
         schema, err = ut.http_fetch(url)
         fn = os.path.join(schema_dir, os.path.basename(url))
         ut.write_json_file(fn, schema)
+        print(fn)
