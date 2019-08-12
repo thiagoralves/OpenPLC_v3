@@ -109,18 +109,26 @@ def delete_dir_contents(dir_path):
         pass #os.remove(f)
 
 
-def list_dir(*args):
+def list_dir(dir_path):
     """return list of files in a dir"""
-
-    fullpath = ""
-    for a in args:
-        fullpath = os.path.join(fullpath, a)
-    print(fullpath)
+    print("list_fir", dir_path)
     try:
-        return os.listdir(fullpath), None
+        return os.listdir(dir_path), None
     except Exception as e:
         return None, str(e)
 
+def read_json_dir(dir_path):
+    files, err = list_dir(dir_path)
+    lst = []
+    for fn in files:
+        rec, err = read_json_file(os.path.join(dir_path, fn))
+        if err:
+            # return None, err
+            print("ERROR", err)
+            # TODO
+            continue
+        lst.append(rec)
+    return lst, None
 
 def to_int(obj):
     try:

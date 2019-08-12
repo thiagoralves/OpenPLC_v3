@@ -8,6 +8,27 @@ from . import ut
 WORK_DIR = None
 
 
+#-----------------------------------------------------------------------
+# Settings related
+#-----------------------------------------------------------------------
+defaultSettings = dict(
+    modbus_enabled="false",
+    modbus_port=502,
+
+    dnp3_enabled="false",
+    dnp3_port=20000,
+
+    enip_enabled="false",
+    enip_port=20000,
+
+    Pstorage_enabled="false",
+    Pstorage_polling=10,
+
+    Start_run_mode="false",
+    Slave_polling=100,
+    Slave_timeout=1000
+)
+
 settings = {}
 
 
@@ -16,10 +37,6 @@ def load_settings():
     global settings
     settings, err = ut.read_json(os.path.join(WORK_DIR, "settings.json"))
     return err
-
-def get_setting(key):
-    """Return setting for key, or default"""
-    return get_settings().get(key, defaultSettings.get(key))
 
 def set_setting(key, value):
     """Sets the Key (currently maybe case sensitive)"""
@@ -34,6 +51,7 @@ def set_setting(key, value):
 #------------------------------------------------
 # User releated
 #------------------------------------------------
+
 def list_users_dir():
     files, err = ut.list_dir(WORK_DIR, "users")
     if err:
@@ -89,3 +107,31 @@ def auth_user(username=None, password=None):
 
 def gen_password(password):
     return str(bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()))
+
+
+
+#-----------------------------------------------------------------------
+# Programs related
+#-----------------------------------------------------------------------
+
+def get_programs():
+    return ut.read_json_dir(os.path.join(WORK_DIR, "programs"))
+
+def get_program(prog_id):
+    file_path = os.path.join(WORK_DIR, "programs", "%s.json" % prog_id)
+    return ut.read_json_file(file_path)
+
+def save_program(prog_id, rec):
+    file_path = os.path.join(WORK_DIR, "programs", "%s.json" % prog_id)
+    return ut.write_json_file(file_path, rec)
+
+#-----------------------------------------------------------------------
+# Devices & Slaves related
+#-----------------------------------------------------------------------
+def get_devices():
+    return ut.read_json_dir(os.path.join(WORK_DIR, "devices"))
+
+
+def get_device(dev_id):
+    file_path = os.path.join(WORK_DIR, "devices", "%s.json" % dev_id)
+    return ut.read_json_file(file_path)

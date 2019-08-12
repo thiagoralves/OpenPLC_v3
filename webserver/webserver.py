@@ -232,26 +232,7 @@ def unauthorized_handler():
 
 
 
-#-----------------------------------------------------------------------
-# Settings
-#-----------------------------------------------------------------------
-defaultSettings = dict(
-    modbus_enabled="false",
-    modbus_port=502,
 
-    dnp3_enabled="false",
-    dnp3_port=20000,
-
-    enip_enabled="false",
-    enip_port=20000,
-
-    Pstorage_enabled="false",
-    Pstorage_polling=10,
-
-    Start_run_mode="false",
-    Slave_polling=100,
-    Slave_timeout=1000
-)
 
 def sscheck_settings():
     """Make sure default settings are in db, run at startup"""
@@ -557,22 +538,14 @@ def p_runtime_logs():
 @login_required
 def p_programs():
 
-    if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-
+    #if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
     ctx = make_context("programs")
-
-    list_all = request.args.get('list_all') == '1'
-    sql = 'SELECT Prog_ID, Name, File, Date_upload FROM Programs ORDER BY Date_upload DESC '
-    if not list_all:
-        sql += " limit 20"
-
-
-    ctx.programs, ctx.error = db_query(sql)
+    ctx.programs, ctx.error = model.get_programs()
 
     return render_template("programs.html", c=ctx)
 
-@app.route('/program/<int:prog_id>', methods=['GET', 'POST'])
+@app.route('/program/<prog_id>', methods=['GET', 'POST'])
 @login_required
 def p_program_edit(prog_id):
 
@@ -595,7 +568,7 @@ def p_program_edit(prog_id):
             ctx.prog_id, err = db_insert("Programs", vars)
 
         else:
-            db_update("Programs", vars, "Prog_id", prog_id)
+            model.save_program(prog_id, vars)
 
         ## FIXME this needs to be somewhere else
         st_dir = os.path.join(ETC_DIR, "st_files")
@@ -604,7 +577,7 @@ def p_program_edit(prog_id):
 
 
 
-    ctx.program, ctx.error = db_query("SELECT * FROM Programs WHERE Prog_ID = ?", [str(prog_id)], single=True)
+    ctx.program, ctx.error = model.get_program(prog_id)
 
     st_path = os.path.join(ETC_DIR, "st_files", "prog.%s.st" % prog_id)
     ctx.st_source, err = ut.read_file(st_path)
@@ -762,8 +735,7 @@ def p_slaves():
 
         ctx = make_context("slaves")
 
-        sql = "SELECT dev_id, dev_name, dev_type, di_size, coil_size, ir_size, hr_read_size, hr_write_size FROM Slave_dev"
-        rows, ctx.error = db_query(sql)
+        rows, ctx.error = model.get_devices()
 
         counter_di = 0
         counter_do = 0
@@ -825,7 +797,7 @@ IO_PREFIXES = [
     {"prefix": "hr_write", "label": "Holding Registers - Write (%QW100)"},
 ]
 
-@app.route('/slave/<int:dev_id>', methods=['GET', 'POST'])
+@app.route('/slave/<dev_id>', methods=['GET', 'POST'])
 @login_required
 def p_slave_edit(dev_id):
 
@@ -854,7 +826,7 @@ def p_slave_edit(dev_id):
 
     ctx.device = {}
     if dev_id > 0:
-        ctx.device, ctx.error = db_query("select * from slave_dev where dev_id=?", [dev_id], single=True)
+        ctx.device, ctx.error = model.get_device(dev_id)
 
     ctx.DEVICE_PROTOCOLS = DEVICE_PROTOCOLS
     ctx.IO_PREFIXES = IO_PREFIXES
