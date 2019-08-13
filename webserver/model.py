@@ -1,7 +1,9 @@
 
 import os
-import bcrypt
 
+
+import bcrypt
+import jsonschema
 
 from . import ut
 
@@ -46,7 +48,7 @@ settings = {}
 def load_settings():
     """Returns dict of settings"""
     global settings
-    settings, err = ut.read_json(os.path.join(WORK_DIR, "settings.json"))
+    settings, err = ut.read_json_file(os.path.join(WORK_DIR, "settings.json"))
     return err
 
 def set_setting(key, value):
@@ -171,3 +173,18 @@ def fetch_schema():
         fn = os.path.join(schema_dir, os.path.basename(url))
         ut.write_json_file(fn, schema)
         print(fn)
+
+def get_schema(name):
+    s_file = os.path.join(WORK_DIR, "__schema__", "%s.schema.json" % name)
+    return ut.read_json_file(s_file)
+
+def validate(data, schema_name):
+    schema, err = get_schema("program")
+    if err:
+        return [err]
+    errs = []
+    for k, v in data.items():
+        print(k, v)
+
+    return "\n".join(errs)
+    valid = jsonschema.validate(instance=rec, schema=schema)

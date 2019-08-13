@@ -4,7 +4,7 @@ import os
 import glob
 import json
 import uuid
-
+import datetime
 
 from . import PY3
 if PY3:
@@ -26,15 +26,6 @@ def write_file(file_path, contents):
         f.write(contents)
         return None
     return "OOPS in write_file()"
-
-
-def read_json(file_path):
-    with open(file_path, "r") as f:
-        try:
-            return json.load(f), None
-        except Exception as e:
-            return None, str(e)
-
 
 
 def to_json(data, minify=False):
@@ -65,6 +56,20 @@ def to_json(data, minify=False):
         return json.dumps(data, ensure_ascii=True, separators=(',', ':')), None
     return json.dumps(data, ensure_ascii=True, indent=4, sort_keys=True, separators=(',', ': ')), None
 
+
+
+def read_json_dir(dir_path):
+    files, err = list_dir(dir_path)
+    lst = []
+    for fn in files:
+        rec, err = read_json_file(os.path.join(dir_path, fn))
+        if err:
+            # return None, err
+            print("ERROR", err)
+            # TODO
+            continue
+        lst.append(rec)
+    return lst, None
 
 
 def write_json_file(file_path, data, minify=False):
@@ -125,18 +130,6 @@ def list_dir(dir_path):
     except Exception as e:
         return None, str(e)
 
-def read_json_dir(dir_path):
-    files, err = list_dir(dir_path)
-    lst = []
-    for fn in files:
-        rec, err = read_json_file(os.path.join(dir_path, fn))
-        if err:
-            # return None, err
-            print("ERROR", err)
-            # TODO
-            continue
-        lst.append(rec)
-    return lst, None
 
 def to_int(obj):
     try:
@@ -172,6 +165,11 @@ def gen_uuid():
     # return base64.b64encode(os.urandom(32))[:8]
     return str(uuid.uuid4().hex)[:8]
 
+def now(timestamp=False):
+    utc_ts = datetime.datetime.utcnow()
+    if timestamp:
+        return utc_ts
+    return datetime.datetime.strftime(utc_ts, "%Y-%m-%d %H:%M:%S")
 
 
 

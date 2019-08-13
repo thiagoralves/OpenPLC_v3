@@ -33,11 +33,12 @@ import logging
 
 import flask
 from flask import redirect, request, render_template, url_for
-
 import flask_login
 from flask_login import current_user, login_required
-
 from flask_socketio import SocketIO
+
+import jsonschema
+
 
 from . import HERE_DIR, ROOT_DIR, ETC_DIR, SCRIPTS_DIR, CURR_PROGRAM_FILE, CURR_DRIVER_FILE
 from . import model
@@ -45,128 +46,6 @@ from . import openplc
 from . import pages
 from . import monitoring
 from . import ut
-
-#-----------------------------------------------------------------------
-# Database stuff
-#-----------------------------------------------------------------------
-# DB_FILE = "openplc.db"
-#
-# def db_connect():
-#     global DB_FILE
-#     try:
-#         conn = sqlite3.connect(DB_FILE)
-#         return conn
-#     except Error as e:
-#         print("db_connection():", e)
-#     return None
-#
-# def db_query(sql, args=(), single=False, as_list=False):
-#     """ Opens db, execute query, close then return results.
-#     Querying is one function atmo, as issues with multithread app.
-#
-#     :param sql: str with sql and :params placeholders
-#     :param args: dict with arg values
-#     :param single: return only one row
-#     :param as_list: True returns a row in a list, otherwise a dict
-#     :return: rows/row, err
-#     """
-#     conn = db_connect()
-#     if not conn:
-#         return None, "Cannot connect db"
-#     try:
-#         cur = conn.cursor()
-#         cur.execute(sql, args)
-#
-#         rows = cur.fetchall()
-#         cur.close()
-#         conn.close()
-#
-#         ## This is a workaround until schema changes maybe, converts to dict
-#         col_names = [c[0].lower() for c in cur.description]
-#         row_dict = []
-#         for ridx, row in enumerate(rows):
-#             d = {}
-#             for cidx, cn in enumerate(col_names):
-#                 d[cn] = row[cidx]
-#             row_dict.append(d)
-#
-#         if not single:
-#             return rows if as_list else row_dict, None
-#
-#         if len(rows) == 0:
-#             return None, "No Rows"
-#
-#         if len(rows) > 1:
-#             return None, "More than one row"
-#
-#         return rows[0] if as_list else row_dict[0], None
-#
-#     except Error as e:
-#         print("error connecting to the database: " + str(e))
-#         return None, str(e)
-#
-#
-# def db_insert(table, flds):
-#     sql = "insert into %s (" % table
-#     keys = sorted(flds.keys())
-#     sql += ",".join(keys)
-#     sql += ") values ("
-#     sql += ",".join(["?" for i in range(0, len(keys))])
-#     sql += ");"
-#
-#     conn = db_connect()
-#     if not conn:
-#         return None, "Cannot connect db"
-#
-#     try:
-#         cur = conn.cursor()
-#         cur.execute(sql, [flds[k] for k in keys])
-#         conn.commit()
-#
-#         ## get inserted id
-#         sql = "select last_insert_rowid()"
-#         cur.execute(sql)
-#         row = cur.fetchone()
-#         return row[0], None
-#
-#     except Error as e:
-#         return None, str(e)
-#
-#
-# def db_update(table, flds, p_name, p_id):
-#     sql = "update %s set " % table
-#     keys = sorted(flds.keys())
-#     sql += ",".join(["%s=?" % k for k in keys])
-#     sql += " where %s = ?;" % p_name
-#     vals = [flds[k] for k in keys]
-#     vals.append(p_id)
-#
-#     conn = db_connect()
-#     if not conn:
-#         return "Cannot connect db"
-#     try:
-#         cur = conn.cursor()
-#         cur.execute(sql, vals)
-#         conn.commit()
-#         return None
-#
-#     except Error as e:
-#         print("error connecting to the database" + str(e))
-#         return str(e)
-#
-# def db_execute(sql, vars):
-#     conn = db_connect()
-#     if not conn:
-#         return None, "Cannot connect db"
-#     try:
-#         print("db_execute", sql, vars)
-#         cur = conn.cursor()
-#         cur.execute(sql,vars)
-#         conn.commit()
-#         return None
-#
-#     except Error as e:
-#         return str(e)
 
 
 #-----------------------------------------------------------------------
@@ -567,20 +446,26 @@ def p_program_edit(prog_id):
         print(request.form)
         if ctx.is_new:
             prog_id = ut.gen_uuid()
+
             rec = {}
-            rec['prog_id'] = prog_id
+
+            rec["prog_id"] = None #prog_id
+
+            print(rec)
 
         else:
             rec, ctx.error = model.get_program(prog_id)
 
-
-
-        rec["name"] = request.form["name"]
-        rec["description"] = request.form["description"]
+        rec['date_upload'] =  "" #ut.now()
+        rec['name'] =  "3" #request.form["name"]
+        rec['description'] = request.form["description"]
         #vars["date_upload"] = str(int(time.time()))
         #vars['File'] = prog_file.filename
 
-
+        #print(obj.items(obj))
+        schema, err = model.get_schema("program")
+        valid = jsonschema.validate(instance=rec, schema=schema)
+        print("valid=", valid)
         model.save_program(prog_id, rec)
 
         ## FIXME this needs to be somewhere else
@@ -588,6 +473,15 @@ def p_program_edit(prog_id):
         save_path = os.path.join(st_dir, "prog.%s.st" % prog_id)
         #prog_file.save(save_path)
 
+    rec = {}
+
+    rec["prog_id"] = None  # prog_id
+    rec['date_upload'] = ""  # ut.now()
+    rec['name'] = "3"  # request.form["name"]
+    print(rec)
+
+    errs = model.validate(rec, "program")
+    print("valid=", errs)
 
     if ctx.is_new:
         ctx.program = dict(prog_id=prog_id)
