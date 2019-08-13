@@ -12,6 +12,13 @@ import shutil
 
 import bcrypt
 
+"""
+This script is not to be taken seriously and does not conform to PEP8
+
+- Instead its a quick hack to export stuff, and indeed legacy
+- Sometimes might be faster to create a new scenario, said the writer of this script ! 
+
+"""
 
 def export_db(database=None, workspace=None, openplc=None):
 
@@ -117,6 +124,10 @@ def export_db(database=None, workspace=None, openplc=None):
         uid = gen_uid()
         row["user_id"] = uid
         row['user_active'] = True
+        row['full_name'] = row['name']
+        row['user'] = row['username']
+        del row['name']
+        del row['username']
         row['password'] = str(bcrypt.hashpw(row['password'].encode('utf-8'), bcrypt.gensalt()))
         write_json("users",  "%s.json" % uid, row)
 

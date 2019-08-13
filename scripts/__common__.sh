@@ -20,3 +20,4 @@ DRIVER_FILE="$ETC_DIR/openplc_driver"
 ACTIVE_PROGAM_FILE="$ETC_DIR/active_program.txt"
 
 BLANK_ST_FILE="$ETC_DIR/st_files/blank_program.st"
+

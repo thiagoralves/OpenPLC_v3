@@ -10,6 +10,7 @@ from . import ut
 #-----------------------------------------------------------------------
 # Workspace related
 #-----------------------------------------------------------------------
+
 WORK_DIR = None
 
 def init_workspace():
@@ -20,10 +21,63 @@ def init_workspace():
 
 
 
+#-----------------------------------------------------------------------
+# Schema.json related
+#-----------------------------------------------------------------------
+SCHEMA_INDEX_URL = "https://openplcproject.gitlab.io/openplc_schema/json/index.json"
+
+def fetch_schema():
+    schema_dir = os.path.join(WORK_DIR, "__schema__")
+
+    ## get index
+    url_list, err = ut.http_fetch(SCHEMA_INDEX_URL)
+    if err:
+        return err
+    fn = os.path.join(schema_dir, os.path.basename(SCHEMA_INDEX_URL))
+    ut.write_json_file(fn, url_list)
+
+    ## get files listed in index
+    for url in url_list:
+        schema, err = ut.http_fetch(url)
+        fn = os.path.join(schema_dir, os.path.basename(url))
+        ut.write_json_file(fn, schema)
+        print(fn)
+
+def get_schema(name):
+    s_file = os.path.join(WORK_DIR, "__schema__", "%s.schema.json" % name)
+    return ut.read_json_file(s_file)
+
+def validate(data, schema_name):
+    schema, err = get_schema(schema_name)
+    if err:
+        return err
+
+    try:
+        jsonschema.validate(instance=data, schema=schema)
+        return None
+
+    except jsonschema.ValidationError as e:
+        #print("_---------------------")
+        #print(e)
+        #print"(---------------------"
+        #print(e.message)
+        #print(e.schema)
+        #print(e.cause)
+        #print(e.schema_path)
+        #print(e.path)
+        return "%s: %s" % (e.path, e.message)
+
+
+    except Exception as e:
+        return str(e)
+
+    return "Unknown error"
 
 #-----------------------------------------------------------------------
 # Settings related
 #-----------------------------------------------------------------------
+
+# The ultimate settings, mayve this should come from schema
 defaultSettings = dict(
     modbus_enabled="false",
     modbus_port=502,
@@ -160,55 +214,3 @@ def get_device(dev_id):
     file_path = os.path.join(WORK_DIR, "devices", "%s.json" % dev_id)
     return ut.read_json_file(file_path)
 
-
-#-----------------------------------------------------------------------
-# Schema related
-#-----------------------------------------------------------------------
-SCHEMA_INDEX_URL = "https://openplcproject.gitlab.io/openplc_schema/json/index.json"
-
-def fetch_schema():
-    schema_dir = os.path.join(WORK_DIR, "__schema__")
-
-    ## get index
-    url_list, err = ut.http_fetch(SCHEMA_INDEX_URL)
-    if err:
-        return err
-    fn = os.path.join(schema_dir, os.path.basename(SCHEMA_INDEX_URL))
-    ut.write_json_file(fn, url_list)
-
-    ## get files listed in index
-    for url in url_list:
-        schema, err = ut.http_fetch(url)
-        fn = os.path.join(schema_dir, os.path.basename(url))
-        ut.write_json_file(fn, schema)
-        print(fn)
-
-def get_schema(name):
-    s_file = os.path.join(WORK_DIR, "__schema__", "%s.schema.json" % name)
-    return ut.read_json_file(s_file)
-
-def validate(data, schema_name):
-    schema, err = get_schema(schema_name)
-    if err:
-        return err
-
-    try:
-        jsonschema.validate(instance=data, schema=schema)
-        return None
-
-    except jsonschema.ValidationError as e:
-        #print("_---------------------")
-        #print(e)
-        #print"(---------------------"
-        #print(e.message)
-        #print(e.schema)
-        #print(e.cause)
-        #print(e.schema_path)
-        #print(e.path)
-        return "%s: %s" % (e.path, e.message)
-
-
-    except Exception as e:
-        return str(e)
-
-    return "Unknown error"
