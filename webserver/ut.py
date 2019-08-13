@@ -60,6 +60,7 @@ def to_json(data, minify=False):
 
 def read_json_dir(dir_path):
     files, err = list_dir(dir_path)
+    print(files, err)
     lst = []
     for fn in files:
         rec, err = read_json_file(os.path.join(dir_path, fn))

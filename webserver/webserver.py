@@ -110,7 +110,7 @@ def user_loader(user_id):
 
 @login_manager.unauthorized_handler
 def unauthorized_handler():
-    ctx = make_context("unauthorized")
+    ctx = create_context("unauthorized")
     return render_template('unauthorized.html', c=ctx)
 
 
@@ -274,13 +274,12 @@ class TemplateContext(object):
         self.errors = []
 
     def __setattr__(self, name, value):
-        print(name, value)
         if name == "error":
             self.errors.append(value)
         object.__setattr__(self, name, value)
 
 
-def make_context(nav_page, title=None):
+def create_context(nav_page, title=None):
     c = TemplateContext()
     c.page = nav_page
     c.icon = nav_icon(nav_page)
@@ -306,7 +305,7 @@ def p_login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
 
-    ctx = make_context("login")
+    ctx = create_context("login")
 
     if request.method == "POST":
         username = request.form['oplc_username']
@@ -354,7 +353,7 @@ def index():
 @login_required
 def p_dashboard():
 
-    ctx = make_context(page="dashboard")
+    ctx = create_context("dashboard")
 
     return render_template("dashboard.html", c=ctx)
 
@@ -404,7 +403,7 @@ def p_programs():
 
     #if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
 
-    ctx = make_context("programs")
+    ctx = create_context("programs")
     ctx.programs, ctx.error = model.get_programs()
 
     return render_template("programs.html", c=ctx)
@@ -413,7 +412,7 @@ def p_programs():
 @login_required
 def p_program_edit(prog_id):
 
-    ctx = make_context("programs")
+    ctx = create_context("programs")
     ctx.prog_id = prog_id
     ctx.program = {}
     ctx.title = "New Program" if prog_id == 0 else "Progam Detail"
@@ -581,7 +580,7 @@ def upload_program():
 def p_program_compile(prog_id):
 
     # The compile is triggered nbu the socketio below
-    ctx = make_context("compiling")
+    ctx = create_context("compiling")
     ctx.prog_id = prog_id
 
 
@@ -628,7 +627,7 @@ def ws_xcommand(data):
 @login_required
 def p_slaves():
 
-        ctx = make_context("slaves")
+        ctx = create_context("slaves")
 
         rows, ctx.error = model.get_devices()
 
@@ -696,7 +695,7 @@ IO_PREFIXES = [
 @login_required
 def p_slave_edit(dev_id):
 
-    ctx = make_context("slaves")
+    ctx = create_context("slaves")
     ctx.dev_id = dev_id
 
     if request.method == 'POST':
@@ -758,7 +757,7 @@ def p_slave_remove(dev_id):
 @login_required
 def p_monitoring():
 
-    ctx = make_context("monitoring")
+    ctx = create_context("monitoring")
     ctx.debug_vars = []
     monitor.start_monitor()
     if openplc_runtime.is_running():
@@ -789,7 +788,7 @@ def p_hardware():
 
     monitor.stop_monitor()
 
-    ctx = make_context("hardware")
+    ctx = create_context("hardware")
     custom_layer_file = os.path.join(ROOT_DIR, "runtime", "core", "custom_layer.h")
 
     if request.method == "POST":
@@ -843,7 +842,7 @@ def p_restore_custom_hardware():
 @login_required
 def p_users():
 
-    ctx = make_context("users")
+    ctx = create_context("users")
 
     sql = "SELECT user_id, name, username, email FROM Users order by username asc"
     ctx.users, ctx.error = db_query(sql)
@@ -854,7 +853,7 @@ def p_users():
 @login_required
 def p_user_edit(user_id):
 
-    ctx = make_context("users")
+    ctx = create_context("users")
     ctx.user_id = user_id
     ctx.user = {}
 
@@ -900,7 +899,7 @@ def p_user_delete(user_id):
 @login_required
 def p_settings():
 
-    ctx = make_context("settings")
+    ctx = create_context("settings")
 
     if request.method == 'POST':
 
