@@ -48,8 +48,18 @@ settings = {}
 def load_settings():
     """Returns dict of settings"""
     global settings
+
+    # load from file
     settings, err = ut.read_json_file(os.path.join(WORK_DIR, "settings.json"))
-    return err
+    if err:
+        return err
+
+    # check keys are missing (eg a new setting with olde file)
+    for k, v in defaultSettings.items():
+        if not k in settings:
+            settings[k] = v
+    return None
+
 
 def set_setting(key, value):
     """Sets the Key (currently maybe case sensitive)"""
@@ -108,7 +118,7 @@ def get_user(username=None, user_id=None):
     return None, None
 
 def auth_user(username=None, password=None):
-    rec, err = get_user(username)
+    rec, err = get_user(username=username)
     if err:
         return None, err
     if rec == None:
@@ -154,18 +164,17 @@ def get_device(dev_id):
 #-----------------------------------------------------------------------
 # Schema related
 #-----------------------------------------------------------------------
-SCHEMA_INDEX = "https://openplcproject.gitlab.io/openplc_schema/json/index.json"
+SCHEMA_INDEX_URL = "https://openplcproject.gitlab.io/openplc_schema/json/index.json"
 
 def fetch_schema():
     schema_dir = os.path.join(WORK_DIR, "__schema__")
 
     ## get index
-    url_list, err = ut.http_fetch(SCHEMA_INDEX)
+    url_list, err = ut.http_fetch(SCHEMA_INDEX_URL)
     if err:
         return err
-    fn = os.path.join(schema_dir, os.path.basename(SCHEMA_INDEX))
+    fn = os.path.join(schema_dir, os.path.basename(SCHEMA_INDEX_URL))
     ut.write_json_file(fn, url_list)
-    print(SCHEMA_INDEX)
 
     ## get files listed in index
     for url in url_list:
@@ -179,12 +188,27 @@ def get_schema(name):
     return ut.read_json_file(s_file)
 
 def validate(data, schema_name):
-    schema, err = get_schema("program")
+    schema, err = get_schema(schema_name)
     if err:
-        return [err]
-    errs = []
-    for k, v in data.items():
-        print(k, v)
+        return err
 
-    return "\n".join(errs)
-    valid = jsonschema.validate(instance=rec, schema=schema)
+    try:
+        jsonschema.validate(instance=data, schema=schema)
+        return None
+
+    except jsonschema.ValidationError as e:
+        #print("_---------------------")
+        #print(e)
+        #print"(---------------------"
+        #print(e.message)
+        #print(e.schema)
+        #print(e.cause)
+        #print(e.schema_path)
+        #print(e.path)
+        return "%s: %s" % (e.path, e.message)
+
+
+    except Exception as e:
+        return str(e)
+
+    return "Unknown error"

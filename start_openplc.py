@@ -30,13 +30,14 @@ parser.add_argument("-r", "--request-log",
                     help="Switch on http request logging",
                     action="store_true")
 
+
 args = parser.parse_args()
 
 if args.workspace == None:
     print("ERROR: Need a workspace")
     parser.print_help()
     sys.exit()
-print(args)
+
 webserver.start_server(address=args.address,
                        port=args.port,
                        request_log=args.request_log,

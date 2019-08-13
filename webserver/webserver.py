@@ -32,7 +32,7 @@ import sys
 import logging
 
 import flask
-from flask import redirect, request, render_template, url_for
+from flask import redirect, request, render_template, url_for, flash
 import flask_login
 from flask_login import current_user, login_required
 from flask_socketio import SocketIO
@@ -114,39 +114,6 @@ def unauthorized_handler():
     return render_template('unauthorized.html', c=ctx)
 
 
-
-
-
-def sscheck_settings():
-    """Make sure default settings are in db, run at startup"""
-    curr_setts = model.get_settings()
-    for key, value in defaultSettings.items():
-        if not key.lower() in curr_setts:
-            sql = "INSERT into Settings(key, value)values(?,?)"
-            err = db_execute(sql, (key, value,))
-            print(err)
-
-
-
-@app.route('/settings', methods=['GET', 'POST'])
-@login_required
-def p_settings():
-
-    ctx = make_context("settings")
-
-    if request.method == 'POST':
-
-
-
-        set_setting("modbus_port", request.form.get('modbus_port', "disabled"))
-        set_setting("Dnp3_port", request.form.get('dnp3_port', "disabled"))
-        set_setting("Enip_port", request.form.get('enip_port', "disabled"))
-        # TODO
-
-    ctx.settings = model.settings
-    ctx.defaultSettings = model.defaultSettings
-
-    return render_template("settings.html", c=ctx)
 
 
 #-----------------------------------------------------------------------
@@ -298,13 +265,26 @@ def inject_template_vars():
     return dict(nav=Nav, runtime=openplc_runtime)
 
 class TemplateContext(object):
-    pass
+    """Template context, appears as `c.` in templates
 
-def make_context(page, **kwargs):
+    - the self.errors is a list and allows multiple fails
+    - setting self.error = "foo" will append to the errors.list
+    """
+    def __init__(self):
+        self.errors = []
+
+    def __setattr__(self, name, value):
+        print(name, value)
+        if name == "error":
+            self.errors.append(value)
+        object.__setattr__(self, name, value)
+
+
+def make_context(nav_page, title=None):
     c = TemplateContext()
-    c.error = None
-    c.page = page
-    c.icon = nav_icon(page)
+    c.page = nav_page
+    c.icon = nav_icon(nav_page)
+    c.title = title
     return c
 
 
@@ -473,6 +453,11 @@ def p_program_edit(prog_id):
         save_path = os.path.join(st_dir, "prog.%s.st" % prog_id)
         #prog_file.save(save_path)
 
+    ctx.error = "one"
+    ctx.error = "tow"
+    ctx.error = "three"
+    print(ctx.errors)
+
     rec = {}
 
     rec["prog_id"] = None  # prog_id
@@ -480,8 +465,8 @@ def p_program_edit(prog_id):
     rec['name'] = "3"  # request.form["name"]
     print(rec)
 
-    errs = model.validate(rec, "program")
-    print("valid=", errs)
+    err = model.validate(rec, "program")
+    print("valid=", err)
 
     if ctx.is_new:
         ctx.program = dict(prog_id=prog_id)
@@ -909,6 +894,27 @@ def p_user_delete(user_id):
     return redirect(url_for('p_users'))
 
 
+
+#----------------------- Settings pages ------------
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def p_settings():
+
+    ctx = make_context("settings")
+
+    if request.method == 'POST':
+
+
+
+        set_setting("modbus_port", request.form.get('modbus_port', "disabled"))
+        set_setting("Dnp3_port", request.form.get('dnp3_port', "disabled"))
+        set_setting("Enip_port", request.form.get('enip_port', "disabled"))
+        # TODO
+
+    ctx.settings = model.settings
+    ctx.defaultSettings = model.defaultSettings
+
+    return render_template("settings.html", c=ctx)
 
 @app.route('/settingx', methods=['GET', 'POST'])
 def settingsxd():

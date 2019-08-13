@@ -28,12 +28,15 @@
 <body>
 
 
-{# --------------- Page Top + bar --------------- #}
+{# --------------- Page Top + navbar --------------- #}
 <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+
     <a class="navbar-brand" href="/"><img src='/static/openplc_logo.gif' height="40" alt='OpenPLC'></a>
+
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topbar" aria-controls="topbar" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
+
     <div class="collapse navbar-collapse" id="topbar">
 
         <ul class="navbar-nav ml-auto">
@@ -46,6 +49,7 @@
                     <a href="https://github.com/thiagoralves/OpenPLC_v3" target="github" class="dropdown-item">GitHub project</a>
                 </div>
              </li>
+
             {% if current_user.is_authenticated %}
               <li class="nav-item">
                  <a class="nav-link" href="/"><i class="fa fa-user"></i> {{current_user.username}}</a>
@@ -59,17 +63,16 @@
 
 
 {# ------------------------- main body --------------- #}
-<div class="sscontainer-fluid spacer">
+<div class="spacer">
 
     <div class="row no-gutters">
 
 
-        {# --- Main Navigation left col if auth  ------------------- #}
+        {# --- Main Navigation left col, only if logged in  ------------------- #}
         <div class="col-md-3">
 
             {% if current_user.is_authenticated %}
 
-                {# authenticated, so show menu/nav #}
                 <ul class="nav nav-pills flex-column" id="mainmav">
                     {% for n in nav -%}
                     <li class="nav-item {{ "openplc_" + n.page}}">
@@ -80,7 +83,7 @@
                 </ul>
 
             {% else %}
-                <h5>Maybe in all probably the first fully open source Programable Logic Controller</h5> #}
+                <h5>In all probably, the first fully open source Programable Logic Controller</h5>
             {% endif %}
 
         </div>

@@ -122,11 +122,14 @@ def delete_dir_contents(dir_path):
         pass #os.remove(f)
 
 
-def list_dir(dir_path):
+def list_dir(dir_path, path=True):
     """return list of files in a dir"""
-    print("list_fir", dir_path)
     try:
-        return os.listdir(dir_path), None
+        lst = os.listdir(dir_path), None
+        if path:
+            return [os.path.join(dir_path, fn) for fn in lst]
+        return lst
+
     except Exception as e:
         return None, str(e)
 
@@ -162,6 +165,8 @@ def http_fetch(url, plain=False):
 
 
 def gen_uuid():
+    """Generates an unique ID"""
+
     # return base64.b64encode(os.urandom(32))[:8]
     return str(uuid.uuid4().hex)[:8]
 
