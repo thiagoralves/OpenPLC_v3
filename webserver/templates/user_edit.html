@@ -1,0 +1,46 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "Program" %}
+
+
+{% block content %}
+
+
+
+<form action="/user/{{c.user_id}}" method="POST">
+    <div class="form-group">
+        <label for='username'><b>Login ID</b></label>
+        <input type='text' class="form-control" id='username' name='username'
+               value="{{c.user.username}}" placeholder='eg jblogs' required  minlength="2">
+    </div>
+
+    <div class="form-group">
+        <label for='name'><b>Name</b></label>
+        <input type='text' class="form-control" id='name' name='name'
+                value="{{c.user.username}}" placeholder='eg Nungu SmithAno' required>
+    </div>
+    <div class="form-group">
+        <label for='email'><b>Email</b></label>
+        <input type='email' class="form-control" id='email' name='email'  value="{{c.user.email}}">
+    </div>
+    <div class="form-group">
+        <label for="xpasswd"><b>Password</b></label>
+        <input type='text' class="form-control" id='xpasswd' name='xpasswd'   value="{{c.user.password}}" minlength="4">
+    </div>
+    <div class="form-group">
+        <input type="submit" class="btn btn-success" value='Save user' class="btn btn-success">
+    </div>
+</form>
+
+
+{## Delete Form ==============================#}
+<form action="/user/{{c.user_id}}/delete" method="POST" onsubmit="return confirm('Are you sure ?');">
+    <input type="hidden" name="user_id" value="{{c.user_id}}">
+    <input type="hidden" name="action" value="do_delete">
+    <div class="form-group">
+        <input type="submit" class="btn btn-danger" value='Delete User' sonclick="checkDelete();">
+     </div>
+</form>
+
+{% endblock content %}

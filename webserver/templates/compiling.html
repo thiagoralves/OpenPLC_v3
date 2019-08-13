@@ -1,0 +1,56 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "Compile" %}
+
+
+{% block content %}
+
+<p><a deadhref='dashboard' id='btn_compile' class='btn btn-danger' >Start Compile</a></p>
+<textarea id="log" style="height:500px; resize:vertical; width: 100%; font-size: 10pt; font-family: monospace;"
+    >idle</textarea>
+
+
+
+
+
+
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script type="text/javascript" charset="utf-8">
+var PROG_ID = {{c.prog_id}};
+
+$(document).ready(function(){
+
+    var textbox = $('#log');
+    var btn = $('#btn_compile')
+    btn.hide();
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    socket.on('xmessage', function(msg) {
+        if (msg.done){
+            btn.show();
+            return;
+        }
+
+        textbox.val( textbox.val() + msg.data);
+        textbox.scrollTop(textbox[0].scrollHeight);
+    });
+
+    socket.on('connect', function() {
+        btn.show();
+    });
+
+    btn.click(function(event) {
+        btn.hide();
+        textbox.val("");
+        socket.emit('compile', {prog_id: PROG_ID });
+        return false;
+    });
+
+});
+
+</script>
+
+
+
+{% endblock content %}

@@ -1,0 +1,136 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "Settings" %}
+
+
+
+{% block content %}
+
+
+
+ <form id="settingsForm" action="/settings" method="POST">
+
+     {#--- modbus ----------------- #}
+     <fieldset>
+         <legend>Modbus Server</legend>
+
+         <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="modbus_enabled"
+                {% if c.settings.modbus_port != "disabled"%}checked{%endif%}>
+            <label class="form-check-label" for="modbus_enabled">Enable</label>
+         </div>
+         <div class="form-group row">
+            <label for='modbus_port' class="col-sm-1 col-form-label text-right">Port</label>
+             <div class="col-sm-4">
+                <input type='number' id='modbus_port' name='modbus_port' class="form-control"
+                   value='{% if c.settings.modbus_port != "disabled"%}{{c.settings.modbus_port}}{%else%}502{%endif%}'
+                   min="0" max="65535">
+             </div>
+              <div class="col-sm-4">
+                 <a href="">Default: {{c.defaultSettings.modbus_port}}</a>
+             </div>
+         </div>
+     </fieldset>
+
+{#--- modbus ----------------- #}
+     <fieldset>
+         <legend>DNP3 Server</legend>
+
+         <div class="form-check">
+            <input class="form-check-input" type="checkbox"
+                   id="dnp3_enabled" name="dnp3_enabled"
+                {% if c.settings.dnp3_port != "disabled"%}checked{%endif%}>
+            <label class="form-check-label" for="dnp3_enabled">Enable</label>
+         </div>
+         <div class="form-group row">
+            <label for='dnp3_port' class="col-sm-1 col-form-label text-right">Port</label>
+             <div class="col-sm-4">
+                <input type='number' id='dnp3_port' name='dnp3_port' class="form-control"
+                   value='{{c.settings.dnp3_port}}'
+                   min="0" max="65535" >
+             </div>
+              <div class="col-sm-4">
+                 <a href="">Default: {{c.defaultSettings.dnp3_port}}</a>
+             </div>
+         </div>
+
+     </fieldset>
+
+     <fieldset>
+         <legend>EtherNet/IP Server</legend>
+
+         <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="enip_enabled"
+                {% if c.settings.dnp3_port != "disabled"%}checked{%endif%}>
+            <label class="form-check-label" for="enip_enabled">Enable</label>
+         </div>
+         <div class="form-group row">
+            <label for='dnp3_port' class="col-sm-1 col-form-label text-right">Port</label>
+             <div class="col-sm-4">
+                <input type='number' id='enip_port' name='enip_port' class="form-control"
+                   value='{{c.settings.enip_port}}'
+                   min="0" max="65535" >
+             </div>
+             <div class="col-sm-4">
+                 <a href="">Default: {{c.defaultSettings.enip_port}}</a>
+             </div>
+         </div>
+     </fieldset>
+
+     <fieldset>
+         <legend>Persistent Storage</legend>
+
+         <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="pstorage_enabled"
+                {% if c.settings.pstorage_enabled != "disabled"%}checked{%endif%}>
+            <label class="form-check-label" for="pstorage_enabled">Enable</label>
+         </div>
+         <div class="form-group row">
+            <label for='pstorage_polling' class="col-sm-1 col-form-label text-right">Port</label>
+             <div class="col-sm-4">
+                <input type='number' id='pstorage_polling' name='pstorage_polling' class="form-control"
+                   value='{{c.settings.pstorage_polling}}'
+                   min="0" max="65535" >
+             </div>
+         </div>
+     </fieldset>
+
+
+      <fieldset>
+         <legend>Slave Devices</legend>
+
+         <div class="form-group row">
+            <label for='slave_polling_period' class="col-sm-3 col-form-label text-right">Polling Period (ms)</label>
+             <div class="col-sm-4">
+                <input type='number' class="form-control" id='slave_polling_period' name='slave_polling_period' value='100' min="1" max="30000">
+             </div>
+         </div>
+
+          <div class="form-group row">
+            <label for='slave_polling_period' class="col-sm-3 col-form-label text-right">Timeout (ms)</label>
+              <div class="col-sm-4">
+                <input type='number' class="form-control" id='slave_timeout' name='slave_timeout' value='1000' min="500" max="30000" step="100">
+              </div>
+         </div>
+
+
+     </fieldset>
+
+
+
+    <label class="container">
+        <b>Start OpenPLC in RUN mode</b>
+        <input id="auto_run" type="checkbox">
+        <span class="checkmark"></span>
+    </label>
+    <input type='hidden' value='false' id='auto_run_text' name='auto_run_text'/>
+
+
+      <button type="submit" class="btn btn-primary">Submit</button>
+
+</form>
+
+<script type="text/javascript" src="/static/openplc_js/settings.js"></script>
+
+{% endblock content %}

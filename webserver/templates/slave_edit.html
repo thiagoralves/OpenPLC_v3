@@ -1,0 +1,123 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "Add New Device" %}
+
+
+
+{% block content %}
+
+
+<form id="slave_form" action="/slave/{{c.dev_id}}" method="POST" onsubmit="return validateForm()">
+<div class="row">
+    <div class="col">
+
+        <div class="form-group">
+            <label for='dev_name'>Device Name</label>
+            <input type='text' class="form-control" id='dev_name' name='dev_name' required value="{{c.device.dev_name}}">
+        </div>
+
+        <div class="form-group">
+            <label for='dev_type'>Device Type</label>
+            <select id='dev_type' class="form-control" name='dev_type'>
+                {% for dp in c.DEVICE_PROTOCOLS %}
+                    <option {% if c.device.dev_type == dp.protocol %} selected='selected'{%endif%} value='{{dp.protocol}}'>{{dp.label}}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for='slave_id'>Slave ID</label>
+            <input type='number' class="form-control" id='slave_id' name='slave_id' placeholder='0'
+                   min="0" max="256" required value="{{c.device.slave_id}}">
+        </div>
+
+        <div id="tcp-stuff">
+            <div class="form-group">
+                <label for='ip_address'>IP Address</label>
+                <input type='text' class="form-control" id='ip_address' name='ip_address'
+                       placeholder='eg 192.168.1.1' value="{{c.device.dev_ip}}">
+            </div>
+            <div class="form-group">
+                <label for='ip_port'>IP Port</label>
+                <input type='number' class="form-control" id='ip_port' name='ip_port'
+                       placeholder='eg 502' value="{{c.device.dev_port}}">
+            </div>
+        </div>
+        <div id="rtu-stuff">
+            <div class="form-group">
+
+                <label for='com_port'>COM Port</label>
+                <select id='com_port' class="form-control" name='com_port' value="{{c.device.com_port}}">
+                </select>
+            </div>
+             <!--suppress BuyFluidPluginNoteInspection -->
+            <div class="form-group">
+                <label for='baud_rate'>Baud Rate</label>
+                <input type='number' class="form-control" id='baud_rate' name='baud_rate' value="{{c.device.baud_rate}}">
+             </div>
+             <div class="form-group">
+                <label for='parity'>Parity</label>
+                <select id='parity' class="form-control" name='parity'>
+                    <option value='None'>None</option>
+                    <option value='Even'>Even</option>
+                    <option value='Odd'>Odd</option>
+                </select>
+             </div>
+             <div class="form-group">
+                <label for='data_bits'>Data Bits</label>
+                <input type='number' class="form-control" id='data_bits' name='data_bits' placeholder='eg 8'>
+             </div>
+             <div class="form-group">
+                <label for='stop_bits'>Stop Bits</label>
+                <input type='number' class="form-control" id='stop_bits' name='stop_bits' placeholder='eg 1'>
+             </div>
+        </div>
+
+
+
+    </div>
+    <div class="col">
+
+        {% for rec in c.IO_PREFIXES %}
+
+        <fieldset>
+            <legend>{{rec.label}}</legend>
+            <div class="form-group row">
+
+                {% set fstart = rec.prefix + "_start" %}
+                <label for='{{fstart}}' class="col-sm-4 col-form-label">Start Address:</label>
+                <div class="col-sm-2">
+                    <input type='text' class="form-control" required value="{{c.device[fstart]}}"
+                           id='{{fstart}}' name='{{fstart}}'>
+                </div>
+
+                {% set fsize = rec.prefix + "_size" %}
+                <label for='{{fsize}}' class="col-sm-2 col-form-label">Size:</label>
+                <div class="col-sm-3">
+                    <input type='number' class="form-control"
+                           value="{{c.device[fsize]}}"
+                           required min="8" max="9999"
+                           id='{{fsize}}' name='{{fsize}}'>
+                </div>
+            </div>
+        </fieldset>
+        {% endfor %}
+
+    </div>
+</div>
+ <center><input type="submit" class="btn btn-primary"  value='Save device'></center>
+</form>
+
+{## Delete Form ==============================#}
+<form action="/slave/{{c.dev_id}}/remove" method="POST" onsubmit="return confirm('Are you sure ?');">
+    <input type="hidden" name="dev_id" value="{{c.dev_id}}">
+    <input type="hidden" name="action" value="do_delete">
+    <div class="form-group">
+        <input type="submit" class="btn btn-danger" value='Remove Slave' sonclick="checkDelete();">
+     </div>
+</form>
+
+<script type="text/javascript" src="/static/openplc_js/slave_edit.js"></script>
+
+{% endblock content %}

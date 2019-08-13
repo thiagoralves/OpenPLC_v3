@@ -1,0 +1,45 @@
+
+{% extends "BASE.html" %}
+
+{% set title = "Dashboard" %}
+
+
+{% block content %}
+
+<table  class="table table-bordered table-sm" style="max-width: 50%">
+<col width="50%"><col width="50%">
+<tr>
+    <th class="table-dark text-right">Status:</th>
+    <th><span class="{{runtime.status()}}">{{runtime.status()}}</span></th>
+</tr>
+<tr>
+    <th class="table-dark text-right">Program:</th>
+    <th>{{runtime.project_name}}</th>
+</tr>
+<tr>
+    <th class="table-dark text-right">Description:</th>
+    <th>{{runtime.project_description}}</th>
+</tr>
+<tr>
+    <th class="table-dark text-right">File:</th>
+    <th>{{runtime.project_file}}</th>
+</tr>
+<tr>
+    <th class="table-dark text-right">Runtime:</th>
+    <th>{{runtime.exec_time()}}</th>
+</tr>
+</table>
+
+
+
+<br>
+<br>
+<h2>Runtime Logs</h2>
+<textarea wrap='off' spellcheck='false' id='mytextarea'>
+loading logs...
+</textarea>
+<div class='tooltip' style='margin: 5px 0px 0px 0px'>
+    <button class='button' style='height:45px; padding-top:10px' onclick='copyClipboard()' onmouseout='outFunc()'><span class='tooltiptext' id='myTooltip'>Copy to clipboard</span>Copy logs</button>
+</div>
+
+{% endblock content %}

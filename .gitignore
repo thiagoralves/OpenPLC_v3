@@ -39,3 +39,5 @@ etc/
 
 # Misc
 install_log.txt
+
+*.css.map
