@@ -57,14 +57,6 @@ def validate(data, schema_name):
         return None
 
     except jsonschema.ValidationError as e:
-        #print("_---------------------")
-        #print(e)
-        #print"(---------------------"
-        #print(e.message)
-        #print(e.schema)
-        #print(e.cause)
-        #print(e.schema_path)
-        #print(e.path)
         return "%s: %s" % (e.path, e.message)
 
 
@@ -79,21 +71,21 @@ def validate(data, schema_name):
 
 # The ultimate settings, mayve this should come from schema
 defaultSettings = dict(
-    modbus_enabled="false",
+    modbus_enabled=False,
     modbus_port=502,
 
-    dnp3_enabled="false",
+    dnp3_enabled=False,
     dnp3_port=20000,
 
-    enip_enabled="false",
+    enip_enabled=False,
     enip_port=20000,
 
-    Pstorage_enabled="false",
-    Pstorage_polling=10,
+    pstorage_enabled=False,
+    pstorage_polling=10,
 
-    Start_run_mode="false",
-    Slave_polling=100,
-    Slave_timeout=1000
+    start_run_mode=False,
+    slave_polling=100,
+    slave_timeout=1000
 )
 
 settings = {}

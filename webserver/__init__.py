@@ -11,7 +11,7 @@ BIN_DIR = os.path.abspath(os.path.join(ROOT_DIR, "bin"))
 ETC_DIR = os.path.abspath(os.path.join(ROOT_DIR, "etc"))
 SCRIPTS_DIR = os.path.abspath(os.path.join(ROOT_DIR, "scripts"))
 
-CURR_PLATFORM_FILE = os.path.abspath(os.path.join(ETC_DIR, 'openplc_platform'))
-CURR_DRIVER_FILE = os.path.abspath(os.path.join(ETC_DIR, 'openplc_driver'))
-CURR_PROGRAM_FILE = os.path.abspath(os.path.join(ETC_DIR, 'active_program'))
+CURR_PLATFORM_FILE = os.path.abspath(os.path.join(ETC_DIR, 'openplc_platform.txt'))
+CURR_DRIVER_FILE = os.path.abspath(os.path.join(ETC_DIR, 'openplc_driver.txt'))
+CURR_PROGRAM_FILE = os.path.abspath(os.path.join(ETC_DIR, 'active_program.txt'))
 
