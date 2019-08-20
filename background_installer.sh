@@ -233,7 +233,7 @@ elif [ "$1" == "linux" ]; then
     linux_install_deps sudo
     
     install_py_deps
-    install_py_deps sudo
+    install_py_deps "sudo -H"
 
     install_all_libs sudo
 
@@ -265,7 +265,7 @@ elif [ "$1" == "rpi" ]; then
     sudo apt-get install -y wiringpi
 
     install_py_deps
-    install_py_deps sudo 
+    install_py_deps "sudo -H" 
 
     install_all_libs sudo
 
@@ -293,7 +293,7 @@ elif [ "$1" == "neuron" ]; then
     linux_install_deps sudo
     
     install_py_deps
-    install_py_deps sudo
+    install_py_deps "sudo -H"
 
     install_all_libs sudo
 
