@@ -818,10 +818,6 @@ monitoring_tail = """
                     //Start a new update timer
                     timeoutID = setTimeout('loadData()', 100);
                 }
-                else
-                {
-                    runtime_logs.value = 'There was a problem retrieving the logs. Error: ' + req.statusText;
-                }
             }
         }
         
