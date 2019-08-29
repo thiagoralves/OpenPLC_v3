@@ -748,16 +748,59 @@ monitoring_head = """
             font-family: arial, sans-serif;
         }
         
-        input[type=text], input[type=password], select, textarea {
-            width: 100%;
-            padding: 12px 20px;
-            margin: 8px 0;
-            display: inline-block;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+        .form-inline 
+		{  
+			display: flex;
+			flex-flow: row wrap;
+			align-items: center;
+		}
+
+		.form-inline label 
+		{
+			margin: 5px 10px 5px 0;
+			width: 130px;
+		}
+
+		.form-inline input 
+		{
+			vertical-align: middle;
+			margin: 5px 10px 5px 0;
+			padding: 10px;
+			width: calc(100% - 250px);
+			background-color: #fff;
+			border: 1px solid #ddd;
+		}
+
+		.form-inline button 
+		{
+			padding: 10px 20px;
+			background-color: #E02222;
+			width: 100px;
+			border: 1px solid #1F1F1F;
+			color: white;
+			cursor: pointer;
+			font-size: 14px;
             font-family: "Roboto", sans-serif;
-        }
+		}
+
+		.form-inline button:hover 
+		{
+			background-color: #B51A1A;
+		}
+
+		@media (max-width: 800px) 
+		{
+			.form-inline input 
+			{
+				margin: 10px 0;
+			}
+
+			.form-inline 
+			{
+				flex-direction: column;
+				align-items: stretch;
+			}
+		}
         </style>
         <body onload='loadData()'>"""
 
@@ -772,6 +815,7 @@ monitoring_tail = """
     
     <script>
         var req;
+        var refresh_rate = 100;
         
         function loadData()
         {
@@ -802,6 +846,18 @@ monitoring_tail = """
             req.send(null);
         }
         
+        function updateRefreshRate()
+        {
+			html_refresh_text = document.getElementById('refresh_rate');
+            refresh_rate = parseInt(html_refresh_text.value);
+            if (refresh_rate < 100)
+            {
+                refresh_rate = 100
+            }
+			
+			html_refresh_text.value = refresh_rate;
+        }
+        
         function processReqChange()
         {
             //If req shows 'complete'
@@ -816,11 +872,10 @@ monitoring_tail = """
                     mon_table.innerHTML = req.responseText;
                     
                     //Start a new update timer
-                    timeoutID = setTimeout('loadData()', 100);
+                    timeoutID = setTimeout('loadData()', refresh_rate);
                 }
             }
         }
-        
     </script>
 </html>"""
 

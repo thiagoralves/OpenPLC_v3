@@ -11,6 +11,7 @@ import pages
 import openplc
 import monitoring as monitor
 import sys
+import ctypes
 
 import flask 
 import flask_login
@@ -1311,7 +1312,12 @@ def monitoring():
                 <div style="w3-container">
                     <br>
                     <h2>Monitoring</h2>
-                    <p>The table below displays a list of the OpenPLC points used by the currently running program. By clicking in one of the listed points it is possible to see more information about it and also to force it to be a different value.</p>
+                    <form class="form-inline">
+						<label for="refresh_rate">Refresh Rate (ms):</label>
+						<input type="text" id="refresh_rate" value="100" name="refresh_rate">
+						<button type="button" onclick="updateRefreshRate()">Update</button>
+					</form>
+					<br>
                     <div id='monitor_table'>
                         <table>
                             <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
@@ -1330,9 +1336,17 @@ def monitoring():
                         return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
                     else:
                         return_str += '<img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</td>'
-                else:
+                elif (debug_data.type == 'UINT'):
                     percentage = (debug_data.value*100)/65535
                     return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
+                elif (debug_data.type == 'INT'):
+                    percentage = ((debug_data.value + 32768)*100)/65535
+                    debug_data.value = ctypes.c_short(debug_data.value).value
+                    return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
+                elif (debug_data.type == 'REAL') or (debug_data.type == 'LREAL'):
+                    return_str += "{:10.4f}".format(debug_data.value)
+                else:
+                    return_str += str(debug_data.value)
                 return_str += '</tr>'
                 data_index += 1
             return_str += pages.monitoring_tail
@@ -1374,9 +1388,17 @@ def monitor_update():
                         return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
                     else:
                         return_str += '<img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</td>'
-                else:
+                elif (debug_data.type == 'UINT'):
                     percentage = (debug_data.value*100)/65535
                     return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
+                elif (debug_data.type == 'INT'):
+                    percentage = ((debug_data.value + 32768)*100)/65535
+                    debug_data.value = ctypes.c_short(debug_data.value).value
+                    return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
+                elif (debug_data.type == 'REAL') or (debug_data.type == 'LREAL'):
+                    return_str += "{:10.4f}".format(debug_data.value)
+                else:
+                    return_str += str(debug_data.value)
                 return_str += '</tr>'
                 data_index += 1
         

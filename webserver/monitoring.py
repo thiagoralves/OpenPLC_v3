@@ -1,4 +1,5 @@
 import time, threading
+from struct import *
 from pymodbus.client.sync import ModbusTcpClient
 
 class debug_var():
@@ -72,11 +73,41 @@ def modbus_monitor():
             
         elif (debug_data.location.find('MD')) > 0:
             #Reading Double Memory
-            print('hi')
-            
+            mb_address = debug_data.location.split('%MD')[1]
+            result = mb_client.read_holding_registers((int(mb_address)*2) + 2048, 2)
+            if (debug_data.type == 'SINT') or (debug_data.type == 'INT') or (debug_data.type == 'DINT'):
+                #signed integer
+                float_pack = pack('>HH', result.registers[0], result.registers[1])
+                debug_data.value = unpack('>i', float_pack)[0]
+                
+            if (debug_data.type == 'USINT') or (debug_data.type == 'UINT') or (debug_data.type == 'UDINT'):
+                #unsigned integer
+                float_pack = pack('>HH', result.registers[0], result.registers[1])
+                debug_data.value = unpack('>I', float_pack)[0]
+                
+            if (debug_data.type == 'REAL'):
+                #32-bit float
+                float_pack = pack('>HH', result.registers[0], result.registers[1])
+                debug_data.value = unpack('>f', float_pack)[0]
+                
         elif (debug_data.location.find('ML')) > 0:
             #Reading Long Memory
-            print('hi')
+            mb_address = debug_data.location.split('%ML')[1]
+            result = mb_client.read_holding_registers((int(mb_address)*4) + 4096, 4)
+            if (debug_data.type == 'SINT') or (debug_data.type == 'INT') or (debug_data.type == 'DINT') or (debug_data.type == 'LINT'):
+                #signed integer
+                float_pack = pack('>HHHH', result.registers[0], result.registers[1], result.registers[2], result.registers[3])
+                debug_data.value = unpack('>q', float_pack)[0]
+                
+            if (debug_data.type == 'USINT') or (debug_data.type == 'UINT') or (debug_data.type == 'UDINT') or (debug_data.type == 'ULINT'):
+                #unsigned integer
+                float_pack = pack('>HHHH', result.registers[0], result.registers[1], result.registers[2], result.registers[3])
+                debug_data.value = unpack('>Q', float_pack)[0]
+                
+            if (debug_data.type == 'REAL') or (debug_data.type == 'LREAL'):
+                #64-bit float
+                float_pack = pack('>HHHH', result.registers[0], result.registers[1], result.registers[2], result.registers[3])
+                debug_data.value = unpack('>d', float_pack)[0]
             
     
     if (monitor_active == True):
