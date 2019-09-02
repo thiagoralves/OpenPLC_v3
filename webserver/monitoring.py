@@ -26,7 +26,14 @@ def parse_st(st_file):
             debug_data.name = tmp[0]
             debug_data.location = tmp[2]
             debug_data.type = tmp[4].split(';')[0]
-            debug_vars.append(debug_data)
+            
+            #don't add special functions (%ML1024 and up) as they are not accessible
+            if (debug_data.location.find('ML')) > 0:
+                mb_address = debug_data.location.split('%ML')[1]
+                if (int(mb_address) < 1024):
+                    debug_vars.append(debug_data)
+            else:
+                debug_vars.append(debug_data)
     
     for debugs in debug_vars:
         print('Name: ' + debugs.name)
