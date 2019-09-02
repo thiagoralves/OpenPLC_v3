@@ -41,7 +41,7 @@ IEC_BOOL __DEBUG;
 
 IEC_LINT cycle_counter = 0;
 
-static int tick = 0;
+unsigned long __tick = 0;
 pthread_mutex_t bufferLock; //mutex for the internal buffers
 pthread_mutex_t logLock; //mutex for the internal log
 uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
@@ -263,7 +263,7 @@ int main(int argc,char **argv)
 		updateCustomIn();
         updateBuffersIn_MB(); //update input image table with data from slave devices
         handleSpecialFunctions();
-		config_run__(tick++); // execute plc program logic
+		config_run__(__tick++); // execute plc program logic
 		updateCustomOut();
         updateBuffersOut_MB(); //update slave devices with data from the output image table
 		pthread_mutex_unlock(&bufferLock); //unlock mutex
