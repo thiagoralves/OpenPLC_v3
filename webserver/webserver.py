@@ -1413,7 +1413,7 @@ def point_info():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        #if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         point_id = flask.request.args.get('table_id')
         debug_data = monitor.debug_vars[int(point_id)]
         return_str = pages.w3_style + pages.settings_style + draw_top_div()
@@ -1490,7 +1490,7 @@ def point_update():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        #if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         point_id = flask.request.args.get('table_id')
         debug_data = monitor.debug_vars[int(point_id)]
         return_str = """
