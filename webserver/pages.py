@@ -879,6 +879,97 @@ monitoring_tail = """
     </script>
 </html>"""
 
+point_info_tail = """
+                        <br>
+                        <br>
+                        <br>
+                        <br>
+                        <center><input type="submit" value="Save Changes" class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"></center>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+    
+    <script type="text/javascript">
+        var req;
+        
+        window.onload = function()
+        {
+            setupSelector();
+            loadData();
+        }
+        
+        function setupSelector()
+        {
+            var checkbox_element = document.getElementById('force_checkbox');
+            var selector_element = document.getElementById('forced_value');
+            if (checkbox_element.checked == true)
+            {
+                selector_element.disabled = false;
+            }
+            else
+            {
+                selector_element.disabled = true;
+            }
+        }
+
+        document.getElementById('force_checkbox').onchange = function()
+        {
+            setupSelector();
+        }
+        
+        function loadData()
+        {
+            table_id = document.getElementById('point_id').value;
+            url = 'point-update?table_id=' + table_id;
+            try
+            {
+                req = new XMLHttpRequest();
+            } catch (e) 
+            {
+                try
+                {
+                    req = new ActiveXObject('Msxml2.XMLHTTP');
+                } catch (e) 
+                {
+                    try 
+                    {
+                        req = new ActiveXObject('Microsoft.XMLHTTP');
+                    } catch (oc) 
+                    {
+                        alert('No AJAX Support');
+                        return;
+                    }
+                }
+            }
+            
+            req.onreadystatechange = processReqChange;
+            req.open('GET', url, true);
+            req.send(null);
+        }
+        
+        function processReqChange()
+        {
+            //If req shows 'complete'
+            if (req.readyState == 4)
+            {
+                mon_point = document.getElementById('monitor_point');
+                
+                //If 'OK'
+                if (req.status == 200)
+                {
+                    //Update table contents
+                    mon_point.innerHTML = req.responseText;
+                    
+                    //Start a new update timer
+                    timeoutID = setTimeout('loadData()', 500);
+                }
+            }
+        }
+    </script>
+</html>"""
+
 add_user_tail = """
             </div>
             <div style="margin-left:320px; margin-right:70px">

@@ -1406,8 +1406,122 @@ def monitor_update():
                         </table>"""
         
         return return_str
-            
-            
+
+
+@app.route('/point-info', methods=['GET', 'POST'])
+def point_info():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        point_id = flask.request.args.get('table_id')
+        debug_data = monitor.debug_vars[int(point_id)]
+        return_str = pages.w3_style + pages.settings_style + draw_top_div()
+        return_str += """
+            <div class='main'>
+                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
+                    <br>
+                    <br>
+                    <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
+                    <a href='programs' class='w3-bar-item w3-button'><img src='/static/programs-icon-64x64.png' alt='Programs' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
+                    <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
+                    <a href="monitoring" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/monitoring-icon-64x64.png" alt="Monitoring" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Monitoring</p></a>                    
+                    <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
+                    <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
+                    <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
+                    <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
+                    <br>
+                    <br>"""
+        return_str += draw_status()
+        return_str += """
+        </div>
+            <div style="margin-left:320px; margin-right:70px">
+                <div style="w3-container">
+                    <br>
+                    <h2>Point Details</h2>
+                    <br>
+                    <div id='monitor_point'>
+                        <input type='hidden' value='""" + point_id + """' id='point_id' name='point_id'/>
+                        <p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Point Name:</b> """ + debug_data.name + """</p>
+                        <p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Type:</b> """ + debug_data.type + """</p>
+                        <p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Location:</b> """ + debug_data.location + "</p>"
+        if (debug_data.type == 'BOOL'):
+            if (debug_data.value == 0):
+                return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Status:</b> <img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</p>"""
+            else:
+                return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Status:</b> <img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</p>"""
+        elif (debug_data.type == 'UINT'):
+            percentage = (debug_data.value*100)/65535
+            return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Value: </b> <div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:""" + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></p>'
+        elif (debug_data.type == 'INT'):
+            percentage = ((debug_data.value + 32768)*100)/65535
+            debug_data.value = ctypes.c_short(debug_data.value).value
+            return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Value: </b> <div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:""" + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></p>'
+        elif (debug_data.type == 'REAL') or (debug_data.type == 'LREAL'):
+            return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Value: </b>""" + "{:10.4f}".format(debug_data.value) + "</p>"
+        else:
+            return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Value: </b>""" + str(debug_data.value) + "</p>"
+        
+        return_str += """<br>
+                        <br>
+                    </div>
+                    <form action="/monitoring" method="post">
+                        <label class="container">
+                            <b>Force Point Value: </b>
+                            <input id="force_checkbox" type="checkbox">
+                            <span class="checkmark"></span>
+                        </label>"""
+        if (debug_data.type == 'BOOL'):
+            return_str += """
+                        <select id='forced_value' name='forced_value' style="width:200px;height:30px;font-size: 16px;font-family: 'Roboto', sans-serif;">
+                            <option selected='selected' value='TRUE'>TRUE</option>
+                            <option value='FALSE'>FALSE</option>
+                        </select>"""
+        else:
+            return_str += """
+                        <input type='text' id='forced_value' name='forced_value' style="width:200px;height:30px;font-size: 16px;font-family: 'Roboto', sans-serif;" value='0'>
+                        """
+        return_str += pages.point_info_tail
+        return return_str
+
+
+@app.route('/point-update', methods=['GET', 'POST'])
+def point_update():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        point_id = flask.request.args.get('table_id')
+        debug_data = monitor.debug_vars[int(point_id)]
+        return_str = """
+                        <input type='hidden' value='""" + point_id + """' id='point_id' name='point_id'/>
+                        <p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Point Name:</b> """ + debug_data.name + """</p>
+                        <p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Type:</b> """ + debug_data.type + """</p>
+                        <p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Location:</b> """ + debug_data.location + "</p>"
+        if (debug_data.type == 'BOOL'):
+            if (debug_data.value == 0):
+                return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Status:</b> <img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</p>"""
+            else:
+                return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Status:</b> <img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</p>"""
+        elif (debug_data.type == 'UINT'):
+            percentage = (debug_data.value*100)/65535
+            return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Value: </b> <div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:""" + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></p>'
+        elif (debug_data.type == 'INT'):
+            percentage = ((debug_data.value + 32768)*100)/65535
+            debug_data.value = ctypes.c_short(debug_data.value).value
+            return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Value: </b> <div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:""" + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></p>'
+        elif (debug_data.type == 'REAL') or (debug_data.type == 'LREAL'):
+            return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Value: </b>""" + "{:10.4f}".format(debug_data.value) + "</p>"
+        else:
+            return_str += """<p style='font-family:"Roboto", sans-serif; font-size:16px'><b>Value: </b>""" + str(debug_data.value) + "</p>"
+        
+        return_str += """<br>
+                        <br>"""
+        return return_str
+
+
+
+
 @app.route('/hardware', methods=['GET', 'POST'])
 def hardware():
     if (flask_login.current_user.is_authenticated == False):

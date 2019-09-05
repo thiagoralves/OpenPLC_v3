@@ -57,7 +57,10 @@ def modbus_monitor():
         elif (debug_data.location.find('QX')) > 0:
             #Reading Coils
             mb_address = debug_data.location.split('%QX')[1].split('.')
-            result = mb_client.read_coils(int(mb_address[0])*8 + int(mb_address[1]), 1)
+            if (len(mb_address) < 2):
+                result = mb_client.read_coils(int(mb_address[0])*8, 1)
+            else:
+                result = mb_client.read_coils(int(mb_address[0])*8 + int(mb_address[1]), 1)
             debug_data.value = result.bits[0]
             
         elif (debug_data.location.find('IW')) > 0:
