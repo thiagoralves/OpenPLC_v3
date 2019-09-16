@@ -25,6 +25,7 @@
 
 #include <pthread.h>
 #include <stdint.h>
+#include "enipStruct.h"	//This header file contains necessary structs for enip.cpp
 
 #define MODBUS_PROTOCOL     0
 #define DNP3_PROTOCOL       1
@@ -142,6 +143,9 @@ void mapUnusedIO();
 
 //enip.cpp
 int processEnipMessage(unsigned char *buffer, int buffer_size);
+
+//pccc.cpp ADDED Ulmer
+uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size);
 
 //modbus_master.cpp
 void initializeMB();
