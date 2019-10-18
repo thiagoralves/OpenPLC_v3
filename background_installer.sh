@@ -110,7 +110,7 @@ elif [ "$1" == "linux" ]; then
     echo "Installing OpenPLC on Linux"
     linux_install_deps sudo
     install_py_deps
-    install_py_deps sudo
+    install_py_deps "sudo -H"
 
     cmake_build_and_test
 
@@ -146,13 +146,14 @@ elif [ "$1" == "docker" ]; then
 
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
+
     linux_install_deps sudo
     sudo apt-get install -y wiringpi
+
     install_py_deps
-    install_py_deps sudo 
-    
-    cmake_build_and_test   
-    
+    install_py_deps "sudo -H" 
+
+    cmake_build_and_test
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
         exit 1
@@ -178,9 +179,10 @@ elif [ "$1" == "neuron" ]; then
     sudo systemctl stop evok.service
     sudo systemctl disable evok.service
     
-    linux_install_deps sudo    
+    linux_install_deps sudo
+
     install_py_deps
-    install_py_deps sudo
+    install_py_deps sudo "sudo -H"
     
     cmake_build_and_test  
     

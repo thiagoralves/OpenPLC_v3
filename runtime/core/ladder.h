@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <cstdint>
 #include <mutex>
+#include "enipStruct.h"	//This header file contains necessary structs for enip.cpp
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -148,6 +149,9 @@ void mapUnusedIO();
 
 //enip.cpp
 int processEnipMessage(unsigned char *buffer, int buffer_size);
+
+//pccc.cpp ADDED Ulmer
+uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size);
 
 //modbus_master.cpp
 void initializeMB();
