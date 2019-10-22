@@ -22,6 +22,15 @@ project(openplc_project)
 # so include that capability for cmake
 include(ExternalProject)
 
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+    "Choose a build type from: Debug Release RelWithDebInfo MinSizeRel"
+    FORCE)
+endif()
+
+message("Build type is ${CMAKE_BUILD_TYPE}")
+
 # Include settings that are specific to a particular target environment
 include(${PROJECT_SOURCE_DIR}/cmake/settings.cmake)
 
@@ -173,6 +182,7 @@ endif()
 # work nicely.
 if(OPLC_DNP3_OUTSTATION)
     message("Build and install OpenDNP3 enabled")
+    add_definitions(-DOPLC_DNP3_OUTSTATION)
     add_subdirectory(utils/dnp3_src)
     include_directories(utils/dnp3_src/cpp/libs/include)
 endif()

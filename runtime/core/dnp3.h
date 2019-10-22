@@ -12,50 +12,140 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_DNP3_H_
-#define CORE_DNP3_H_
+#ifndef CORE_DNP3_DNP3_H_
+#define CORE_DNP3_DNP3_H_
 
 #include <cstdint>
 #include <istream>
+#include <mutex>
+#include <utility>
 #include <sstream>
 #include <string>
+
+namespace asiodnp3 {
+class OutstationStackConfig;
+}
+
+struct GlueVariable;
+struct GlueVariablesBinding;
 
 /** \addtogroup openplc_runtime
  *  @{
  */
 
+typedef const GlueVariable ConstGlueVariable;
+
 ////////////////////////////////////////////////////////////////////////////////
-/// \brief Defines an offest mapping for DNP3 to glue variables.
-///
-/// This structure allows you to specify valid ranges for
-/// the glue mapping. This could allow you to divide up
-/// the glue into multiple outstations.
+/// @brief Defines a list of mapped variables for a particular group.
+/// These are indexed for fast lookup based on the point index number and are
+/// therefore used for commands that are received from the DNP3 master.
 ////////////////////////////////////////////////////////////////////////////////
-struct Dnp3Range {
-    std::uint16_t inputs_start;
-    std::uint16_t inputs_end;
-    std::int16_t inputs_offset;
+struct Dnp3IndexedGroup {
+    /// The size of the items array
+    std::uint16_t size;
+    /// The items array. Members in this array may be nullptr if they are
+    /// not mapped to a glue variable.
+    ConstGlueVariable** items;
+};
 
-    std::uint16_t outputs_start;
-    std::uint16_t outputs_end;
-    std::int16_t outputs_offset;
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Defines a glue variable that is mapped to a particular group and
+/// variation for DNP3.
+////////////////////////////////////////////////////////////////////////////////
+struct DNP3MappedGlueVariable {
+    /// The DNP3 group for this variable.
+    std::uint8_t group;
+    /// The DNP3 point index number for this variable.
+    std::uint16_t point_index_number;
+    /// The located variable that is glued to location.
+    const GlueVariable* variable;
+};
 
-    std::uint16_t bool_inputs_start;
-    std::uint16_t bool_inputs_end;
-    std::int16_t bool_inputs_offset;
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Defines the list of variables that are mapped from located variables
+/// to DNP3. You can essentially iterate over this list to find every
+/// located variable that is mapped.
+////////////////////////////////////////////////////////////////////////////////
+struct Dnp3MappedGroup {
+    /// The size of the items array
+    std::uint16_t size;
+    /// The items array. Members in this array may be nullptr if they are
+    /// not mapped to a glue variable.
+    DNP3MappedGlueVariable* items;
 
-    std::uint16_t bool_outputs_start;
-    std::uint16_t bool_outputs_end;
-    std::int16_t bool_outputs_offset;
-
-    std::string ToString() {
-        std::stringstream ss;
-        ss << "DNP3 range (S,E,O) " << "I: " << this->inputs_start << ' ' << this->inputs_end << ' ' << this->inputs_offset;
-        ss << "; O: " << this->outputs_start << ' ' << this->outputs_end << ' ' << this->outputs_offset;
-        ss << "; BI: " << this->bool_inputs_start << ' ' << this->bool_inputs_end << ' ' << this->bool_inputs_offset;
-        ss << "; BO: " << this->bool_outputs_start << ' ' << this->bool_outputs_end << ' ' << this->bool_outputs_offset;
-        return ss.str();
+    /// Gets the number of items in the specified group.
+    std::uint16_t group_size(const std::uint8_t group) {
+        std::uint16_t num(0);
+        for (std::uint16_t i(0); i < size; ++i) {
+            if (items[i].group == group) {
+                num += 1;
+            }
+        }
+        return num;
     }
 };
 
-#endif  // CORE_DNP3_H_
+////////////////////////////////////////////////////////////////////////////////
+/// @brief The mapping of glue variables into this DNP3 outstation.
+////////////////////////////////////////////////////////////////////////////////
+struct Dnp3BoundGlueVariables {
+    Dnp3BoundGlueVariables(
+        std::mutex* buffer_lock,
+        std::uint16_t binary_commands_size,
+        std::uint16_t analog_commands_size,
+        std::uint16_t measurements_size
+    ) :
+
+        buffer_lock(buffer_lock),
+        binary_commands({ .size=0, .items=nullptr }),
+        analog_commands({ .size=0, .items=nullptr }),
+        measurements({ .size=0, .items=nullptr })
+    {}
+
+    /// @brief Mutex for the glue variables associated with this structures.
+    std::mutex* buffer_lock;
+
+    /// @brief Structure of bound glue variables for binary commands
+    Dnp3IndexedGroup binary_commands;
+    /// @brief Structure of bound glue variables for analog commands
+    Dnp3IndexedGroup analog_commands;
+
+    /// @brief All measurements that are sent from this outstation to the
+    /// master.
+    Dnp3MappedGroup measurements;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Create the outstation stack configuration using the configration
+/// settings as specified in the stream.
+/// @param cfg_stream The stream to read for configuration settings.
+/// @param binding The mutex for exclusive access to glue variable values.
+/// @return The configuration represented by the stream and any defaults and
+///         the range mapping.
+////////////////////////////////////////////////////////////////////////////////
+asiodnp3::OutstationStackConfig dnp3_create_config(std::istream& cfg_stream,
+                        const GlueVariablesBinding& binding,
+                        Dnp3IndexedGroup& binary_commands,
+                        Dnp3IndexedGroup& analog_commands,
+                        Dnp3MappedGroup& measurements);
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Start the DNP3 server running on the specified port and configured
+/// using the specified stream.
+///
+/// The stream is specified as a function so that this function will close the
+/// stream as soon as it is done with the stream.
+/// @param port The port to listen on.
+/// @param cfg_stream An input stream to read configuration information
+///                   from. This will be reset once use of the stream has
+///                   been completed.
+/// @param run A signal for running this server. This server terminates when
+///            this signal is false.
+/// @param glue_variables The glue variables that may be bound into this
+///                       server.
+void dnp3StartServer(int port,
+                     std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+                     bool* run,
+                     const GlueVariablesBinding& glue_variables);
+
+#endif  // CORE_DNP3_DNP3_H_

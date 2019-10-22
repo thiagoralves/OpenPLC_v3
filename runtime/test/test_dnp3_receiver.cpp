@@ -18,17 +18,15 @@
 
 #include "dnp3_receiver.h"
 #include "glue.h"
-#include "glue_test_helpers.h"
 
+using namespace std;
 using namespace opendnp3;
 
 SCENARIO("dnp3 receiver", "Receiver") {
-
-    auto variables = make_vars();
-    auto range = Dnp3Range{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
+    Dnp3IndexedGroup binary_commands = {0};
+    Dnp3IndexedGroup analog_commands = {0};
     GIVEN("No glue range") {
-		Dnp3Receiver receiver(variables, range);
+        Dnp3Receiver receiver(binary_commands, analog_commands);
         WHEN("Select ControlRelayOutputBlock") {
             ControlRelayOutputBlock crob;
             REQUIRE(receiver.Select(crob, 0) == CommandStatus::OUT_OF_RANGE);
@@ -55,10 +53,16 @@ SCENARIO("dnp3 receiver", "Receiver") {
         }
     }
 
-    GIVEN("One boolean output glue") {
-        range.bool_outputs_start = 0;
-        range.bool_outputs_end = 1;
-		Dnp3Receiver receiver(variables, range);
+    GIVEN("One boolean command") {
+        IEC_BOOL bool_val(0);
+        auto group = GlueBoolGroup { .index=0, .values={ &bool_val, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr } };
+
+        const GlueVariable glue_var = { IECLDT_IN, IECLST_BIT, 0, 0, IECVT_BOOL, &group };
+        const GlueVariable* glue_vars[] = { &glue_var };
+        binary_commands.size = 1;
+        binary_commands.items = glue_vars;
+
+    Dnp3Receiver receiver(binary_commands, analog_commands);
         WHEN("Select ControlRelayOutputBlock") {
             ControlRelayOutputBlock crob;
             REQUIRE(receiver.Select(crob, 0) == CommandStatus::SUCCESS);
@@ -70,7 +74,10 @@ SCENARIO("dnp3 receiver", "Receiver") {
             THEN("sets output to true") {
                 REQUIRE(receiver.Select(crob, 0) == CommandStatus::SUCCESS);
                 REQUIRE(receiver.Operate(crob, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
-                REQUIRE(*variables->bool_outputs[0]);
+
+                receiver.ExchangeGlue();
+
+                REQUIRE(bool_val);
             }
         }
 
@@ -80,18 +87,22 @@ SCENARIO("dnp3 receiver", "Receiver") {
             THEN("sets output to false") {
                 REQUIRE(receiver.Select(crob, 0) == CommandStatus::SUCCESS);
                 REQUIRE(receiver.Operate(crob, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
-                REQUIRE(!(*variables->bool_outputs[0]));
+
+                receiver.ExchangeGlue();
+
+                REQUIRE(!bool_val);
             }
         }
     }
 
     GIVEN("One analog 16 output glue") {
-        range.outputs_start = 0;
-        range.outputs_end = 1;
-		variables->outputs[0].type = IECVT_INT;
-		variables->outputs[0].value = new IEC_INT{ 0 };
-		Dnp3Receiver receiver(variables, range);
+        IEC_SINT int_val(0);
+        const GlueVariable glue_var = { IECLDT_IN, IECLST_BYTE, 0, 0, IECVT_SINT, &int_val };
+        const GlueVariable* glue_vars[] = { &glue_var };
+        analog_commands.size = 1;
+        analog_commands.items = glue_vars;
 
+    Dnp3Receiver receiver(binary_commands, analog_commands);
         WHEN("Select AnalogOutputInt16") {
             AnalogOutputInt16 aoi;
             REQUIRE(receiver.Select(aoi, 0) == CommandStatus::SUCCESS);
@@ -100,20 +111,25 @@ SCENARIO("dnp3 receiver", "Receiver") {
         WHEN("Operate AnalogOutputInt16 int value") {
             AnalogOutputInt16 aoi(9);
 
-            THEN("sets output to true") {
+            THEN("sets output to 9") {
                 REQUIRE(receiver.Select(aoi, 0) == CommandStatus::SUCCESS);
                 REQUIRE(receiver.Operate(aoi, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
-                REQUIRE(*reinterpret_cast<IEC_INT*>(variables->outputs[0].value) == 9);
+
+                receiver.ExchangeGlue();
+
+                REQUIRE(int_val == 9);
             }
         }
     }
 
     GIVEN("One analog 32 output glue") {
-        range.outputs_start = 0;
-        range.outputs_end = 1;
-		variables->outputs[0].type = IECVT_INT;
-		variables->outputs[0].value = new IEC_INT{ 0 };
-		Dnp3Receiver receiver(variables, range);
+        IEC_INT int_val(0);
+        const GlueVariable glue_var = { IECLDT_IN, IECLST_WORD, 0, 0, IECVT_INT, &int_val };
+        const GlueVariable* glue_vars[] = { &glue_var };
+        analog_commands.size = 1;
+        analog_commands.items = glue_vars;
+
+    Dnp3Receiver receiver(binary_commands, analog_commands);
 
         WHEN("Select AnalogOutputInt32") {
             AnalogOutputInt32 aoi;
@@ -126,17 +142,22 @@ SCENARIO("dnp3 receiver", "Receiver") {
             THEN("sets output to true") {
                 REQUIRE(receiver.Select(aoi, 0) == CommandStatus::SUCCESS);
                 REQUIRE(receiver.Operate(aoi, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
-                REQUIRE(*reinterpret_cast<IEC_INT*>(variables->outputs[0].value) == 9);
+
+                receiver.ExchangeGlue();
+
+                REQUIRE(int_val == 9);
             }
         }
     }
 
     GIVEN("One float 32 output glue") {
-        range.outputs_start = 0;
-        range.outputs_end = 1;
-		variables->outputs[0].type = IECVT_INT;
-		variables->outputs[0].value = new IEC_INT{ 0 };
-		Dnp3Receiver receiver(variables, range);
+        IEC_LINT int_val(0);
+        const GlueVariable glue_var = { IECLDT_IN, IECLST_DOUBLEWORD, 0, 0, IECVT_LINT, &int_val };
+        const GlueVariable* glue_vars[] = { &glue_var };
+        analog_commands.size = 1;
+        analog_commands.items = glue_vars;
+
+    Dnp3Receiver receiver(binary_commands, analog_commands);
 
         WHEN("Select AnalogOutputFloat32") {
             AnalogOutputFloat32 aoi;
@@ -149,30 +170,10 @@ SCENARIO("dnp3 receiver", "Receiver") {
             THEN("sets output to true") {
                 REQUIRE(receiver.Select(aoi, 0) == CommandStatus::SUCCESS);
                 REQUIRE(receiver.Operate(aoi, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
-                REQUIRE(*reinterpret_cast<IEC_INT*>(variables->outputs[0].value) == 9);
-            }
-        }
-    }
 
-    GIVEN("One double 64 output glue") {
-        range.outputs_start = 0;
-        range.outputs_end = 1;
-		variables->outputs[0].type = IECVT_INT;
-		variables->outputs[0].value = new IEC_INT{ 0 };
-		Dnp3Receiver receiver(variables, range);
+                receiver.ExchangeGlue();
 
-        WHEN("Select AnalogOutputDouble64") {
-            AnalogOutputDouble64 aoi;
-            REQUIRE(receiver.Select(aoi, 0) == CommandStatus::SUCCESS);
-        }
-
-        WHEN("Operate AnalogOutputDouble64 value") {
-            AnalogOutputDouble64 aoi(9);
-
-            THEN("sets output to true") {
-                REQUIRE(receiver.Select(aoi, 0) == CommandStatus::SUCCESS);
-                REQUIRE(receiver.Operate(aoi, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
-                REQUIRE(*reinterpret_cast<IEC_INT*>(variables->outputs[0].value) == 9);
+                REQUIRE(int_val == 9);
             }
         }
     }

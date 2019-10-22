@@ -17,15 +17,15 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-#include <string>
-#include <vector>
 #include <list>
+#include <string>
 
 using namespace std;
 
 /**
  * \defgroup glue_generator Glue Generator
- * @brief Glue generator produces a binding headers for connecting the MATIEC Structured Text to C application code to the OpenPLC runtime.
+ * @brief Glue generator produces a binding headers for connecting the MATIEC
+ * Structured Text to C application code to the OpenPLC runtime.
  *
  */
 
@@ -58,6 +58,31 @@ void generateHeader(ostream& glueVars) {
 TIME __CURRENT_TIME;
 extern unsigned long long common_ticktime__;
 
+#ifndef OPLC_IEC_GLUE_DIRECTION
+#define OPLC_IEC_GLUE_DIRECTION
+enum IecLocationDirection {
+    IECLDT_IN,
+    IECLDT_OUT,
+    IECLDT_MEM,
+};
+#endif  // OPLC_IEC_GLUE_DIRECTION
+
+#ifndef OPLC_IEC_GLUE_SIZE
+#define OPLC_IEC_GLUE_SIZE
+enum IecLocationSize {
+    /// Variables that are a single bit
+    IECLST_BIT,
+    /// Variables that are 1 byte
+    IECLST_BYTE,
+    /// Variables that are 2 bytes
+    IECLST_WORD,
+    /// Variables that are 4 bytes, including REAL
+    IECLST_DOUBLEWORD,
+    /// Variables that are 8 bytes, including LREAL
+    IECLST_LONGWORD,
+};
+#endif  // OPLC_IEC_GLUE_SIZE
+
 #ifndef OPLC_IEC_GLUE_VALUE_TYPE
 #define OPLC_IEC_GLUE_VALUE_TYPE
 enum IecGlueValueType {
@@ -76,16 +101,51 @@ enum IecGlueValueType {
     IECVT_LWORD,
     IECVT_LINT,
     IECVT_ULINT,
+    /// This is not a normal type and won't appear in the glue variables
+    /// here. But it does allow you to create your own indexed mapping
+    /// and have a way to indicate a value that is not assigned a type.
     IECVT_UNASSIGNED,
 };
 #endif  // OPLC_IEC_GLUE_VALUE_TYPE
 
+#ifndef OPLC_GLUE_BOOL_GROUP
+#define OPLC_GLUE_BOOL_GROUP
+/// Defines the mapping for a glued variable that is a boolean array.
+/// The boolean array is sub-indiced as a group, for example all of the
+/// values %IX0.0 through %IX0.1 share the same group. The size of the
+/// group is fixed at 8 values, but some may be unassigned.
+struct GlueBoolGroup {
+    /// The first index for this array. If we are iterating over the glue
+    /// variables, then this index is superfluous, but it is very helpful
+    /// for debugging.
+    std::uint16_t index;
+    /// The values in this group. If the value is not assigned, then the
+    /// value at the index points to nullptr.
+    IEC_BOOL* values[8];
+};
+#endif // OPLC_GLUE_BOOL_GROUP
+
 #ifndef OPLC_GLUE_VARIABLE
 #define OPLC_GLUE_VARIABLE
-/// Defines the mapping for a glued variable.
+/// Defines the mapping for a glued variable. This defines a simple, space
+/// efficient lookup table. It has all of the mapping information that you
+/// need to find the variable based on the location name (e.g. %IB1.1). While
+/// this is space efficient, this should be searched once to construct a fast
+/// lookup into this table used for the remainder of the application lifecycle.
 struct GlueVariable {
-
-    /// The type of the glue variable.
+    /// The direction of the variable - this is determined by I/Q/M.
+    IecLocationDirection dir;
+    /// The size of the variable - this is determined by X/B/W/D/L.
+    IecLocationSize size;
+    /// The most significant index for the variable. This is the part of the
+    /// name, converted to an integer, before the period.
+    std::uint16_t msi;
+    /// The least significant index (sub-index) for the variable. This is the
+    /// part of the name, converted to an integer, after the period. It is
+    /// only relevant for boolean (bit) values.
+    std::uint8_t lsi;
+    /// The type of the glue variable. This is used so that we correctly
+    /// write into the value type.
     IecGlueValueType type;
     /// A pointer to the memory address for reading/writing the value.
     void* value;
@@ -93,25 +153,34 @@ struct GlueVariable {
 #endif  // OPLC_GLUE_VARIABLE
 
 // Internal buffers for I/O and memory. These buffers are defined in the
-// auto-generated glueVars.cpp file
+// auto-generated glueVars.cpp file.
+// Inputs: I
+// Outputs: Q
+// Memory: M
 #define BUFFER_SIZE 1024
 
-// Booleans
-IEC_BOOL *bool_input[BUFFER_SIZE][8];
-IEC_BOOL *bool_output[BUFFER_SIZE][8];
+// Booleans - defined by the "X" width
+IEC_BOOL *bool_input[BUFFER_SIZE][8] = {};
+IEC_BOOL *bool_output[BUFFER_SIZE][8] = {};
 
-// Bytes
-IEC_BYTE *byte_input[BUFFER_SIZE];
-IEC_BYTE *byte_output[BUFFER_SIZE];
+// Bytes - defined by the "B" width
+IEC_BYTE *byte_input[BUFFER_SIZE] = {};
+IEC_BYTE *byte_output[BUFFER_SIZE] = {};
 
-// Analog I/O
-IEC_UINT *int_input[BUFFER_SIZE];
-IEC_UINT *int_output[BUFFER_SIZE];
+// Words - defined by the "W" width
+IEC_UINT *int_input[BUFFER_SIZE] = {};
+IEC_UINT *int_output[BUFFER_SIZE] = {};
+IEC_UINT *int_memory[BUFFER_SIZE] = {};
 
-// Memory
-IEC_UINT *int_memory[BUFFER_SIZE];
-IEC_DINT *dint_memory[BUFFER_SIZE];
-IEC_LINT *lint_memory[BUFFER_SIZE];
+// Double words - defined by the "D" width
+// This is also valid size for a REAL but we don't allow
+// them in this structure
+IEC_DINT *dint_memory[BUFFER_SIZE] = {};
+
+// Longs - defined by the "L" width
+// This is also valid size for a LREAL but we don't allow
+// them in this structure
+IEC_LINT *lint_memory[BUFFER_SIZE] = {};
 
 // Special Functions
 IEC_LINT *special_functions[BUFFER_SIZE];
@@ -246,60 +315,51 @@ void glueVar(ostream& glueVars, const char *varName, uint16_t pos1,
     }
 }
 
-void generateIntegratedGlue(ostream& glueVars, const list<IecVar>& all_vars,
-                            int32_t max_index) {
-    // We want to build 4 arrays here - inputs, outputs, boolean inputs and
-    // boolean outputs. To do that, we need to divide the list into the
-    // relevant parts so that we can assign the mapping location at compile
-    // time. A little upfront processing here means saves some work at runtime.
+const char* fromDirectionFlag(const char flag) {
+    switch (flag) {
+        case 'I':
+            return "IN";
+        case 'Q':
+            return "OUT";
+        default:
+            return "MEM";
+    }
+}
 
-    // Allocate arrays with sufficient space so we don't have to check later.
-    vector<const IecVar*> input_vars(max_index + 1);
-    vector<const IecVar*> output_vars(max_index + 1);
-    int32_t max_input(-1);
-    int32_t max_output(-1);
+const char* fromSizeFlag(const char flag) {
+    switch (flag) {
+        case 'X':
+            return "BIT";
+        case 'B':
+            return "BYTE";
+        case 'W':
+            return "WORD";
+        case 'D':
+            return "DOUBLEWORD";
+        case 'L':
+        default:
+            return "LONGWORD";
+    }
+}
 
+void generateIntegratedGlue(ostream& glueVars, const list<IecVar>& all_vars) {
+    glueVars << "/// The size of the array of glue variables.\n";
+    glueVars << "extern std::uint16_t const OPLCGLUE_GLUE_SIZE(";
+    glueVars << all_vars.size() << ");\n";
+
+    glueVars << "/// The packed glue variables.\n";
+    glueVars << "extern const GlueVariable oplc_glue_vars[] = {\n";
     for (auto it = all_vars.begin(); it != all_vars.end(); ++it) {
-        const char direction = (*it).name[2];
-        const int32_t pos1 = (*it).pos1;
-        if ((*it).type.compare("BOOL") != 0) {
-            if (direction == 'I') {
-                max_input = max(pos1, max_input);
-                input_vars[pos1] = &(*it);
-            } else if (direction == 'Q') {
-                max_output = max(pos1, max_output);
-                output_vars[pos1] = &(*it);
-            }
-        }
-    }
+        const char directionFlag = (*it).name[2];
+        const char sizeFlag = (*it).name[3];
 
-    // Now that things are sorted, we are ready to write them out.
-    glueVars << "/// The size of the array of input variables.\n";
-    glueVars << "extern std::uint16_t const OPLCGLUE_INPUT_SIZE(";
-    glueVars << max_input + 1 << ");\n";
-
-    glueVars << "GlueVariable oplc_input_vars[] = {\n";
-    for (auto i = 0; i < max_input + 1; i++) {
-        if (input_vars[i] != nullptr) {
-            glueVars << "    { IECVT_" << input_vars[i]->type << ", ";
-            glueVars << input_vars[i]->name << " },\n";
-        } else {
-            glueVars << "    { IECVT_UNASSIGNED, nullptr },\n";
-        }
-    }
-    glueVars << "};\n\n";
-
-    glueVars << "/// The size of the array of output variables.\n";
-    glueVars << "extern std::uint16_t const OPLCGLUE_OUTPUT_SIZE(";
-    glueVars << max_output + 1 << ");\n";
-    glueVars << "GlueVariable oplc_output_vars[] = {\n";
-    for (auto i = 0; i < max_output + 1; i++) {
-        if (output_vars[i] != nullptr) {
-            glueVars << "    { IECVT_" << output_vars[i]->type << ", ";
-            glueVars << output_vars[i]->name << " },\n";
-        } else {
-            glueVars << "    { IECVT_UNASSIGNED, nullptr },\n";
-        }
+        glueVars << "    {";
+        glueVars << " IECLDT_" << fromDirectionFlag(directionFlag) << ",";
+        glueVars << " IECLST_" << fromSizeFlag(sizeFlag) << ",";
+        glueVars << " " << (*it).pos1 << ",";
+        glueVars << " " << (*it).pos2 << ",";
+        glueVars << " IECVT_" << (*it).type << ", ";
+        glueVars << " " << (*it).name << " },\n";
     }
     glueVars << "};\n\n";
 }
@@ -352,7 +412,7 @@ void generateBody(istream& locatedVars, ostream& glueVars) {
     glueVars << "}\n\n";
 
     // Generate the unified glue variables
-    generateIntegratedGlue(glueVars, all_vars, max_index);
+    generateIntegratedGlue(glueVars, all_vars);
 }
 
 /// This is our main function. We define it with a different name and then

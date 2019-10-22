@@ -14,7 +14,9 @@
 
 
 import socket
+import time
 import unittest
+from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 class IntegrationTest(unittest.TestCase):
 
@@ -25,6 +27,28 @@ class IntegrationTest(unittest.TestCase):
         data = s.recv(1)
         print(data)
         s.close()
+
+    def test_connect_with_modbus(self):
+        client = ModbusClient('localhost', port=502)
+        unit=0x01
+
+        # Write the value true to the coil
+        client.write_coil(1, True, unit=unit)
+        time.sleep(1)
+
+        rr = client.read_coils(0, 1, unit=unit)
+        bit_value = rr.getBit(0)
+
+        self.assertTrue(bit_value)
+
+        # Write the value false to the coil
+        client.write_coil(1, False, unit=unit)
+        time.sleep(1)
+
+        rr = client.read_coils(0, 1, unit=unit)
+        bit_value = rr.getBit(0)
+
+        self.assertFalse(bit_value)
 
 if __name__ == '__main__':
     unittest.main()

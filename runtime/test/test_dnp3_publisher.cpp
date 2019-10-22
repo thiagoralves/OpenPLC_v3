@@ -14,16 +14,19 @@
 
 #ifdef OPLC_DNP3_OUTSTATION
 
-#include <memory>
+#include <cstdint>
+#include <utility>
+#include <vector>
 #include <asiodnp3/IOutstation.h>
 
 #include "catch.hpp"
 #include "fakeit.hpp"
 
 #include "glue.h"
-#include "glue_test_helpers.h"
+#include "dnp3.h"
 #include "dnp3_publisher.h"
 
+using namespace std;
 using namespace fakeit;
 using namespace opendnp3;
 
@@ -32,10 +35,10 @@ using namespace opendnp3;
 /// during the tests whether the correct updates were called.
 class UpdateCaptureHandler : public opendnp3::IUpdateHandler {
 public:
-    std::vector<std::pair<bool, std::uint16_t>> binary;
-    std::vector<std::pair<bool, std::uint16_t>> binaryOutput;
-    std::vector<std::pair<double, std::uint16_t>> analog;
-    std::vector<std::pair<double, std::uint16_t>> analogOutput;
+    vector<pair<bool, uint16_t>> binary;
+    vector<pair<bool, uint16_t>> binary_output;
+    vector<pair<double, uint16_t>> analog;
+    vector<pair<double, uint16_t>> analog_output;
 
     virtual ~UpdateCaptureHandler() {}
     virtual bool Update(const Binary& meas, uint16_t index, EventMode mode) {
@@ -56,11 +59,11 @@ public:
         return true;
     }
     virtual bool Update(const BinaryOutputStatus& meas, uint16_t index, EventMode mode) {
-        binaryOutput.push_back(std::make_pair(meas.value, index));
+        binary_output.push_back(std::make_pair(meas.value, index));
         return true;
     }
     virtual bool Update(const AnalogOutputStatus& meas, uint16_t index, EventMode mode) {
-        analogOutput.push_back(std::make_pair(meas.value, index));
+        analog_output.push_back(std::make_pair(meas.value, index));
         return true;
     }
     virtual bool Update(const TimeAndInterval& meas, uint16_t index) {
@@ -71,146 +74,163 @@ public:
     }
 };
 
-SCENARIO("dnp3 publisher", "WriteToPoints") {
+SCENARIO("dnp3 publisher", "ExchangeGlue") {
     Mock<asiodnp3::IOutstation> mock_outstation;
-    UpdateCaptureHandler updateHandler;
+    UpdateCaptureHandler update_handler;
 
     When(Method(mock_outstation, Apply)).AlwaysDo([&](const asiodnp3::Updates& updates) {
-        updates.Apply(updateHandler);
+        updates.Apply(update_handler);
     });
     auto outstation = std::shared_ptr<asiodnp3::IOutstation>(&mock_outstation.get(), [](asiodnp3::IOutstation*) {});
-    auto variables = make_vars();
-    auto range = Dnp3Range{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    
 
-    GIVEN("No glue range") {
-		Dnp3Publisher mapper(outstation, variables, range);
-        auto num_writes = mapper.WriteToPoints();
+    Dnp3MappedGroup measurements = {0};
+    Dnp3Publisher publisher(outstation, measurements);
 
+    GIVEN("No glued measurements") {
+        auto num_writes = publisher.ExchangeGlue();
         THEN("Writes nothing") {
             REQUIRE(num_writes == 0);
         }
     }
 
-	GIVEN("Boolean input variable at offset 0") {
-		range.bool_inputs_start = 0;
-		range.bool_inputs_end = 1;
-		Dnp3Publisher mapper(outstation, variables, range);
+    GIVEN("Boolean input variable at offset 0") {
+        IEC_BOOL bool_val(0);
+        auto group = GlueBoolGroup { .index=0, .values={ &bool_val, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr } };
 
-		WHEN("value is false") {
-			*variables->bool_inputs[0] = false;
-			auto num_writes = mapper.WriteToPoints();
+        const GlueVariable glue_var = { IECLDT_OUT, IECLST_BIT, 0, 0, IECVT_BOOL, &group };
+        DNP3MappedGlueVariable mapped_vars[] = { {
+            .group = 1,
+            .point_index_number = 0,
+            .variable = &glue_var
+        } };
 
-			THEN("Writes binary input false") {
-				REQUIRE(num_writes == 1);
-				Verify(Method(mock_outstation, Apply)).Exactly(Once);
-				REQUIRE(updateHandler.binary.size() == 1);
-				REQUIRE(updateHandler.binary[0].first == false);
-				REQUIRE(updateHandler.binary[0].second == 0);
-			}
-		}
-
-		WHEN("value is true") {
-			*variables->bool_inputs[0] = true;
-			auto num_writes = mapper.WriteToPoints();
-
-			THEN("Writes binary input true") {
-				REQUIRE(num_writes == 1);
-				Verify(Method(mock_outstation, Apply)).Exactly(Once);
-				REQUIRE(updateHandler.binary.size() == 1);
-				REQUIRE(updateHandler.binary[0].first == true);
-				REQUIRE(updateHandler.binary[0].second == 0);
-			}
-		}
-	}
-
-	GIVEN("Boolean input variable at offset 8") {
-        WHEN("Range is set and value is true") {
-            range.bool_inputs_start = 8;
-            range.bool_inputs_end = 9;
-			Dnp3Publisher mapper(outstation, variables, range);
-
-            *variables->bool_inputs[1] = true;
-            auto num_writes = mapper.WriteToPoints();
-
-            THEN("Writes binary input") {
-                REQUIRE(num_writes == 1);
-                Verify(Method(mock_outstation, Apply)).Exactly(Once);
-                REQUIRE(updateHandler.binary.size() == 1);
-                REQUIRE(updateHandler.binary[0].first == true);
-                REQUIRE(updateHandler.binary[0].second == 8);
-            }
-        }
-    }
-
-    GIVEN("One boolean output status variable at offset 0") {
-        range.bool_outputs_start = 0;
-        range.bool_outputs_end = 1;
-		Dnp3Publisher mapper(outstation, variables, range);
+        Dnp3MappedGroup measurements;
+        measurements.size = 1;
+        measurements.items = mapped_vars;
+        Dnp3Publisher publisher(outstation, measurements);
 
         WHEN("value is false") {
-            *variables->bool_outputs[0] = false;
-            auto num_writes = mapper.WriteToPoints();
+            bool_val = false;
+            auto num_writes = publisher.ExchangeGlue();
 
-            THEN("Writes binary output false") {
+            THEN("Writes binary input false") {
                 REQUIRE(num_writes == 1);
                 Verify(Method(mock_outstation, Apply)).Exactly(Once);
-                REQUIRE(updateHandler.binaryOutput.size() == 1);
-                REQUIRE(updateHandler.binaryOutput[0].first == false);
-                REQUIRE(updateHandler.binaryOutput[0].second == 0);
+                REQUIRE(update_handler.binary.size() == 1);
+                REQUIRE(update_handler.binary[0].first == false);
+                REQUIRE(update_handler.binary[0].second == 0);
             }
         }
 
         WHEN("value is true") {
-            *variables->bool_outputs[0] = true;
-            auto num_writes = mapper.WriteToPoints();
+            bool_val = true;
+            auto num_writes = publisher.ExchangeGlue();
 
-            THEN("Writes binary output true") {
+            THEN("Writes binary input true") {
                 REQUIRE(num_writes == 1);
                 Verify(Method(mock_outstation, Apply)).Exactly(Once);
-                REQUIRE(updateHandler.binaryOutput.size() == 1);
-                REQUIRE(updateHandler.binaryOutput[0].first == true);
-                REQUIRE(updateHandler.binaryOutput[0].second == 0);
+                REQUIRE(update_handler.binary.size() == 1);
+                REQUIRE(update_handler.binary[0].first == true);
+                REQUIRE(update_handler.binary[0].second == 0);
             }
         }
     }
 
-    GIVEN("One input register") {
-        range.inputs_start = 0;
-        range.inputs_end = 1;
-		Dnp3Publisher mapper(outstation, variables, range);
+    GIVEN("Boolean output status variable at offset 0") {
+        IEC_BOOL bool_val(0);
+        auto group = GlueBoolGroup { .index=0, .values={ &bool_val, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr } };
 
-        WHEN("Value is 9") {
-            variables->inputs[0].type = IECVT_INT;
-            variables->inputs[0].value = new IEC_INT{ 9 };
-            auto num_writes = mapper.WriteToPoints();
+        const GlueVariable glue_var = { IECLDT_OUT, IECLST_BIT, 0, 0, IECVT_BOOL, &group };
+        DNP3MappedGlueVariable mapped_vars[] = { {
+            .group = 10,
+            .point_index_number = 0,
+            .variable = &glue_var
+        } };
 
-            THEN("Writes analog output 9") {
+        Dnp3MappedGroup measurements;
+        measurements.size = 1;
+        measurements.items = mapped_vars;
+        Dnp3Publisher publisher(outstation, measurements);
+
+        WHEN("value is false") {
+            bool_val = false;
+            auto num_writes = publisher.ExchangeGlue();
+
+            THEN("Writes binary input false") {
                 REQUIRE(num_writes == 1);
                 Verify(Method(mock_outstation, Apply)).Exactly(Once);
-                REQUIRE(updateHandler.analog.size() == 1);
-                REQUIRE(updateHandler.analog[0].first == 9);
-                REQUIRE(updateHandler.analog[0].second == 0);
+                REQUIRE(update_handler.binary_output.size() == 1);
+                REQUIRE(update_handler.binary_output[0].first == false);
+                REQUIRE(update_handler.binary_output[0].second == 0);
+            }
+        }
+
+        WHEN("value is true") {
+            bool_val = true;
+            auto num_writes = publisher.ExchangeGlue();
+
+            THEN("Writes binary input true") {
+                REQUIRE(num_writes == 1);
+                Verify(Method(mock_outstation, Apply)).Exactly(Once);
+                REQUIRE(update_handler.binary_output.size() == 1);
+                REQUIRE(update_handler.binary_output[0].first == true);
+                REQUIRE(update_handler.binary_output[0].second == 0);
             }
         }
     }
 
-    GIVEN("One output register") {
-        range.outputs_start = 0;
-        range.outputs_end = 1;
-		Dnp3Publisher mapper(outstation, variables, range);
+    GIVEN("Real variable at offset 0") {
+        IEC_REAL real_val(9);
 
-        WHEN("Value is 9") {
-            variables->outputs[0].type = IECVT_INT;
-            variables->outputs[0].value = new IEC_INT{ 9 };
-            auto num_writes = mapper.WriteToPoints();
+        const GlueVariable glue_var = { IECLDT_OUT, IECLST_DOUBLEWORD, 0, 0, IECVT_REAL, &real_val };
+        DNP3MappedGlueVariable mapped_vars[] = { {
+            .group = 30,
+            .point_index_number = 0,
+            .variable = &glue_var
+        } };
 
-            THEN("Writes analog output 9") {
+        Dnp3MappedGroup measurements;
+        measurements.size = 1;
+        measurements.items = mapped_vars;
+        Dnp3Publisher publisher(outstation, measurements);
+
+        WHEN("value is 9") {
+            auto num_writes = publisher.ExchangeGlue();
+
+            THEN("Writes binary input false") {
                 REQUIRE(num_writes == 1);
                 Verify(Method(mock_outstation, Apply)).Exactly(Once);
-                REQUIRE(updateHandler.analogOutput.size() == 1);
-                REQUIRE(updateHandler.analogOutput[0].first == 9);
-                REQUIRE(updateHandler.analogOutput[0].second == 0);
+                REQUIRE(update_handler.analog.size() == 1);
+                REQUIRE(update_handler.analog[0].first == 9);
+                REQUIRE(update_handler.analog[0].second == 0);
+            }
+        }
+    }
+
+    GIVEN("Real status variable at offset 0") {
+        IEC_REAL real_val(9);
+
+        const GlueVariable glue_var = { IECLDT_OUT, IECLST_DOUBLEWORD, 0, 0, IECVT_REAL, &real_val };
+        DNP3MappedGlueVariable mapped_vars[] = { {
+            .group = 40,
+            .point_index_number = 0,
+            .variable = &glue_var
+        } };
+
+        Dnp3MappedGroup measurements;
+        measurements.size = 1;
+        measurements.items = mapped_vars;
+        Dnp3Publisher publisher(outstation, measurements);
+
+        WHEN("value is 9") {
+            auto num_writes = publisher.ExchangeGlue();
+
+            THEN("Writes binary input false") {
+                REQUIRE(num_writes == 1);
+                Verify(Method(mock_outstation, Apply)).Exactly(Once);
+                REQUIRE(update_handler.analog_output.size() == 1);
+                REQUIRE(update_handler.analog_output[0].first == 9);
+                REQUIRE(update_handler.analog_output[0].second == 0);
             }
         }
     }
