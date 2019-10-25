@@ -71,7 +71,6 @@ CommandStatus Dnp3Receiver::Select(const ControlRelayOutputBlock& command, uint1
 }
 
 CommandStatus Dnp3Receiver::Operate(const ControlRelayOutputBlock& command, uint16_t index, OperateType opType) {
-    spdlog::trace("DNP3 operate CROB");
     auto code = command.functionCode;
     auto glue_index = mapDnp3IndexToGlueIndex(range.bool_outputs_start, range.bool_outputs_end, range.bool_outputs_offset, index);
 
@@ -88,7 +87,7 @@ CommandStatus Dnp3Receiver::Operate(const ControlRelayOutputBlock& command, uint
         std::lock_guard<std::mutex> lock(*glue_variables->buffer_lock);
         *glue = crob_val;
     }
-
+    spdlog::trace("DNP3 CROB: {} written at index: {}", code == ControlCode::LATCH_ON ? "True": "False", index);
     return CommandStatus::SUCCESS;
 }
 
@@ -100,7 +99,7 @@ CommandStatus Dnp3Receiver::Select(const AnalogOutputInt16& command, uint16_t in
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputInt16& command, uint16_t index, OperateType opType) {
-    spdlog::trace("DNP3 select AO int16 point status");
+    spdlog::trace("DNP3 select AO int16 point status: {} written at index: {}", command.value, index);
     return this->UpdateGlueVariable<int16_t>(command.value, index);
 }
 
@@ -112,7 +111,7 @@ CommandStatus Dnp3Receiver::Select(const AnalogOutputInt32& command, uint16_t in
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputInt32& command, uint16_t index, OperateType opType) {
-    spdlog::trace("DNP3 select AO int32 point status");
+    spdlog::trace("DNP3 select AO int32 point status: {} written at index: {}", command.value, index);
     return this->UpdateGlueVariable<int32_t>(command.value, index);
 }
 
@@ -124,7 +123,7 @@ CommandStatus Dnp3Receiver::Select(const AnalogOutputFloat32& command, uint16_t 
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputFloat32& command, uint16_t index, OperateType opType) {
-    spdlog::trace("DNP3 select AO float32 point status");
+    spdlog::trace("DNP3 select AO float32 point status: {} written at index: {}", command.value, index);
     return this->UpdateGlueVariable<float>(command.value, index);
 }
 
@@ -136,7 +135,7 @@ CommandStatus Dnp3Receiver::Select(const AnalogOutputDouble64& command, uint16_t
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputDouble64& command, uint16_t index, OperateType opType) {
-    spdlog::trace("DNP3 select AO double64 point status");
+    spdlog::trace("DNP3 select AO double64 point status: {} written at index: {}", command.value, index);
     return this->UpdateGlueVariable<double>(command.value, index);
 }
 
@@ -244,12 +243,13 @@ CommandStatus Dnp3Receiver::UpdateGlueVariable(T value, uint16_t dnp3_index) con
 }
 
 void Dnp3Receiver::Start() {
-    spdlog::info("DNP3 Receiver Started");
+    spdlog::info("DNP3 receiver started");
 }
 
 void Dnp3Receiver::End() {
-    spdlog::info("DNP3 Receiver Stopped");
+    spdlog::info("DNP3 receiver stopped");
 }
+
 
 #endif  // OPLC_DNP3_OUTSTATION
 

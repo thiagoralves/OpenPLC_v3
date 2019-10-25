@@ -115,7 +115,7 @@ std::pair<asiodnp3::OutstationStackConfig, Dnp3Range> create_config(std::istream
     }
 
     auto config = asiodnp3::OutstationStackConfig(DatabaseSizes::AllTypes(default_size));
-    Dnp3Range range = { 0, OPLCGLUE_INPUT_SIZE, 0, 0, OPLCGLUE_OUTPUT_SIZE, 0, 0, 0, 0, 0, 0, 0};
+    Dnp3Range range = { 0, OPLCGLUE_INPUT_SIZE, 0, 0, OPLCGLUE_OUTPUT_SIZE, 0, 0, BUFFER_SIZE, 0, 0, BUFFER_SIZE, 0};
 
     // Finally, handle the remaining items
     for (auto it = cfg_values.begin(); it != cfg_values.end(); ++it) {
@@ -235,7 +235,8 @@ void dnp3StartServer(int port, std::unique_ptr<std::istream, std::function<void(
 
         // Run this until we get a signal to stop.
         while (*run) {
-            publisher->WriteToPoints();
+            int num_writes = publisher->WriteToPoints();
+            spdlog::trace("{} data points written to outstation", num_writes);
             sleep_until(&timer_start, OPLC_CYCLE);
         }
 
@@ -255,7 +256,7 @@ void dnp3StartServer(int port, std::unique_ptr<std::istream, std::function<void(
 /// @param port The port to run against.
 ////////////////////////////////////////////////////////////////////////////////
 void dnp3StartServer(int port) {
-    std::unique_ptr<std::istream, std::function<void(std::istream*)>> cfg_stream(new std::ifstream("dnp3.cfg"), [](std::istream* s)
+    std::unique_ptr<std::istream, std::function<void(std::istream*)>> cfg_stream(new std::ifstream("./../webserver/dnp3.cfg"), [](std::istream* s)
         {
             reinterpret_cast<std::ifstream*>(s)->close();
             delete s;

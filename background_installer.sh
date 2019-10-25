@@ -64,8 +64,14 @@ function cmake_build_and_test {
 
     echo "Executing platform tests"
     cd ../bin
-    ./gg_unit_test
-    ./oplc_unit_test
+
+    if [ "$1" == "win" ]; then
+        ./gg_unit_test.exe
+        ./oplc_unit_test.exe
+    else
+        ./gg_unit_test
+        ./oplc_unit_test
+    fi
 }
 
 if [ "$1" == "win" ]; then

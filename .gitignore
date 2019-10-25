@@ -3,6 +3,10 @@ public/
 
 .sass-cache/
 .idea/
+.settings/
+.classpath
+.project
+target/
 
 *.pyc
 

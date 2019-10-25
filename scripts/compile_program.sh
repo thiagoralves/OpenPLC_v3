@@ -13,7 +13,7 @@ echo ""
     
 if [ "$OPENPLC_PLATFORM" = "linux" ]; then
     cd ../build
-    cmake .. -DOPLC_ALL=OFF -DOPLC_BUILD_USER_APPLICATION=ON -Dprogram_name=$1
+    cmake .. -Dprogram_name=$1
     make
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
@@ -24,7 +24,7 @@ if [ "$OPENPLC_PLATFORM" = "linux" ]; then
     
 elif [ "$OPENPLC_PLATFORM" = "win" ]; then
     cd ../build
-    cmake .. -DOPLC_ALL=OFF -OPLC_BUILD_USER_APPLICATION=ON -Dprogram_name=$1
+    cmake .. -Dprogram_name=$1
     make
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
@@ -36,7 +36,7 @@ elif [ "$OPENPLC_PLATFORM" = "win" ]; then
 elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     
     cd ../build
-    cmake .. -DOPLC_ALL=OFF -OPLC_BUILD_USER_APPLICATION=ON -Dprogram_name=$1 -DOPLC_PLATFORM_RPI=ON
+    cmake .. -Dprogram_name=$1 -DOPLC_PLATFORM_RPI=ON
     make
     
     if [ $? -ne 0 ]; then

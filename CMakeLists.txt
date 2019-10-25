@@ -237,10 +237,13 @@ if(OPLC_MAIN_PROGRAM)
     set_target_properties(openplc PROPERTIES PREFIX "")
 
     add_dependencies(openplc files_generator)
+    if(OPLC_MODBUS)
+        add_dependencies(openplc libmodbus_proj)
+    endif()
 
     target_link_libraries(openplc ${OPLC_PTHREAD} modbus)
     if (OPLC_DNP3_OUTSTATION)
-        add_definitions(-DOPLC_DNP3_OUTSTATION)
+        target_compile_definitions(openplc PRIVATE OPLC_DNP3_OUTSTATION)
         target_link_libraries(openplc asiodnp3 asiopal opendnp3 openpal)
     endif()
 
