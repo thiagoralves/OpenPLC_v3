@@ -35,6 +35,15 @@ struct GlueVariablesBinding;
 
 typedef const GlueVariable ConstGlueVariable;
 
+const std::uint8_t GROUP_BINARY_COMMAND(12);
+const std::uint8_t GROUP_ANALOG_COMMAND(41);
+const std::uint8_t GROUP_BINARY_INPUT(1);
+const std::uint8_t GROUP_BINARY_OUTPUT_STATUS(10);
+const std::uint8_t GROUP_ANALOG_INPUT(30);
+const std::uint8_t GROUP_ANALOG_OUTPUT_STATUS(40);
+const std::uint8_t GROUP_COUNTER(20);
+const std::uint8_t GROUP_FROZEN_COUNTER(21);
+
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Defines a list of mapped variables for a particular group.
 /// These are indexed for fast lookup based on the point index number and are

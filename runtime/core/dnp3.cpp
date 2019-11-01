@@ -87,7 +87,7 @@ public:
 
 /// @brief Trim from both ends (in place), removing only whitespace.
 /// @param s The string to trim
-static inline void trim(string& s) {
+inline void trim(string& s) {
     // Trim from the left
     s.erase(s.begin(), find_if(s.begin(), s.end(),
         not1(ptr_fun<int, int>(isspace))));
@@ -145,20 +145,21 @@ int16_t get_data_index(const string& value) {
 string get_located_name(const string& value) {
     // Find the "index" key as the sub-item
     auto name_start = value.find("name:");
+    auto name_value_start = name_start + 5;
     if (name_start == string::npos) {
         // This items is missing the index key.
         spdlog::error("DNP3 bind_location missing 'name:' in config item value {}", value);
         return "";
     }
 
-    auto name_end = value.find(',', name_start + 5);
+    auto name_end = value.find(',', name_value_start);
     if (name_end == string::npos) {
         // This items is missing the name end.
         spdlog::error("DNP3 bind_location missing ending ',' for name in config item value {}", value);
         return "";
     }
 
-    return value.substr(name_start + 5, name_end - name_start - 5);
+    return value.substr(name_value_start, name_end - name_start - 5);
 }
 
 /// @brief Handle the parsed config items to populate the command and
@@ -182,7 +183,7 @@ void bind_variables(const vector<pair<string, string>>& config_items,
     // lifetime.
     vector<tuple<string, int8_t, int16_t>> bindings;
     for (auto it = config_items.begin(); it != config_items.end(); ++it) {
-        if ((*it).first != "bind_location") {
+        if (it->first != "bind_location") {
             // We are searching through all configuration items, so ignore any
             // items that are not associated with a bind location.
             continue;
@@ -190,8 +191,8 @@ void bind_variables(const vector<pair<string, string>>& config_items,
 
         // Find the name of the located variable
         string name = get_located_name((*it).second);
-        int8_t group_number = get_group_number((*it).second);
-        int16_t data_index = get_data_index((*it).second);
+        int8_t group_number = get_group_number(it->second);
+        int16_t data_index = get_data_index(it->second);
 
         if (name.empty() || group_number < 0 || data_index < 0) {
             // If one of the items is not valid, then don't handle furhter
@@ -199,16 +200,18 @@ void bind_variables(const vector<pair<string, string>>& config_items,
         }
 
         switch (group_number) {
-            case 12:
+            case GROUP_BINARY_COMMAND:
                 group_12_max_index = max(group_12_max_index, data_index);
                 break;
-            case 41:
+            case GROUP_ANALOG_COMMAND:
                 group_41_max_index = max(group_41_max_index, data_index);
                 break;
-            case 1:
-            case 10:
-            case 30:
-            case 40:
+            case GROUP_BINARY_INPUT:
+            case GROUP_BINARY_OUTPUT_STATUS:
+            case GROUP_ANALOG_INPUT:
+            case GROUP_ANALOG_OUTPUT_STATUS:
+            case GROUP_COUNTER:
+            case GROUP_FROZEN_COUNTER:
                 measurements_size += 1;
                 break;
             default:
@@ -250,10 +253,10 @@ void bind_variables(const vector<pair<string, string>>& config_items,
         }
 
         switch (group_number) {
-            case 12:
+            case GROUP_BINARY_COMMAND:
                 binary_commands.items[data_index] = var;
                 break;
-            case 41:
+            case GROUP_ANALOG_COMMAND:
                 analog_commands.items[data_index] = var;
                 break;
             default:

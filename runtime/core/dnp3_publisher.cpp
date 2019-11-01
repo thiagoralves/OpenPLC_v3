@@ -114,25 +114,25 @@ uint32_t Dnp3Publisher::ExchangeGlue() {
         const GlueVariable* var = mapping.variable;
         void* value = var->value;
 
-        if (group == 1 || group == 10) {
+        if (group == GROUP_BINARY_INPUT || group == GROUP_BINARY_OUTPUT_STATUS) {
             const GlueBoolGroup* bool_group = reinterpret_cast<const GlueBoolGroup*>(value);
-            if (group == 1) {
+            if (group == GROUP_BINARY_INPUT) {
                 builder.Update(Binary(*(bool_group->values[0])), point_index_number);
             } else {
                 builder.Update(BinaryOutputStatus(*(bool_group->values[0])), point_index_number);
             }
             
-        } else if (group == 30 || group == 40) {
+        } else if (group == GROUP_ANALOG_INPUT || group == GROUP_ANALOG_OUTPUT_STATUS) {
             double double_val = cast_variable<double>(var);
-            if (group == 30) {
+            if (group == GROUP_ANALOG_INPUT) {
                 builder.Update(Analog(double_val), point_index_number);
             } else {
                 builder.Update(AnalogOutputStatus(double_val), point_index_number);
             }
             
-        } else if (group == 20 || group == 21) {
+        } else if (group == GROUP_COUNTER || group == GROUP_FROZEN_COUNTER) {
             uint32_t int_val = cast_variable<uint32_t>(var);
-            if (group == 20) {
+            if (group == GROUP_COUNTER) {
                 builder.Update(Counter(int_val), point_index_number);
             } else {
                 builder.Update(FrozenCounter(int_val), point_index_number);
