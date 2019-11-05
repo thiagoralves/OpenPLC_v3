@@ -16,8 +16,8 @@
 
 #include "catch.hpp"
 
-#include "dnp3_receiver.h"
 #include "glue.h"
+#include "dnp3s/dnp3_receiver.h"
 
 using namespace std;
 using namespace opendnp3;

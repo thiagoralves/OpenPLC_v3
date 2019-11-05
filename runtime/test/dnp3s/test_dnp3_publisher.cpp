@@ -23,8 +23,8 @@
 #include "fakeit.hpp"
 
 #include "glue.h"
-#include "dnp3.h"
-#include "dnp3_publisher.h"
+#include "dnp3s/dnp3.h"
+#include "dnp3s/dnp3_publisher.h"
 
 using namespace std;
 using namespace fakeit;

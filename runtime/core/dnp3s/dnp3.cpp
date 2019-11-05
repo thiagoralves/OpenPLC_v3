@@ -437,7 +437,7 @@ void dnp3StartServer(int port,
 /// the DNP3 server is started.
 /// @param port The port to run against.
 ////////////////////////////////////////////////////////////////////////////////
-void dnp3StartServer(int port, bool* run, const GlueVariablesBinding& binding) {
+void dnp3s_start_server(int port, bool* run, const GlueVariablesBinding& binding) {
     unique_ptr<istream, function<void(istream*)>> cfg_stream(new ifstream("./../webserver/dnp3.cfg"), [](istream* s)
         {
             reinterpret_cast<ifstream*>(s)->close();

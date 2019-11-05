@@ -21,7 +21,7 @@
 #include <pthread.h>
 #include <cstdint>
 #include <mutex>
-#include "enipStruct.h"	//This header file contains necessary structs for enip.cpp
+//#include "enipStruct.h"	//This header file contains necessary structs for enip.cpp
 
 /** \addtogroup openplc_runtime
  *  @{
