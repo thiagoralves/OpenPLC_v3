@@ -35,6 +35,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "glue.h"
 #include "ladder.h"
 #include "logsink.h"
 
@@ -86,7 +87,8 @@ void *modbusThread(void *arg)
 ///////////////////////////////////////////////////////////////////////////////
 void *dnp3Thread(void *arg)
 {
-    dnp3StartServer(dnp3_port);
+    GlueVariablesBinding binding(&bufferLock, OPLCGLUE_GLUE_SIZE, oplc_glue_vars);
+    dnp3StartServer(dnp3_port, &run_dnp3, binding);
     return nullptr;
 }
 #endif
@@ -130,7 +132,7 @@ int readCommandArgument(unsigned char *command)
         argument[j] = '\0';
     }
     
-    return atoi(argument);
+    return atoi((char *)argument);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

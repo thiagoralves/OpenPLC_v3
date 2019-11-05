@@ -14,6 +14,7 @@
 
 #ifdef OPLC_DNP3_OUTSTATION
 
+#include <cstring>
 #include <spdlog/spdlog.h>
 
 #include "dnp3_receiver.h"
@@ -26,6 +27,24 @@ using namespace std;
  */
 
 ////////////////////////////////////////////////////////////////////////////////
+/// @brief Is the specified DNP3 point something that we can map?
+/// @param data_index The index of the point from DNP3.
+/// @param group The group based on the command type.
+////////////////////////////////////////////////////////////////////////////////
+inline CommandStatus mapIsValidDnp3Index(uint16_t data_index, const Dnp3IndexedGroup& group) {
+    return (data_index < group.size && group.items[data_index]->value) ? CommandStatus::SUCCESS : CommandStatus::OUT_OF_RANGE;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Is the specified DNP3 point something that we can map?
+/// @param data_index The index of the point from DNP3.
+/// @param group The group based on the command type.
+////////////////////////////////////////////////////////////////////////////////
+inline bool isValidDnp3Index(uint16_t data_index, const Dnp3IndexedGroup& group) {
+    return (data_index < group.size && group.items[data_index]->value);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 /// \brief Maps the DNP3 index to the index in our glue variables, returning
 /// index or < 0 if the value is not in the range of mapped glue variables.
 /// @param start The start index of valid ranges.
@@ -33,7 +52,7 @@ using namespace std;
 /// @param offset The offset defined for this set of values.
 /// @param dnp3_index The index of the point for DNP3.
 /// @return Non-negative glue index if the dnp3 index is valid, otherwise negative.
-////////////////////////////////////////////////////////////////////////////////
+
 inline int16_t mapDnp3IndexToGlueIndex(uint16_t start, uint16_t stop, uint16_t offset, uint16_t dnp3_index) {
     int16_t glue_index = dnp3_index + offset;
     return glue_index >= start && glue_index < stop ? glue_index : -1;
@@ -52,194 +71,214 @@ inline CommandStatus mapDnp3IndexToStatus(uint16_t start, uint16_t stop, uint16_
     return mapDnp3IndexToGlueIndex(start, stop, offset, dnp3_index) >= 0 ? CommandStatus::SUCCESS : CommandStatus::OUT_OF_RANGE;
 }
 
-/// Initialize a new instance of the DNP3 receiver. The receiver listens for point value updates
-/// over the DNP3 channel and then maps those to the glue variables.
-/// @param glue_variables The glue variables that we map onto.
-/// @param range The valid range in the glue that we allow.
-Dnp3Receiver::Dnp3Receiver(
-    std::shared_ptr<GlueVariables> glue_variables,
-    Dnp3Range range) :
+Dnp3Receiver::Dnp3Receiver(const Dnp3IndexedGroup& binary_commands, const Dnp3IndexedGroup& analog_commands) :
 
-    glue_variables(glue_variables),
-    range(range)
-{ }
+    binary_commands(binary_commands),
+    analog_commands(analog_commands),
+    binary_commands_cache(binary_commands.size > 0 ? new CacheItem<bool>[binary_commands.size] : nullptr),
+    analog_commands_cache(analog_commands.size > 0 ? new CacheItem<double>[analog_commands.size] : nullptr)
+{
+    // We need to zero out the caches so that we don't think there is something
+    // that we can handle on the first cycle
+    if (binary_commands_cache != nullptr) {
+        memset(binary_commands_cache, 0, sizeof(CacheItem<bool>) * binary_commands.size);
+    }
+    if (analog_commands_cache != nullptr) {
+        memset(analog_commands_cache, 0, sizeof(CacheItem<double>) * analog_commands.size);
+    }
+}
 
 /// CROB
 CommandStatus Dnp3Receiver::Select(const ControlRelayOutputBlock& command, uint16_t index) {
     spdlog::trace("DNP3 select CROB index");
-    return mapDnp3IndexToStatus(range.bool_outputs_start, range.bool_outputs_end, range.bool_outputs_offset, index);
+    return mapIsValidDnp3Index(index, binary_commands);
 }
 
 CommandStatus Dnp3Receiver::Operate(const ControlRelayOutputBlock& command, uint16_t index, OperateType opType) {
     auto code = command.functionCode;
-    auto glue_index = mapDnp3IndexToGlueIndex(range.bool_outputs_start, range.bool_outputs_end, range.bool_outputs_offset, index);
 
-    if (glue_index < 0) {
+    if (!isValidDnp3Index(index, binary_commands)) {
         return CommandStatus::OUT_OF_RANGE;
-    } else if (code != ControlCode::LATCH_ON && code != ControlCode::LATCH_OFF) {
+    }
+    if (code != ControlCode::LATCH_ON && code != ControlCode::LATCH_OFF) {
         return CommandStatus::NOT_SUPPORTED;
     }
 
-    IEC_BOOL crob_val = (code == ControlCode::LATCH_ON);
+    lock_guard<mutex> cache_guard(cache_mutex);
+    binary_commands_cache[index].has_value = true;
+    binary_commands_cache[index].value = (code == ControlCode::LATCH_ON);
 
-    IEC_BOOL* glue = glue_variables->BoolOutputAt(index, 0);
-    if (glue != nullptr) {
-        std::lock_guard<std::mutex> lock(*glue_variables->buffer_lock);
-        *glue = crob_val;
-    }
-    spdlog::trace("DNP3 CROB: {} written at index: {}", code == ControlCode::LATCH_ON ? "True": "False", index);
     return CommandStatus::SUCCESS;
 }
 
 // AnalogOut 16 (Int)
 CommandStatus Dnp3Receiver::Select(const AnalogOutputInt16& command, uint16_t index) {
-    CommandStatus status = mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
     spdlog::trace("DNP3 select AO int16 point status");
-    return status;
+    return mapIsValidDnp3Index(index, analog_commands);
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputInt16& command, uint16_t index, OperateType opType) {
     spdlog::trace("DNP3 select AO int16 point status: {} written at index: {}", command.value, index);
-    return this->UpdateGlueVariable<int16_t>(command.value, index);
+    return this->CacheUpdatedValue<int16_t>(command.value, index);
 }
 
 // AnalogOut 32 (Int)
 CommandStatus Dnp3Receiver::Select(const AnalogOutputInt32& command, uint16_t index) {
-    CommandStatus status = mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
-    spdlog::trace("DNP3 select AO int32 point  status");
-    return status;
+    spdlog::trace("DNP3 select AO int32 point status");
+    return mapIsValidDnp3Index(index, analog_commands);
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputInt32& command, uint16_t index, OperateType opType) {
     spdlog::trace("DNP3 select AO int32 point status: {} written at index: {}", command.value, index);
-    return this->UpdateGlueVariable<int32_t>(command.value, index);
+    return this->CacheUpdatedValue<int32_t>(command.value, index);
 }
 
 // AnalogOut 32 (Float)
 CommandStatus Dnp3Receiver::Select(const AnalogOutputFloat32& command, uint16_t index) {
-    CommandStatus status = mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
     spdlog::trace("DNP3 select AO float32 point status");
-    return status;
+    return mapIsValidDnp3Index(index, analog_commands);
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputFloat32& command, uint16_t index, OperateType opType) {
     spdlog::trace("DNP3 select AO float32 point status: {} written at index: {}", command.value, index);
-    return this->UpdateGlueVariable<float>(command.value, index);
+    return this->CacheUpdatedValue<float>(command.value, index);
 }
 
 // AnalogOut 64
 CommandStatus Dnp3Receiver::Select(const AnalogOutputDouble64& command, uint16_t index) {
-    CommandStatus status = mapDnp3IndexToStatus(range.outputs_start, range.outputs_end, range.outputs_offset, index);
     spdlog::trace("DNP3 select AO double64 point status");
-    return status;
+    return mapIsValidDnp3Index(index, analog_commands);
 }
 
 CommandStatus Dnp3Receiver::Operate(const AnalogOutputDouble64& command, uint16_t index, OperateType opType) {
     spdlog::trace("DNP3 select AO double64 point status: {} written at index: {}", command.value, index);
-    return this->UpdateGlueVariable<double>(command.value, index);
+    return this->CacheUpdatedValue<double>(command.value, index);
 }
 
+/// @brief Update a value in our cache. This cache is designed to operate fast
+/// so that we return immediately without waiting on the glue variables lock.
+/// This is quite important because the lock on the glue variables can be very
+/// long (the cycle time for the PLC logic) and that would be far too long to
+/// wait for DNP3 values.
+/// @param value The value received over DNP3.
+/// @param dnp3_index The index of the value.
 template<class T>
-CommandStatus Dnp3Receiver::UpdateGlueVariable(T value, uint16_t dnp3_index) const {
-    int16_t glue_index = mapDnp3IndexToGlueIndex(range.outputs_start, range.outputs_end, range.outputs_offset, dnp3_index);
-
-    if (glue_index < 0 || glue_index >= glue_variables->outputs_size) {
-        spdlog::trace("DNP3 update point is out of mapped glue range");
+CommandStatus Dnp3Receiver::CacheUpdatedValue(T value, uint16_t dnp3_index) {
+    if (!isValidDnp3Index(dnp3_index, analog_commands)) {
+        spdlog::trace("DNP3 update point at index {} is not glued", dnp3_index);
         return CommandStatus::OUT_OF_RANGE;
     }
 
-    // Next check if we have a value mapped at that particular index in the glue variables (the IO locations can have holes)
-    IecGlueValueType type = glue_variables->outputs[glue_index].type;
-    void* value_container = glue_variables->outputs[glue_index].value;
+    lock_guard<mutex> cache_guard(cache_mutex);
+    analog_commands_cache[dnp3_index].has_value = true;
+    analog_commands_cache[dnp3_index].value = static_cast<double>(value);
 
-    if (type == IECVT_UNASSIGNED || value_container == nullptr) {
-        spdlog::trace("DNP3 update point for glue index is not mapped");
-        return CommandStatus::OUT_OF_RANGE;
-    }
+    return CommandStatus::SUCCESS;
+}
 
-    // We have a container we can write to, but we need to update the value as appropriate
-    // for the particular value container type.
-    std::lock_guard<std::mutex> lock(*glue_variables->buffer_lock);
-    CommandStatus status = CommandStatus::SUCCESS;
-    switch (type) {
-        case IECVT_BYTE:
-        {
-            *(reinterpret_cast<IEC_BYTE*>(value_container)) = static_cast<IEC_BYTE>(value);
-            break;
-        }
-        case IECVT_SINT:
-        {
-            *(reinterpret_cast<IEC_SINT*>(value_container)) = static_cast<IEC_SINT>(value);
-            break;
-        }
-        case IECVT_USINT:
-        {
-            *(reinterpret_cast<IEC_USINT*>(value_container)) = static_cast<IEC_USINT>(value);
-            break;
-        }
-        case IECVT_INT:
-        {
-            *(reinterpret_cast<IEC_INT*>(value_container)) = static_cast<IEC_INT>(value);
-            break;
-        }
-        case IECVT_UINT:
-        {
-            *(reinterpret_cast<IEC_USINT*>(value_container)) = static_cast<IEC_USINT>(value);
-            break;
-        }
-        case IECVT_WORD:
-        {
-            *(reinterpret_cast<IEC_WORD*>(value_container)) = static_cast<IEC_WORD>(value);
-            break;
-        }
-        case IECVT_DINT:
-        {
-            *(reinterpret_cast<IEC_DINT*>(value_container)) = static_cast<IEC_DINT>(value);
-            break;
-        }
-        case IECVT_UDINT:
-        {
-            *(reinterpret_cast<IEC_UDINT*>(value_container)) = static_cast<IEC_UDINT>(value);
-            break;
-        }
-        case IECVT_DWORD:
-        {
-            *(reinterpret_cast<IEC_DWORD*>(value_container)) = static_cast<IEC_DWORD>(value);
-            break;
-        }
-        case IECVT_REAL:
-        {
-            *(reinterpret_cast<IEC_REAL*>(value_container)) = static_cast<IEC_REAL>(value);
-            break;
-        }
-        case IECVT_LREAL:
-        {
-            *(reinterpret_cast<IEC_LREAL*>(value_container)) = static_cast<IEC_LREAL>(value);
-            break;
-        }
-        case IECVT_LWORD:
-        {
-            *(reinterpret_cast<IEC_LWORD*>(value_container)) = static_cast<IEC_LWORD>(value);
-            break;
-        }
-        case IECVT_LINT:
-        {
-            *(reinterpret_cast<IEC_LINT*>(value_container)) = static_cast<IEC_LINT>(value);
-            break;
-        }
-        case IECVT_ULINT:
-        {
-            *(reinterpret_cast<IEC_ULINT*>(value_container)) = static_cast<IEC_ULINT>(value);
-            break;
-        }
-        default:
-        {
-            status = CommandStatus::NOT_SUPPORTED;
-            break;
+/// @brief Write the point values into the glue variables for each value that
+/// was received.
+void Dnp3Receiver::ExchangeGlue() {
+    // Acquire the locks to do the data exchange
+    lock_guard<mutex> cache_guard(cache_mutex);
+
+    for (uint16_t data_index(0); data_index < binary_commands.size; ++data_index) {
+        if (binary_commands_cache[data_index].has_value) {
+            binary_commands_cache[data_index].has_value = false;
+            const GlueVariable* variable = binary_commands.items[data_index];
+            if (!variable) {
+                continue;
+            }
+
+            (*((GlueBoolGroup*)variable->value)->values[0]) = binary_commands_cache[data_index].value;
         }
     }
 
-    return status;
+    for (uint16_t data_index(0); data_index < analog_commands.size; ++data_index) {
+        if (analog_commands_cache[data_index].has_value) {
+            analog_commands_cache[data_index].has_value = false;
+
+            const GlueVariable* variable = analog_commands.items[data_index];
+            if (!variable) {
+                continue;
+            }
+
+            double value = analog_commands_cache[data_index].value;
+            void* value_container = variable->value;
+            switch (variable->type) {
+                case IECVT_BYTE:
+                {
+                    *(reinterpret_cast<IEC_BYTE*>(value_container)) = static_cast<IEC_BYTE>(value);
+                    break;
+                }
+                case IECVT_SINT:
+                {
+                    *(reinterpret_cast<IEC_SINT*>(value_container)) = static_cast<IEC_SINT>(value);
+                    break;
+                }
+                case IECVT_USINT:
+                {
+                    *(reinterpret_cast<IEC_USINT*>(value_container)) = static_cast<IEC_USINT>(value);
+                    break;
+                }
+                case IECVT_INT:
+                {
+                    *(reinterpret_cast<IEC_INT*>(value_container)) = static_cast<IEC_INT>(value);
+                    break;
+                }
+                case IECVT_UINT:
+                {
+                    *(reinterpret_cast<IEC_USINT*>(value_container)) = static_cast<IEC_USINT>(value);
+                    break;
+                }
+                case IECVT_WORD:
+                {
+                    *(reinterpret_cast<IEC_WORD*>(value_container)) = static_cast<IEC_WORD>(value);
+                    break;
+                }
+                case IECVT_DINT:
+                {
+                    *(reinterpret_cast<IEC_DINT*>(value_container)) = static_cast<IEC_DINT>(value);
+                    break;
+                }
+                case IECVT_UDINT:
+                {
+                    *(reinterpret_cast<IEC_UDINT*>(value_container)) = static_cast<IEC_UDINT>(value);
+                    break;
+                }
+                case IECVT_DWORD:
+                {
+                    *(reinterpret_cast<IEC_DWORD*>(value_container)) = static_cast<IEC_DWORD>(value);
+                    break;
+                }
+                case IECVT_REAL:
+                {
+                    *(reinterpret_cast<IEC_REAL*>(value_container)) = static_cast<IEC_REAL>(value);
+                    break;
+                }
+                case IECVT_LREAL:
+                {
+                    *(reinterpret_cast<IEC_LREAL*>(value_container)) = static_cast<IEC_LREAL>(value);
+                    break;
+                }
+                case IECVT_LWORD:
+                {
+                    *(reinterpret_cast<IEC_LWORD*>(value_container)) = static_cast<IEC_LWORD>(value);
+                    break;
+                }
+                case IECVT_LINT:
+                {
+                    *(reinterpret_cast<IEC_LINT*>(value_container)) = static_cast<IEC_LINT>(value);
+                    break;
+                }
+                case IECVT_ULINT:
+                {
+                    *(reinterpret_cast<IEC_ULINT*>(value_container)) = static_cast<IEC_ULINT>(value);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void Dnp3Receiver::Start() {
@@ -249,7 +288,6 @@ void Dnp3Receiver::Start() {
 void Dnp3Receiver::End() {
     spdlog::info("DNP3 receiver stopped");
 }
-
 
 #endif  // OPLC_DNP3_OUTSTATION
 

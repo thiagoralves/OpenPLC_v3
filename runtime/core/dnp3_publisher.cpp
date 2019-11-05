@@ -22,217 +22,124 @@
 #include "glue.h"
 
 using namespace opendnp3;
+using namespace std;
 
 /** \addtogroup openplc_runtime
  *  @{
  */
 
 
-// Initialize a new instance of the publisher.
+/// Initialize a new instance of the publisher.
 Dnp3Publisher::Dnp3Publisher(
-    std::shared_ptr<asiodnp3::IOutstation> outstation,
-    std::shared_ptr<GlueVariables> glue_variables,
-    Dnp3Range range) :
+    shared_ptr<asiodnp3::IOutstation> outstation,
+    const Dnp3MappedGroup& measurements) :
 
     outstation(outstation),
-    glue_variables(glue_variables),
-    range(range)
+    measurements(measurements)
 { }
+
+template<class T>
+T cast_variable(const GlueVariable* var) {
+    T val;
+    void* value = var->value;
+    switch (var->type) {
+        case IECVT_SINT:
+        {
+            IEC_SINT* tval = reinterpret_cast<IEC_SINT*>(value);
+            val = *tval;
+            break;
+        }
+        case IECVT_USINT:
+        {
+            IEC_USINT* tval = reinterpret_cast<IEC_USINT*>(value);
+            val = *tval;
+            break;
+        }
+        case IECVT_INT:
+        {
+            IEC_INT* tval = reinterpret_cast<IEC_INT*>(value);
+            val = *tval;
+            break;
+        }
+        case IECVT_UINT:
+        {
+            IEC_UINT* tval = reinterpret_cast<IEC_UINT*>(value);
+            val = *tval;
+            break;
+        }
+        case IECVT_DINT:
+        {
+            IEC_DINT* tval = reinterpret_cast<IEC_DINT*>(value);
+            val = *tval;
+            break;
+        }
+        case IECVT_UDINT:
+        {
+            IEC_UDINT* tval = reinterpret_cast<IEC_UDINT*>(value);
+            val = *tval;
+            break;
+        }
+        case IECVT_REAL:
+        {
+            IEC_REAL* tval = reinterpret_cast<IEC_REAL*>(value);
+            val = *tval;
+            break;
+        }
+        case IECVT_LREAL:
+        {
+            IEC_LREAL* tval = reinterpret_cast<IEC_LREAL*>(value);
+            val = *tval;
+            break;
+        }
+    }
+
+    return val;
+}
 
 /// Writes mapped values in the glue variables to the DNP3 outstation channel.
 /// This function would normally be called on a timer to write the data.
 /// Writing to the DNP3 channel happens asynchronously, so completion of this
 /// function doesn't mean anything has been sent.
 /// @return the number of values that were sent to the channel.
-std::uint32_t Dnp3Publisher::WriteToPoints() {
-    std::uint32_t num_writes(0);
+uint32_t Dnp3Publisher::ExchangeGlue() {
+    uint32_t num_writes(0);
     asiodnp3::UpdateBuilder builder;
-
-    std::lock_guard<std::mutex> lock(*glue_variables->buffer_lock);
 
     spdlog::trace("Writing glue variables to DNP3 points");
 
-    // Writes data points to the outstation. We support two capabilities here:
-    //
-    // * A set of ranges that we will map so that not all of the data needs to
-    //   be available over DNP3
-    // * An offset of the index in the glue variables to the index of the DNP3 points.
-    //   That is, the offset can take glue variable at index 10 and offset by -5 so that
-    //   it is written to point 5.
+    for (uint16_t i(0); i < measurements.size; ++i) {
+        const DNP3MappedGlueVariable& mapping = measurements.items[i];
+        const uint8_t group = mapping.group;
+        const uint16_t point_index_number = mapping.point_index_number;
+        const GlueVariable* var = mapping.variable;
+        void* value = var->value;
 
-    // Update Discrete input (Binary input)
-    for (auto i = range.bool_inputs_start; i < range.bool_inputs_end; i++) {
-        if (glue_variables->BoolInputAt(i, 0) == nullptr) {
-            continue;
+        if (group == GROUP_BINARY_INPUT || group == GROUP_BINARY_OUTPUT_STATUS) {
+            const GlueBoolGroup* bool_group = reinterpret_cast<const GlueBoolGroup*>(value);
+            if (group == GROUP_BINARY_INPUT) {
+                builder.Update(Binary(*(bool_group->values[0])), point_index_number);
+            } else {
+                builder.Update(BinaryOutputStatus(*(bool_group->values[0])), point_index_number);
+            }
+            
+        } else if (group == GROUP_ANALOG_INPUT || group == GROUP_ANALOG_OUTPUT_STATUS) {
+            double double_val = cast_variable<double>(var);
+            if (group == GROUP_ANALOG_INPUT) {
+                builder.Update(Analog(double_val), point_index_number);
+            } else {
+                builder.Update(AnalogOutputStatus(double_val), point_index_number);
+            }
+            
+        } else if (group == GROUP_COUNTER || group == GROUP_FROZEN_COUNTER) {
+            uint32_t int_val = cast_variable<uint32_t>(var);
+            if (group == GROUP_COUNTER) {
+                builder.Update(Counter(int_val), point_index_number);
+            } else {
+                builder.Update(FrozenCounter(int_val), point_index_number);
+            }
         }
-        auto db_index = i - range.bool_inputs_offset;
-        if (db_index < 0) {
-            continue;
-        }
-        builder.Update(Binary(*glue_variables->BoolInputAt(i, 0)), db_index);
-        num_writes += 1;
-    }
-
-    // Update Coils (Binary Output)
-    for (auto i = range.bool_outputs_start; i < range.bool_outputs_end; i++) {
-        if (glue_variables->BoolOutputAt(i, 0) == nullptr) {
-            continue;
-        }
-        auto db_index = i - range.bool_outputs_offset;
-        if (db_index < 0) {
-            continue;
-        }
-        builder.Update(BinaryOutputStatus(*glue_variables->BoolOutputAt(i, 0)), db_index);
-        num_writes += 1;
-    }
-
-    // Write the generic types
-    for (auto i = range.inputs_start; i < range.inputs_end; i++) {
-        void* value = glue_variables->inputs[i].value;
-        if (!value) {
-            // If this slot in the glue is not mapped to a memory location, then
-            // it is not a defined address and we must skip it.
-            continue;
-        }
-
-        // We allow the user to arbitrarily shift the point index for DNP3. This
-        // might allow someone to have two outstations, both starting at index
-        // 0, but referring to different points.
-        std::uint16_t point_index = i - range.inputs_offset;
 
         num_writes += 1;
-        switch (glue_variables->inputs[i].type) {
-            case IECVT_SINT:
-            {
-                IEC_SINT* tval = reinterpret_cast<IEC_SINT*>(value);
-                builder.Update(Analog(*tval), point_index);
-                break;
-            }
-            case IECVT_USINT:
-            {
-                IEC_USINT* tval = reinterpret_cast<IEC_USINT*>(value);
-                builder.Update(Counter(*tval), point_index);
-                break;
-            }
-            case IECVT_INT:
-            {
-                IEC_INT* tval = reinterpret_cast<IEC_INT*>(value);
-                builder.Update(Analog(*tval), point_index);
-                break;
-            }
-            case IECVT_UINT:
-            {
-                IEC_UINT* tval = reinterpret_cast<IEC_UINT*>(value);
-                builder.Update(Counter(*tval), point_index);
-                break;
-            }
-            case IECVT_DINT:
-            {
-                IEC_DINT* tval = reinterpret_cast<IEC_DINT*>(value);
-                builder.Update(Analog(*tval), point_index);
-                break;
-            }
-            case IECVT_UDINT:
-            {
-                IEC_UDINT* tval = reinterpret_cast<IEC_UDINT*>(value);
-                builder.Update(Counter(*tval), point_index);
-                break;
-            }
-            case IECVT_REAL:
-            {
-                IEC_REAL* tval = reinterpret_cast<IEC_REAL*>(value);
-                builder.Update(Analog(*tval), point_index);
-                break;
-            }
-            case IECVT_LREAL:
-            {
-                IEC_LREAL* tval = reinterpret_cast<IEC_LREAL*>(value);
-                builder.Update(Analog(*tval), point_index);
-                break;
-            }
-            default:
-            {
-                // We assumed above that we successfully found a value to write, but
-                // we were wrong. This undoes the increment since we don't actually
-                // support this particular type.
-                num_writes -= 1;
-                break;
-            }
-        }
-    }
-
-    for (auto i = range.outputs_start; i < range.outputs_end; i++) {
-        void* value = glue_variables->outputs[i].value;
-        if (!value) {
-            // If this slot in the glue is not mapped to a memory location, then
-            // it is not a defined address and we must skip it.
-            continue;
-        }
-
-        // We allow the user to arbitrarily shift the point index for DNP3. This
-        // might allow someone to have two outstations, both starting at index
-        // 0, but referring to different points.
-        std::uint16_t point_index = i - range.outputs_offset;
-
-        num_writes += 1;
-        switch (glue_variables->outputs[i].type) {
-            case IECVT_SINT:
-            {
-                IEC_SINT* tval = reinterpret_cast<IEC_SINT*>(value);
-                builder.Update(AnalogOutputStatus(*tval), point_index);
-                break;
-            }
-            case IECVT_USINT:
-            {
-                IEC_USINT* tval = reinterpret_cast<IEC_USINT*>(value);
-                builder.Update(Counter(*tval), point_index);
-                break;
-            }
-            case IECVT_INT:
-            {
-                IEC_INT* tval = reinterpret_cast<IEC_INT*>(value);
-                builder.Update(AnalogOutputStatus(*tval), point_index);
-                break;
-            }
-            case IECVT_UINT:
-            {
-                IEC_UINT* tval = reinterpret_cast<IEC_UINT*>(value);
-                builder.Update(Counter(*tval), point_index);
-                break;
-            }
-            case IECVT_DINT:
-            {
-                IEC_DINT* tval = reinterpret_cast<IEC_DINT*>(value);
-                builder.Update(AnalogOutputStatus(*tval), point_index);
-                break;
-            }
-            case IECVT_UDINT:
-            {
-                IEC_UDINT* tval = reinterpret_cast<IEC_UDINT*>(value);
-                builder.Update(Counter(*tval), point_index);
-                break;
-            }
-            case IECVT_REAL:
-            {
-                IEC_REAL* tval = reinterpret_cast<IEC_REAL*>(value);
-                builder.Update(AnalogOutputStatus(*tval), point_index);
-                break;
-            }
-            case IECVT_LREAL:
-            {
-                IEC_LREAL* tval = reinterpret_cast<IEC_LREAL*>(value);
-                builder.Update(AnalogOutputStatus(*tval), point_index);
-                break;
-            }
-            default:
-            {
-                // We assumed above that we successfully found a value to write, but
-                // we were wrong. This undoes the increment since we don't actually
-                // support this particular type.
-                num_writes -= 1;
-                break;
-            }
-        }
     }
 
     outstation->Apply(builder.Build());

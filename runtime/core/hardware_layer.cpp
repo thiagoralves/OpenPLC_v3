@@ -26,36 +26,38 @@
 #include "ladder.h"
 #include "custom_layer.h"
 
-/** \addtogroup openplc_runtime
- *  @{
- */
+/** @addtogroup blank  Blank
+  * \brief A template with placeholder functions
+  * \ingroup hardware_layers
+  *  @{ */
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief This function is called by the main OpenPLC routine when it
-/// is initializing. All hardware initialization procedures should be here.
-/// @see finalizeHardware()
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Initialization procedures
+///
+/// This function is called by the main OpenPLC routine when it is initializing.
+/// Hardware initialization procedures should be here.
+////////////////////////////////////////////////////////////////////////////////
 void initializeHardware()
 {
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief This function is called by the main OpenPLC routine when it is
-/// finalizing. Resource clearing procedures should be here.
-/// @see initializeHardware()
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Resource clearing
+///
+/// This function is called by the main OpenPLC routine when it is finalizing.
+/// Resource clearing procedures should be here.
+////////////////////////////////////////////////////////////////////////////////
 void finalizeHardware()
 {
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Update input buffers
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Update internal buffers
 ///
 /// This function is called by the OpenPLC in a loop. Here the internal buffers
 /// must be updated to reflect the actual Input state. The mutex bufferLock
 /// must be used to protect access to the buffers on a threaded environment.
-/// @see updateBuffersOut()
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void updateBuffersIn()
 {
 	std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
@@ -71,14 +73,13 @@ void updateBuffersIn()
 	**************************************************/
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Update output buffers
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Update output buffers
 ///
 /// This function is called by the OpenPLC in a loop. Here the internal buffers
 /// must be updated to reflect the actual Output state. The mutex bufferLock
 /// must be used to protect access to the buffers on a threaded environment.
-/// @see updateBuffersIn()
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void updateBuffersOut()
 {
 	std::lock_guard<std::mutex> lock(bufferLock); //lock mutex
@@ -94,5 +95,4 @@ void updateBuffersOut()
 	**************************************************/
 }
 
-/** @}*/
-
+/** @} */

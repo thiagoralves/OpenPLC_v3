@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <cstdint>
 #include <mutex>
+#include "enipStruct.h"	//This header file contains necessary structs for enip.cpp
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -84,11 +85,10 @@ extern std::mutex bufferLock;
 extern unsigned long long common_ticktime__;
 
 struct GlueVariable;
+struct GlueVariablesBinding;
 
-extern const std::uint16_t OPLCGLUE_INPUT_SIZE;
-extern GlueVariable oplc_input_vars[];
-extern const std::uint16_t OPLCGLUE_OUTPUT_SIZE;
-extern GlueVariable oplc_output_vars[];
+extern const std::uint16_t OPLCGLUE_GLUE_SIZE;
+extern const GlueVariable oplc_glue_vars[];
 
 //----------------------------------------------------------------------
 //FUNCTION PROTOTYPES
@@ -149,6 +149,9 @@ void mapUnusedIO();
 //enip.cpp
 int processEnipMessage(unsigned char *buffer, int buffer_size);
 
+//pccc.cpp ADDED Ulmer
+uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size);
+
 //modbus_master.cpp
 void initializeMB();
 void *querySlaveDevices(void *arg);
@@ -157,7 +160,7 @@ void updateBuffersOut_MB();
 
 #ifdef OPLC_DNP3_OUTSTATION
 //dnp3.cpp
-void dnp3StartServer(int port);
+void dnp3StartServer(int port, bool* run, const GlueVariablesBinding& binding);
 #endif
 
 //persistent_storage.cpp

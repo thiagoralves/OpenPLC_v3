@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_DNP3_PUBLISHER_H_
-#define CORE_DNP3_PUBLISHER_H_
+#ifndef CORE_DNP3_DNP3_PUBLISHER_H_
+#define CORE_DNP3_DNP3_PUBLISHER_H_
 
 #include <cstdint>
 #include <memory>
@@ -25,27 +25,24 @@
  *  @{
  */
 
-struct GlueVariables;
-struct GlueRange;
 namespace asiodnp3 {
 class IOutstation;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \brief The publisher defines the interface between the glue arrays
+/// @brief The publisher defines the interface between the glue arrays
 /// of variables that are read from PLC application and written to
 /// the DNP3 channel. This published all of the available glue
 /// information over DNP3, incuding inputs, outputs, memory.
 ////////////////////////////////////////////////////////////////////////////////
 class Dnp3Publisher {
  public:
-    /// \brief Constructs a new instance of the publihser object.
+    /// \brief Constructs a new instance of the publisher object.
     /// @param outstation The outstation that is ourselves
-    /// @param glue_variables The buffers that we use for data transfer
+    /// @param measurements The buffers that we use for data transfer
     Dnp3Publisher(
         std::shared_ptr<asiodnp3::IOutstation> outstation,
-        std::shared_ptr<GlueVariables> glue_variables,
-        Dnp3Range range);
+        const Dnp3MappedGroup& measurements);
 
     /// \brief Publish the values from the in-memory buffers to DNP3 points.
     ///
@@ -53,19 +50,16 @@ class Dnp3Publisher {
     /// once the points have been queued to write but in general will return
     /// before the write has actually happened.
     /// @return the number of points that were queued to write.
-    std::uint32_t WriteToPoints();
+    std::uint32_t ExchangeGlue();
 
  private:
     /// The outstation that we are subscribed to.
     const std::shared_ptr<asiodnp3::IOutstation> outstation;
 
     /// The buffers for data transfer.
-    const std::shared_ptr<GlueVariables> glue_variables;
-
-    /// The range and offsets into the glue that are valid for this instance.
-    const Dnp3Range range;
+    const Dnp3MappedGroup& measurements;
 };
 
-#endif  // CORE_DNP3_PUBLISHER_H_
+#endif  // CORE_DNP3_DNP3_PUBLISHER_H_
 
 /** @}*/

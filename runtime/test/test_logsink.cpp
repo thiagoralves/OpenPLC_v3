@@ -24,9 +24,10 @@ SCENARIO("logsink", "")
 {
     GIVEN("initialized sink")
     {
-		unsigned char buffer[50];
+        unsigned char buffer[50];
+        buffer[0] = '\0';
         auto sink = std::make_shared<buffered_sink>(buffer, 50);
-		sink->set_pattern("%v");
+        sink->set_pattern("%v");
 
         WHEN("get data before any messages")
         {
@@ -34,90 +35,90 @@ SCENARIO("logsink", "")
             REQUIRE(data.size() == 0);
         }
 
-		WHEN("has one message published then returns the message")
-		{
-			std::string logger_name = "test";
+        WHEN("has one message published then returns the message")
+        {
+            std::string logger_name = "test";
 
-			fmt::memory_buffer buf;
-			fmt::format_to(buf, "Hello");
-			spdlog::details::log_msg msg(&logger_name, spdlog::level::info, spdlog::string_view_t(buf.data(), buf.size()));
+            fmt::memory_buffer buf;
+            fmt::format_to(buf, "Hello");
+            spdlog::details::log_msg msg(&logger_name, spdlog::level::info, spdlog::string_view_t(buf.data(), buf.size()));
 
-			sink->log(msg);
-			std::string data = sink->data();
-			REQUIRE_THAT(data, Contains("Hello\n"));
-		}
+            sink->log(msg);
+            std::string data = sink->data();
+            REQUIRE_THAT(data, Contains("Hello\n"));
+        }
 
-		WHEN("has two messages published then return both messages")
-		{
-			std::string logger_name = "test";
+        WHEN("has two messages published then return both messages")
+        {
+            std::string logger_name = "test";
 
-			fmt::memory_buffer buf1;
-			fmt::format_to(buf1, "Hello");
-			spdlog::details::log_msg msg1(&logger_name, spdlog::level::info, spdlog::string_view_t(buf1.data(), buf1.size()));
+            fmt::memory_buffer buf1;
+            fmt::format_to(buf1, "Hello");
+            spdlog::details::log_msg msg1(&logger_name, spdlog::level::info, spdlog::string_view_t(buf1.data(), buf1.size()));
 
-			fmt::memory_buffer buf2;
-			fmt::format_to(buf2, "There");
-			spdlog::details::log_msg msg2(&logger_name, spdlog::level::info, spdlog::string_view_t(buf2.data(), buf2.size()));
+            fmt::memory_buffer buf2;
+            fmt::format_to(buf2, "There");
+            spdlog::details::log_msg msg2(&logger_name, spdlog::level::info, spdlog::string_view_t(buf2.data(), buf2.size()));
 
-			sink->log(msg1);
-			sink->log(msg2);
-			std::string data = sink->data();
-			REQUIRE_THAT(data, Contains("Hello\n"));
-			REQUIRE_THAT(data, Contains("There\n"));
-		}
+            sink->log(msg1);
+            sink->log(msg2);
+            std::string data = sink->data();
+            REQUIRE_THAT(data, Contains("Hello\n"));
+            REQUIRE_THAT(data, Contains("There\n"));
+        }
 
-		WHEN("has two messages published then return both messages")
-		{
-			std::string logger_name = "test";
+        WHEN("has two messages published then return both messages")
+        {
+            std::string logger_name = "test";
 
-			fmt::memory_buffer buf1;
-			fmt::format_to(buf1, "Hello");
-			spdlog::details::log_msg msg1(&logger_name, spdlog::level::info, spdlog::string_view_t(buf1.data(), buf1.size()));
+            fmt::memory_buffer buf1;
+            fmt::format_to(buf1, "Hello");
+            spdlog::details::log_msg msg1(&logger_name, spdlog::level::info, spdlog::string_view_t(buf1.data(), buf1.size()));
 
-			fmt::memory_buffer buf2;
-			fmt::format_to(buf2, "There");
-			spdlog::details::log_msg msg2(&logger_name, spdlog::level::info, spdlog::string_view_t(buf2.data(), buf2.size()));
+            fmt::memory_buffer buf2;
+            fmt::format_to(buf2, "There");
+            spdlog::details::log_msg msg2(&logger_name, spdlog::level::info, spdlog::string_view_t(buf2.data(), buf2.size()));
 
-			sink->log(msg1);
-			sink->log(msg2);
-			std::string data = sink->data();
-			REQUIRE_THAT(data, Contains("Hello\n"));
-			REQUIRE_THAT(data, Contains("There\n"));
-		}
+            sink->log(msg1);
+            sink->log(msg2);
+            std::string data = sink->data();
+            REQUIRE_THAT(data, Contains("Hello\n"));
+            REQUIRE_THAT(data, Contains("There\n"));
+        }
 
-		WHEN("message is longer than buffer size then truncates but still has newline")
-		{
-			std::string logger_name = "test";
+        WHEN("message is longer than buffer size then truncates but still has newline")
+        {
+            std::string logger_name = "test";
 
-			fmt::memory_buffer buf;
-			fmt::format_to(buf, "01234567890123456789012345678901234567890123456789ABCDEFG");
-			spdlog::details::log_msg msg(&logger_name, spdlog::level::info, spdlog::string_view_t(buf.data(), buf.size()));
+            fmt::memory_buffer buf;
+            fmt::format_to(buf, "01234567890123456789012345678901234567890123456789ABCDEFG");
+            spdlog::details::log_msg msg(&logger_name, spdlog::level::info, spdlog::string_view_t(buf.data(), buf.size()));
 
-			sink->log(msg);
-			std::string data = sink->data();
-			REQUIRE_THAT(data, Contains("0123456789012345678901234567890123456789012345678"));
-		}
+            sink->log(msg);
+            std::string data = sink->data();
+            REQUIRE_THAT(data, Contains("0123456789012345678901234567890123456789012345678"));
+        }
 
-		WHEN("multiple messages exhaust buffer then starts from beginning")
-		{
-			std::string logger_name = "test";
+        WHEN("multiple messages exhaust buffer then starts from beginning")
+        {
+            std::string logger_name = "test";
 
-			fmt::memory_buffer buf;
-			fmt::format_to(buf, "0123456789");
-			spdlog::details::log_msg msg(&logger_name, spdlog::level::info, spdlog::string_view_t(buf.data(), buf.size()));
+            fmt::memory_buffer buf;
+            fmt::format_to(buf, "0123456789");
+            spdlog::details::log_msg msg(&logger_name, spdlog::level::info, spdlog::string_view_t(buf.data(), buf.size()));
 
-			fmt::memory_buffer buf2;
-			fmt::format_to(buf2, "ABCDEFG");
-			spdlog::details::log_msg msg2(&logger_name, spdlog::level::info, spdlog::string_view_t(buf2.data(), buf2.size()));
+            fmt::memory_buffer buf2;
+            fmt::format_to(buf2, "ABCDEFG");
+            spdlog::details::log_msg msg2(&logger_name, spdlog::level::info, spdlog::string_view_t(buf2.data(), buf2.size()));
 
-			sink->log(msg);
-			sink->log(msg);
-			sink->log(msg);
-			sink->log(msg);
-			sink->log(msg);
-			sink->log(msg2);
-			std::string data = sink->data();
-			REQUIRE_THAT(data, Contains("ABCDEFG\n"));
-		}
+            sink->log(msg);
+            sink->log(msg);
+            sink->log(msg);
+            sink->log(msg);
+            sink->log(msg);
+            sink->log(msg2);
+            std::string data = sink->data();
+            REQUIRE_THAT(data, Contains("ABCDEFG\n"));
+        }
     }
 }

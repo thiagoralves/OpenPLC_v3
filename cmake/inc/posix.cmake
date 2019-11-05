@@ -18,7 +18,11 @@ if (UNIX)
     set(OPLC_PTHREAD pthread)
     find_package(Threads)
 
-    SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fpermissive")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+
+    # Add build type options
+    set(CMAKE_CXX_FLAGS_DEBUG         "-O0 -g")
+    set(CMAKE_CXX_FLAGS_RELEASE       "-O3 -DNDEBUG")
 
     set(PLATFORM_EXTENSION "")
 endif()

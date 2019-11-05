@@ -44,7 +44,7 @@ IEC_BOOL __DEBUG;
 
 IEC_LINT cycle_counter = 0;
 
-static int tick = 0;
+unsigned long __tick = 0;
 std::mutex bufferLock; //mutex for the internal buffers
 uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
 
@@ -231,14 +231,13 @@ int main(int argc,char **argv)
 		glueVars();
         
 		updateBuffersIn(); //read input image
-
 		
 		{
 			std::lock_guard<std::mutex> guard(bufferLock);
 			updateCustomIn();
 			updateBuffersIn_MB(); //update input image table with data from slave devices
 			handleSpecialFunctions();
-			config_run__(tick++); // execute plc program logic
+			config_run__(__tick++); // execute plc program logic
 			updateCustomOut();
 			updateBuffersOut_MB(); //update slave devices with data from the output image table
 		}

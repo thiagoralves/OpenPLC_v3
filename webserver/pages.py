@@ -748,16 +748,59 @@ monitoring_head = """
             font-family: arial, sans-serif;
         }
         
-        input[type=text], input[type=password], select, textarea {
-            width: 100%;
-            padding: 12px 20px;
-            margin: 8px 0;
-            display: inline-block;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+        .form-inline 
+		{  
+			display: flex;
+			flex-flow: row wrap;
+			align-items: center;
+		}
+
+		.form-inline label 
+		{
+			margin: 5px 10px 5px 0;
+			width: 130px;
+		}
+
+		.form-inline input 
+		{
+			vertical-align: middle;
+			margin: 5px 10px 5px 0;
+			padding: 10px;
+			width: calc(100% - 250px);
+			background-color: #fff;
+			border: 1px solid #ddd;
+		}
+
+		.form-inline button 
+		{
+			padding: 10px 20px;
+			background-color: #E02222;
+			width: 100px;
+			border: 1px solid #1F1F1F;
+			color: white;
+			cursor: pointer;
+			font-size: 14px;
             font-family: "Roboto", sans-serif;
-        }
+		}
+
+		.form-inline button:hover 
+		{
+			background-color: #B51A1A;
+		}
+
+		@media (max-width: 800px) 
+		{
+			.form-inline input 
+			{
+				margin: 10px 0;
+			}
+
+			.form-inline 
+			{
+				flex-direction: column;
+				align-items: stretch;
+			}
+		}
         </style>
         <body onload='loadData()'>"""
 
@@ -772,10 +815,114 @@ monitoring_tail = """
     
     <script>
         var req;
+        var refresh_rate = 100;
         
         function loadData()
         {
             url = 'monitor-update'
+            try
+            {
+                req = new XMLHttpRequest();
+            } catch (e) 
+            {
+                try
+                {
+                    req = new ActiveXObject('Msxml2.XMLHTTP');
+                } catch (e) 
+                {
+                    try 
+                    {
+                        req = new ActiveXObject('Microsoft.XMLHTTP');
+                    } catch (oc) 
+                    {
+                        alert('No AJAX Support');
+                        return;
+                    }
+                }
+            }
+            
+            req.onreadystatechange = processReqChange;
+            req.open('GET', url, true);
+            req.send(null);
+        }
+        
+        function updateRefreshRate()
+        {
+			html_refresh_text = document.getElementById('refresh_rate');
+            refresh_rate = parseInt(html_refresh_text.value);
+            if (refresh_rate < 100)
+            {
+                refresh_rate = 100
+            }
+			
+			html_refresh_text.value = refresh_rate;
+        }
+        
+        function processReqChange()
+        {
+            //If req shows 'complete'
+            if (req.readyState == 4)
+            {
+                mon_table = document.getElementById('monitor_table');
+                
+                //If 'OK'
+                if (req.status == 200)
+                {
+                    //Update table contents
+                    mon_table.innerHTML = req.responseText;
+                    
+                    //Start a new update timer
+                    timeoutID = setTimeout('loadData()', refresh_rate);
+                }
+            }
+        }
+    </script>
+</html>"""
+
+point_info_tail = """
+                        <br>
+                        <br>
+                        <br>
+                        <br>
+                        <center><input type="submit" value="Save Changes" class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"></center>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+    
+    <script type="text/javascript">
+        var req;
+        
+        window.onload = function()
+        {
+            setupSelector();
+            loadData();
+        }
+        
+        function setupSelector()
+        {
+            var checkbox_element = document.getElementById('force_checkbox');
+            var selector_element = document.getElementById('forced_value');
+            if (checkbox_element.checked == true)
+            {
+                selector_element.disabled = false;
+            }
+            else
+            {
+                selector_element.disabled = true;
+            }
+        }
+
+        document.getElementById('force_checkbox').onchange = function()
+        {
+            setupSelector();
+        }
+        
+        function loadData()
+        {
+            table_id = document.getElementById('point_id').value;
+            url = 'point-update?table_id=' + table_id;
             try
             {
                 req = new XMLHttpRequest();
@@ -807,24 +954,19 @@ monitoring_tail = """
             //If req shows 'complete'
             if (req.readyState == 4)
             {
-                mon_table = document.getElementById('monitor_table');
+                mon_point = document.getElementById('monitor_point');
                 
                 //If 'OK'
                 if (req.status == 200)
                 {
                     //Update table contents
-                    mon_table.innerHTML = req.responseText;
+                    mon_point.innerHTML = req.responseText;
                     
                     //Start a new update timer
-                    timeoutID = setTimeout('loadData()', 100);
-                }
-                else
-                {
-                    runtime_logs.value = 'There was a problem retrieving the logs. Error: ' + req.statusText;
+                    timeoutID = setTimeout('loadData()', 500);
                 }
             }
         }
-        
     </script>
 </html>"""
 

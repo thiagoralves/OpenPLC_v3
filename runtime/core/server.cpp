@@ -99,10 +99,10 @@ int createSocket(uint16_t port)
     
     //Set SO_REUSEADDR
     int enable = 1;
-	  if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) 
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) 
     {
-		    spdlog::error("setsockopt(SO_REUSEADDR) failed");
-	  }
+        spdlog::error("setsockopt(SO_REUSEADDR) failed");
+    }
         
     
     SetSocketBlockingEnabled(socket_fd, false);
@@ -213,7 +213,7 @@ void *handleConnections(void *arguments)
     else if (protocol_type == ENIP_PROTOCOL)
         run_server = &run_enip;
 
-	spdlog::debug("Server: Thread created for client ID: {}", client_fd);
+    spdlog::debug("Server: Thread created for client ID: {}", client_fd);
 
     while(*run_server)
     {
@@ -226,11 +226,11 @@ void *handleConnections(void *arguments)
             // something has  gone wrong or the client has closed connection
             if (messageSize == 0)
             {
-				        spdlog::debug("Server: client ID: {} has closed the connection", client_fd);
+                spdlog::debug("Server: client ID: {} has closed the connection", client_fd);
             }
             else
             {
-				        spdlog::error("Server: Something is wrong with the  client ID: {} message Size : {}", client_fd, messageSize);
+                spdlog::error("Server: Something is wrong with the  client ID: {} message Size : {}", client_fd, messageSize);
             }
             break;
         }
@@ -240,7 +240,7 @@ void *handleConnections(void *arguments)
     
     spdlog::debug("Closing client socket and calling pthread_exit");
     close(client_fd);
-	  spdlog::info("Terminating server connections thread");
+    spdlog::info("Terminating server connections thread");
     pthread_exit(NULL);
 }
 
@@ -274,14 +274,14 @@ void startServer(uint16_t port, int protocol_type)
         client_fd = waitForClient(socket_fd, protocol_type); //block until a client connects
         if (client_fd < 0)
         {
-			spdlog::info("Server: Error accepting client!");
+            spdlog::info("Server: Error accepting client!");
         }
         else
         {
             int arguments[2];
             pthread_t thread;
             int ret = -1;
-			spdlog::debug("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
+            spdlog::debug("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
             arguments[0] = client_fd;
             arguments[1] = protocol_type;
             ret = pthread_create(&thread, NULL, handleConnections, (void*)arguments);
@@ -293,7 +293,7 @@ void startServer(uint16_t port, int protocol_type)
     }
     close(socket_fd);
     close(client_fd);
-	spdlog::info("Terminating server thread");
+    spdlog::info("Terminating server thread");
 }
 
 /** @}*/

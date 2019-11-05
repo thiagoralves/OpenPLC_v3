@@ -17,90 +17,179 @@
 #include <cstdint>
 #include <utility>
 #include <mutex>
+#include <asiodnp3/OutstationStackConfig.h>
 
 #include "catch.hpp"
 #include "fakeit.hpp"
 
-// The current DNP3 file does not expose anything and my current goal is to minimize
-// changes. For now, just include it here so that we can we test it. This is needed
-// because the structure currently depends on a number of globals that make testing
-// a bit hard.
 void sleep_until(timespec*, int) {}
-bool run_dnp3(false);
-#include "dnp3.cpp"
 #include "glue.h"
-IEC_BOOL* bool_output[BUFFER_SIZE][8];
-IEC_BOOL* bool_input[BUFFER_SIZE][8];
-std::mutex bufferLock;
-const std::uint16_t OPLCGLUE_INPUT_SIZE(1);
-GlueVariable oplc_input_vars[] = {
-	{ IECVT_UNASSIGNED, nullptr },
-};
-const std::uint16_t OPLCGLUE_OUTPUT_SIZE(1);
-GlueVariable oplc_output_vars[] = {
-	{ IECVT_UNASSIGNED, nullptr },
-};
+#include "dnp3.h"
 
+using namespace asiodnp3;
 using namespace std;
 
 SCENARIO("create_config", "")
 {
-	GIVEN("<input stream>")
-	{
-		WHEN("stream is empty creates default config")
-		{
-			std::stringstream input_stream;
-			pair<OutstationStackConfig, Dnp3Range> config_range(create_config(input_stream));
-			OutstationStackConfig config = config_range.first;
+    mutex glue_mutex;
+    unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new stringstream(""), [](istream* s) { delete s; });
+    Dnp3IndexedGroup binary_commands = {0};
+    Dnp3IndexedGroup analog_commands = {0};
+    Dnp3MappedGroup measurements = {0};
 
-			REQUIRE(config.dbConfig.binary.IsEmpty());
-			REQUIRE(config.dbConfig.doubleBinary.IsEmpty());
-			REQUIRE(config.dbConfig.analog.IsEmpty());
-			REQUIRE(config.dbConfig.counter.IsEmpty());
-			REQUIRE(config.dbConfig.frozenCounter.IsEmpty());
-			REQUIRE(config.dbConfig.boStatus.IsEmpty());
-			REQUIRE(config.dbConfig.aoStatus.IsEmpty());
-			REQUIRE(config.dbConfig.timeAndInterval.IsEmpty());
-			REQUIRE(config.link.IsMaster == false);
-			REQUIRE(config.link.UseConfirms == false);
-			REQUIRE(config.link.NumRetry == 0);
-			REQUIRE(config.link.LocalAddr == 1024);
-			REQUIRE(config.link.RemoteAddr == 1);
-		}
+    GIVEN("<input stream>")
+    {
+        WHEN("stream is empty creates default config")
+        {
+            GlueVariablesBinding bindings(&glue_mutex, 0, nullptr);
+            std::stringstream input_stream;
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
 
-		WHEN("stream only specifies default size")
-		{
-			std::stringstream input_stream("database_size=1");
-			pair<OutstationStackConfig, Dnp3Range> config_range(create_config(input_stream));
-			OutstationStackConfig config = config_range.first;
+            REQUIRE(config.dbConfig.binary.IsEmpty());
+            REQUIRE(config.dbConfig.doubleBinary.IsEmpty());
+            REQUIRE(config.dbConfig.analog.IsEmpty());
+            REQUIRE(config.dbConfig.counter.IsEmpty());
+            REQUIRE(config.dbConfig.frozenCounter.IsEmpty());
+            REQUIRE(config.dbConfig.boStatus.IsEmpty());
+            REQUIRE(config.dbConfig.aoStatus.IsEmpty());
+            REQUIRE(config.dbConfig.timeAndInterval.IsEmpty());
+            REQUIRE(config.link.IsMaster == false);
+            REQUIRE(config.link.UseConfirms == false);
+            REQUIRE(config.link.NumRetry == 0);
+            REQUIRE(config.link.LocalAddr == 1024);
+            REQUIRE(config.link.RemoteAddr == 1);
+        }
 
-			REQUIRE(config.dbConfig.binary.Size() == 1);
-			REQUIRE(config.dbConfig.doubleBinary.Size() == 1);
-			REQUIRE(config.dbConfig.analog.Size() == 1);
-			REQUIRE(config.dbConfig.counter.Size() == 1);
-			REQUIRE(config.dbConfig.frozenCounter.Size() == 1);
-			REQUIRE(config.dbConfig.boStatus.Size() == 1);
-			REQUIRE(config.dbConfig.aoStatus.Size() == 1);
-			REQUIRE(config.dbConfig.timeAndInterval.Size() == 1);
-			REQUIRE(config.link.IsMaster == false);
-			REQUIRE(config.link.UseConfirms == false);
-			REQUIRE(config.link.NumRetry == 0);
-			REQUIRE(config.link.LocalAddr == 1024);
-			REQUIRE(config.link.RemoteAddr == 1);
-		}
-	}
+        WHEN("stream specifies size based on glue variables for one boolean")
+        {
+            bool bool_var;
+            const GlueVariable glue_vars[] = {
+                { IECLDT_OUT, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
+            };
+            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
+            std::stringstream input_stream("bind_location=name:%QX0.0,group:1,index:0,");
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
+
+            REQUIRE(config.dbConfig.binary.Size() == 1);
+            REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
+            REQUIRE(config.dbConfig.analog.Size() == 0);
+            REQUIRE(config.dbConfig.counter.Size() == 0);
+            REQUIRE(config.dbConfig.frozenCounter.Size() == 0);
+            REQUIRE(config.dbConfig.boStatus.Size() == 0);
+            REQUIRE(config.dbConfig.aoStatus.Size() == 0);
+            REQUIRE(config.dbConfig.timeAndInterval.Size() == 0);
+            REQUIRE(config.link.IsMaster == false);
+            REQUIRE(config.link.UseConfirms == false);
+            REQUIRE(config.link.NumRetry == 0);
+            REQUIRE(config.link.LocalAddr == 1024);
+            REQUIRE(config.link.RemoteAddr == 1);
+
+            // We should have bound the one variable
+            REQUIRE(measurements.items[0].variable == &(glue_vars[0]));
+        }
+
+        WHEN("stream specifies size based on glue variables for one boolean at index 1")
+        {
+            bool bool_var;
+            const GlueVariable glue_vars[] = {
+                { IECLDT_IN, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
+            };
+            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
+            std::stringstream input_stream("bind_location=name:%IX0.0,group:1,index:1,");
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
+
+            REQUIRE(config.dbConfig.binary.Size() == 1);
+            REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
+            REQUIRE(config.dbConfig.analog.Size() == 0);
+            REQUIRE(config.dbConfig.counter.Size() == 0);
+            REQUIRE(config.dbConfig.frozenCounter.Size() == 0);
+            REQUIRE(config.dbConfig.boStatus.Size() == 0);
+            REQUIRE(config.dbConfig.aoStatus.Size() == 0);
+            REQUIRE(config.dbConfig.timeAndInterval.Size() == 0);
+            REQUIRE(config.link.IsMaster == false);
+            REQUIRE(config.link.UseConfirms == false);
+            REQUIRE(config.link.NumRetry == 0);
+            REQUIRE(config.link.LocalAddr == 1024);
+            REQUIRE(config.link.RemoteAddr == 1);
+
+            // We should have bound the one variable
+            REQUIRE(measurements.items[0].variable == &(glue_vars[0]));
+        }
+
+        WHEN("stream specifies size based on glue variables for one boolean command at index 1")
+        {
+            bool bool_var;
+            const GlueVariable glue_vars[] = {
+                { IECLDT_IN, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
+            };
+            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
+            std::stringstream input_stream("bind_location=name:%IX0.0,group:12,index:1,");
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
+
+            REQUIRE(config.dbConfig.binary.Size() == 0);
+            REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
+            REQUIRE(config.dbConfig.analog.Size() == 0);
+            REQUIRE(config.dbConfig.counter.Size() == 0);
+            REQUIRE(config.dbConfig.frozenCounter.Size() == 0);
+            REQUIRE(config.dbConfig.boStatus.Size() == 0);
+            REQUIRE(config.dbConfig.aoStatus.Size() == 0);
+            REQUIRE(config.dbConfig.timeAndInterval.Size() == 0);
+            REQUIRE(config.link.IsMaster == false);
+            REQUIRE(config.link.UseConfirms == false);
+            REQUIRE(config.link.NumRetry == 0);
+            REQUIRE(config.link.LocalAddr == 1024);
+            REQUIRE(config.link.RemoteAddr == 1);
+
+            // We should have bound the one variable
+            REQUIRE(measurements.size == 0);
+            REQUIRE(binary_commands.size == 2);
+            REQUIRE(binary_commands.items[1] == &(glue_vars[0]));
+        }
+
+        WHEN("stream specifies size based on glue variables for one real at index 1")
+        {
+            IEC_REAL real_var(9);
+            const GlueVariable glue_vars[] = {
+                { IECLDT_OUT, IECLST_DOUBLEWORD, 0, 0, IECVT_REAL, &real_var },
+            };
+            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
+            std::stringstream input_stream("bind_location=name:%QD0,group:30,index:1,");
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
+
+            REQUIRE(config.dbConfig.binary.Size() == 0);
+            REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
+            REQUIRE(config.dbConfig.analog.Size() == 1);
+            REQUIRE(config.dbConfig.counter.Size() == 0);
+            REQUIRE(config.dbConfig.frozenCounter.Size() == 0);
+            REQUIRE(config.dbConfig.boStatus.Size() == 0);
+            REQUIRE(config.dbConfig.aoStatus.Size() == 0);
+            REQUIRE(config.dbConfig.timeAndInterval.Size() == 0);
+            REQUIRE(config.link.IsMaster == false);
+            REQUIRE(config.link.UseConfirms == false);
+            REQUIRE(config.link.NumRetry == 0);
+            REQUIRE(config.link.LocalAddr == 1024);
+            REQUIRE(config.link.RemoteAddr == 1);
+
+            // We should have bound the one variable
+            REQUIRE(measurements.items[0].variable->value == &real_var);
+        }
+    }
 }
 
 SCENARIO("dnp3StartServer", "")
 {
-	WHEN("provides configuration stream but not run")
-	{
-		// Configure this to start and then immediately terminate
-		// the run flag is set to false. This should just return quickly
-		bool run_dnp3(false);
-		unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new stringstream(""), [](istream* s) { delete s; });
-		dnp3StartServer(20000, cfg_stream, &run_dnp3);
-	}
+    mutex glue_mutex;
+
+    WHEN("provides configuration stream but not run")
+    {
+        // Configure this to start and then immediately terminate
+        // the run flag is set to false. This should just return quickly
+        bool run_dnp3(false);
+        unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new stringstream(""), [](istream* s) { delete s; });
+        GlueVariablesBinding bindings(&glue_mutex, 0, nullptr);
+
+        dnp3StartServer(20000, cfg_stream, &run_dnp3, bindings);
+    }
 }
 
 #endif  // OPLC_DNP3_OUTSTATION

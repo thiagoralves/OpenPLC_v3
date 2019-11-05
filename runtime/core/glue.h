@@ -16,6 +16,7 @@
 #define CORE_GLUE_H
 
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <mutex>
 
@@ -29,6 +30,30 @@
 #define BUFFER_SIZE 1024
 #endif
 
+#ifndef OPLC_IEC_GLUE_DIRECTION
+#define OPLC_IEC_GLUE_DIRECTION
+enum IecLocationDirection {
+    IECLDT_IN,
+    IECLDT_OUT,
+    IECLDT_MEM,
+};
+#endif  // OPLC_IEC_GLUE_DIRECTION
+
+#ifndef OPLC_IEC_GLUE_SIZE
+#define OPLC_IEC_GLUE_SIZE
+enum IecLocationSize {
+    /// Variables that are a single bit
+    IECLST_BIT,
+    /// Variables that are 1 byte
+    IECLST_BYTE,
+    /// Variables that are 2 bytes
+    IECLST_WORD,
+    /// Variables that are 4 bytes, including REAL
+    IECLST_DOUBLEWORD,
+    /// Variables that are 8 bytes, including LREAL
+    IECLST_LONGWORD,
+};
+#endif  // OPLC_IEC_GLUE_SIZE
 
 #ifndef OPLC_IEC_GLUE_VALUE_TYPE
 #define OPLC_IEC_GLUE_VALUE_TYPE
@@ -54,127 +79,105 @@ enum IecGlueValueType {
     IECVT_LWORD,
     IECVT_LINT,
     IECVT_ULINT,
+    /// This is not a normal type and won't appear in the glue variables
+    /// here. But it does allow you to create your own indexed mapping
+    /// and have a way to indicate a value that is not assigned a type.
     IECVT_UNASSIGNED
 };
 #endif // OPLC_IEC_GLUE_VALUE_TYPE
+
+#ifndef OPLC_GLUE_BOOL_GROUP
+#define OPLC_GLUE_BOOL_GROUP
+
+//////////////////////////////////////////////////////////////////////////////////
+/// @brief Defines the mapping for a group of glued boolean variable.
+///
+/// This definition must be consistent with what is produced by the @ref glue_generator.
+//////////////////////////////////////////////////////////////////////////////////
+struct GlueBoolGroup {
+    /// The first index for this array. If we are iterating over the glue
+    /// variables, then this index is superfluous, but it is very helpful
+    /// for debugging.
+    std::uint16_t index;
+    /// The values in this group. If the value is not assigned, then the
+    /// value at the index points to nullptr.
+    IEC_BOOL* values[8];
+};
+#endif // OPLC_GLUE_BOOL_GROUP
 
 #ifndef OPLC_GLUE_VARIABLE
 #define OPLC_GLUE_VARIABLE
 
 //////////////////////////////////////////////////////////////////////////////////
-/// @brief Defines the mapping for a glued variable.
+/// @brief Defines the mapping for a glued variable. This defines a simple, space
+/// efficient lookup table. It has all of the mapping information that you
+/// need to find the variable based on the location name (e.g. %IB1.1). While
+/// this is space efficient, this should be searched once to construct a fast
+/// lookup into this table used for the remainder of the application lifecycle.
 ///
 /// This definition must be consistent with what is produced by the @ref glue_generator.
 //////////////////////////////////////////////////////////////////////////////////
 struct GlueVariable {
-    /// The type of the glue variable.
+    /// The direction of the variable - this is determined by I/Q/M.
+    IecLocationDirection dir;
+    /// The size of the variable - this is determined by X/B/W/D/L.
+    IecLocationSize size;
+    /// The most significant index for the variable. This is the part of the
+    /// name, converted to an integer, before the period.
+    std::uint16_t msi;
+    /// The least significant index (sub-index) for the variable. This is the
+    /// part of the name, converted to an integer, after the period. It is
+    /// only relevant for boolean (bit) values.
+    std::uint8_t lsi;
+    /// The type of the glue variable. This is used so that we correctly
+    /// write into the value type.
     IecGlueValueType type;
     /// A pointer to the memory address for reading/writing the value.
     void* value;
 };
-#endif // OPLC_GLUE_VARIABLE
+#endif  // OPLC_GLUE_VARIABLE
 
 //////////////////////////////////////////////////////////////////////////////////
-/// @brief Defines a collection of buffers by which we exchange data
-/// between the runtime and peripherals/middleware.
-///
-/// Except for the boolean buffers, each is an array of the same length
-/// where each value points to a memory location for data
-/// exchange. That is, the values of the arrays only indirectly
-/// indicate the held value.
-///
-/// In the case of booleans, there is a further level of indirection
-/// in that each location has as many as 8 child bits.
-///
-/// Access to the buffers is protected by a common mutex. You need
-/// to acquire the lock prior to reading or writing from the buffers.
-///
-/// Inputs are normally only populated by hardwired devices. They
-/// are inputs to the runtime. Outputs are normally populated by
-/// the runtime and are available as outputs from the runtime. The
-/// precise use of these conventions ultimately depends on the
-/// implementation of the communcation driver.
-///
-/// A value that is not mapped is marked with NULL and must not be used.
+/// @brief Defines accessors for glue variables.
+/// This structure wraps up items that are available as globals, but this allows
+/// a straighforward way to inject definitions into tests, so it is preferred
+/// to use this structure rather than globals.
 //////////////////////////////////////////////////////////////////////////////////
-struct GlueVariables {
+struct GlueVariablesBinding {
 
-	GlueVariables(
-		std::mutex* buffer_lock,
-		IEC_BOOL** bool_inputs,
-		IEC_BOOL** bool_outputs,
-		std::uint16_t inputs_size,
-		GlueVariable* inputs,
-		std::uint16_t outputs_size,
-		GlueVariable* outputs) :
+    GlueVariablesBinding(std::mutex* buffer_lock, const std::uint16_t size, const GlueVariable* glue_variables) :
+        buffer_lock(buffer_lock),
+        size(size),
+        glue_variables(glue_variables)
 
-		buffer_lock(buffer_lock),
-		bool_inputs(bool_inputs),
-		bool_outputs(bool_outputs),
-		inputs_size(inputs_size),
-		inputs(inputs),
-		outputs_size(outputs_size),
-		outputs(outputs)
-	{}
+    {}
 
-	GlueVariables(const GlueVariables& copy) :
-
-		buffer_lock(copy.buffer_lock),
-		bool_inputs(copy.bool_inputs),
-		bool_outputs(copy.bool_outputs),
-		inputs_size(copy.inputs_size),
-		inputs(copy.inputs),
-		outputs_size(copy.outputs_size),
-		outputs(copy.outputs)
-	{}
-
-    /// @brief Mutex for this structure
+    /// @brief Mutex for the glue variables
     std::mutex* buffer_lock;
 
-    // Booleans - these are mapped separately because they have an additional
-    // level of nesting.
+    /// @brief The size of the glue variables array
+    std::uint16_t size;
 
-    /// Mapped to IXx_x locations. This is a a 2D array where the second index
-	/// must have a length of 8.
-    IEC_BOOL** bool_inputs;
+    /// @brief The glue variables array
+    const GlueVariable* glue_variables;
 
-    /// Mapped to QXx_x locations. This is a a 2D array where the second index
-	/// must have a length of 8.
-    IEC_BOOL** bool_outputs;
+    //////////////////////////////////////////////////////////////////////////////////
+    /// @brief Find a glue varia&glue_mutexble based on the specification of the variable.
+    /// @return the variable or null if there is no variable that matches all
+    /// criteria in the specification.
+    //////////////////////////////////////////////////////////////////////////////////
+    const GlueVariable* find(IecLocationDirection dir,
+                             IecLocationSize size,
+                             std::uint16_t msi,
+                             std::uint8_t lsi) const;
 
-	/// @brief Gets the boolean input at the specified primary and secondary index.
-	/// @param prim The primary (first) index in the 2-D array
-	/// @param sec The secondary index in the 2-D array.
-	/// @return A pointer to the boolean value.
-	inline IEC_BOOL* BoolInputAt(std::uint16_t prim, std::uint16_t sec) {
-		std::uint16_t idx = prim * 8 + sec;
-		return this->bool_inputs[idx];
-	}
-
-	/// @brief Gets the boolean output at the specified primary and secondary index.
-	/// @param prim The primary (first) index in the 2-D array
-	/// @param sec The secondary index in the 2-D array.
-	/// @return A pointer to the boolean value.
-	inline IEC_BOOL* BoolOutputAt(std::uint16_t prim, std::uint16_t sec) {
-		std::uint16_t idx = prim * 8 + sec;
-		return this->bool_outputs[idx];
-	}
-
-    /// @brief The size of the inputs array.  You can index up to inputs_size - 1
-    /// in the array.
-    const std::uint16_t inputs_size;
-
-    /// @brief The input glue variables array. The number of items in the array is
-    /// given by inputs_size.
-    GlueVariable* const inputs;
-
-    /// @brief The size of the outputs array. You can index up to outputs_size - 1
-    /// in the array.
-    const std::uint16_t outputs_size;
-
-    /// @brief The output glue variables array. The number of items in the array is
-    /// given by outputs_size.
-    GlueVariable* const outputs;
+    //////////////////////////////////////////////////////////////////////////////////
+    /// @brief Find a glue variable based on the location of the variable, for example
+    /// %IX0.1
+    /// @return the variable or null if there is no variable that matches all
+    /// criteria in the specification.
+    //////////////////////////////////////////////////////////////////////////////////
+    const GlueVariable* find(const std::string& location) const;    
 };
 
 #endif // CORE_GLUE_H

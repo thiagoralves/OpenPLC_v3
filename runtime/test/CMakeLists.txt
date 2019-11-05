@@ -22,10 +22,14 @@ include_directories(../core/lib)
 include_directories(../vendor/catch2-2.7.0)
 include_directories(../vendor/fakeit-2.0.5)
 
+if (NOT OPLC_DNP3_OUTSTATION)
+    message(WARNING "Building of tests does not have DNP3 outstation enabled")
+endif()
+
 # This is all of our test files
 file(GLOB oplctest_SRC *.cpp)
 
-add_executable(oplc_unit_test ${oplctest_SRC} ../core/dnp3_publisher.cpp ../core/dnp3_receiver.cpp)
+add_executable(oplc_unit_test ${oplctest_SRC} ../core/glue.cpp ../core/dnp3.cpp ../core/dnp3_publisher.cpp ../core/dnp3_receiver.cpp)
 
 target_link_libraries(oplc_unit_test ${OPLC_PTHREAD})
 if (OPLC_DNP3_OUTSTATION)
