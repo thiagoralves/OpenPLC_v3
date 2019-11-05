@@ -129,7 +129,7 @@ ExecStart=$WORKING_DIR/start_openplc.sh\n\
 WantedBy=multi-user.target" >> openplc.service
         $1 cp -rf ./openplc.service /lib/systemd/system/
         rm -rf openplc.service
-        $1 "Enabling OpenPLC Service..."
+        echo "Enabling OpenPLC Service..."
         $1 systemctl daemon-reload
         $1 systemctl enable openplc
     fi
