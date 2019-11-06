@@ -27,9 +27,10 @@ if (NOT OPLC_DNP3_OUTSTATION)
 endif()
 
 # This is all of our test files
-file(GLOB oplctest_SRC *.cpp)
+file(GLOB oplctest_SRC *.cpp **/*.cpp)
+file(GLOB oplc_dnp3_SRC ../core/dnp3s/*.cpp)
 
-add_executable(oplc_unit_test ${oplctest_SRC} ../core/glue.cpp ../core/dnp3.cpp ../core/dnp3_publisher.cpp ../core/dnp3_receiver.cpp)
+add_executable(oplc_unit_test ${oplctest_SRC} ${oplc_dnp3_SRC} ../core/glue.cpp )
 
 target_link_libraries(oplc_unit_test ${OPLC_PTHREAD})
 if (OPLC_DNP3_OUTSTATION)

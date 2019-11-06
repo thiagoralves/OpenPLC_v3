@@ -28,6 +28,7 @@
 #include <spdlog/spdlog.h>
 
 #include "ladder.h"
+#include "enip.h"
 
 /** \addtogroup openplc_runtime
  *  @{

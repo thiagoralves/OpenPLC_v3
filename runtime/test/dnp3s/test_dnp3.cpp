@@ -24,7 +24,7 @@
 
 void sleep_until(timespec*, int) {}
 #include "glue.h"
-#include "dnp3.h"
+#include "dnp3s/dnp3.h"
 
 using namespace asiodnp3;
 using namespace std;

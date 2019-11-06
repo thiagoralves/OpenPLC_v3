@@ -26,7 +26,10 @@ endif()
 include_directories(lib)
 
 # The primary source is everything in this directory
-file(GLOB oplc_SRC *.cpp)
+file(GLOB oplc_SRC *.cpp dnp3s/*.cpp)
+
+message("In runtime")
+message(${oplc_SRC})
 
 # For other part of the build, it is useful to know what are the valid
 # files without the hardware layer.

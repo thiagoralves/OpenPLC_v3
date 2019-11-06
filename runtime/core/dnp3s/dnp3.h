@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_DNP3_DNP3_H_
-#define CORE_DNP3_DNP3_H_
+#ifndef CORE_DNP3S_DNP3_H_
+#define CORE_DNP3S_DNP3_H_
 
 #include <cstdint>
 #include <istream>
@@ -153,8 +153,10 @@ asiodnp3::OutstationStackConfig dnp3_create_config(std::istream& cfg_stream,
 /// @param glue_variables The glue variables that may be bound into this
 ///                       server.
 void dnp3StartServer(int port,
-                     std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
-                     bool* run,
-                     const GlueVariablesBinding& glue_variables);
+                       std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+                       bool* run,
+                       const GlueVariablesBinding& glue_variables);
 
-#endif  // CORE_DNP3_DNP3_H_
+#endif  // CORE_DNP3S_DNP3_H_
+
+/** @}*/

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_DNP3_DNP3_PUBLISHER_H_
-#define CORE_DNP3_DNP3_PUBLISHER_H_
+#ifndef CORE_DNP3S_DNP3_PUBLISHER_H_
+#define CORE_DNP3s_DNP3_PUBLISHER_H_
 
 #include <cstdint>
 #include <memory>
@@ -60,6 +60,6 @@ class Dnp3Publisher {
     const Dnp3MappedGroup& measurements;
 };
 
-#endif  // CORE_DNP3_DNP3_PUBLISHER_H_
+#endif  // CORE_DNP3S_DNP3_PUBLISHER_H_
 
 /** @}*/
