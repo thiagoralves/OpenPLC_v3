@@ -17,13 +17,16 @@
 
 #include <cstdint>
 #include <istream>
-#include <mutex>
+#include <memory>
 #include <utility>
 #include <sstream>
 #include <string>
 
 namespace asiodnp3 {
 class OutstationStackConfig;
+}
+namespace std {
+class mutex;
 }
 
 struct GlueVariable;
@@ -152,11 +155,25 @@ asiodnp3::OutstationStackConfig dnp3_create_config(std::istream& cfg_stream,
 ///            this signal is false.
 /// @param glue_variables The glue variables that may be bound into this
 ///                       server.
-void dnp3StartServer(int port,
-                       std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
-                       bool* run,
-                       const GlueVariablesBinding& glue_variables);
+void dnp3s_start_server(int port,
+                        std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+                        volatile bool& run,
+                        const GlueVariablesBinding& glue_variables);
 
-#endif  // CORE_DNP3S_DNP3_H_
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Start the DNP3 server running on the specified port and configured
+/// using the specified stream.
+///
+/// The stream is specified as a function so that this function will close the
+/// stream as soon as it is done with the stream.
+/// @param glue_variables The glue variables that may be bound into this
+///                       server.
+/// @param run A signal for running this server. This server terminates when
+///            this signal is false.
+/// @param config The custom configuration for this service.
+void dnp3s_service_run(const GlueVariablesBinding& binding,
+                       volatile bool& run, const char* config);
 
 /** @}*/
+
+#endif  // CORE_DNP3S_DNP3_H_

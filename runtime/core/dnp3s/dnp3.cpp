@@ -52,6 +52,7 @@
 #include "dnp3.h"
 #include "dnp3_publisher.h"
 #include "dnp3_receiver.h"
+#include "../service/service_definition.h"
 
 
 /** \addtogroup openplc_runtime
@@ -363,10 +364,10 @@ OutstationStackConfig dnp3_create_config(istream& cfg_stream,
     return config;
 }
 
-void dnp3StartServer(int port,
-                     unique_ptr<istream, function<void(istream*)>>& cfg_stream,
-                     bool* run,
-                     const GlueVariablesBinding& glue_variables) {
+void dnp3s_start_server(int port,
+                        unique_ptr<istream, function<void(istream*)>>& cfg_stream,
+                        volatile bool& run,
+                        const GlueVariablesBinding& glue_variables) {
     const uint32_t FILTERS = levels::NORMAL;
 
     Dnp3IndexedGroup binary_commands = {0};
@@ -409,7 +410,7 @@ void dnp3StartServer(int port,
         clock_gettime(CLOCK_MONOTONIC, &timer_start);
 
         // Run this until we get a signal to stop.
-        while (*run) {
+        while (run) {
             {
                 // Create a scope so we release the log after the read/write
                 lock_guard<mutex> guard(*glue_variables.buffer_lock);
@@ -435,15 +436,15 @@ void dnp3StartServer(int port,
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Function to begin DNP3 server functions. This is the normal way that
 /// the DNP3 server is started.
-/// @param port The port to run against.
 ////////////////////////////////////////////////////////////////////////////////
-void dnp3s_start_server(int port, bool* run, const GlueVariablesBinding& binding) {
+void dnp3s_service_run(const GlueVariablesBinding& binding, volatile bool& run, const char* config) {
     unique_ptr<istream, function<void(istream*)>> cfg_stream(new ifstream("./../webserver/dnp3.cfg"), [](istream* s)
         {
             reinterpret_cast<ifstream*>(s)->close();
             delete s;
         });
-    dnp3StartServer(port, cfg_stream, run, binding);
+    int port = strlen(config) > 0 ? atoi(config) : 20000;
+    dnp3s_start_server(port, cfg_stream, run, binding);
 }
 
 #endif  // OPLC_DNP3_OUTSTATION

@@ -26,7 +26,7 @@ endif()
 include_directories(lib)
 
 # The primary source is everything in this directory
-file(GLOB oplc_SRC *.cpp dnp3s/*.cpp)
+file(GLOB oplc_SRC *.cpp dnp3s/*.cpp service/*.cpp)
 
 message("In runtime")
 message(${oplc_SRC})
