@@ -47,11 +47,13 @@
 #include <openpal/util/Uncopyable.h>
 
 #include <spdlog/spdlog.h>
+#include <ini.h>
 
 #include "ladder.h"
 #include "dnp3.h"
 #include "dnp3_publisher.h"
 #include "dnp3_receiver.h"
+#include "../ini_util.h"
 #include "../service/service_definition.h"
 
 
@@ -165,12 +167,12 @@ string get_located_name(const string& value) {
 
 /// @brief Handle the parsed config items to populate the command and
 /// measurement mappings, using the information about the glue variables.
-/// @param[in] config_items The list of all configuration items.
+/// @param[in] binding_defs The list of all binding items.
 /// @param[in] bindings The struture for querying glue variables.
 /// @param[out] binary_commands The binary command group to create.
 /// @param[out] analog_command The analog command group to create.
 /// @param[out] measurements The measurements list to create.
-void bind_variables(const vector<pair<string, string>>& config_items,
+void bind_variables(const vector<string>& binding_defs,
                     const GlueVariablesBinding& binding,
                     Dnp3IndexedGroup& binary_commands,
                     Dnp3IndexedGroup& analog_commands,
@@ -182,21 +184,15 @@ void bind_variables(const vector<pair<string, string>>& config_items,
     // We do this in several passes so that we can efficiently allocate memory.
     // That means more work up front, but save space over the application
     // lifetime.
-    vector<tuple<string, int8_t, int16_t>> bindings;
-    for (auto it = config_items.begin(); it != config_items.end(); ++it) {
-        if (it->first != "bind_location") {
-            // We are searching through all configuration items, so ignore any
-            // items that are not associated with a bind location.
-            continue;
-        }
-
+    vector<tuple<string, int8_t, int16_t>> binding_infos;
+    for (auto it = binding_defs.begin(); it != binding_defs.end(); ++it) {
         // Find the name of the located variable
-        string name = get_located_name((*it).second);
-        int8_t group_number = get_group_number(it->second);
-        int16_t data_index = get_data_index(it->second);
+        string name = get_located_name((*it));
+        int8_t group_number = get_group_number((*it));
+        int16_t data_index = get_data_index((*it));
 
         if (name.empty() || group_number < 0 || data_index < 0) {
-            // If one of the items is not valid, then don't handle furhter
+            // If one of the items is not valid, then don't handle further
             continue;
         }
 
@@ -216,10 +212,10 @@ void bind_variables(const vector<pair<string, string>>& config_items,
                 measurements_size += 1;
                 break;
             default:
-               spdlog::error("DNP3 bind_location unknown group config item {}", (*it).second); 
+               spdlog::error("DNP3 bind_location unknown group config item {}", (*it)); 
         }
 
-        bindings.push_back(make_tuple(name, group_number, data_index));
+        binding_infos.push_back(make_tuple(name, group_number, data_index));
     }
 
     if (group_12_max_index >= 0) {
@@ -242,7 +238,7 @@ void bind_variables(const vector<pair<string, string>>& config_items,
     
     // Now bind each glue variable into the structure
     uint16_t meas_index(0);
-    for (auto it = bindings.begin(); it != bindings.end(); ++it) {
+    for (auto it = binding_infos.begin(); it != binding_infos.end(); ++it) {
         string name = std::get<0>(*it);
         int8_t group_number = std::get<1>(*it);
         int16_t data_index = std::get<2>(*it);
@@ -270,37 +266,95 @@ void bind_variables(const vector<pair<string, string>>& config_items,
     }
 }
 
+/// Container for reading in configuration from the config.ini
+/// This is populated with values from the config file.
+struct Dnp3Config {
+    Dnp3Config() :
+        port(20000),
+        link(false, false)
+    {}
+
+    uint16_t port;
+
+    /// Outstation config
+	opendnp3::OutstationConfig outstation;
+
+	/// Link layer config
+	opendnp3::LinkConfig link;
+
+    vector<string> bindings;
+};
+
+int dnp3s_cfg_handler(void* user_data, const char* section,
+                      const char* name, const char* value) {
+    if (strcmp("dnp3s", section) != 0) {
+        return 0;
+    }
+
+    auto config = reinterpret_cast<Dnp3Config*>(user_data);
+
+    // First check for a binding, because we expect to have many more of those.
+    if (strcmp(name, "bind_location") == 0) {
+        config->bindings.push_back(value);
+    } else if (strcmp(name, "port") == 0) {
+        config->port = atoi(value);
+    } else if (strcmp(name, "local_address") == 0) {
+        config->link.LocalAddr = atoi(value);
+    } else if (strcmp(name, "remote_address") == 0) {
+        config->link.RemoteAddr = atoi(value);
+    } else if (strcmp(name, "keep_alive_timeout") == 0) {
+        if (strcmp(value, "MAX") == 0) {
+            config->link.KeepAliveTimeout = openpal::TimeDuration::Max();
+        } else {
+            config->link.KeepAliveTimeout = openpal::TimeDuration::Seconds(atoi(value));
+        }
+    } else if (strcmp(name, "enable_unsolicited") == 0) {
+        config->outstation.params.allowUnsolicited = ini_atob(value);
+    } else if (strcmp(name, "select_timeout") == 0) {
+        config->outstation.params.selectTimeout = openpal::TimeDuration::Seconds(atoi(value));
+    } else if (strcmp(name, "max_controls_per_request") == 0) {
+        config->outstation.params.maxControlsPerRequest = atoi(value);
+    } else if (strcmp(name, "max_rx_frag_size") == 0) {
+        config->outstation.params.maxRxFragSize = atoi(value);
+    } else if (strcmp(name, "max_tx_frag_size") == 0) {
+        config->outstation.params.maxTxFragSize = atoi(value);
+    } else if (strcmp(name, "event_buffer_size") == 0) {
+        config->outstation.eventBufferConfig = EventBufferConfig::AllTypes(atoi(value));
+    } else if (strcmp(name, "sol_confirm_timeout") == 0) {
+        config->outstation.params.solConfirmTimeout =
+            openpal::TimeDuration::Milliseconds(atoi(value));
+    } else if (strcmp(name, "unsol_confirm_timeout") == 0) {
+        config->outstation.params.unsolConfirmTimeout =
+            openpal::TimeDuration::Milliseconds(atoi(value));
+    } else if (strcmp(name, "unsol_retry_timeout") == 0) {
+        config->outstation.params.unsolRetryTimeout =
+            openpal::TimeDuration::Milliseconds(atoi(value));
+    } else {
+        spdlog::warn("Unknown configuration item {}", name);
+        return -1;
+    }
+
+    return 0;
+}
+
 OutstationStackConfig dnp3_create_config(istream& cfg_stream,
                                          const GlueVariablesBinding& binding,
                                          Dnp3IndexedGroup& binary_commands,
                                          Dnp3IndexedGroup& analog_commands,
-                                         Dnp3MappedGroup& measurements) {
+                                         Dnp3MappedGroup& measurements,
+                                         uint16_t& port) {
     // We need to know the size of the database (number of points) before
     // we can do anything. To avoid doing two passes of the stream, read
     // everything into a map, then get the database size, and finally
     // process the remaining items
-    vector<pair<string, string>> cfg_values;
-    string line;
-    while (getline(cfg_stream, line)) {
-        // Skip comment lines or those that are not a key-value pair
-        auto pos = line.find('=');
-        if (pos == string::npos || line[0] == '#') {
-            continue;
-        }
-
-        string token = line.substr(0, pos);
-        string value = line.substr(pos + 1);
-        trim(token);
-        trim(value);
-
-        cfg_values.push_back(make_pair(token, value));
-    }
+    Dnp3Config dnp3_config;
+    ini_parse_stream(istream_fgets, &cfg_stream, dnp3s_cfg_handler, &dnp3_config);
 
     // We need to know the size of the DNP3 database (the size of each of the
     // groups) before we can create the configuration. We can figure that out
     // based on the binding of located variables, so we need to process that
     // first
-    bind_variables(cfg_values, binding, binary_commands,
+    bind_variables(dnp3_config.bindings, binding, binary_commands,
                    analog_commands, measurements);
 
     auto config = asiodnp3::OutstationStackConfig(DatabaseSizes(
@@ -314,58 +368,16 @@ OutstationStackConfig dnp3_create_config(istream& cfg_stream,
         measurements.group_size(50) // Time and interval
     ));
 
-    // Finally, handle the remaining itemss
-    for (auto it = cfg_values.begin(); it != cfg_values.end(); ++it) {
-        auto token = it->first;
-        auto value = it->second;
-        try {
-            if (token == "local_address") {
-                config.link.LocalAddr = atoi(value.c_str());
-            } else if (token == "remote_address") {
-                config.link.RemoteAddr = atoi(value.c_str());
-            } else if (token == "keep_alive_timeout") {
-                if (value == "MAX") {
-                    config.link.KeepAliveTimeout = openpal::TimeDuration::Max();
-                } else {
-                    config.link.KeepAliveTimeout = openpal::TimeDuration::Seconds(atoi(value.c_str()));
-                }
-            } else if (token == "enable_unsolicited") {
-                if (token == "True") {
-                    config.outstation.params.allowUnsolicited = true;
-                } else {
-                    config.outstation.params.allowUnsolicited = false;
-                }
-            } else if (token == "select_timeout") {
-                config.outstation.params.selectTimeout = openpal::TimeDuration::Seconds(atoi(value.c_str()));
-            } else if (token == "max_controls_per_request") {
-                config.outstation.params.maxControlsPerRequest = atoi(value.c_str());
-            } else if (token == "max_rx_frag_size") {
-                config.outstation.params.maxRxFragSize = atoi(value.c_str());
-            } else if (token == "max_tx_frag_size") {
-                config.outstation.params.maxTxFragSize = atoi(value.c_str());
-            } else if (token == "event_buffer_size") {
-                config.outstation.eventBufferConfig = EventBufferConfig::AllTypes(atoi(value.c_str()));
-            } else if (token == "sol_confirm_timeout") {
-                config.outstation.params.solConfirmTimeout =
-                    openpal::TimeDuration::Milliseconds(atoi(value.c_str()));
-            } else if (token == "unsol_confirm_timeout") {
-                config.outstation.params.unsolConfirmTimeout =
-                    openpal::TimeDuration::Milliseconds(atoi(value.c_str()));
-            } else if (token == "unsol_retry_timeout") {
-                config.outstation.params.unsolRetryTimeout =
-                    openpal::TimeDuration::Milliseconds(atoi(value.c_str()));
-            }
-        }
-        catch (...) {
-            spdlog::error("Malformed line {} = {}", token, value);
-            exit(1);
-        }
-    }
+    config.outstation = dnp3_config.outstation;
+    config.link = dnp3_config.link;
+
+    port = dnp3_config.port;
+
     return config;
 }
 
-void dnp3s_start_server(int port,
-                        unique_ptr<istream, function<void(istream*)>>& cfg_stream,
+void dnp3s_start_server(unique_ptr<istream, function<void(istream*)>>& cfg_stream,
+                        const char* cfg_overrides,
                         volatile bool& run,
                         const GlueVariablesBinding& glue_variables) {
     const uint32_t FILTERS = levels::NORMAL;
@@ -373,9 +385,13 @@ void dnp3s_start_server(int port,
     Dnp3IndexedGroup binary_commands = {0};
     Dnp3IndexedGroup analog_commands = {0};
     Dnp3MappedGroup measurements = {0};
+    uint16_t port;
     auto config(dnp3_create_config(*cfg_stream, glue_variables,
                                    binary_commands, analog_commands,
-                                   measurements));
+                                   measurements, port));
+
+    // If we have a config override, then check for the port number
+    port = strlen(cfg_overrides) > 0 ? atoi(cfg_overrides) : port;
 
     // We are done with the file, so release the unique ptr. Normally this
     // will close the reference to the file
@@ -414,7 +430,7 @@ void dnp3s_start_server(int port,
             {
                 // Create a scope so we release the log after the read/write
                 lock_guard<mutex> guard(*glue_variables.buffer_lock);
-                // Readn and write DNP3
+                // Read and write DNP3
                 int num_writes = publisher->ExchangeGlue();
                 receiver->ExchangeGlue();
                 spdlog::trace("{} data points written to outstation", num_writes);
@@ -433,18 +449,15 @@ void dnp3s_start_server(int port,
     spdlog::info("DNP3 Server deactivated");
 }
 
-////////////////////////////////////////////////////////////////////////////////
 /// @brief Function to begin DNP3 server functions. This is the normal way that
 /// the DNP3 server is started.
-////////////////////////////////////////////////////////////////////////////////
 void dnp3s_service_run(const GlueVariablesBinding& binding, volatile bool& run, const char* config) {
-    unique_ptr<istream, function<void(istream*)>> cfg_stream(new ifstream("./../webserver/dnp3.cfg"), [](istream* s)
+    unique_ptr<istream, function<void(istream*)>> cfg_stream(new ifstream("../etc/config.ini"), [](istream* s)
         {
             reinterpret_cast<ifstream*>(s)->close();
             delete s;
         });
-    int port = strlen(config) > 0 ? atoi(config) : 20000;
-    dnp3s_start_server(port, cfg_stream, run, binding);
+    dnp3s_start_server(cfg_stream, config, run, binding);
 }
 
 #endif  // OPLC_DNP3_OUTSTATION

@@ -24,10 +24,16 @@ class ServiceDefinition;
 /// Finds the service in the registry by the name of the service.
 /// @param name The identifier for the service.
 /// @return The service if found, or nullptr if there is no such service.
-ServiceDefinition* find_service(const char* name);
+ServiceDefinition* services_find(const char* name);
 
 /// Stop all known services.
-void stop_services();
+void services_stop();
+
+/// Initialize all known services.
+void services_init();
+
+/// Finalize all known services.
+void services_finalize();
 
 /** @}*/
 

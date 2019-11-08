@@ -155,9 +155,6 @@ void *querySlaveDevices(void *arg);
 void updateBuffersIn_MB();
 void updateBuffersOut_MB();
 
-#ifdef OPLC_DNP3_OUTSTATION
-//dnp3.cpp
-void dnp3StartServer(int port, bool* run, const GlueVariablesBinding& binding);
-#endif
+void bootstrap();
 
 /** @}*/

@@ -168,58 +168,12 @@ int main(int argc,char **argv)
     initializeLogging(argc, argv);
 	spdlog::info("OpenPLC Runtime starting...");
 
-    //======================================================
-    //                 PLC INITIALIZATION
-    //======================================================
+    bootstrap();
+
+    // Start the thread for the interactive server
     time(&start_time);
     pthread_t interactive_thread;
     pthread_create(&interactive_thread, NULL, interactiveServerThread, NULL);
-    config_init__();
-    glueVars();
-
-    //======================================================
-    //              HARDWARE INITIALIZATION
-    //======================================================
-    initializeHardware();
-    initializeMB();
-    initCustomLayer();
-    updateBuffersIn();
-    updateCustomIn();
-    updateBuffersOut();
-    updateCustomOut();
-
-    //======================================================
-    //          PERSISTENT STORAGE INITIALIZATION
-    //======================================================
-    glueVars();
-    mapUnusedIO();
-    ServiceDefinition* pstorageDef = find_service("pstorage");
-    if (pstorageDef) {
-        pstorageDef->initialize();
-    }
-    //pthread_t persistentThread;
-    //pthread_create(&persistentThread, NULL, persistentStorage, NULL);
-
-#ifdef __linux__
-    //======================================================
-    //              REAL-TIME INITIALIZATION
-    //======================================================
-    // Set our thread to real time priority
-    struct sched_param sp;
-    sp.sched_priority = 30;
-    spdlog::info("Setting main thread priority to RT");
-    if(pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
-    {
-        spdlog::warn("WARNING: Failed to set main thread to real-time priority");
-    }
-
-    // Lock memory to ensure no swapping is done.
-    spdlog::info("Locking main thread memory");
-    if(mlockall(MCL_FUTURE|MCL_CURRENT))
-    {
-        spdlog::warn("WARNING: Failed to lock memory");
-    }
-#endif
 
 	//gets the starting point for the clock
 	spdlog::debug("Getting current time");
@@ -257,6 +211,8 @@ int main(int argc,char **argv)
     //======================================================
 	//             SHUTTING DOWN OPENPLC RUNTIME
 	//======================================================
+    services_stop();
+
     pthread_join(interactive_thread, NULL);
 	spdlog::debug("Disabling outputs...");
     disableOutputs();
