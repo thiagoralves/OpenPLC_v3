@@ -195,7 +195,7 @@ void bind_variables(const vector<pair<string, string>>& config_items,
         int16_t data_index = get_data_index(it->second);
 
         if (name.empty() || group_number < 0 || data_index < 0) {
-            // If one of the items is not valid, then don't handle furhter
+            // If one of the items is not valid, then don't handle further
             continue;
         }
 
@@ -313,7 +313,7 @@ OutstationStackConfig dnp3_create_config(istream& cfg_stream,
         measurements.group_size(50) // Time and interval
     ));
 
-    // Finally, handle the remaining itemss
+    // Finally, handle the remaining items
     for (auto it = cfg_values.begin(); it != cfg_values.end(); ++it) {
         auto token = it->first;
         auto value = it->second;
@@ -413,7 +413,7 @@ void dnp3StartServer(int port,
             {
                 // Create a scope so we release the log after the read/write
                 lock_guard<mutex> guard(*glue_variables.buffer_lock);
-                // Readn and write DNP3
+                // Read and write DNP3
                 int num_writes = publisher->ExchangeGlue();
                 receiver->ExchangeGlue();
                 spdlog::trace("{} data points written to outstation", num_writes);

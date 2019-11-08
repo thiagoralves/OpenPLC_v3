@@ -162,7 +162,7 @@ struct GlueVariablesBinding {
     const GlueVariable* glue_variables;
 
     //////////////////////////////////////////////////////////////////////////////////
-    /// @brief Find a glue varia&glue_mutexble based on the specification of the variable.
+    /// @brief Find a glue variable based on the specification of the variable.
     /// @return the variable or null if there is no variable that matches all
     /// criteria in the specification.
     //////////////////////////////////////////////////////////////////////////////////
