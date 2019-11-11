@@ -31,7 +31,7 @@ ServiceDefinition* services[] = {
 #endif
 };
 
-ServiceDefinition* find_service(const char* name) {
+ServiceDefinition* services_find(const char* name) {
     ServiceDefinition** item = std::find_if(std::begin(services), std::end(services), [name] (ServiceDefinition* def) {
         return strcmp(def->id(), name) == 0;
     });
@@ -39,8 +39,20 @@ ServiceDefinition* find_service(const char* name) {
     return (item != std::end(services)) ? *item : nullptr;
 }
 
-void stop_services() {
+void services_stop() {
     std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def){
         def->stop();
+    });
+}
+
+void services_init() {
+    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def){
+        def->initialize();
+    });
+}
+
+void services_finalize() {
+    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def){
+        def->finalize();
     });
 }

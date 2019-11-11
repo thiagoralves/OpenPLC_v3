@@ -36,6 +36,7 @@ SCENARIO("create_config", "")
     Dnp3IndexedGroup binary_commands = {0};
     Dnp3IndexedGroup analog_commands = {0};
     Dnp3MappedGroup measurements = {0};
+    std::uint16_t port;
 
     GIVEN("<input stream>")
     {
@@ -43,7 +44,7 @@ SCENARIO("create_config", "")
         {
             GlueVariablesBinding bindings(&glue_mutex, 0, nullptr);
             std::stringstream input_stream;
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
             REQUIRE(config.dbConfig.binary.IsEmpty());
             REQUIRE(config.dbConfig.doubleBinary.IsEmpty());
@@ -67,8 +68,8 @@ SCENARIO("create_config", "")
                 { IECLDT_OUT, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
             };
             GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
-            std::stringstream input_stream("bind_location=name:%QX0.0,group:1,index:0,");
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
+            std::stringstream input_stream("[dnp3s]\nbind_location=name:%QX0.0,group:1,index:0,");
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
             REQUIRE(config.dbConfig.binary.Size() == 1);
             REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
@@ -95,8 +96,8 @@ SCENARIO("create_config", "")
                 { IECLDT_IN, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
             };
             GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
-            std::stringstream input_stream("bind_location=name:%IX0.0,group:1,index:1,");
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
+            std::stringstream input_stream("[dnp3s]\nbind_location=name:%IX0.0,group:1,index:1,");
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
             REQUIRE(config.dbConfig.binary.Size() == 1);
             REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
@@ -123,8 +124,8 @@ SCENARIO("create_config", "")
                 { IECLDT_IN, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
             };
             GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
-            std::stringstream input_stream("bind_location=name:%IX0.0,group:12,index:1,");
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
+            std::stringstream input_stream("[dnp3s]\nbind_location=name:%IX0.0,group:12,index:1,");
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
             REQUIRE(config.dbConfig.binary.Size() == 0);
             REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
@@ -153,8 +154,8 @@ SCENARIO("create_config", "")
                 { IECLDT_OUT, IECLST_DOUBLEWORD, 0, 0, IECVT_REAL, &real_var },
             };
             GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
-            std::stringstream input_stream("bind_location=name:%QD0,group:30,index:1,");
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements));
+            std::stringstream input_stream("[dnp3s]\nbind_location=name:%QD0,group:30,index:1,");
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
             REQUIRE(config.dbConfig.binary.Size() == 0);
             REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
@@ -188,7 +189,7 @@ SCENARIO("dnp3s_start_server", "")
         unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new stringstream(""), [](istream* s) { delete s; });
         GlueVariablesBinding bindings(&glue_mutex, 0, nullptr);
 
-        dnp3s_start_server(20000, cfg_stream, run_dnp3, bindings);
+        dnp3s_start_server(cfg_stream, "20000", run_dnp3, bindings);
     }
 }
 

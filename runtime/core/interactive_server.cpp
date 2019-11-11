@@ -51,7 +51,6 @@ bool run_modbus = 0;
 uint16_t modbus_port = 502;
 bool run_enip = 0;
 uint16_t enip_port = 44818;
-uint16_t pstorage_polling = 10;
 unsigned char server_command[1024];
 int command_index = 0;
 bool processing_command = 0;
@@ -61,7 +60,6 @@ time_t end_time;
 //Global Threads
 pthread_t modbus_thread;
 pthread_t enip_thread;
-pthread_t pstorage_thread;
 
 //Log Buffer
 #define LOG_BUFFER_SIZE 1000000
@@ -269,7 +267,7 @@ void processCommand(unsigned char *buffer, int client_fd)
             pthread_join(modbus_thread, NULL);
 			spdlog::info("Modbus server was stopped");
         }
-        stop_services();
+        services_stop();
         run_openplc = 0;
         processing_command = false;
     }
@@ -308,7 +306,7 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "start_dnp3(", 11) == 0)
     {
         processing_command = true;
-        ServiceDefinition* def = find_service("dnp3s");
+        ServiceDefinition* def = services_find("dnp3s");
         if (def && copy_command_config(buffer + 11, command_config, COMMAND_CONFIG_SIZE) == 0) {
             def->start(command_config);
         }
@@ -317,7 +315,7 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "stop_dnp3()", 11) == 0)
     {
         processing_command = true;
-        ServiceDefinition* def = find_service("dnp3s");
+        ServiceDefinition* def = services_find("dnp3s");
         if (def) {
             def->stop();
         }
@@ -387,7 +385,7 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "start_pstorage(", 15) == 0)
     {
         processing_command = true;
-        ServiceDefinition* def = find_service("pstorage");
+        ServiceDefinition* def = services_find("pstorage");
         if (def && copy_command_config(buffer + 15, command_config, COMMAND_CONFIG_SIZE) == 0) {
             def->start(command_config);
         }
@@ -396,7 +394,7 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "stop_pstorage()", 15) == 0)
     {
         processing_command = true;
-        ServiceDefinition* def = find_service("pstorage");
+        ServiceDefinition* def = services_find("pstorage");
         if (def) {
             def->stop();
         }

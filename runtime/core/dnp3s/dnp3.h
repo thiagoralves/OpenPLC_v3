@@ -139,7 +139,8 @@ asiodnp3::OutstationStackConfig dnp3_create_config(std::istream& cfg_stream,
                         const GlueVariablesBinding& binding,
                         Dnp3IndexedGroup& binary_commands,
                         Dnp3IndexedGroup& analog_commands,
-                        Dnp3MappedGroup& measurements);
+                        Dnp3MappedGroup& measurements,
+                        uint16_t& port);
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Start the DNP3 server running on the specified port and configured
@@ -147,16 +148,16 @@ asiodnp3::OutstationStackConfig dnp3_create_config(std::istream& cfg_stream,
 ///
 /// The stream is specified as a function so that this function will close the
 /// stream as soon as it is done with the stream.
-/// @param port The port to listen on.
 /// @param cfg_stream An input stream to read configuration information
 ///                   from. This will be reset once use of the stream has
 ///                   been completed.
+/// @param cfg_overrides A config string with the port number.
 /// @param run A signal for running this server. This server terminates when
 ///            this signal is false.
 /// @param glue_variables The glue variables that may be bound into this
 ///                       server.
-void dnp3s_start_server(int port,
-                        std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+void dnp3s_start_server(std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+                        const char* cfg_overrides,
                         volatile bool& run,
                         const GlueVariablesBinding& glue_variables);
 
