@@ -28,10 +28,12 @@
 #include <thread>
 #include <type_traits>
 
+#include <ini.h>
 #include <spdlog/spdlog.h>
 
-#include "ladder.h"
 #include "glue.h"
+#include "ini_util.h"
+#include "ladder.h"
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -124,10 +126,52 @@ size_t pstorage_copy_glue(const GlueVariablesBinding& bindings, char* buffer) {
 	return num_written;
 }
 
-int8_t pstorage_run(const GlueVariablesBinding& bindings, volatile bool& run,
-                    chrono::milliseconds sleep_time,
+/// Container for reading in configuration from the config.ini
+/// This is populated with values from the config file.
+struct PstorageConfig {
+	PstorageConfig() :
+		poll_interval(std::chrono::seconds(10))
+	{}
+	std::chrono::seconds poll_interval;
+};
+
+int pstorage_cfg_handler(void* user_data, const char* section,
+                         const char* name, const char* value) {
+	if (strcmp("pstorage", section) != 0) {
+        return 0;
+    }
+
+	auto config = reinterpret_cast<PstorageConfig*>(user_data);
+
+	if (strcmp(name, "poll_interval") == 0) {
+		// We do not allow a poll period of less than 1 second as that 
+		// might cause lock contention problems.
+		config->poll_interval = std::chrono::seconds(max(1, atoi(value)));
+	} else {
+        spdlog::warn("Unknown configuration item {}", name);
+        return -1;
+    }
+
+	return 0;
+}
+
+int8_t pstorage_run(std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+                    const char* cfg_overrides,
+					const GlueVariablesBinding& bindings,
+					volatile bool& run,
 					function<std::ostream*(void)> stream_fn)
 {
+	PstorageConfig config;
+	ini_parse_stream(istream_fgets, cfg_stream.get(), pstorage_cfg_handler, &config);
+
+	// We are done with the file, so release the unique ptr. Normally this
+    // will close the reference to the file
+    cfg_stream.reset(nullptr);
+
+	if (strlen(cfg_overrides) > 0) {
+		config.poll_interval = std::chrono::seconds(max(1, atoi(cfg_overrides)));
+	}
+
 	const char endianness_header[2] = { IS_BIG_ENDIAN, '\n'};
 
 	// This isn't ideal because we really only need enough space for
@@ -157,6 +201,8 @@ int8_t pstorage_run(const GlueVariablesBinding& bindings, volatile bool& run,
 			}
 			out_stream->write(FILE_HEADER, FILE_HEADER_SIZE);
 			out_stream->write(endianness_header, 2);
+			out_stream->write(bindings.checksum, strlen(bindings.checksum));
+			out_stream->put('\n');
 			out_stream->write(buffer, num_written);
 
 			spdlog::info("Persistent storage updated");
@@ -170,7 +216,7 @@ int8_t pstorage_run(const GlueVariablesBinding& bindings, volatile bool& run,
 		// Since we just wrote, we sleep.
 		// TODO this needs a new mechanism for sleeping because this can
 		// delay shutdown/stop if polling is long.
-		this_thread::sleep_for(sleep_time);
+		this_thread::sleep_for(config.poll_interval);
 	}
 
 	spdlog::debug("Persistent storage ending normally");
@@ -210,6 +256,20 @@ int8_t pstorage_read(istream& input_stream,
 		return -2;
 	}
 
+	// We have a digest in the header to try to prevent accidentally using
+	// the wrong persistence file for a particular runtime.
+	char checksum_check[32];
+	if (read_and_check(input_stream, bindings.checksum, checksum_check, 32) != 0) {
+		return -3;
+	}
+
+	// Just add one newline character
+	char padding_expected[1] = { '\n' };
+	char padding_check[1];
+	if (read_and_check(input_stream, padding_expected, padding_check, 1) != 0) {
+		return -4;
+	}
+
 	// Now we know that the format is right, so read in the rest. We read
 	// variable by variable so that we can assign into the right value.
 	for (uint16_t index(0); index < bindings.size; ++index) {
@@ -239,7 +299,7 @@ int8_t pstorage_read(istream& input_stream,
 				break;
 			default:
 				spdlog::error("Unexpected glue variable type {}", glue.size);
-				return -3;
+				return -5;
 		}
 
 		// Read the required number of bytes from the stream
@@ -248,7 +308,7 @@ int8_t pstorage_read(istream& input_stream,
 		char buffer[8];
 		if (!input_stream.read(buffer, num_bytes)) {
 			spdlog::error("Persistent storage file too short; partially read");
-			return -4;
+			return -6;
 		}
 
 		// Assign the value into the glue value. The value is ether a simple
@@ -283,9 +343,15 @@ void pstorage_service_run(const GlueVariablesBinding& binding,
 
 	// We don't allow a poll duration of less than one second otherwise
 	// that can have detrimental effects on performance
-	int duration_seconds = max(1, atoi(config));
 	auto create_stream = []() { return new ofstream("persistent.file", ios::binary); };
-	pstorage_run(binding, run, chrono::milliseconds(duration_seconds * 1000), create_stream);
+
+	unique_ptr<istream, function<void(istream*)>> cfg_stream(new ifstream("../etc/config.ini"), [](istream* s)
+        {
+            reinterpret_cast<ifstream*>(s)->close();
+            delete s;
+        });
+
+	pstorage_run(cfg_stream, config, binding, run, create_stream);
 }
 
 /** @}*/

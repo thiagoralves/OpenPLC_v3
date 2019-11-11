@@ -89,11 +89,10 @@ enum IecGlueValueType {
 #ifndef OPLC_GLUE_BOOL_GROUP
 #define OPLC_GLUE_BOOL_GROUP
 
-//////////////////////////////////////////////////////////////////////////////////
 /// @brief Defines the mapping for a group of glued boolean variable.
 ///
-/// This definition must be consistent with what is produced by the @ref glue_generator.
-//////////////////////////////////////////////////////////////////////////////////
+/// This definition must be consistent with what is produced by the @ref
+/// glue_generator.
 struct GlueBoolGroup {
     /// The first index for this array. If we are iterating over the glue
     /// variables, then this index is superfluous, but it is very helpful
@@ -140,18 +139,31 @@ struct GlueVariable {
 
 /// @brief Defines accessors for glue variables.
 /// This structure wraps up items that are available as globals, but this
-/// allows a straighforward way to inject definitions into tests, so it is
+/// allows a straightforward way to inject definitions into tests, so it is
 /// preferred to use this structure rather than globals.
-struct GlueVariablesBinding {
+class GlueVariablesBinding {
 
+  public:
+    /// Initialize a new instance of the glue bindings.
+    /// @param buffer_lock A lock for accessing the value part of bindings
+    /// @param size The number of bindings we have
+    /// @param glue_variables The glue variable binding definitions
+    /// @param checksum A checksum for the bindining definitions. That is
+    /// when we generated the bindings, a checking from the source.
     GlueVariablesBinding(std::mutex* buffer_lock, const std::uint16_t size,
-                         const GlueVariable* glue_variables) :
+                         const GlueVariable* glue_variables,
+                         const char* checksum) :
         buffer_lock(buffer_lock),
         size(size),
-        glue_variables(glue_variables)
-
+        glue_variables(glue_variables),
+        checksum(checksum)
     {}
 
+  private:
+    // Don't allow copying of the bindings.
+    GlueVariablesBinding(const GlueVariablesBinding& copy);
+
+  public:
     /// @brief Mutex for the glue variables
     std::mutex* buffer_lock;
 
@@ -161,7 +173,12 @@ struct GlueVariablesBinding {
     /// @brief The glue variables array
     const GlueVariable* glue_variables;
 
-    /// @brief Find a glue varia&glue_mutexble based on the specification of
+    /// @brief Checksum for the variables definition
+    /// This might be used to check, between instances of running the
+    /// application whether the variables are likely to have changed.
+    const char* checksum;
+
+    /// @brief Find a glue variable based on the specification of
     /// the variable.
     /// @return the variable or null if there is no variable that matches all
     /// criteria in the specification.

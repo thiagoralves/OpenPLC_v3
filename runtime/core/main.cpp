@@ -68,7 +68,7 @@ void sleep_until(struct timespec *ts, int delay)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \brief  Helper function - Makes the running thread sleep for the ammount of
+/// \brief  Helper function - Makes the running thread sleep for the amount of
 /// time in milliseconds
 /// \param milliseconds to sleep
 ////////////////////////////////////////////////////////////////////////////////

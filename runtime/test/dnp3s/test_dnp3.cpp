@@ -42,7 +42,7 @@ SCENARIO("create_config", "")
     {
         WHEN("stream is empty creates default config")
         {
-            GlueVariablesBinding bindings(&glue_mutex, 0, nullptr);
+            GlueVariablesBinding bindings(&glue_mutex, 0, nullptr, nullptr);
             std::stringstream input_stream;
             const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
@@ -67,7 +67,7 @@ SCENARIO("create_config", "")
             const GlueVariable glue_vars[] = {
                 { IECLDT_OUT, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
             };
-            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
+            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
             std::stringstream input_stream("[dnp3s]\nbind_location=name:%QX0.0,group:1,index:0,");
             const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
@@ -95,7 +95,7 @@ SCENARIO("create_config", "")
             const GlueVariable glue_vars[] = {
                 { IECLDT_IN, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
             };
-            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
+            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
             std::stringstream input_stream("[dnp3s]\nbind_location=name:%IX0.0,group:1,index:1,");
             const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
@@ -123,7 +123,7 @@ SCENARIO("create_config", "")
             const GlueVariable glue_vars[] = {
                 { IECLDT_IN, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
             };
-            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
+            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
             std::stringstream input_stream("[dnp3s]\nbind_location=name:%IX0.0,group:12,index:1,");
             const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
@@ -153,7 +153,7 @@ SCENARIO("create_config", "")
             const GlueVariable glue_vars[] = {
                 { IECLDT_OUT, IECLST_DOUBLEWORD, 0, 0, IECVT_REAL, &real_var },
             };
-            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars);
+            GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
             std::stringstream input_stream("[dnp3s]\nbind_location=name:%QD0,group:30,index:1,");
             const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
 
@@ -187,7 +187,7 @@ SCENARIO("dnp3s_start_server", "")
         // the run flag is set to false. This should just return quickly
         volatile bool run_dnp3(false);
         unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new stringstream(""), [](istream* s) { delete s; });
-        GlueVariablesBinding bindings(&glue_mutex, 0, nullptr);
+        GlueVariablesBinding bindings(&glue_mutex, 0, nullptr, nullptr);
 
         dnp3s_start_server(cfg_stream, "20000", run_dnp3, bindings);
     }

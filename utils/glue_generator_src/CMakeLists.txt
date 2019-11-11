@@ -27,10 +27,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 include_directories(vendor/catch2-2.7.0)
 
 # The main application that we always build
-add_executable(glue_generator glue_generator.cpp)
+add_executable(glue_generator glue_generator.cpp md5.c)
 
 if (OPLC_BUILD_TESTS)
-    add_executable(gg_unit_test test/glue_generator_test.cpp)
+    add_executable(gg_unit_test test/glue_generator_test.cpp md5.c)
     enable_testing()
     add_test(NAME glue_generator_test COMMAND gg_unit_test)
 endif()

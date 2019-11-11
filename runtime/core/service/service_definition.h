@@ -23,7 +23,7 @@
  *  @{
  */
 
-struct GlueVariablesBinding;
+class GlueVariablesBinding;
 
 const std::size_t MAX_INTERACTIVE_CONFIG_SIZE(1024);
 
@@ -37,7 +37,7 @@ typedef std::function<void(const GlueVariablesBinding& binding, volatile bool& r
 /// about your service and you provide to the service definition a set
 /// of functions that that your service uses.
 ///
-/// All services run in their own thread and this mechanism is repsonsible
+/// All services run in their own thread and this mechanism is responsible
 /// for creating that thread. This further means that each service, must
 /// keep only a very short lock on the glue variables so that it cannot
 /// prevent the main PLC loop from accessing the variables.
