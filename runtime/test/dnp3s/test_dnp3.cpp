@@ -24,7 +24,7 @@
 
 void sleep_until(timespec*, int) {}
 #include "glue.h"
-#include "dnp3.h"
+#include "dnp3s/dnp3.h"
 
 using namespace asiodnp3;
 using namespace std;
@@ -176,7 +176,7 @@ SCENARIO("create_config", "")
     }
 }
 
-SCENARIO("dnp3StartServer", "")
+SCENARIO("dnp3s_start_server", "")
 {
     mutex glue_mutex;
 
@@ -184,11 +184,11 @@ SCENARIO("dnp3StartServer", "")
     {
         // Configure this to start and then immediately terminate
         // the run flag is set to false. This should just return quickly
-        bool run_dnp3(false);
+        volatile bool run_dnp3(false);
         unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new stringstream(""), [](istream* s) { delete s; });
         GlueVariablesBinding bindings(&glue_mutex, 0, nullptr);
 
-        dnp3StartServer(20000, cfg_stream, &run_dnp3, bindings);
+        dnp3s_start_server(20000, cfg_stream, run_dnp3, bindings);
     }
 }
 

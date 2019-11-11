@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_DNP3_DNP3_RECEIVER_H_
-#define CORE_DNP3_DNP3_RECEIVER_H_
+#ifndef CORE_DNP3_DNP3S_RECEIVER_H_
+#define CORE_DNP3_DNP3S_RECEIVER_H_
 
 #include <cstdint>
 #include <opendnp3/outstation/SimpleCommandHandler.h>
@@ -83,6 +83,6 @@ class Dnp3Receiver : public opendnp3::ICommandHandler {
     CacheItem<double>* const analog_commands_cache;
 };
 
-#endif  //  CORE_DNP3_DNP3_RECEIVER_H_
+#endif  //  CORE_DNP3S_DNP3_RECEIVER_H_
 
 /** @}*/

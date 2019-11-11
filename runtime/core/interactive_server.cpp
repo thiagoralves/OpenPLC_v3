@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <cstring>
 #include <memory>
 #include <netdb.h>
 #include <string.h>
@@ -38,6 +39,8 @@
 #include "glue.h"
 #include "ladder.h"
 #include "logsink.h"
+#include "service/service_definition.h"
+#include "service/service_registry.h"
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -46,11 +49,8 @@
 //Global Variables
 bool run_modbus = 0;
 uint16_t modbus_port = 502;
-bool run_dnp3 = 0;
-uint16_t dnp3_port = 20000;
 bool run_enip = 0;
 uint16_t enip_port = 44818;
-bool run_pstorage = 0;
 uint16_t pstorage_polling = 10;
 unsigned char server_command[1024];
 int command_index = 0;
@@ -60,7 +60,6 @@ time_t end_time;
 
 //Global Threads
 pthread_t modbus_thread;
-pthread_t dnp3_thread;
 pthread_t enip_thread;
 pthread_t pstorage_thread;
 
@@ -68,6 +67,8 @@ pthread_t pstorage_thread;
 #define LOG_BUFFER_SIZE 1000000
 unsigned char log_buffer[LOG_BUFFER_SIZE];
 std::shared_ptr<buffered_sink> log_sink;
+
+using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Start the Modbus Thread
@@ -79,19 +80,6 @@ void *modbusThread(void *arg)
     return nullptr;
 }
 
-
-#ifdef OPLC_DNP3_OUTSTATION
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Start the DNP3 Thread
-/// @param *arg
-///////////////////////////////////////////////////////////////////////////////
-void *dnp3Thread(void *arg)
-{
-    GlueVariablesBinding binding(&bufferLock, OPLCGLUE_GLUE_SIZE, oplc_glue_vars);
-    dnp3StartServer(dnp3_port, &run_dnp3, binding);
-    return nullptr;
-}
-#endif
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Start the Enip Thread
 /// @param *arg
@@ -99,16 +87,6 @@ void *dnp3Thread(void *arg)
 void *enipThread(void *arg)
 {
     startServer(enip_port, ENIP_PROTOCOL);
-    return nullptr;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Start the Persistent Storage Thread
-/// @param *arg
-///////////////////////////////////////////////////////////////////////////////
-void *pstorageThread(void *arg)
-{
-    startPstorage();
     return nullptr;
 }
 
@@ -133,6 +111,42 @@ int readCommandArgument(unsigned char *command)
     }
     
     return atoi((char *)argument);
+}
+
+/// Copy the configuration argument from the command into the buffer
+/// @param source The source of the command. This should be pointing to the
+/// character right after the opening "("
+/// @param target The target buffer for the command.
+/// @return Zero on success. Non-zero on failure. If this function
+/// fails, it marks the target as an empty string so it is still safe
+/// to read the string but it will be empty.
+std::int8_t copy_command_config(unsigned char *source, char target[],
+                                size_t target_size)
+{
+    // Search through source until we find the closing ")"
+    size_t end_index = 0;
+    while (source[end_index] != ')' && source[end_index] != '\0') {
+        end_index++;
+    }
+
+    // If the size is such that we would not be able to assign the
+    // terminating null, then return an error.
+    if (end_index >= (target_size - 1)) {
+        target[0] = '\0';
+        return -1;
+    }
+
+    // Now we want to copy everything from the beginning of source
+    // into target, up to the length of target. This may or many not
+    // fill our target, but the size ensure we don't go over the buffer
+    // size.
+    std::memcpy(target, source, min(end_index, target_size));
+
+    // And set the final null terminating character in target. In general
+    // this is replacing the null terminating character with the right end.
+    target[end_index] = '\0';
+
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -233,6 +247,10 @@ void processCommand(unsigned char *buffer, int client_fd)
     spdlog::debug("Process command received {}", buffer);
 
     int count_char = 0;
+
+    // A buffer for the command configuration information.
+    const size_t COMMAND_CONFIG_SIZE(1024);
+    char command_config[COMMAND_CONFIG_SIZE];
     
     if (processing_command)
     {
@@ -251,12 +269,7 @@ void processCommand(unsigned char *buffer, int client_fd)
             pthread_join(modbus_thread, NULL);
 			spdlog::info("Modbus server was stopped");
         }
-        if (run_dnp3)
-        {
-            run_dnp3 = 0;
-            pthread_join(dnp3_thread, NULL);
-			spdlog::info("DNP3 server was stopped");
-        }
+        stop_services();
         run_openplc = 0;
         processing_command = false;
     }
@@ -294,32 +307,19 @@ void processCommand(unsigned char *buffer, int client_fd)
 #ifdef OPLC_DNP3_OUTSTATION
     else if (strncmp(buffer, "start_dnp3(", 11) == 0)
     {
-
         processing_command = true;
-		dnp3_port = readCommandArgument(buffer);
-		spdlog::info("Issued start_dnp3() command to start on port: {}", dnp3_port);
-        if (run_dnp3)
-        {
-			spdlog::info("DNP3 server already active. Restarting on port: {}", dnp3_port);
-            //Stop DNP3 server
-            run_dnp3 = 0;
-            pthread_join(dnp3_thread, NULL);
-			spdlog::info("DNP3 server was stopped");
+        ServiceDefinition* def = find_service("dnp3s");
+        if (def && copy_command_config(buffer + 11, command_config, COMMAND_CONFIG_SIZE) == 0) {
+            def->start(command_config);
         }
-        //Start DNP3 server
-        run_dnp3 = 1;
-        pthread_create(&dnp3_thread, NULL, dnp3Thread, NULL);
         processing_command = false;
     }
     else if (strncmp(buffer, "stop_dnp3()", 11) == 0)
     {
         processing_command = true;
-		spdlog::info("Issued stop_dnp3() command");
-        if (run_dnp3)
-        {
-            run_dnp3 = 0;
-            pthread_join(dnp3_thread, NULL);
-			spdlog::info("DNP3 server was stopped");
+        ServiceDefinition* def = find_service("dnp3s");
+        if (def) {
+            def->stop();
         }
         processing_command = false;
     }
@@ -387,25 +387,18 @@ void processCommand(unsigned char *buffer, int client_fd)
     else if (strncmp(buffer, "start_pstorage(", 15) == 0)
     {
         processing_command = true;
-        pstorage_polling = readCommandArgument(buffer);
-        spdlog::info("Issued start_pstorage() command with polling rate of {} seconds", pstorage_polling);
-        if (run_pstorage)
-        {
-            spdlog::info("Persistent Storage server already active. Changing polling rate to: {}", pstorage_polling);
+        ServiceDefinition* def = find_service("pstorage");
+        if (def && copy_command_config(buffer + 15, command_config, COMMAND_CONFIG_SIZE) == 0) {
+            def->start(command_config);
         }
-        //Start Enip server
-        run_pstorage = 1;
-        pthread_create(&pstorage_thread, NULL, pstorageThread, NULL);
         processing_command = false;
     }
     else if (strncmp(buffer, "stop_pstorage()", 15) == 0)
     {
         processing_command = true;
-        spdlog::info("Issued stop_pstorage() command");
-        if (run_pstorage)
-        {
-            run_pstorage = 0;
-            spdlog::info("Persistent Storage thread was stopped");
+        ServiceDefinition* def = find_service("pstorage");
+        if (def) {
+            def->stop();
         }
         processing_command = false;
     }
@@ -538,11 +531,8 @@ void startInteractiveServer(int port)
     }
     spdlog::info("Shutting down internal threads\n");
     run_modbus = 0;
-    run_dnp3 = 0;
     run_enip = 0;
-    run_pstorage = 0;
     pthread_join(modbus_thread, NULL);
-    pthread_join(dnp3_thread, NULL);
     pthread_join(enip_thread, NULL);
 
 	spdlog::info("Closing socket...");

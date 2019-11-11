@@ -227,12 +227,13 @@ if(OPLC_MAIN_PROGRAM)
     message("Compile main program enabled")
 
     set(OPLC_USER_DIR ${PROJECT_SOURCE_DIR}/etc/src)
-    file(GLOB oplc_SRC runtime/core/*.cpp)
+    file(GLOB oplc_SRC runtime/core/*.cpp runtime/core/dnp3s/*.cpp runtime/core/service/*.cpp runtime/vendor/inih-r46/*.c)
 
     include_directories(${OPLC_USER_DIR})
     include_directories(runtime/core)
     include_directories(runtime/core/lib)
     include_directories(runtime/vendor/spdlog-1.3.1)
+    include_directories(runtime/vendor/inih-r46)
     include_directories(./include)
 
     # The makefile based project put their libs here

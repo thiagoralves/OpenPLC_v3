@@ -108,15 +108,16 @@ struct GlueBoolGroup {
 #ifndef OPLC_GLUE_VARIABLE
 #define OPLC_GLUE_VARIABLE
 
-//////////////////////////////////////////////////////////////////////////////////
-/// @brief Defines the mapping for a glued variable. This defines a simple, space
-/// efficient lookup table. It has all of the mapping information that you
-/// need to find the variable based on the location name (e.g. %IB1.1). While
-/// this is space efficient, this should be searched once to construct a fast
-/// lookup into this table used for the remainder of the application lifecycle.
+
+/// @brief Defines the mapping for a glued variable. This defines a simple,
+/// space efficient lookup table. It has all of the mapping information that 
+/// you need to find the variable based on the location name (e.g. %IB1.1).
+/// While this is space efficient, this should be searched once to construct a
+/// fast lookup into this table used for the remainder of the application
+/// lifecycle.
 ///
-/// This definition must be consistent with what is produced by the @ref glue_generator.
-//////////////////////////////////////////////////////////////////////////////////
+/// This definition must be consistent with what is produced by the
+/// @ref glue_generator.
 struct GlueVariable {
     /// The direction of the variable - this is determined by I/Q/M.
     IecLocationDirection dir;
@@ -137,15 +138,14 @@ struct GlueVariable {
 };
 #endif  // OPLC_GLUE_VARIABLE
 
-//////////////////////////////////////////////////////////////////////////////////
 /// @brief Defines accessors for glue variables.
-/// This structure wraps up items that are available as globals, but this allows
-/// a straighforward way to inject definitions into tests, so it is preferred
-/// to use this structure rather than globals.
-//////////////////////////////////////////////////////////////////////////////////
+/// This structure wraps up items that are available as globals, but this
+/// allows a straighforward way to inject definitions into tests, so it is
+/// preferred to use this structure rather than globals.
 struct GlueVariablesBinding {
 
-    GlueVariablesBinding(std::mutex* buffer_lock, const std::uint16_t size, const GlueVariable* glue_variables) :
+    GlueVariablesBinding(std::mutex* buffer_lock, const std::uint16_t size,
+                         const GlueVariable* glue_variables) :
         buffer_lock(buffer_lock),
         size(size),
         glue_variables(glue_variables)
@@ -161,23 +161,20 @@ struct GlueVariablesBinding {
     /// @brief The glue variables array
     const GlueVariable* glue_variables;
 
-    //////////////////////////////////////////////////////////////////////////////////
-    /// @brief Find a glue varia&glue_mutexble based on the specification of the variable.
+    /// @brief Find a glue varia&glue_mutexble based on the specification of
+    /// the variable.
     /// @return the variable or null if there is no variable that matches all
     /// criteria in the specification.
-    //////////////////////////////////////////////////////////////////////////////////
     const GlueVariable* find(IecLocationDirection dir,
                              IecLocationSize size,
                              std::uint16_t msi,
                              std::uint8_t lsi) const;
 
-    //////////////////////////////////////////////////////////////////////////////////
-    /// @brief Find a glue variable based on the location of the variable, for example
-    /// %IX0.1
+    /// @brief Find a glue variable based on the location of the variable, for
+    /// example %IX0.1
     /// @return the variable or null if there is no variable that matches all
     /// criteria in the specification.
-    //////////////////////////////////////////////////////////////////////////////////
-    const GlueVariable* find(const std::string& location) const;    
+    const GlueVariable* find(const std::string& location) const;
 };
 
 #endif // CORE_GLUE_H

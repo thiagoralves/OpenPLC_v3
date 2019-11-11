@@ -31,6 +31,8 @@
 
 #include "iec_types.h"
 #include "ladder.h"
+#include "service/service_definition.h"
+#include "service/service_registry.h"
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -191,7 +193,10 @@ int main(int argc,char **argv)
     //======================================================
     glueVars();
     mapUnusedIO();
-    readPersistentStorage();
+    ServiceDefinition* pstorageDef = find_service("pstorage");
+    if (pstorageDef) {
+        pstorageDef->initialize();
+    }
     //pthread_t persistentThread;
     //pthread_create(&persistentThread, NULL, persistentStorage, NULL);
 

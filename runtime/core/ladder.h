@@ -21,7 +21,6 @@
 #include <pthread.h>
 #include <cstdint>
 #include <mutex>
-#include "enipStruct.h"	//This header file contains necessary structs for enip.cpp
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -89,6 +88,7 @@ struct GlueVariablesBinding;
 
 extern const std::uint16_t OPLCGLUE_GLUE_SIZE;
 extern const GlueVariable oplc_glue_vars[];
+extern const std::size_t OPLC_LOCATED_VARIABLES_MEM_SIZE;
 
 //----------------------------------------------------------------------
 //FUNCTION PROTOTYPES
@@ -135,10 +135,7 @@ bool SetSocketBlockingEnabled(int fd, bool blocking);
 void startInteractiveServer(int port);
 void initializeLogging(int argc,char **argv);
 extern bool run_modbus;
-extern bool run_dnp3;
 extern bool run_enip;
-extern bool run_pstorage;
-extern uint16_t pstorage_polling;
 extern time_t start_time;
 extern time_t end_time;
 
@@ -162,9 +159,5 @@ void updateBuffersOut_MB();
 //dnp3.cpp
 void dnp3StartServer(int port, bool* run, const GlueVariablesBinding& binding);
 #endif
-
-//persistent_storage.cpp
-void startPstorage();
-int readPersistentStorage();
 
 /** @}*/
