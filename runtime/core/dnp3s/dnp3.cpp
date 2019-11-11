@@ -329,6 +329,8 @@ int dnp3s_cfg_handler(void* user_data, const char* section,
     } else if (strcmp(name, "unsol_retry_timeout") == 0) {
         config->outstation.params.unsolRetryTimeout =
             openpal::TimeDuration::Milliseconds(atoi(value));
+    } else if (strcmp(name, "enabled") == 0) {
+        // Nothing to do here - we already know this is enabled
     } else {
         spdlog::warn("Unknown configuration item {}", name);
         return -1;

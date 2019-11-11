@@ -68,8 +68,8 @@ class Dnp3Receiver : public opendnp3::ICommandHandler {
 
     template <typename T>
     struct CacheItem {
-       bool has_value;
-       T value;
+       volatile bool has_value;
+       volatile T value;
     };
 
  private:

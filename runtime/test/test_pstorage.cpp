@@ -43,10 +43,11 @@ SCENARIO("pstorage_read", "") {
         IEC_LWORD lword_var = 0;
         IEC_SINT usint_var = 0;
         IEC_BOOL bool_var = 0;
+        GlueBoolGroup grp { .index=0, .values = { &bool_var, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr} };
         const GlueVariable glue_vars[] = {
             { IECLDT_MEM, IECLST_DOUBLEWORD, 0, 0, IECVT_LWORD, &lword_var },
             { IECLDT_MEM, IECLST_BYTE, 0, 0, IECVT_USINT, &usint_var },
-            { IECLDT_MEM, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
+            { IECLDT_MEM, IECLST_BIT, 0, 0, IECVT_BOOL, &grp },
         };
         GlueVariablesBinding bindings(&glue_mutex, 3, glue_vars, CHECKSUM_HEADER);
 
@@ -90,6 +91,32 @@ SCENARIO("pstorage_read", "") {
             REQUIRE(bool_var == 1);
         }
     }
+
+    GIVEN("one bool group") {
+        IEC_BOOL bool_var0 = 0;
+        IEC_BOOL bool_var1 = 0;
+        IEC_BOOL bool_var7 = 0;
+        GlueBoolGroup grp { .index=0, .values = { &bool_var0, &bool_var1, nullptr, nullptr, nullptr, nullptr, nullptr, &bool_var7} };
+        const GlueVariable glue_vars[] = {
+            { IECLDT_MEM, IECLST_BIT, 0, 0, IECVT_BOOL, &grp },
+        };
+        GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, CHECKSUM_HEADER);
+
+        WHEN("data is valid and mixture of bits set") {
+            // We don't (in general) know the endianness to know
+            // the byte order, so we initialize the buffer based on
+            // the actual memory layout
+            char one_char = 0x81;
+
+            input_stream.write(&one_char, 1);
+            input_stream.seekg(0);
+            REQUIRE(pstorage_read(input_stream, bindings) == 0);
+
+            REQUIRE(bool_var0 == 1);
+            REQUIRE(bool_var1 == 0);
+            REQUIRE(bool_var7 == 1);
+        }
+    }
 }
 
 SCENARIO("pstorage_run") {
@@ -105,10 +132,11 @@ SCENARIO("pstorage_run") {
         IEC_LWORD lword_var = 1;
         IEC_SINT usint_var = 2;
         IEC_BOOL bool_var = 1;
+        GlueBoolGroup grp { .index=0, .values = { &bool_var, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr} };
         const GlueVariable glue_vars[] = {
             { IECLDT_MEM, IECLST_DOUBLEWORD, 0, 0, IECVT_LWORD, &lword_var },
             { IECLDT_MEM, IECLST_BYTE, 0, 0, IECVT_USINT, &usint_var },
-            { IECLDT_MEM, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
+            { IECLDT_MEM, IECLST_BIT, 0, 0, IECVT_BOOL, &grp },
         };
         GlueVariablesBinding bindings(&glue_mutex, 3, glue_vars, CHECKSUM_HEADER);
 

@@ -45,7 +45,9 @@ int config_handler(void* user_data, const char* section,
     auto config = reinterpret_cast<PlcConfig*>(user_data);
 
     if (ini_matches("logging", "level", section, name)) {
-        if (strcmp(value, "debug") == 0) {
+        if (strcmp(value, "trace") == 0) {
+            spdlog::set_level(spdlog::level::trace);
+        } else if (strcmp(value, "debug") == 0) {
             spdlog::set_level(spdlog::level::debug);
         } else if (strcmp(value, "info") == 0) {
             spdlog::set_level(spdlog::level::info);

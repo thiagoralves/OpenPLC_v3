@@ -15,9 +15,13 @@
 #include <cstring>
 #include <cstdlib>
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <fstream>
 #include <list>
+#include <map>
+#include <memory>
+#include <set>
 #include <string>
 
 #include "md5.h"
@@ -331,6 +335,8 @@ const char* fromDirectionFlag(const char flag) {
 
 const char* fromSizeFlag(const char flag) {
     switch (flag) {
+        // G is a special flag we use to represent a boolean group
+        case 'G':
         case 'X':
             return "BIT";
         case 'B':
@@ -345,6 +351,93 @@ const char* fromSizeFlag(const char flag) {
     }
 }
 
+void generateBoolGroups(ostream& glueVars, char direction, map<uint16_t, array<string, 8>>& items) {
+    if (items.empty()) {
+        return;
+    }
+
+    for (auto it_group = items.begin(); it_group != items.end(); ++it_group) {
+        string name;
+        name += direction;
+        name += 'G';
+        name += to_string(it_group->first);
+        glueVars << "GlueBoolGroup ___" << name;
+        glueVars << " { .index=" << it_group->first << ", .values={ ";
+        for (auto it_var = it_group->second.begin(); it_var != it_group->second.end(); ++it_var) {
+            if (it_var->empty()) {
+                glueVars << "nullptr, ";
+            } else {
+                glueVars << (*it_var) << ", ";
+            }
+        }
+        glueVars <<  "} };\n";
+        glueVars << "GlueBoolGroup* __" << name << "(&___" << name << ");\n";
+    }
+}
+
+/// Generate the boolean groups structures. These structures contain
+/// boolean values that are grouped together. For example, %IX0.0 and %IX0.1
+/// are generated as a group and then that group is referred to from
+/// the integrated glue. This function generates the definitions
+/// of the bool groups.
+void generateBoolGroups(ostream& glueVars, list<IecVar>& all_vars) {
+    map<uint16_t, array<string, 8>> inputs;
+    map<uint16_t, array<string, 8>> outputs;
+    map<uint16_t, array<string, 8>> memory;
+    for (auto it_var = all_vars.begin(); it_var != all_vars.end(); ) {
+        const char sizeFlag = it_var->name[3];
+        if (sizeFlag != 'X') {
+            // We only care about the boolen locations here.
+            ++it_var;
+            continue;
+        }
+        const char directionFlag = it_var->name[2];
+
+        map<uint16_t, array<string, 8>>* container;
+        switch (directionFlag) {
+            case 'I':
+                container = &inputs;
+                break;
+            case 'Q':
+                container = &outputs;
+                break;
+            default:
+                container = &memory;
+                break;
+        }
+
+        uint16_t pos1 = it_var->pos1;
+        uint16_t pos2 = it_var->pos2;
+        string name = it_var->name;
+
+        auto it_group = container->find(pos1);
+        if (it_group == container->end()) {
+            (*container)[pos1] = array<string, 8>();
+            // Replace the name with our special name
+            it_var->name = "__";
+            it_var->name += directionFlag;
+            it_var->name += 'G';
+            it_var->name += to_string(pos1);
+            it_var->pos2 = 0;
+            ++it_var;
+        } else {
+            // Since we have seen this before, remove it from the
+            // list of variables so that when we generate the
+            // integrated glue, we only see the first item in
+            // the group, not each item
+            it_var = all_vars.erase(it_var);
+        }
+
+        (*container)[pos1][pos2] = name;
+    }
+
+    // Now that we have them grouped into the groups that we care about
+    // generate the intermediate glue bindings for the items
+    generateBoolGroups(glueVars, 'I', inputs);
+    generateBoolGroups(glueVars, 'Q', outputs);
+    generateBoolGroups(glueVars, 'M', memory);
+}
+
 void generateIntegratedGlue(ostream& glueVars, const list<IecVar>& all_vars) {
     glueVars << "/// The size of the array of glue variables.\n";
     glueVars << "extern std::uint16_t const OPLCGLUE_GLUE_SIZE(";
@@ -353,16 +446,17 @@ void generateIntegratedGlue(ostream& glueVars, const list<IecVar>& all_vars) {
     glueVars << "/// The packed glue variables.\n";
     glueVars << "extern const GlueVariable oplc_glue_vars[] = {\n";
     for (auto it = all_vars.begin(); it != all_vars.end(); ++it) {
-        const char directionFlag = (*it).name[2];
-        const char sizeFlag = (*it).name[3];
+        string name = it->name;
+        const char directionFlag = it->name[2];
+        const char sizeFlag = it->name[3];
 
         glueVars << "    {";
         glueVars << " IECLDT_" << fromDirectionFlag(directionFlag) << ",";
         glueVars << " IECLST_" << fromSizeFlag(sizeFlag) << ",";
-        glueVars << " " << (*it).pos1 << ",";
-        glueVars << " " << (*it).pos2 << ",";
-        glueVars << " IECVT_" << (*it).type << ", ";
-        glueVars << " " << (*it).name << " },\n";
+        glueVars << " " << it->pos1 << ",";
+        glueVars << " " << it->pos2 << ",";
+        glueVars << " IECVT_" << it->type << ", ";
+        glueVars << " " << name << " },\n";
     }
     glueVars << "};\n\n";
 }
@@ -421,6 +515,7 @@ void generateBody(istream& locatedVars, ostream& glueVars, md5_byte_t digest[16]
     glueVars << "}\n\n";
 
     // Generate the unified glue variables
+    generateBoolGroups(glueVars, all_vars);
     generateIntegratedGlue(glueVars, all_vars);
 
     // Finish the checksum value
