@@ -187,9 +187,9 @@ void bind_variables(const vector<string>& binding_defs,
     vector<tuple<string, int8_t, int16_t>> binding_infos;
     for (auto it = binding_defs.begin(); it != binding_defs.end(); ++it) {
         // Find the name of the located variable
-        string name = get_located_name((*it));
-        int8_t group_number = get_group_number((*it));
-        int16_t data_index = get_data_index((*it));
+        string name = get_located_name(*it);
+        int8_t group_number = get_group_number(*it);
+        int16_t data_index = get_data_index(*it);
 
         if (name.empty() || group_number < 0 || data_index < 0) {
             // If one of the items is not valid, then don't handle further
@@ -277,11 +277,12 @@ struct Dnp3Config {
     uint16_t port;
 
     /// Outstation config
-	opendnp3::OutstationConfig outstation;
+    opendnp3::OutstationConfig outstation;
 
-	/// Link layer config
-	opendnp3::LinkConfig link;
+    /// Link layer config
+   opendnp3::LinkConfig link;
 
+    /// Descriptions of the bindings we want to create.
     vector<string> bindings;
 };
 
