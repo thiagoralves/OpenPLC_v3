@@ -1,4 +1,5 @@
 // Copyright 2018 Thiago Alves
+// Copyright 2019 Smarter Grid Solutions
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,18 +22,18 @@
 // Thiago Alves, Jun 2018
 //-----------------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <cstring>
+#include <cstdint>
+#include <chrono>
+#include <fstream>
+#include <functional>
+#include <istream>
 #include <memory>
-#include <netdb.h>
-#include <string.h>
-#include <pthread.h>
+#include <mutex>
+#include <thread>
+
+#include <stdio.h>
 #include <arpa/inet.h>
-#include <fcntl.h>
-#include <time.h>
+#include <netinet/in.h>
 
 #include <spdlog/spdlog.h>
 
@@ -46,16 +47,15 @@
  *  @{
  */
 
-//Global Variables
+const uint16_t BUFFER_MAX_SIZE(1024);
+std::mutex command_mutex;
+
+// TODO Globals to move into services
 bool run_modbus = 0;
 uint16_t modbus_port = 502;
 bool run_enip = 0;
 uint16_t enip_port = 44818;
-unsigned char server_command[1024];
-int command_index = 0;
-bool processing_command = 0;
 time_t start_time;
-time_t end_time;
 
 //Global Threads
 pthread_t modbus_thread;
@@ -92,11 +92,11 @@ void *enipThread(void *arg)
 /// @brief Read the argument from a command function
 /// @param *command
 ///////////////////////////////////////////////////////////////////////////////
-int readCommandArgument(unsigned char *command)
+int readCommandArgument(const char *command)
 {
     int i = 0;
     int j = 0;
-    unsigned char argument[1024];
+    char argument[BUFFER_MAX_SIZE];
     
     while (command[i] != '(' && command[i] != '\0') i++;
     if (command[i] == '(') i++;
@@ -118,7 +118,7 @@ int readCommandArgument(unsigned char *command)
 /// @return Zero on success. Non-zero on failure. If this function
 /// fails, it marks the target as an empty string so it is still safe
 /// to read the string but it will be empty.
-std::int8_t copy_command_config(unsigned char *source, char target[],
+std::int8_t copy_command_config(const char *source, char target[],
                                 size_t target_size)
 {
     // Search through source until we find the closing ")"
@@ -147,66 +147,61 @@ std::int8_t copy_command_config(unsigned char *source, char target[],
     return 0;
 }
 
-///////////////////////////////////////////////////////////////////////////////
 /// @brief Create the socket and bind it.
 /// @param port
-/// @return the file descriptor for the socket
-///////////////////////////////////////////////////////////////////////////////
-int createSocket_interactive(int port)
+/// @return the file descriptor for the socket, or less than 0 if a socket
+/// if an error occurred.
+int interactive_open_socket(uint16_t port)
 {
     int socket_fd;
     struct sockaddr_in server_addr;
 
     //Create TCP Socket
-    socket_fd = socket(AF_INET,SOCK_STREAM,0);
+    socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd < 0)
     {
-		spdlog::error("Interactive Server: error creating stream socket => {}", strerror(errno));
-        exit(1);
+        spdlog::error("Interactive Server: error creating stream socket => {}", strerror(errno));
+        return -1;
     }
     
     //Set SO_REUSEADDR
     int enable = 1;
-	if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
-		perror("setsockopt(SO_REUSEADDR) failed");
-	}
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+        perror("setsockopt(SO_REUSEADDR) failed");
+    }
         
     SetSocketBlockingEnabled(socket_fd, false);
     
     //Initialize Server Struct
-    bzero((char *) &server_addr, sizeof(server_addr));
+    memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     server_addr.sin_port = htons(port);
 
     //Bind socket
-    if (bind(socket_fd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0)
+    if (bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
-		spdlog::error("Interactive Server: error binding socket => {}", strerror(errno));
-        exit(1);
+        spdlog::error("Interactive Server: error binding socket => {}", strerror(errno));
+        return -2;
     }
+
     // we accept max 5 pending connections
-    listen(socket_fd,5);
-	spdlog::info("Interactive Server: Listening on port {}", port);
+    listen(socket_fd, 5);
+    spdlog::info("Interactive Server: Listening on port {}", port);
 
     return socket_fd;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Blocking call. Wait here for the client to connect.
-/// @param socket_fd
-/// @return the file descriptor descriptor to communicate with the client.
-///////////////////////////////////////////////////////////////////////////////
-int waitForClient_interactive(int socket_fd)
+int interactive_wait_new_client(volatile bool& run, int socket_fd)
 {
     int client_fd;
     struct sockaddr_in client_addr;
     socklen_t client_len;
 
-	spdlog::debug("Interactive Server: waiting for new client...");
+    spdlog::debug("Interactive Server: waiting for new client...");
 
     client_len = sizeof(client_addr);
-    while (run_openplc)
+    while (run)
     {
         client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &client_len); //non-blocking call
         if (client_fd > 0)
@@ -214,149 +209,85 @@ int waitForClient_interactive(int socket_fd)
             SetSocketBlockingEnabled(client_fd, true);
             break;
         }
-        sleepms(100);
+
+        this_thread::sleep_for(chrono::milliseconds(100));
     }
 
     return client_fd;
 }
 
-/////////////////////////////////////////////////////////////////////////////////
-/// @brief Blocking call. Holds here until something is received from the client.
-/// Once the message is received, it is stored on the buffer and the function
-/// returns the number of bytes received.
-/// @param client_fd
-/// @param *buffer
-/// @return the number of bytes received.
-///////////////////////////////////////////////////////////////////////////////
-int listenToClient_interactive(int client_fd, unsigned char *buffer)
-{
-    bzero(buffer, 1024);
-    int n = read(client_fd, buffer, 1024);
-    return n;
-}
-
-/////////////////////////////////////////////////////////////////////////////////
-/// @brief Process client's commands for the interactive server
-/// @param *buffer
-/// @param client_fd
-/////////////////////////////////////////////////////////////////////////////////
-void processCommand(unsigned char *buffer, int client_fd)
-{
-    spdlog::debug("Process command received {}", buffer);
-
-    int count_char = 0;
-
+void interactive_client_command(const char* command, int client_fd) {
     // A buffer for the command configuration information.
-    const size_t COMMAND_CONFIG_SIZE(1024);
-    char command_config[COMMAND_CONFIG_SIZE];
-    
-    if (processing_command)
-    {
-        count_char = sprintf(buffer, "Processing command...\n");
-        write(client_fd, buffer, count_char);
+    char command_buffer[BUFFER_MAX_SIZE];
+
+    std::unique_lock<std::mutex> lock(command_mutex, std::defer_lock);
+    if (!lock.try_lock()) {
+        spdlog::trace("Process command skipped because already processing  {}", command);
+        int count_char = sprintf(command_buffer, "Another command in progress...\n");
+        write(client_fd, command_buffer, count_char);
         return;
     }
-    
-    if (strncmp(buffer, "quit()", 6) == 0)
+
+    spdlog::trace("Process command received {}", command);
+
+    if (strncmp(command, "quit()", 6) == 0)
     {
-        processing_command = true;
-		spdlog::info("Issued quit() command");
+        spdlog::info("Issued quit() command");
         if (run_modbus)
         {
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
-			spdlog::info("Modbus server was stopped");
+            spdlog::info("Modbus server was stopped");
         }
-        services_stop();
         run_openplc = 0;
-        processing_command = false;
     }
-    else if (strncmp(buffer, "start_modbus(", 13) == 0)
+    else if (strncmp(command, "start_modbus(", 13) == 0)
     {
-        processing_command = true;
-		modbus_port = readCommandArgument(buffer);
-		spdlog::info("Issued start_modbus() command to start on port: {}", modbus_port);
+        modbus_port = readCommandArgument(command);
+        spdlog::info("Issued start_modbus() command to start on port: {}", modbus_port);
         
         if (run_modbus)
         {
-			spdlog::info("Modbus server already active. Restarting on port: {}", modbus_port);
+            spdlog::info("Modbus server already active. Restarting on port: {}", modbus_port);
             //Stop Modbus server
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
-			spdlog::info("Modbus server was stopped");
+            spdlog::info("Modbus server was stopped");
         }
         //Start Modbus server
         run_modbus = 1;
         pthread_create(&modbus_thread, NULL, modbusThread, NULL);
-        processing_command = false;
     }
-    else if (strncmp(buffer, "stop_modbus()", 13) == 0)
+    else if (strncmp(command, "stop_modbus()", 13) == 0)
     {
-        processing_command = true;
-		spdlog::info("Issued stop_modbus() command");
+        spdlog::info("Issued stop_modbus() command");
         if (run_modbus)
         {
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
-			spdlog::info("Modbus server was stopped");
+            spdlog::info("Modbus server was stopped");
         }
-        processing_command = false;
     }
 #ifdef OPLC_DNP3_OUTSTATION
-    else if (strncmp(buffer, "start_dnp3(", 11) == 0)
+    else if (strncmp(command, "start_dnp3(", 11) == 0)
     {
-        processing_command = true;
         ServiceDefinition* def = services_find("dnp3s");
-        if (def && copy_command_config(buffer + 11, command_config, COMMAND_CONFIG_SIZE) == 0) {
-            def->start(command_config);
+        if (def && copy_command_config(command + 11, command_buffer, BUFFER_MAX_SIZE) == 0) {
+            def->start(command_buffer);
         }
-        processing_command = false;
     }
-    else if (strncmp(buffer, "stop_dnp3()", 11) == 0)
+    else if (strncmp(command, "stop_dnp3()", 11) == 0)
     {
-        processing_command = true;
         ServiceDefinition* def = services_find("dnp3s");
         if (def) {
             def->stop();
         }
-        processing_command = false;
     }
 #endif  // OPLC_DNP3_OUTSTATION
-    else if (strncmp(buffer, "start_enip(", 11) == 0)
+    else if (strncmp(command, "start_enip(", 11) == 0)
     {
-        processing_command = true;
-        spdlog::info("Issued start_enip() command to start on port: {}", readCommandArgument(buffer));
-        enip_port = readCommandArgument(buffer);
-        if (run_enip)
-        {
-	        spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
-            //Stop Enip server
-            run_enip = 0;
-            pthread_join(enip_thread, NULL);
-	        spdlog::info("EtherNet/IP server was stopped");
-        }
-        //Start Enip server
-        run_enip = 1;
-        pthread_create(&enip_thread, NULL, enipThread, NULL);
-        processing_command = false;
-    }
-    else if (strncmp(buffer, "stop_enip()", 11) == 0)
-    {
-        processing_command = true;
-	    spdlog::info("Issued stop_enip() command");
-        if (run_enip)
-        {
-            run_enip = 0;
-            pthread_join(enip_thread, NULL);
-	        spdlog::info("EtherNet/IP server was stopped");
-        }
-        processing_command = false;
-    }
-    else if (strncmp(buffer, "start_enip(", 11) == 0)
-    {
-        processing_command = true;
-        enip_port = readCommandArgument(buffer);
-        spdlog::info("Issued start_enip() command to start on port: {}", enip_port);
+        spdlog::info("Issued start_enip() command to start on port: {}", readCommandArgument(command));
+        enip_port = readCommandArgument(command);
         if (run_enip)
         {
             spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
@@ -368,11 +299,9 @@ void processCommand(unsigned char *buffer, int client_fd)
         //Start Enip server
         run_enip = 1;
         pthread_create(&enip_thread, NULL, enipThread, NULL);
-        processing_command = false;
     }
-    else if (strncmp(buffer, "stop_enip()", 11) == 0)
+    else if (strncmp(command, "stop_enip()", 11) == 0)
     {
-        processing_command = true;
         spdlog::info("Issued stop_enip() command");
         if (run_enip)
         {
@@ -380,166 +309,136 @@ void processCommand(unsigned char *buffer, int client_fd)
             pthread_join(enip_thread, NULL);
             spdlog::info("EtherNet/IP server was stopped");
         }
-        processing_command = false;
     }
-    else if (strncmp(buffer, "start_pstorage(", 15) == 0)
+    else if (strncmp(command, "start_pstorage(", 15) == 0)
     {
-        processing_command = true;
         ServiceDefinition* def = services_find("pstorage");
-        if (def && copy_command_config(buffer + 15, command_config, COMMAND_CONFIG_SIZE) == 0) {
-            def->start(command_config);
+        if (def && copy_command_config(command + 15, command_buffer, BUFFER_MAX_SIZE) == 0) {
+            def->start(command_buffer);
         }
-        processing_command = false;
     }
-    else if (strncmp(buffer, "stop_pstorage()", 15) == 0)
+    else if (strncmp(command, "stop_pstorage()", 15) == 0)
     {
-        processing_command = true;
         ServiceDefinition* def = services_find("pstorage");
         if (def) {
             def->stop();
         }
-        processing_command = false;
     }
-    else if (strncmp(buffer, "runtime_logs()", 14) == 0)
+    else if (strncmp(command, "runtime_logs()", 14) == 0)
     {
-        processing_command = true;
         spdlog::debug("Issued runtime_logs() command");
         std::string data = log_sink->data();
         write(client_fd, data.c_str(), data.size());
-        processing_command = false;
         return;
     }
-    else if (strncmp(buffer, "exec_time()", 11) == 0)
+    else if (strncmp(command, "exec_time()", 11) == 0)
     {
-        processing_command = true;
+        time_t end_time;
         time(&end_time);
-        count_char = sprintf(buffer, "%llu\n", (unsigned long long)difftime(end_time, start_time));
-        write(client_fd, buffer, count_char);
-        processing_command = false;
+        int count_char = sprintf(command_buffer, "%llu\n", (unsigned long long)difftime(end_time, start_time));
+        write(client_fd, command_buffer, count_char);
         return;
     }
     else
     {
-        processing_command = true;
-        count_char = sprintf(buffer, "Error: unrecognized command\n");
-        write(client_fd, buffer, count_char);
-        processing_command = false;
+        int count_char = sprintf(command_buffer, "Error: unrecognized command\n");
+        write(client_fd, command_buffer, count_char);
         return;
     }
     
-    count_char = sprintf(buffer, "OK\n");
-    write(client_fd, buffer, count_char);
+    int count_char = sprintf(command_buffer, "OK\n");
+    write(client_fd, command_buffer, count_char);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////
-/// @brief Process client's request
-/// @param *buffer
-/// @param bufferSize
-/// @param client_fd
-/////////////////////////////////////////////////////////////////////////////////////
-void processMessage_interactive(unsigned char *buffer, int bufferSize, int client_fd)
-{
-    for (int i = 0; i < bufferSize; i++)
-    {
-        if (buffer[i] == '\r' || buffer[i] == '\n' || command_index >= 1024)
-        {
-            processCommand(server_command, client_fd);
-            command_index = 0;
-            break;
-        }
-        server_command[command_index] = buffer[i];
-        command_index++;
-        server_command[command_index] = '\0';
-    }
-}
+struct ClientArgs {
+    int client_fd;
+    volatile bool* run;
+};
 
-/////////////////////////////////////////////////////////////////////////////////////
-/// @brief  Thread to handle requests for each connected client
-/// @param *arguments
-/////////////////////////////////////////////////////////////////////////////////////
-void *handleConnections_interactive(void *arguments)
-{
-    int client_fd = *(int *)arguments;
-    unsigned char buffer[1024];
-    int messageSize;
+void* interactive_client_run(void* arguments) {
+    auto client_args = reinterpret_cast<ClientArgs*>(arguments);
 
-	spdlog::debug("Interactive Server: Thread created for client ID: {}", client_fd);
+    char buffer[BUFFER_MAX_SIZE];
+    int message_size;
 
-    while(run_openplc)
-    {
-        //unsigned char buffer[1024];
-        //int messageSize;
+    while (*client_args->run) {
+        memset(buffer, 0, BUFFER_MAX_SIZE);
+        message_size = read(client_args->client_fd, buffer, BUFFER_MAX_SIZE);
 
-        messageSize = listenToClient_interactive(client_fd, buffer);
-        if (messageSize <= 0 || messageSize > 1024)
-        {
-            // something has  gone wrong or the client has closed connection
-            if (messageSize == 0)
-            {
-				spdlog::debug("Interactive Server: client ID: {} has closed the connection", client_fd);
-            }
-            else
-            {
-				spdlog::error("Interactive Server: Something is wrong with the client ID: {} message Size : {}", client_fd, messageSize);
-            }
+        if (message_size <= 0) {
+            spdlog::trace("Interactive Server: client ID: {} has closed the connection", client_args->client_fd);
             break;
         }
 
-        processMessage_interactive(buffer, messageSize, client_fd);
+        if (message_size > BUFFER_MAX_SIZE) {
+            spdlog::error("Interactive Server: Message size is too large for client {}", client_args->client_fd);
+            break;
+        }
+
+        // Process the received buffer, splitting into commands
+        char* start = buffer;
+        uint16_t cur_pos = 0;
+
+        while (cur_pos < BUFFER_MAX_SIZE && buffer[cur_pos] != '\0') {
+            if (buffer[cur_pos] == '\n' || buffer[cur_pos] == '\r') {
+                // Terminate the command
+                buffer[cur_pos] = '\0';
+                interactive_client_command(start, client_args->client_fd);
+            }
+            cur_pos += 1;
+        }
     }
 
-    spdlog::debug("Closing client socket and calling pthread_exit in interactive_server.cpp");
-    closeSocket(client_fd);
-	spdlog::debug("Terminating interactive server connections");
+    closeSocket(client_args->client_fd);
+    spdlog::trace("Interactive server connection completed");
+    delete client_args;
     pthread_exit(NULL);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////
-/// @brief Function to start the server. It receives the port number as argument and
-/// creates an infinite loop to listen and parse the messages sent by the
-/// clients
-/// @param port
-/////////////////////////////////////////////////////////////////////////////////////
-void startInteractiveServer(int port)
-{
-    int socket_fd, client_fd;
-    socket_fd = createSocket_interactive(port);
+int8_t interactive_run(std::unique_ptr<istream, function<void(istream*)>>& cfg_stream,
+                       const char* cfg_overrides,
+                       const GlueVariablesBinding& bindings,
+                       volatile bool& run) {
+    const uint16_t port = 43628;
+    int socket_fd = interactive_open_socket(port);
 
-    while(run_openplc)
-    {
-        client_fd = waitForClient_interactive(socket_fd); //block until a client connects
-        if (client_fd < 0)
-        {
-			spdlog::error("Interactive Server: Error accepting client!");
+    // Listen for new connections to our socket. When we have a new
+    // connection, we spawn a new thread to handle that connection.
+    while (run) {
+        int client_fd = interactive_wait_new_client(run, socket_fd);
+
+        if (client_fd < 0) {
+            spdlog::error("Interactive Server: Error accepting client!");
+            continue;
         }
-        else
-        {
-            int arguments[1];
-            pthread_t thread;
-            int ret = -1;
 
-			spdlog::debug("Interactive Server: Client accepted! Creating thread for the new client ID: {}", client_fd);
-            arguments[0] = client_fd;
-            ret = pthread_create(&thread, NULL, handleConnections_interactive, arguments);
-            if (ret==0) 
-            {
-                pthread_detach(thread);
-            }
+        pthread_t thread;
+        auto client_args = new ClientArgs { .client_fd=client_fd, .run=&run };
+
+        spdlog::trace("Interactive Server: Client accepted! Creating thread for the new client ID: {}", client_fd);
+        int ret = pthread_create(&thread, NULL, interactive_client_run, client_args);
+        if (ret == 0)  {
+            pthread_detach(thread);
+        } else {
+            delete client_args;
         }
     }
-    spdlog::info("Shutting down internal threads\n");
-    run_modbus = 0;
-    run_enip = 0;
-    pthread_join(modbus_thread, NULL);
-    pthread_join(enip_thread, NULL);
 
-	spdlog::info("Closing socket...");
     closeSocket(socket_fd);
-    closeSocket(client_fd);
-	spdlog::debug("Terminating interactive server thread");
 }
 
-void initializeLogging(int argc,char **argv)
+void interactive_service_run(const GlueVariablesBinding& binding,
+                             volatile bool& run, const char* config) {
+    unique_ptr<istream, function<void(istream*)>> cfg_stream(new ifstream("../etc/config.ini"), [](istream* s)
+        {
+            reinterpret_cast<ifstream*>(s)->close();
+            delete s;
+        });
+
+    interactive_run(cfg_stream, config, binding, run);
+}
+
+void initialize_logging(int argc,char **argv)
 {
     log_sink.reset(new buffered_sink(log_buffer, LOG_BUFFER_SIZE));
     spdlog::default_logger()->sinks().push_back(log_sink);

@@ -140,7 +140,8 @@ asiodnp3::OutstationStackConfig dnp3_create_config(std::istream& cfg_stream,
                         Dnp3IndexedGroup& binary_commands,
                         Dnp3IndexedGroup& analog_commands,
                         Dnp3MappedGroup& measurements,
-                        uint16_t& port);
+                        uint16_t& port,
+                        std::chrono::milliseconds& poll_interval);
 
 /// @brief Start the DNP3 server running on the specified port and configured
 /// using the specified stream.

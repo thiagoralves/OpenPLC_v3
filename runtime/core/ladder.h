@@ -133,12 +133,10 @@ void closeSocket(int fd);
 bool SetSocketBlockingEnabled(int fd, bool blocking);
 
 //interactive_server.cpp
-void startInteractiveServer(int port);
-void initializeLogging(int argc,char **argv);
+void initialize_logging(int argc,char **argv);
 extern bool run_modbus;
 extern bool run_enip;
 extern time_t start_time;
-extern time_t end_time;
 
 //modbus.cpp
 int processModbusMessage(unsigned char *buffer, int bufferSize);

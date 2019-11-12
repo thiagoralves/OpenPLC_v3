@@ -22,7 +22,6 @@
 #include "catch.hpp"
 #include "fakeit.hpp"
 
-void sleep_until(timespec*, int) {}
 #include "glue.h"
 #include "dnp3s/dnp3.h"
 
@@ -36,6 +35,7 @@ SCENARIO("create_config", "")
     Dnp3IndexedGroup binary_commands = {0};
     Dnp3IndexedGroup analog_commands = {0};
     Dnp3MappedGroup measurements = {0};
+    chrono::milliseconds poll_interval(1);
     std::uint16_t port;
 
     GIVEN("<input stream>")
@@ -44,7 +44,7 @@ SCENARIO("create_config", "")
         {
             GlueVariablesBinding bindings(&glue_mutex, 0, nullptr, nullptr);
             std::stringstream input_stream;
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port, poll_interval));
 
             REQUIRE(config.dbConfig.binary.IsEmpty());
             REQUIRE(config.dbConfig.doubleBinary.IsEmpty());
@@ -69,7 +69,7 @@ SCENARIO("create_config", "")
             };
             GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
             std::stringstream input_stream("[dnp3s]\nbind_location=name:%QX0.0,group:1,index:0,");
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port, poll_interval));
 
             REQUIRE(config.dbConfig.binary.Size() == 1);
             REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
@@ -97,7 +97,7 @@ SCENARIO("create_config", "")
             };
             GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
             std::stringstream input_stream("[dnp3s]\nbind_location=name:%IX0.0,group:1,index:1,");
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port, poll_interval));
 
             REQUIRE(config.dbConfig.binary.Size() == 1);
             REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
@@ -125,7 +125,7 @@ SCENARIO("create_config", "")
             };
             GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
             std::stringstream input_stream("[dnp3s]\nbind_location=name:%IX0.0,group:12,index:1,");
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port, poll_interval));
 
             REQUIRE(config.dbConfig.binary.Size() == 0);
             REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
@@ -155,7 +155,7 @@ SCENARIO("create_config", "")
             };
             GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
             std::stringstream input_stream("[dnp3s]\nbind_location=name:%QD0,group:30,index:1,");
-            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port));
+            const OutstationStackConfig config(dnp3_create_config(input_stream, bindings, binary_commands, analog_commands, measurements, port, poll_interval));
 
             REQUIRE(config.dbConfig.binary.Size() == 0);
             REQUIRE(config.dbConfig.doubleBinary.Size() == 0);
