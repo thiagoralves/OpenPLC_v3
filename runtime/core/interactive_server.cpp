@@ -192,13 +192,20 @@ int interactive_open_socket(uint16_t port)
     return socket_fd;
 }
 
+/// Poll for new clients that want to connect to the runtime.
+///
+/// This returns a client file desriptor for each client that wants to
+/// attach.
+/// @param run A flag that is set to false when we should stop polling.
+/// @param socket_fd The socket file descriptor we are listening on.
+/// @return the client file descriptor.
 int interactive_wait_new_client(volatile bool& run, int socket_fd)
 {
     int client_fd;
     struct sockaddr_in client_addr;
     socklen_t client_len;
 
-    spdlog::debug("Interactive Server: waiting for new client...");
+    spdlog::trace("Interactive Server: waiting for new client...");
 
     client_len = sizeof(client_addr);
     while (run)
@@ -216,6 +223,9 @@ int interactive_wait_new_client(volatile bool& run, int socket_fd)
     return client_fd;
 }
 
+/// Handle a single command from the client.
+/// @param command The command as a text string.
+/// @param client_fd The file descriptor to write a response to.
 void interactive_client_command(const char* command, int client_fd) {
     // A buffer for the command configuration information.
     char command_buffer[BUFFER_MAX_SIZE];
@@ -350,11 +360,18 @@ void interactive_client_command(const char* command, int client_fd) {
     write(client_fd, command_buffer, count_char);
 }
 
+/// Defines the arguments that client threads receive.
 struct ClientArgs {
+    /// The client file descriptor for reading and writing.
     int client_fd;
+    /// A flag that can indicate termination of the thread.
     volatile bool* run;
 };
 
+/// Response to a client connection in a unique thread.
+/// @param arguments The arguments to the thread - must be the client arguments
+/// struture. This thread will be responsible for freeing the arguments.
+/// @return always nullptr.
 void* interactive_client_run(void* arguments) {
     auto client_args = reinterpret_cast<ClientArgs*>(arguments);
 
@@ -393,8 +410,13 @@ void* interactive_client_run(void* arguments) {
     spdlog::trace("Interactive server connection completed");
     delete client_args;
     pthread_exit(NULL);
+
+    return nullptr;
 }
 
+/// Run the interactive server for responding to control and measurement
+/// requests through the socket API. This is the primary means for
+/// controlling the runtime.
 int8_t interactive_run(std::unique_ptr<istream, function<void(istream*)>>& cfg_stream,
                        const char* cfg_overrides,
                        const GlueVariablesBinding& bindings,
