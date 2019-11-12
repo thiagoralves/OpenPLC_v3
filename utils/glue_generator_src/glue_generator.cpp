@@ -20,6 +20,8 @@
 #include <list>
 #include <string>
 
+#include "md5.h"
+
 using namespace std;
 
 /**
@@ -195,11 +197,12 @@ IEC_LINT *special_functions[BUFFER_SIZE];
 )";
 }
 
-int parseIecVars(istream& locatedVars, char *varName, char *varType) {
+int parseIecVars(istream& locatedVars, char *varName, char *varType, md5_state_s& md5_state) {
     string line;
     char buffer[1024];
 
     if (getline(locatedVars, line)) {
+        md5_append(&md5_state, reinterpret_cast<const md5_byte_t*>(line.c_str()), line.length());
         int i = 0, j = 0;
         strncpy(buffer, line.c_str(), 1024);
         for (i = 0; buffer[i] != '('; i++) {
@@ -376,7 +379,13 @@ void generateBottom(ostream& glueVars) {
 })";
 }
 
-void generateBody(istream& locatedVars, ostream& glueVars) {
+void generateBody(istream& locatedVars, ostream& glueVars, md5_byte_t digest[16]) {
+    // We will generate a checksum of the located variables so that
+    // we can detect likely changes (not intended to be cryptographically
+    // secure). This is only to prevent obvious problems.
+    md5_state_s md5_state;
+    md5_init(&md5_state);
+
     // Start the generation process. We need to know all of the variables
     // in advance so that we can appropriately size some storage based
     // on the variables that are actually needed.
@@ -389,7 +398,7 @@ void generateBody(istream& locatedVars, ostream& glueVars) {
     char iecVar_type[100];
     int32_t max_index(-1);
 
-    while (parseIecVars(locatedVars, iecVar_name, iecVar_type)) {
+    while (parseIecVars(locatedVars, iecVar_name, iecVar_type, md5_state)) {
         cout << "varName: " << iecVar_name << "\tvarType: " << iecVar_type;
         cout << endl;
 
@@ -413,6 +422,25 @@ void generateBody(istream& locatedVars, ostream& glueVars) {
 
     // Generate the unified glue variables
     generateIntegratedGlue(glueVars, all_vars);
+
+    // Finish the checksum value
+    md5_finish(&md5_state, digest);
+}
+
+void generateChecksum(ostream& glueVars, md5_byte_t digest[16]) {
+    char const hex_chars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+    // We do this in a separate step, otherwise every unit test would have
+    // this value.
+    glueVars << "/// MD5 checksum of the located variables.\n";
+    glueVars << "/// WARNING: this must not be used to trust file contents.\n";
+    glueVars << "extern const char OPLCGLUE_MD5_DIGEST[] = {";
+    for (int i = 0; i <= 16; ++i) {
+       glueVars << '\'' << hex_chars[ ( digest[i] & 0xF0 ) >> 4 ] << "\', ";
+       glueVars << '\'' << hex_chars[ ( digest[i] & 0x0F ) >> 0 ] << "\', ";
+    }
+    glueVars << "};\n";
+    glueVars << "\n\n";
 }
 
 /// This is our main function. We define it with a different name and then
@@ -461,7 +489,10 @@ int mainImpl(int argc, char const * const *argv) {
     }
 
     generateHeader(glueVars);
-    generateBody(locatedVars, glueVars);
+
+    md5_byte_t digest[16];
+    generateBody(locatedVars, glueVars, digest);
+    generateChecksum(glueVars, digest);
     generateBottom(glueVars);
 
     return 0;

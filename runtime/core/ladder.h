@@ -84,11 +84,12 @@ extern std::mutex bufferLock;
 extern unsigned long long common_ticktime__;
 
 struct GlueVariable;
-struct GlueVariablesBinding;
+class GlueVariablesBinding;
 
 extern const std::uint16_t OPLCGLUE_GLUE_SIZE;
 extern const GlueVariable oplc_glue_vars[];
-extern const std::size_t OPLC_LOCATED_VARIABLES_MEM_SIZE;
+extern const char OPLCGLUE_MD5_DIGEST[];
+
 
 //----------------------------------------------------------------------
 //FUNCTION PROTOTYPES

@@ -69,14 +69,18 @@ std::int8_t pstorage_read(std::istream& input_stream,
 ///
 /// @note This is defined here so that we can access it from the unit tests.
 ///
+/// @param cfg_stream An input stream to read configuration information
+///                   from. This will be reset once use of the stream has
+///                   been completed.
+/// @param custom_config Additional configuration information that we process.
 /// @param bindings The glue bindings to use.
 /// @param run A flag that indicates if we should terminate the process.
-/// @param sleep_time How long to wait between each write cycle.
 /// @return Zero on success, otherwise non-zero. This function may fail
 /// part way through. Failure does not mean no variables have been set.
-std::int8_t pstorage_run(const GlueVariablesBinding& bindings,
+std::int8_t pstorage_run(std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+                         const char* custom_config,
+                         const GlueVariablesBinding& bindings,
                          volatile bool& run,
-                         std::chrono::milliseconds sleep_time,
                          std::function<std::ostream*(void)> stream_fn);
 
 /** @}*/

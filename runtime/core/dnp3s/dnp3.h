@@ -30,7 +30,7 @@ class mutex;
 }
 
 struct GlueVariable;
-struct GlueVariablesBinding;
+class GlueVariablesBinding;
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -142,7 +142,6 @@ asiodnp3::OutstationStackConfig dnp3_create_config(std::istream& cfg_stream,
                         Dnp3MappedGroup& measurements,
                         uint16_t& port);
 
-////////////////////////////////////////////////////////////////////////////////
 /// @brief Start the DNP3 server running on the specified port and configured
 /// using the specified stream.
 ///
@@ -161,7 +160,6 @@ void dnp3s_start_server(std::unique_ptr<std::istream, std::function<void(std::is
                         volatile bool& run,
                         const GlueVariablesBinding& glue_variables);
 
-////////////////////////////////////////////////////////////////////////////////
 /// @brief Start the DNP3 server running on the specified port and configured
 /// using the specified stream.
 ///

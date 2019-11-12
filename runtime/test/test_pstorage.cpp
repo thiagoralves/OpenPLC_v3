@@ -27,6 +27,7 @@ using namespace std;
 #define IS_BIG_ENDIAN (*(uint16_t *)"\0\xff" < 0x100)
 
 const char VALID_HEADER[] = { (char)137, 'O', 'P', 'L', 'C', 'P', 'S', '\n', 'v', 0, '\n' };
+const char* CHECKSUM_HEADER  = "16d15b8416040cce48b111ce03ee3dab";
 
 SCENARIO("pstorage_read", "") {
 
@@ -35,6 +36,8 @@ SCENARIO("pstorage_read", "") {
     input_stream.write(VALID_HEADER, 11);
     char endian_header[2] = { IS_BIG_ENDIAN, '\n'};
     input_stream.write(endian_header, 2);
+    input_stream.write(CHECKSUM_HEADER, strlen(CHECKSUM_HEADER));
+    input_stream.put('\n');
 
     GIVEN("simple glue variables") {
         IEC_LWORD lword_var = 0;
@@ -45,7 +48,7 @@ SCENARIO("pstorage_read", "") {
             { IECLDT_MEM, IECLST_BYTE, 0, 0, IECVT_USINT, &usint_var },
             { IECLDT_MEM, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
         };
-        GlueVariablesBinding bindings(&glue_mutex, 3, glue_vars);
+        GlueVariablesBinding bindings(&glue_mutex, 3, glue_vars, CHECKSUM_HEADER);
 
         WHEN("no data") {
             input_stream.seekg(0);
@@ -95,6 +98,8 @@ SCENARIO("pstorage_run") {
     input_stream.write(VALID_HEADER, 11);
     char endian_header[2] = { IS_BIG_ENDIAN, '\n'};
     input_stream.write(endian_header, 2);
+    input_stream.write(CHECKSUM_HEADER, strlen(CHECKSUM_HEADER));
+    input_stream.put('\n');
 
     GIVEN("glue variables and stream") {
         IEC_LWORD lword_var = 1;
@@ -105,13 +110,14 @@ SCENARIO("pstorage_run") {
             { IECLDT_MEM, IECLST_BYTE, 0, 0, IECVT_USINT, &usint_var },
             { IECLDT_MEM, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
         };
-        GlueVariablesBinding bindings(&glue_mutex, 3, glue_vars);
+        GlueVariablesBinding bindings(&glue_mutex, 3, glue_vars, CHECKSUM_HEADER);
+
+        unique_ptr<istream, std::function<void(istream*)>> cfg_stream(new stringstream(""), [](istream* s) { delete s; });
 
         WHEN("write once") {
             volatile bool run = false;
-            auto timeout = chrono::milliseconds(0);
             auto create_stream = []() { return new stringstream(); };
-            REQUIRE(pstorage_run(bindings, run, timeout, create_stream) == 0);
+            REQUIRE(pstorage_run(cfg_stream, "0", bindings, run, create_stream) == 0);
         }
     }
 }

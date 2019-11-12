@@ -62,12 +62,12 @@ ServiceDefinition::ServiceDefinition(const char* name,
 {}
 
 void ServiceDefinition::initialize() {
-    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE, oplc_glue_vars);
+    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE, oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
     this->init_fn(bindings);
 }
 
 void ServiceDefinition::finalize() {
-    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE, oplc_glue_vars);
+    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE, oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
     this->finalize_fn(bindings);
 }
 
@@ -110,7 +110,8 @@ void ServiceDefinition::stop() {
 void* ServiceDefinition::run_service(void* user_data) {
     auto service = reinterpret_cast<ServiceDefinition*>(user_data);
 
-    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE, oplc_glue_vars);
+    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE,
+                                  oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
     // Start the service. This will not return until the service completes
     // which is normally because the running flag was set to false.
     service->start_fn(bindings, service->running, service->config_buffer);
