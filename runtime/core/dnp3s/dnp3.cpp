@@ -196,6 +196,12 @@ void bind_variables(const vector<string>& binding_defs,
             continue;
         }
 
+        const GlueVariable* var = binding.find(name);
+        if (!var) {
+            spdlog::error("Unable to bind DNP3 location {} because it is not defined in the application", name); 
+            continue;
+        }
+
         switch (group_number) {
             case GROUP_BINARY_COMMAND:
                 group_12_max_index = max(group_12_max_index, data_index);
@@ -242,12 +248,7 @@ void bind_variables(const vector<string>& binding_defs,
         string name = std::get<0>(*it);
         int8_t group_number = std::get<1>(*it);
         int16_t data_index = std::get<2>(*it);
-
         const GlueVariable* var = binding.find(name);
-        if (!var) {
-            spdlog::error("Unable to bind location {} because it is not defined in the application", name); 
-            continue;
-        }
 
         switch (group_number) {
             case GROUP_BINARY_COMMAND:
@@ -330,6 +331,8 @@ int dnp3s_cfg_handler(void* user_data, const char* section,
     } else if (strcmp(name, "unsol_retry_timeout") == 0) {
         config->outstation.params.unsolRetryTimeout =
             openpal::TimeDuration::Milliseconds(atoi(value));
+    } else if (strcmp(name, "enabled") == 0) {
+        // Nothing to do here - we already know this is enabled
     } else {
         spdlog::warn("Unknown configuration item {}", name);
         return -1;

@@ -34,6 +34,7 @@
 #include "glue.h"
 #include "ini_util.h"
 #include "ladder.h"
+#include "lib/iec_types_all.h"
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -97,6 +98,20 @@ size_t get_size_bytes(const GlueVariablesBinding& bindings) {
 	return size;
 }
 
+inline uint8_t mask_index(GlueBoolGroup* group, uint8_t i) {
+	if (!group->values[i]) {
+		return 0;
+	}
+
+	return (*group->values) ? (1 << i) : 0;
+}
+
+inline void set_index(GlueBoolGroup* group, uint8_t i, uint8_t v) {
+	if (group->values[i]) {
+		(*group->values[i]) = ((1 << i) & v) ? TRUE: FALSE;
+	}
+}
+
 /// Copy the glue values into the buffer.
 /// @param bindings The bindings that we want to copy from.
 /// @param buffer The buffer that we are copying into.
@@ -115,8 +130,21 @@ size_t pstorage_copy_glue(const GlueVariablesBinding& bindings, char* buffer) {
 
 		uint8_t num_bytes = get_size_bytes(glue.size);
 
-		// Write the number of bytes to the buffer
-		memcpy(buffer, glue.value, num_bytes);
+		if (glue.size == IECLST_BIT) {
+			GlueBoolGroup* group = reinterpret_cast<GlueBoolGroup*>(glue.value);
+			uint8_t bools_as_byte = mask_index(group, 0)
+			 | mask_index(group, 1)
+			 | mask_index(group, 2)
+			 | mask_index(group, 3)
+			 | mask_index(group, 4)
+			 | mask_index(group, 5)
+			 | mask_index(group, 6)
+			 | mask_index(group, 7);
+			memcpy(buffer, &bools_as_byte, 1);
+		} else {
+			// Write the number of bytes to the buffer
+			memcpy(buffer, glue.value, num_bytes);
+		}
 
 		// Advance the pointer to the next starting position
 		num_written += num_bytes;
@@ -147,6 +175,8 @@ int pstorage_cfg_handler(void* user_data, const char* section,
 		// We do not allow a poll period of less than 1 second as that 
 		// might cause lock contention problems.
 		config->poll_interval = std::chrono::seconds(max(1, atoi(value)));
+	} else if (strcmp(name, "enabled") == 0) {
+        // Nothing to do here - we already know this is enabled
 	} else {
         spdlog::warn("Unknown configuration item {}", name);
         return -1;
@@ -315,7 +345,20 @@ int8_t pstorage_read(istream& input_stream,
 		// value or a group of booleans.
 		// We don't actually care what the contents are - we just populate as
 		// though they are raw bytes
-		memcpy(glue.value, buffer, num_bytes);
+		if (glue.size == IECLST_BIT) {
+			GlueBoolGroup* group = reinterpret_cast<GlueBoolGroup*>(glue.value);
+			uint8_t value = static_cast<uint8_t>(buffer[0]);
+			set_index(group, 0, value);
+			set_index(group, 1, value);
+			set_index(group, 2, value);
+			set_index(group, 3, value);
+			set_index(group, 4, value);
+			set_index(group, 5, value);
+			set_index(group, 6, value);
+			set_index(group, 7, value);
+		} else {
+			memcpy(glue.value, buffer, num_bytes);
+		}
 	}
 
 	spdlog::info("Initialized from persistent storage");

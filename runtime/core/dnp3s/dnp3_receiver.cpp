@@ -282,11 +282,11 @@ void Dnp3Receiver::ExchangeGlue() {
 }
 
 void Dnp3Receiver::Start() {
-    spdlog::info("DNP3 receiver started");
+    spdlog::trace("DNP3 receiver started");
 }
 
 void Dnp3Receiver::End() {
-    spdlog::info("DNP3 receiver stopped");
+    spdlog::trace("DNP3 receiver stopped");
 }
 
 #endif  // OPLC_DNP3_OUTSTATION
