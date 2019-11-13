@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-
 #ifndef CORE_INI_UTIL_H_
 #define CORE_INI_UTIL_H_
 
@@ -25,8 +24,8 @@
 
 /// Convert a boolean value in the INI file to a boolean.
 /// The value must be "true", otherwise it is interpreted as false.
-/// @param value the value to convert
-/// @return The value.
+/// @param value the value to convert.
+/// @return The converted value.
 inline bool ini_atob(const char* value) {
     return strcmp("true", value) == 0;
 }
@@ -45,11 +44,11 @@ inline bool ini_matches(const char* section_expected,
         && strcmp(value_expected, value) == 0;
 }
 
-/// Implementation for fgets based on istream
-/// @param pointe rto an array of chars where the string read is copied
-/// @param num Maximum number of characters to be copied into str
+/// Implementation for fgets based on istream.
+/// @param str pointer to an array of chars where the string read is copied.
+/// @param num Maximum number of characters to be copied into str.
 /// @param stream The stream object. The string must be null terminated.
-/// @param Return the string or null if cannot read more.
+/// @return the string or null if cannot read more.
 static char* istream_fgets(char* str, int num, void* stream) {
     auto st = reinterpret_cast<std::istream*>(stream);
     if (!st->good() || st->eof()) {
