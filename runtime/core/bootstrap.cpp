@@ -81,6 +81,9 @@ void bootstrap() {
     const char* config_path = "../etc/config.ini";
     if (ini_parse(config_path, config_handler, &config) < 0) {
         spdlog::info("Config file {} could not be read", config_path);
+        // If we don't have the config file, then default to always
+        // starting the interactive server.
+        config.services.push_back("interactive");
     }
 
     //======================================================

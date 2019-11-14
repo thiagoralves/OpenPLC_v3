@@ -18,12 +18,13 @@
 
 #ifdef OPLC_DNP3_OUTSTATION
 
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
 #include <csignal>
 #include <algorithm>
-#include <cctype>
+#include <chrono>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -271,9 +272,13 @@ void bind_variables(const vector<string>& binding_defs,
 /// This is populated with values from the config file.
 struct Dnp3Config {
     Dnp3Config() :
+        poll_interval(std::chrono::milliseconds(250)),
         port(20000),
         link(false, false)
     {}
+
+    // How fast we send and receive data into the runtime.
+    std::chrono::milliseconds poll_interval;
 
     uint16_t port;
 
@@ -281,7 +286,7 @@ struct Dnp3Config {
     opendnp3::OutstationConfig outstation;
 
     /// Link layer config
-   opendnp3::LinkConfig link;
+    opendnp3::LinkConfig link;
 
     /// Descriptions of the bindings we want to create.
     vector<string> bindings;
@@ -346,7 +351,8 @@ OutstationStackConfig dnp3_create_config(istream& cfg_stream,
                                          Dnp3IndexedGroup& binary_commands,
                                          Dnp3IndexedGroup& analog_commands,
                                          Dnp3MappedGroup& measurements,
-                                         uint16_t& port) {
+                                         uint16_t& port,
+                                         std::chrono::milliseconds& poll_interval) {
     // We need to know the size of the database (number of points) before
     // we can do anything. To avoid doing two passes of the stream, read
     // everything into a map, then get the database size, and finally
@@ -376,6 +382,7 @@ OutstationStackConfig dnp3_create_config(istream& cfg_stream,
     config.link = dnp3_config.link;
 
     port = dnp3_config.port;
+    poll_interval = dnp3_config.poll_interval;
 
     return config;
 }
@@ -390,9 +397,10 @@ void dnp3s_start_server(unique_ptr<istream, function<void(istream*)>>& cfg_strea
     Dnp3IndexedGroup analog_commands = {0};
     Dnp3MappedGroup measurements = {0};
     uint16_t port;
+    chrono::milliseconds poll_interval;
     auto config(dnp3_create_config(*cfg_stream, glue_variables,
                                    binary_commands, analog_commands,
-                                   measurements, port));
+                                   measurements, port, poll_interval));
 
     // If we have a config override, then check for the port number
     port = strlen(cfg_overrides) > 0 ? atoi(cfg_overrides) : port;
@@ -425,10 +433,6 @@ void dnp3s_start_server(unique_ptr<istream, function<void(istream*)>>& cfg_strea
 
         spdlog::info("DNP3 outstation enabled on port {0:d}", port);
 
-        // Continuously update
-        struct timespec timer_start;
-        clock_gettime(CLOCK_MONOTONIC, &timer_start);
-
         // Run this until we get a signal to stop.
         while (run) {
             {
@@ -440,7 +444,7 @@ void dnp3s_start_server(unique_ptr<istream, function<void(istream*)>>& cfg_strea
                 spdlog::trace("{} data points written to outstation", num_writes);
             }
 
-            sleep_until(&timer_start, OPLC_CYCLE);
+            this_thread::sleep_for(poll_interval);
         }
 
         outstation->Disable();

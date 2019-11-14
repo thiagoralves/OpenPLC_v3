@@ -51,7 +51,7 @@ inline bool ini_matches(const char* section_expected,
 /// @return the string or null if cannot read more.
 static char* istream_fgets(char* str, int num, void* stream) {
     auto st = reinterpret_cast<std::istream*>(stream);
-    if (!st || st->eof()) {
+    if (!st->good() || st->eof()) {
         // We previously reached the end of the file, so return the end signal.
         return nullptr;
     }

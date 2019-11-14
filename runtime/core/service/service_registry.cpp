@@ -18,13 +18,16 @@
 #include "service_definition.h"
 #include "service_registry.h"
 #include "pstorage.h"
+#include "interactive_server.h"
 #include "../dnp3s/dnp3.h"
 
 ServiceInitFunction pstorage_init_fn(pstorage_service_init);
 ServiceStartFunction pstorage_start_service_fn(pstorage_service_run);
 ServiceStartFunction dnp3s_start_service_fn(dnp3s_service_run);
+ServiceStartFunction interactive_start_service_fn(interactive_service_run);
 
 ServiceDefinition* services[] = {
+    new ServiceDefinition("interactive", interactive_start_service_fn),
     new ServiceDefinition("pstorage", pstorage_start_service_fn, pstorage_init_fn),
 #ifdef OPLC_DNP3_OUTSTATION
     new ServiceDefinition("dnp3s", dnp3s_start_service_fn),

@@ -81,16 +81,6 @@ void sleepms(int milliseconds)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \brief  Interactive Server Thread. Creates the server to listen to commands
-/// on localhost
-////////////////////////////////////////////////////////////////////////////////
-void *interactiveServerThread(void *arg)
-{
-    startInteractiveServer(43628);
-    return nullptr;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 /// \brief Verify if pin is present in one of the ignored vectors
 /// \param
 /// \param
@@ -165,15 +155,15 @@ void handleSpecialFunctions()
 
 int main(int argc,char **argv)
 {
-    initializeLogging(argc, argv);
+    initialize_logging(argc, argv);
 	spdlog::info("OpenPLC Runtime starting...");
 
-    bootstrap();
-
-    // Start the thread for the interactive server
     time(&start_time);
-    pthread_t interactive_thread;
-    pthread_create(&interactive_thread, NULL, interactiveServerThread, NULL);
+
+    // Start the thread for the any services we have, including the
+    // interactive server and anything out that is configured to
+    // automatically start
+    bootstrap();
 
 	//gets the starting point for the clock
 	spdlog::debug("Getting current time");
@@ -212,8 +202,8 @@ int main(int argc,char **argv)
 	//             SHUTTING DOWN OPENPLC RUNTIME
 	//======================================================
     services_stop();
+    services_finalize();
 
-    pthread_join(interactive_thread, NULL);
 	spdlog::debug("Disabling outputs...");
     disableOutputs();
     updateCustomOut();
