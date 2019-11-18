@@ -50,7 +50,7 @@ enum IecLocationSize {
     IECLST_WORD,
     /// Variables that are 4 bytes, including REAL
     IECLST_DOUBLEWORD,
-    /// Variables that are 8 bytes, including LREAL
+    /// Variables that are 8 bytes (64-bit), including LREAL, LINT
     IECLST_LONGWORD,
 };
 #endif  // OPLC_IEC_GLUE_SIZE
@@ -150,7 +150,7 @@ class GlueVariablesBinding {
     /// @param glue_variables The glue variable binding definitions
     /// @param checksum A checksum for the bindining definitions. That is
     /// when we generated the bindings, a checking from the source.
-    GlueVariablesBinding(std::mutex* buffer_lock, const std::uint16_t size,
+    GlueVariablesBinding(std::mutex* buffer_lock, const std::size_t size,
                          const GlueVariable* glue_variables,
                          const char* checksum) :
         buffer_lock(buffer_lock),
@@ -168,7 +168,7 @@ class GlueVariablesBinding {
     std::mutex* buffer_lock;
 
     /// @brief The size of the glue variables array
-    std::uint16_t size;
+    std::size_t size;
 
     /// @brief The glue variables array
     const GlueVariable* glue_variables;

@@ -26,10 +26,6 @@
  *  @{
  */
 
-#define MODBUS_PROTOCOL     0
-#define DNP3_PROTOCOL       1
-#define ENIP_PROTOCOL       2
-
 //Internal buffers for I/O and memory. These buffers are defined in the
 //auto-generated glueVars.cpp file
 #define BUFFER_SIZE		1024
@@ -121,29 +117,24 @@ extern int ignored_int_outputs[];
 
 //main.cpp
 void sleep_until(struct timespec *ts, int delay);
-void sleepms(int milliseconds);
 bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber);
 extern uint8_t run_openplc;
 void handleSpecialFunctions();
 
 //server.cpp
-void startServer(uint16_t port, int protocol_type);
+typedef int (*process_message_fn)(unsigned char *buffer, int buffer_size, void* user_data);
+void startServer(uint16_t port, volatile bool& run_server, process_message_fn process_message, void* user_data);
 int getSO_ERROR(int fd);
 void closeSocket(int fd);
 bool SetSocketBlockingEnabled(int fd, bool blocking);
 
 //interactive_server.cpp
 void initialize_logging(int argc,char **argv);
-extern bool run_modbus;
 extern bool run_enip;
 extern time_t start_time;
 
-//modbus.cpp
-int processModbusMessage(unsigned char *buffer, int bufferSize);
-void mapUnusedIO();
-
 //enip.cpp
-int processEnipMessage(unsigned char *buffer, int buffer_size);
+int processEnipMessage(unsigned char *buffer, int buffer_size, void* user_data);
 
 //pccc.cpp ADDED Ulmer
 uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size);

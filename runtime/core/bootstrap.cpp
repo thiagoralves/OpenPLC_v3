@@ -113,7 +113,6 @@ void bootstrap() {
     updateBuffersOut();
     updateCustomOut();
     glueVars();
-    mapUnusedIO();
 
     //======================================================
     //                 SERVICE INITIALIZATION

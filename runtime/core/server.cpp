@@ -26,6 +26,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <chrono>
+#include <thread>
 #include <spdlog/spdlog.h>
 
 #include "ladder.h"
@@ -33,6 +35,8 @@
 /** \addtogroup openplc_runtime
  *  @{
  */
+
+using namespace std;
 
 #define NET_BUFFER_SIZE 10000
 
@@ -132,22 +136,16 @@ int createSocket(uint16_t port)
 /// @param protocol_type
 /// @return  file descriptor to communicate with the client
 ////////////////////////////////////////////////////////////////////////////////
-int waitForClient(int socket_fd, int protocol_type)
+int waitForClient(int socket_fd, volatile bool& run_server)
 {
     int client_fd;
     struct sockaddr_in client_addr;
-    bool *run_server;
     socklen_t client_len;
-    
-    if (protocol_type == MODBUS_PROTOCOL)
-        run_server = &run_modbus;
-    else if (protocol_type == ENIP_PROTOCOL)
-        run_server = &run_enip;
 
     spdlog::debug("Server: waiting for new client...");
 
     client_len = sizeof(client_addr);
-    while (*run_server)
+    while (run_server)
     {
         client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &client_len); //non-blocking call
         if (client_fd > 0)
@@ -155,7 +153,7 @@ int waitForClient(int socket_fd, int protocol_type)
             SetSocketBlockingEnabled(client_fd, true);
             break;
         }
-        sleepms(100);
+        this_thread::sleep_for(chrono::milliseconds(100));
     }
 
     return client_fd;
@@ -175,73 +173,59 @@ int listenToClient(int client_fd, unsigned char *buffer)
     return n;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief Process client's request
-/// @param *buffer
-/// @param bufferSize
-/// @param client_fd
-/// @param protocol_type
-////////////////////////////////////////////////////////////////////////////////
-void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int protocol_type)
-{
-    if (protocol_type == MODBUS_PROTOCOL)
-    {
-        int messageSize = processModbusMessage(buffer, bufferSize);
-        write(client_fd, buffer, messageSize);
-    }
-    else if (protocol_type == ENIP_PROTOCOL)
-    {
-        int messageSize = processEnipMessage(buffer, bufferSize);
-        write(client_fd, buffer, messageSize);
-    }
-}
+/// Arguments passed to the server thread.
+struct ServerArgs {
+    /// The client file descriptor for reading and writing.
+    int client_fd;
+    /// Set to false when the server should terminate.
+    volatile bool* run;
+    /// A function to handle received message buffers.
+    process_message_fn process_message;
+    /// A user provided data structure for the process message function.
+    void* user_data;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Thread to handle requests for each connected client
 ////////////////////////////////////////////////////////////////////////////////
 void *handleConnections(void *arguments)
 {
-    int *args = (int *)arguments;
-    int client_fd = args[0];
-    int protocol_type = args[1];
+    auto args = reinterpret_cast<ServerArgs*>(arguments);
+
     unsigned char buffer[NET_BUFFER_SIZE];
     int messageSize;
-    bool *run_server;
-    
-    if (protocol_type == MODBUS_PROTOCOL)
-        run_server = &run_modbus;
-    else if (protocol_type == ENIP_PROTOCOL)
-        run_server = &run_enip;
 
-    spdlog::debug("Server: Thread created for client ID: {}", client_fd);
+    spdlog::debug("Server: Thread created for client ID: {}", args->client_fd);
 
-    while(*run_server)
+    while(*args->run)
     {
         //unsigned char buffer[NET_BUFFER_SIZE];
         //int messageSize;
 
-        messageSize = listenToClient(client_fd, buffer);
+        messageSize = listenToClient(args->client_fd, buffer);
         if (messageSize <= 0 || messageSize > NET_BUFFER_SIZE)
         {
             // something has  gone wrong or the client has closed connection
             if (messageSize == 0)
             {
-                spdlog::debug("Server: client ID: {} has closed the connection", client_fd);
+                spdlog::debug("Server: client ID: {} has closed the connection", args->client_fd);
             }
             else
             {
-                spdlog::error("Server: Something is wrong with the  client ID: {} message Size : {}", client_fd, messageSize);
+                spdlog::error("Server: Something is wrong with the  client ID: {} message Size : {}", args->client_fd, messageSize);
             }
             break;
         }
 
-        processMessage(buffer, messageSize, client_fd, protocol_type);
+        int messageSize = args->process_message(buffer, NET_BUFFER_SIZE, args->user_data);
+        write(args->client_fd, buffer, messageSize);
     }
     
     spdlog::debug("Closing client socket and calling pthread_exit");
-    close(client_fd);
+    close(args->client_fd);
     spdlog::info("Terminating server connections thread");
     pthread_exit(NULL);
+    delete args;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -254,46 +238,40 @@ void *handleConnections(void *arguments)
 /// @param protocol_type
 /// @see stopServer()
 ////////////////////////////////////////////////////////////////////////////////
-void startServer(uint16_t port, int protocol_type)
+void startServer(uint16_t port, volatile bool& run_server, process_message_fn process_message, void* user_data)
 {
     int socket_fd, client_fd;
-    bool *run_server;
     
     socket_fd = createSocket(port);
     
-    if (protocol_type == MODBUS_PROTOCOL)
+    while(run_server)
     {
-        //mapUnusedIO();
-        run_server = &run_modbus;
-    }
-    else if (protocol_type == ENIP_PROTOCOL)
-        run_server = &run_enip;
-    
-    while(*run_server)
-    {
-        client_fd = waitForClient(socket_fd, protocol_type); //block until a client connects
+        client_fd = waitForClient(socket_fd, run_server); //block until a client connects
         if (client_fd < 0)
         {
-            spdlog::info("Server: Error accepting client!");
+            spdlog::error("Server: Error accepting client!");
+            continue;
         }
-        else
-        {
-            int arguments[2];
-            pthread_t thread;
-            int ret = -1;
-            spdlog::debug("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
-            arguments[0] = client_fd;
-            arguments[1] = protocol_type;
-            ret = pthread_create(&thread, NULL, handleConnections, (void*)arguments);
-            if (ret==0) 
-            {
-                pthread_detach(thread);
-            }
+
+        pthread_t thread;
+        auto args = new ServerArgs {
+            .client_fd=client_fd,
+            .run=&run_server,
+            .process_message=process_message,
+            .user_data=user_data
+        };
+        spdlog::trace("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
+        int ret = pthread_create(&thread, NULL, handleConnections, args);
+        if (ret == 0) {
+            pthread_detach(thread);
+        } else {
+            delete args;
         }
     }
     close(socket_fd);
     close(client_fd);
-    spdlog::info("Terminating server thread");
+
+    spdlog::debug("Terminating server thread");
 }
 
 /** @}*/

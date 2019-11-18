@@ -88,6 +88,15 @@ Dnp3Receiver::Dnp3Receiver(const Dnp3IndexedGroup& binary_commands, const Dnp3In
     }
 }
 
+Dnp3Receiver::~Dnp3Receiver() {
+    if (binary_commands_cache) {
+        delete[] binary_commands_cache;
+    }
+    if (analog_commands_cache) {
+        delete[] analog_commands_cache;
+    }
+}
+
 /// CROB
 CommandStatus Dnp3Receiver::Select(const ControlRelayOutputBlock& command, uint16_t index) {
     spdlog::trace("DNP3 select CROB index");

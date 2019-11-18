@@ -36,6 +36,7 @@ class Dnp3Receiver : public opendnp3::ICommandHandler {
     /// @param binary_commands The glue variables for the binary commands.
     /// @param analog_commands The glue variables for the analog commands.
     Dnp3Receiver(const Dnp3IndexedGroup& binary_commands, const Dnp3IndexedGroup& analog_commands);
+    ~Dnp3Receiver();
 
     opendnp3::CommandStatus Select(const opendnp3::ControlRelayOutputBlock& command, std::uint16_t index) override;
 
