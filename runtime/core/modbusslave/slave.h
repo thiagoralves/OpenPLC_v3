@@ -23,7 +23,7 @@
 class GlueVariablesBinding;
 
 /// @brief Process an individual modbus message.
-int process_modbus_message(unsigned char *buffer, int buffer_size,
+int modbus_process_message(unsigned char *buffer, int buffer_size,
                            void* user_data);
 
 /// @brief Start the modbus slave server.

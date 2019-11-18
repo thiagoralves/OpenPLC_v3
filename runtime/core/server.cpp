@@ -132,8 +132,8 @@ int createSocket(uint16_t port)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Blocking call. Wait here for the client to connect.
-/// @param socket_fd
-/// @param protocol_type
+/// @param socket_fd The socket file descriptor. 
+/// @param run_server A flag to terminate this client.
 /// @return  file descriptor to communicate with the client
 ////////////////////////////////////////////////////////////////////////////////
 int waitForClient(int socket_fd, volatile bool& run_server)
@@ -153,6 +153,7 @@ int waitForClient(int socket_fd, volatile bool& run_server)
             SetSocketBlockingEnabled(client_fd, true);
             break;
         }
+        
         this_thread::sleep_for(chrono::milliseconds(100));
     }
 
@@ -228,16 +229,14 @@ void *handleConnections(void *arguments)
     delete args;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief Function to start the server.
+/// @brief Function to start a socket server.
 ///
 /// It receives the port number as argument and
 /// creates an infinite loop to listen and parse the messages sent by the
 /// clients
-/// @param port
-/// @param protocol_type
-/// @see stopServer()
-////////////////////////////////////////////////////////////////////////////////
+/// @param port The port to listen on.
+/// @param process_message A function to run to process socket messages.
+/// @param user_data Passed into the process_message function as client data.
 void startServer(uint16_t port, volatile bool& run_server, process_message_fn process_message, void* user_data)
 {
     int socket_fd, client_fd;

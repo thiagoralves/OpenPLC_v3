@@ -241,7 +241,7 @@ int write_holding_register(unsigned char* buffer, int buffer_size, IndexedStrate
 {
 	int16_t start = mb_to_word(buffer[8], buffer[9]);
 
-	modbus_errno err = strategy->WriteHoldingRegister(start, buffer + 9, 2);
+	modbus_errno err = strategy->WriteHoldingRegister(start, buffer + 9);
 	if (err) {
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
@@ -308,7 +308,7 @@ int write_multiple_registers(unsigned char* buffer, int buffer_size, IndexedStra
 /// @param buffer_size
 /// @param user_data The mapping strategy.
 /// @return size of the response message in bytes
-int process_modbus_message(unsigned char *buffer, int buffer_size, void* user_data)
+int modbus_process_message(unsigned char *buffer, int buffer_size, void* user_data)
 {
     auto strategy = reinterpret_cast<IndexedStrategy*>(user_data);
 	int message_length = 0;
@@ -376,6 +376,29 @@ int process_modbus_message(unsigned char *buffer, int buffer_size, void* user_da
 	return message_length;
 }
 
+/// Arguments that are passed to the thread to exchange modbus data with the
+/// runtime.
+struct ModbusExchangeArgs {
+	IndexedStrategy* strategy;
+	volatile bool* run;
+	std::chrono::milliseconds interval;
+};
+
+/// The main function for the thread that is responsible for exchanging
+/// modbus data with the located variables.
+void* modbus_exchange_data(void* args) {
+	auto exchange_args = reinterpret_cast<ModbusExchangeArgs*>(args);
+
+	while (*exchange_args->run) {
+		spdlog::trace("Exchanging modbus master data");
+		exchange_args->strategy->Exchange();
+		this_thread::sleep_for(exchange_args->interval);
+	}
+
+	delete exchange_args;
+
+	return nullptr;
+}
 
 /// Container for reading in configuration from the config.ini
 /// This is populated with values from the config file.
@@ -447,8 +470,24 @@ int8_t modbus_slave_run(std::unique_ptr<std::istream, std::function<void(std::is
 
     IndexedStrategy strategy(bindings);
 
+	pthread_t exchange_data_thread;
+	auto args = new ModbusExchangeArgs {
+		.strategy=&strategy,
+		.run=&run,
+		.interval=std::chrono::milliseconds(100)
+	};
+
+    int ret = pthread_create(&exchange_data_thread, NULL, modbus_exchange_data, args);
+	if (ret == 0) {
+		pthread_detach(exchange_data_thread);
+	} else {
+		delete args;
+	}
+
 	spdlog::info("Starting modbus slave on port {}", config.port);
-    startServer(config.port, run, &process_modbus_message, &strategy);
+    startServer(config.port, run, &modbus_process_message, &strategy);
+
+	pthread_join(exchange_data_thread, nullptr);
 
     return 0;
 }

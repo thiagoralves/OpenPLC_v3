@@ -65,7 +65,7 @@ SCENARIO("slave", "")
         {
             //                                  FS, Start, Num, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 1, 0, 0, 0, 9, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 0x01);
             REQUIRE(buffer[8] == 0x02);
             REQUIRE(buffer[9] == 0xCD);
@@ -77,7 +77,7 @@ SCENARIO("slave", "")
         {
             //                                  FS, Start, Num, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 1, 0, 1, 0, 8, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 0x01);
             REQUIRE(buffer[8] == 0x01);
             REQUIRE(buffer[9] == 0xE6);
@@ -88,7 +88,7 @@ SCENARIO("slave", "")
         {
             //                                   FS, Start, Num, By,    Values, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 15, 0, 0, 0, 9, 2, 0xCD, 0x01, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 15);
             REQUIRE(buffer[8] == 0);
             REQUIRE(buffer[9] == 0);
@@ -135,7 +135,7 @@ SCENARIO("slave", "")
         {
             //                                  FS, Start, Num, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 2, 0, 0, 0, 9, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 0x02);
             REQUIRE(buffer[8] == 0x02);
             REQUIRE(buffer[9] == 0xCD);
@@ -147,7 +147,7 @@ SCENARIO("slave", "")
         {
             //                                  FS, Start, Num, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 2, 0, 1, 0, 8, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 0x02);
             REQUIRE(buffer[8] == 0x01);
             REQUIRE(buffer[9] == 0xE6);
@@ -176,7 +176,7 @@ SCENARIO("slave", "")
         {
             //                                  FS, Start, Num, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 3, 0, 0, 0, 1, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 0x03);
             REQUIRE(buffer[8] == 0x02);
             REQUIRE(buffer[9] == 0x00);
@@ -188,7 +188,7 @@ SCENARIO("slave", "")
         {
             //                                  FS,   Start,  Num, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 3, 0x04, 0, 0, 1, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 0x03);
             REQUIRE(buffer[8] == 0x02);
             REQUIRE(buffer[9] == 0x00);
@@ -200,7 +200,7 @@ SCENARIO("slave", "")
         {
             //                                  FS, Start,    Val, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 6, 0, 0, 0, 0x03, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 0x06);
             REQUIRE(buffer[8] == 0x00);
             REQUIRE(buffer[9] == 0x00);
@@ -213,7 +213,7 @@ SCENARIO("slave", "")
         {
             //                                   FS, Start,  Num, By,     Val, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 16, 0, 0,  0, 1,  2, 0, 0x02, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 16);
             REQUIRE(buffer[8] == 0x00);
             REQUIRE(buffer[9] == 0x00);
@@ -240,7 +240,7 @@ SCENARIO("slave", "")
         {
             //                                  FS, Start, Num, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 4, 0, 0, 0, 1, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 0x04);
             REQUIRE(buffer[8] == 0x02);
             REQUIRE(buffer[9] == 0x00);
@@ -270,7 +270,7 @@ SCENARIO("slave", "")
         {
             //                                  FS, Start, Num, CRC
             uint8_t buffer[BUF_SIZE] = { HEADER, 5, 0, 0, 0xFF, 0, 0 };
-            int size = process_modbus_message(buffer, BUF_SIZE, &strategy);
+            int size = modbus_process_message(buffer, BUF_SIZE, &strategy);
             REQUIRE(buffer[7] == 0x05);
             REQUIRE(buffer[8] == 0x00);
             REQUIRE(buffer[9] == 0x00);
