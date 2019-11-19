@@ -147,6 +147,7 @@ void exchange(array<PendingValue<T>, NUM_REGISTER_VALUES>& write_buffer,
         // value to the read buffer.
         if (write_buffer[index].has_pending) {
             *read_buffer[index].value = write_buffer[index].value;
+            write_buffer[index].has_pending = false;
         }
 
         // Finally, update our cached value so that we can read the value
@@ -167,6 +168,7 @@ void IndexedStrategy::Exchange() {
     // writes to those.
     for (size_t index = 0; index < coil_write_buffer.size(); ++index) {
         if (coil_write_buffer[index].has_pending) {
+            coil_write_buffer[index].has_pending = false;
             *coil_read_buffer[index].value = coil_write_buffer[index].value;
         }
         coil_read_buffer[index].update_cache();
