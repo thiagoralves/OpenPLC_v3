@@ -69,6 +69,10 @@ int config_handler(void* user_data, const char* section,
         {
             spdlog::set_level(spdlog::level::err);
         }
+        else
+        {
+            spdlog::warn("Unknown log level {}", value);
+        }
     }
     else if (strcmp("enabled", name) == 0
              && oplc::ini_atob(value)
@@ -151,8 +155,7 @@ void bootstrap()
     struct sched_param sp;
     sp.sched_priority = 30;
     spdlog::info("Setting main thread priority to RT");
-    if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
-    {
+    if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp)) {
         spdlog::warn("Failed to set main thread to real-time priority");
     }
 
@@ -171,8 +174,7 @@ void bootstrap()
     // Our next step here is to start the main loop, so start any
     // services that we want now.
 
-    for (auto it = config.services.begin(); it != config.services.end(); ++it)
-    {
+    for (auto it = config.services.begin(); it != config.services.end(); ++it) {
         const char* service_config = "";
         ServiceDefinition* def = services_find(it->c_str());
         def->start(service_config);

@@ -55,8 +55,7 @@ uint8_t run_openplc = 1;  // Variable to control OpenPLC Runtime execution
 /// \param ts
 /// \param delay in milliseconds
 ////////////////////////////////////////////////////////////////////////////////
-void sleep_until(struct timespec *ts, int delay)
-{
+void sleep_until(struct timespec *ts, int delay) {
     ts->tv_nsec += delay;
     if (ts->tv_nsec >= 1000*1000*1000)
     {
@@ -175,6 +174,13 @@ int main(int argc, char **argv)
 
         {
             std::lock_guard<std::mutex> guard(bufferLock);
+            // Make sure the buffer pointers are correct and
+            // attached to the user variables
+            glueVars();
+
+            // Read input image
+            updateBuffersIn();
+
             updateCustomIn();
             // Update input image table with data from slave devices
             updateBuffersIn_MB();

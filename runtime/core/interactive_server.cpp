@@ -145,8 +145,7 @@ std::int8_t copy_command_config(const char *source, char target[],
 /// @param port
 /// @return the file descriptor for the socket, or less than 0 if a socket
 /// if an error occurred.
-int interactive_open_socket(uint16_t port)
-{
+int interactive_open_socket(uint16_t port) {
     int socket_fd;
     struct sockaddr_in server_addr;
 
@@ -198,8 +197,7 @@ int interactive_open_socket(uint16_t port)
 /// @param run A flag that is set to false when we should stop polling.
 /// @param socket_fd The socket file descriptor we are listening on.
 /// @return the client file descriptor.
-int interactive_wait_new_client(volatile bool& run, int socket_fd)
-{
+int interactive_wait_new_client(volatile bool& run, int socket_fd) {
     int client_fd;
     struct sockaddr_in client_addr;
     socklen_t client_len;
@@ -244,37 +242,32 @@ void interactive_client_command(const char* command, int client_fd)
 
     spdlog::trace("Process command received {}", command);
 
-    if (strncmp(command, "quit()", 6) == 0)
-    {
+    if (strncmp(command, "quit()", 6) == 0) {
         spdlog::info("Issued quit() command");
         run_openplc = 0;
     }
-    else if (strncmp(command, "start_modbus(", 13) == 0)
-    {
+    else if (strncmp(command, "start_modbus(", 13) == 0) {
         ServiceDefinition* def = services_find("modbusslave");
         if (def && copy_command_config(command + 13, command_buffer, BUFFER_MAX_SIZE) == 0)
         {
             def->start(command_buffer);
         }
     }
-    else if (strncmp(command, "stop_modbus()", 13) == 0)
-    {
+    else if (strncmp(command, "stop_modbus()", 13) == 0) {
         ServiceDefinition* def = services_find("modbusslave");
         if (def) {
             def->stop();
         }
     }
 #ifdef OPLC_DNP3_OUTSTATION
-    else if (strncmp(command, "start_dnp3(", 11) == 0)
-    {
+    else if (strncmp(command, "start_dnp3(", 11) == 0) {
         ServiceDefinition* def = services_find("dnp3s");
         if (def && copy_command_config(command + 11, command_buffer, BUFFER_MAX_SIZE) == 0)
         {
             def->start(command_buffer);
         }
     }
-    else if (strncmp(command, "stop_dnp3()", 11) == 0)
-    {
+    else if (strncmp(command, "stop_dnp3()", 11) == 0) {
         ServiceDefinition* def = services_find("dnp3s");
         if (def) {
             def->stop();
@@ -284,8 +277,7 @@ void interactive_client_command(const char* command, int client_fd)
     else if (strncmp(command, "start_enip(", 11) == 0) {
         spdlog::info("Issued start_enip() command to start on port: {}", readCommandArgument(command));
         enip_port = readCommandArgument(command);
-        if (run_enip)
-        {
+        if (run_enip) {
             spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
             //Stop Enip server
             run_enip = 0;
@@ -296,8 +288,7 @@ void interactive_client_command(const char* command, int client_fd)
         run_enip = 1;
         pthread_create(&enip_thread, NULL, enipThread, NULL);
     }
-    else if (strncmp(command, "stop_enip()", 11) == 0)
-    {
+    else if (strncmp(command, "stop_enip()", 11) == 0) {
         spdlog::info("Issued stop_enip() command");
         if (run_enip)
         {
@@ -306,8 +297,7 @@ void interactive_client_command(const char* command, int client_fd)
             spdlog::info("EtherNet/IP server was stopped");
         }
     }
-    else if (strncmp(command, "start_pstorage(", 15) == 0)
-    {
+    else if (strncmp(command, "start_pstorage(", 15) == 0) {
         ServiceDefinition* def = services_find("pstorage");
         if (def && copy_command_config(command + 15, command_buffer, BUFFER_MAX_SIZE) == 0)
         {
@@ -320,23 +310,20 @@ void interactive_client_command(const char* command, int client_fd)
             def->stop();
         }
     }
-    else if (strncmp(command, "runtime_logs()", 14) == 0)
-    {
+    else if (strncmp(command, "runtime_logs()", 14) == 0) {
         spdlog::debug("Issued runtime_logs() command");
         std::string data = log_sink->data();
         write(client_fd, data.c_str(), data.size());
         return;
     }
-    else if (strncmp(command, "exec_time()", 11) == 0)
-    {
+    else if (strncmp(command, "exec_time()", 11) == 0) {
         time_t end_time;
         time(&end_time);
         int count_char = sprintf(command_buffer, "%llu\n", (unsigned long long)difftime(end_time, start_time));
         write(client_fd, command_buffer, count_char);
         return;
     }
-    else
-    {
+    else {
         int count_char = sprintf(command_buffer, "Error: unrecognized command\n");
         write(client_fd, command_buffer, count_char);
         return;
