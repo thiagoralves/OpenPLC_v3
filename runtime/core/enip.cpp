@@ -615,13 +615,13 @@ int sendUnitData(struct enip_header *header, struct enip_data_Connected_0x70 *en
 // response for it. The return value is the size of the response message in
 // bytes.
 //-----------------------------------------------------------------------------
-int processEnipMessage(unsigned char *buffer, int buffer_size)
+int processEnipMessage(unsigned char *buffer, int buffer_size, void* user_data)
 {	
 	// initialize logging system
 	char log_msg[1000];
     char *p = log_msg;
 	
-	// initailize structs
+	// initialize structs
     struct enip_header header;
 	struct enip_data_Unknown enipDataUnknown;
 	struct enip_data_Unconnected enipDataUnconnected;

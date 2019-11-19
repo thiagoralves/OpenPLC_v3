@@ -67,18 +67,6 @@ void sleep_until(struct timespec *ts, int delay)
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ts,  NULL);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/// \brief  Helper function - Makes the running thread sleep for the amount of
-/// time in milliseconds
-/// \param milliseconds to sleep
-////////////////////////////////////////////////////////////////////////////////
-void sleepms(int milliseconds)
-{
-	struct timespec ts;
-	ts.tv_sec = milliseconds / 1000;
-	ts.tv_nsec = (milliseconds % 1000) * 1000000;
-	nanosleep(&ts, NULL);
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Verify if pin is present in one of the ignored vectors
@@ -156,7 +144,7 @@ void handleSpecialFunctions()
 int main(int argc,char **argv)
 {
     initialize_logging(argc, argv);
-	spdlog::info("OpenPLC Runtime starting...");
+    spdlog::info("OpenPLC Runtime starting...");
 
     time(&start_time);
 
@@ -165,51 +153,51 @@ int main(int argc,char **argv)
     // automatically start
     bootstrap();
 
-	//gets the starting point for the clock
-	spdlog::debug("Getting current time");
-	struct timespec timer_start;
-	clock_gettime(CLOCK_MONOTONIC, &timer_start);
+    //gets the starting point for the clock
+    spdlog::debug("Getting current time");
+    struct timespec timer_start;
+    clock_gettime(CLOCK_MONOTONIC, &timer_start);
 
-	//======================================================
-	//                    MAIN LOOP
-	//======================================================
-	while(run_openplc)
-	{
-		//make sure the buffer pointers are correct and
-		//attached to the user variables
-		glueVars();
+    //======================================================
+    //                    MAIN LOOP
+    //======================================================
+    while(run_openplc)
+    {
+        //make sure the buffer pointers are correct and
+        //attached to the user variables
+        glueVars();
         
-		updateBuffersIn(); //read input image
-		
-		{
-			std::lock_guard<std::mutex> guard(bufferLock);
-			updateCustomIn();
-			updateBuffersIn_MB(); //update input image table with data from slave devices
-			handleSpecialFunctions();
-			config_run__(__tick++); // execute plc program logic
-			updateCustomOut();
-			updateBuffersOut_MB(); //update slave devices with data from the output image table
-		}
-
-		updateBuffersOut(); //write output image
+        updateBuffersIn(); //read input image
         
-		updateTime();
+        {
+            std::lock_guard<std::mutex> guard(bufferLock);
+            updateCustomIn();
+            updateBuffersIn_MB(); //update input image table with data from slave devices
+            handleSpecialFunctions();
+            config_run__(__tick++); // execute plc program logic
+            updateCustomOut();
+            updateBuffersOut_MB(); //update slave devices with data from the output image table
+        }
 
-		sleep_until(&timer_start, common_ticktime__);
-	}
+        updateBuffersOut(); //write output image
+
+        updateTime();
+
+        sleep_until(&timer_start, common_ticktime__);
+    }
     
     //======================================================
-	//             SHUTTING DOWN OPENPLC RUNTIME
-	//======================================================
+    //             SHUTTING DOWN OPENPLC RUNTIME
+    //======================================================
     services_stop();
     services_finalize();
 
-	spdlog::debug("Disabling outputs...");
+    spdlog::debug("Disabling outputs...");
     disableOutputs();
     updateCustomOut();
     updateBuffersOut();
-	spdlog::debug("Shutting down OpenPLC Runtime...");
-	finalizeHardware();
+    spdlog::debug("Shutting down OpenPLC Runtime...");
+    finalizeHardware();
     exit(0);
 }
 

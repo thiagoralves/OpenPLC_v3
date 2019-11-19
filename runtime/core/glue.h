@@ -50,7 +50,7 @@ enum IecLocationSize {
     IECLST_WORD,
     /// Variables that are 4 bytes, including REAL
     IECLST_DOUBLEWORD,
-    /// Variables that are 8 bytes, including LREAL
+    /// Variables that are 8 bytes (64-bit), including LREAL, LINT
     IECLST_LONGWORD,
 };
 #endif  // OPLC_IEC_GLUE_SIZE
@@ -150,7 +150,7 @@ class GlueVariablesBinding {
     /// @param glue_variables The glue variable binding definitions
     /// @param checksum A checksum for the bindining definitions. That is
     /// when we generated the bindings, a checking from the source.
-    GlueVariablesBinding(std::mutex* buffer_lock, const std::uint16_t size,
+    GlueVariablesBinding(std::mutex* buffer_lock, const std::size_t size,
                          const GlueVariable* glue_variables,
                          const char* checksum) :
         buffer_lock(buffer_lock),
@@ -168,7 +168,7 @@ class GlueVariablesBinding {
     std::mutex* buffer_lock;
 
     /// @brief The size of the glue variables array
-    std::uint16_t size;
+    std::size_t size;
 
     /// @brief The glue variables array
     const GlueVariable* glue_variables;
@@ -192,6 +192,15 @@ class GlueVariablesBinding {
     /// @return the variable or null if there is no variable that matches all
     /// criteria in the specification.
     const GlueVariable* find(const std::string& location) const;
+
+    /// @brief Find the maximum most significant index for glued variables
+    /// that match the specified type and direction.
+    /// @param type the type to match on.
+    /// @param dir the direction to match on.
+    /// @return The maximum MSI or less than 0 if there are none with the
+    /// specified type.
+    std::int32_t find_max_msi(IecGlueValueType type,
+                              IecLocationDirection dir) const;
 };
 
 #endif // CORE_GLUE_H

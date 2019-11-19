@@ -51,14 +51,11 @@ const uint16_t BUFFER_MAX_SIZE(1024);
 std::mutex command_mutex;
 
 // TODO Globals to move into services
-bool run_modbus = 0;
-uint16_t modbus_port = 502;
 bool run_enip = 0;
 uint16_t enip_port = 44818;
 time_t start_time;
 
 //Global Threads
-pthread_t modbus_thread;
 pthread_t enip_thread;
 
 //Log Buffer
@@ -69,22 +66,12 @@ std::shared_ptr<buffered_sink> log_sink;
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Start the Modbus Thread
-/// @param *arg
-///////////////////////////////////////////////////////////////////////////////
-void *modbusThread(void *arg)
-{
-    startServer(modbus_port, MODBUS_PROTOCOL);
-    return nullptr;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /// @brief Start the Enip Thread
 /// @param *arg
 ///////////////////////////////////////////////////////////////////////////////
 void *enipThread(void *arg)
 {
-    startServer(enip_port, ENIP_PROTOCOL);
+    startServer(enip_port, run_enip, &processEnipMessage, nullptr);
     return nullptr;
 }
 
@@ -243,39 +230,20 @@ void interactive_client_command(const char* command, int client_fd) {
     if (strncmp(command, "quit()", 6) == 0)
     {
         spdlog::info("Issued quit() command");
-        if (run_modbus)
-        {
-            run_modbus = 0;
-            pthread_join(modbus_thread, NULL);
-            spdlog::info("Modbus server was stopped");
-        }
         run_openplc = 0;
     }
     else if (strncmp(command, "start_modbus(", 13) == 0)
     {
-        modbus_port = readCommandArgument(command);
-        spdlog::info("Issued start_modbus() command to start on port: {}", modbus_port);
-        
-        if (run_modbus)
-        {
-            spdlog::info("Modbus server already active. Restarting on port: {}", modbus_port);
-            //Stop Modbus server
-            run_modbus = 0;
-            pthread_join(modbus_thread, NULL);
-            spdlog::info("Modbus server was stopped");
+        ServiceDefinition* def = services_find("modbusslave");
+        if (def && copy_command_config(command + 13, command_buffer, BUFFER_MAX_SIZE) == 0) {
+            def->start(command_buffer);
         }
-        //Start Modbus server
-        run_modbus = 1;
-        pthread_create(&modbus_thread, NULL, modbusThread, NULL);
     }
     else if (strncmp(command, "stop_modbus()", 13) == 0)
     {
-        spdlog::info("Issued stop_modbus() command");
-        if (run_modbus)
-        {
-            run_modbus = 0;
-            pthread_join(modbus_thread, NULL);
-            spdlog::info("Modbus server was stopped");
+        ServiceDefinition* def = services_find("modbusslave");
+        if (def) {
+            def->stop();
         }
     }
 #ifdef OPLC_DNP3_OUTSTATION

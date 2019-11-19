@@ -28,9 +28,11 @@
 #include <string.h>
 #include <pthread.h>
 
+#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <thread>
 
 #include <spdlog/spdlog.h>
 
@@ -348,7 +350,6 @@ void parseConfig()
 	//*/
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Thread to poll each slave device
 ////////////////////////////////////////////////////////////////////////////////
@@ -558,7 +559,7 @@ void *querySlaveDevices(void *arg)
                 }
             }
         }
-        sleepms(polling_period);
+        this_thread::sleep_for(chrono::milliseconds(polling_period));
     }
 
 	return 0;
