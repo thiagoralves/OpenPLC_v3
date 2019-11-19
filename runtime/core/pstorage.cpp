@@ -306,8 +306,7 @@ inline int8_t read_and_check(istream& input_stream, const char header[],
 }
 
 int8_t pstorage_read(istream& input_stream,
-                     const GlueVariablesBinding& bindings)
-{
+                     const GlueVariablesBinding& bindings) {
     // Read the file header - we define the file header as a constant that
     // must be present as the header. We don't allow UTF BOMs here.
     char header_check[FILE_HEADER_SIZE];

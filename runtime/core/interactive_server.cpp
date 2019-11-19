@@ -145,8 +145,7 @@ std::int8_t copy_command_config(const char *source, char target[],
 /// @param port
 /// @return the file descriptor for the socket, or less than 0 if a socket
 /// if an error occurred.
-int interactive_open_socket(uint16_t port)
-{
+int interactive_open_socket(uint16_t port) {
     int socket_fd;
     struct sockaddr_in server_addr;
 
@@ -161,7 +160,7 @@ int interactive_open_socket(uint16_t port)
 
     // Set SO_REUSEADDR
     int enable = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR,
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR
         &enable, sizeof(int)) < 0)
     {
         perror("setsockopt(SO_REUSEADDR) failed");
@@ -198,8 +197,7 @@ int interactive_open_socket(uint16_t port)
 /// @param run A flag that is set to false when we should stop polling.
 /// @param socket_fd The socket file descriptor we are listening on.
 /// @return the client file descriptor.
-int interactive_wait_new_client(volatile bool& run, int socket_fd)
-{
+int interactive_wait_new_client(volatile bool& run, int socket_fd) {
     int client_fd;
     struct sockaddr_in client_addr;
     socklen_t client_len;
@@ -260,7 +258,8 @@ void interactive_client_command(const char* command, int client_fd)
     else if (strncmp(command, "stop_modbus()", 13) == 0)
     {
         ServiceDefinition* def = services_find("modbusslave");
-        if (def) {
+        if (def)
+        {
             def->stop();
         }
     }
@@ -276,12 +275,14 @@ void interactive_client_command(const char* command, int client_fd)
     else if (strncmp(command, "stop_dnp3()", 11) == 0)
     {
         ServiceDefinition* def = services_find("dnp3s");
-        if (def) {
+        if (def)
+        {
             def->stop();
         }
     }
 #endif  // OPLC_DNP3_OUTSTATION
-    else if (strncmp(command, "start_enip(", 11) == 0) {
+    else if (strncmp(command, "start_enip(", 11) == 0)
+    {
         spdlog::info("Issued start_enip() command to start on port: {}", readCommandArgument(command));
         enip_port = readCommandArgument(command);
         if (run_enip)
@@ -314,9 +315,11 @@ void interactive_client_command(const char* command, int client_fd)
             def->start(command_buffer);
         }
     }
-    else if (strncmp(command, "stop_pstorage()", 15) == 0) {
+    else if (strncmp(command, "stop_pstorage()", 15) == 0)
+    {
         ServiceDefinition* def = services_find("pstorage");
-        if (def) {
+        if (def)
+        {
             def->stop();
         }
     }
