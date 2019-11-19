@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_MODBUSSLAVE_SLAVE_H_
-#define CORE_MODBUSSLAVE_SLAVE_H_
+#ifndef RUNTIME_CORE_MODBUSSLAVE_SLAVE_H_
+#define RUNTIME_CORE_MODBUSSLAVE_SLAVE_H_
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -38,4 +38,4 @@ void modbus_slave_service_run(const GlueVariablesBinding& binding,
 
 /** @}*/
 
-#endif  // CORE_MODBUSSLAVE_SLAVE_H_
+#endif  // RUNTIME_CORE_MODBUSSLAVE_SLAVE_H_

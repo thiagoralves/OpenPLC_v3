@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_INI_UTIL_H_
-#define CORE_INI_UTIL_H_
+#ifndef RUNTIME_CORE_INI_UTIL_H_
+#define RUNTIME_CORE_INI_UTIL_H_
 
 /** \addtogroup openplc_runtime
  *  @{
  */
 
 #include <cstring>
+#include <fstream>
 #include <istream>
+#include <memory>
+
+namespace oplc {
 
 /// Convert a boolean value in the INI file to a boolean.
 /// The value must be "true", otherwise it is interpreted as false.
@@ -61,6 +65,21 @@ static char* istream_fgets(char* str, int num, void* stream) {
     return str;
 }
 
+typedef std::unique_ptr<std::istream, std::function<void(std::istream*)>> config_stream;
+
+inline config_stream open_config() {
+    return config_stream(
+            new std::ifstream("../etc/config.ini"),
+            [](std::istream* s)
+                {
+                    reinterpret_cast<std::ifstream*>(s)->close();
+                    delete s;
+                }
+        );
+}
+
+}  // namespace oplc
+
 /** @}*/
 
-#endif  // CORE_INI_UTIL_H_
+#endif  // RUNTIME_CORE_INI_UTIL_H_

@@ -28,7 +28,7 @@
 
 //Internal buffers for I/O and memory. These buffers are defined in the
 //auto-generated glueVars.cpp file
-#define BUFFER_SIZE		1024
+#define BUFFER_SIZE         1024
 /*********************/
 /*  IEC Types defs   */
 /*********************/

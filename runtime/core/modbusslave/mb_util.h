@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_MODBUSSLAVE_MB_UTIL_H_
-#define CORE_MODBUSSLAVE_MB_UTIL_H_
+#ifndef RUNTIME_CORE_MODBUSSLAVE_MB_UTIL_H_
+#define RUNTIME_CORE_MODBUSSLAVE_MB_UTIL_H_
 
 #include <cstdint>
 
@@ -37,4 +37,4 @@ inline std::uint8_t mb_high_byte(std::uint16_t w) {
 
 /** @}*/
 
-#endif  // CORE_MODBUSSLAVE_MB_UTIL_H_
+#endif  // RUNTIME_CORE_MODBUSSLAVE_MB_UTIL_H_

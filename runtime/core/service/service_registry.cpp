@@ -46,19 +46,19 @@ ServiceDefinition* services_find(const char* name) {
 }
 
 void services_stop() {
-    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def){
+    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def) {
         def->stop();
     });
 }
 
 void services_init() {
-    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def){
+    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def) {
         def->initialize();
     });
 }
 
 void services_finalize() {
-    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def){
+    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def) {
         def->finalize();
     });
 }

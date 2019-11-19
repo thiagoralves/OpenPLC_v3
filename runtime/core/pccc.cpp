@@ -46,15 +46,15 @@
 #define MAX_32B_RANGE                   2047 //Holding Register Size 32bit (memory)
 
 /*------------File Type for PCCC--------------*/
-#define PCCC_INPUT_LOGICAL_SLOT			0x8c
-#define PCCC_OUTPUT_LOGICAL_SLOT		0x8b
-#define PCCC_INTEGER					0x89
-#define PCCC_FLOATING_POINT				0x8A
+#define PCCC_INPUT_LOGICAL_SLOT         0x8c
+#define PCCC_OUTPUT_LOGICAL_SLOT        0x8b
+#define PCCC_INTEGER                    0x89
+#define PCCC_FLOATING_POINT             0x8A
 
-#define PCCC_FN_OUTPUT					0x00
-#define PCCC_FN_INPUT					0x01
-#define PCCC_FN_INT						0x07
-#define PCCC_FN_FLOAT					0x08
+#define PCCC_FN_OUTPUT                  0x00
+#define PCCC_FN_INPUT                   0x01
+#define PCCC_FN_INT                     0x07
+#define PCCC_FN_FLOAT                   0x08
 
 /*----------------Define functions for bit/byte operations-------------------*/
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
@@ -78,30 +78,30 @@ using namespace std;
 //-----------------------------------------------------------Structure Defines--------------------------------------------------//
 struct pccc_header //Structure for the Header Information for EthernetIP
 {
-	unsigned char *Data;    
-	unsigned char *Data_Size;	
-	
+    unsigned char *Data;    
+    unsigned char *Data_Size;
+    
     unsigned char *HD_length = 5;//[5] -> Typical Header Length for Command; Response Header Length is 4
-	unsigned char *HD_CMD_Code;//[1] -> Command Code
+    unsigned char *HD_CMD_Code;//[1] -> Command Code
     unsigned char *HD_Status;//[1] -> Status Code
     unsigned char *HD_TransactionNum;//[2] -> Transaction Number
-	unsigned char *HD_Data_Function_Code;//[1] -> Function code MSB
-	unsigned char *HD_Ext_Status; //Ext Status -> only appended if Status = 0x0f[1]
+    unsigned char *HD_Data_Function_Code;//[1] -> Function code MSB
+    unsigned char *HD_Ext_Status; //Ext Status -> only appended if Status = 0x0f[1]
 
-	unsigned char resp_cod_hex = 0x4f; //Response Hex Value
-	unsigned char *RP_CMD_Code = &resp_cod_hex;//[1] -> Reply Command Code = 0x4f
+    unsigned char resp_cod_hex = 0x4f; //Response Hex Value
+    unsigned char *RP_CMD_Code = &resp_cod_hex;//[1] -> Reply Command Code = 0x4f
 };
 
 struct protected_logical_read_command //Struct for Reply and Command values of Read
-{	
-	unsigned char *CMD_Byte_Size;//[1]	
-	unsigned char *RP_EXT_Status;//[1]* -> Ext Status -> only appended if Status = 0x0f[1]
+{    
+    unsigned char *CMD_Byte_Size;//[1]
+    unsigned char *RP_EXT_Status;//[1]* -> Ext Status -> only appended if Status = 0x0f[1]
 };
 
 struct protected_logical_write_command
-{	
-	unsigned char *CMD_Byte_Size;//[1]*
-	unsigned char *RP_EXT_Status;//[1]* -> Ext Status -> only appended if Status = 0x0f[1]
+{    
+    unsigned char *CMD_Byte_Size;//[1]*
+    unsigned char *RP_EXT_Status;//[1]* -> Ext Status -> only appended if Status = 0x0f[1]
 };
 //--------------------------------------------------------------------------------------------------------------------------------------//
 
@@ -127,148 +127,148 @@ int an_word_pccc(unsigned char byte1, unsigned char byte2);
 //This function takes in the data from enip.cpp and places the data in the appropriate structure variables
 uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size)
 {
-	/* Variables */
-	int new_pccc_length; //New PCCC Length
-	pccc_header header;
-	header.Data = buffer;
-	header.Data_Size = buffer_size;
-	
-	/*Determine the new pccc length*/
-	new_pccc_length = ParsePCCCData(buffer,buffer_size);
-	return new_pccc_length;	 //Return the length to enip.cpp
+    /* Variables */
+    int new_pccc_length; //New PCCC Length
+    pccc_header header;
+    header.Data = buffer;
+    header.Data_Size = buffer_size;
+    
+    /*Determine the new pccc length*/
+    new_pccc_length = ParsePCCCData(buffer,buffer_size);
+    return new_pccc_length; //Return the length to enip.cpp
 }
 
 uint16_t ParsePCCCData(unsigned char *buffer, int buffer_size)
-{	
-	/*Variables*/
-	int new_pccc_length; //Variable for new PCCC length
-	pccc_header header;
-	
-	header.HD_CMD_Code = &buffer[0];//[1] -> Command Code
-	header.HD_Status = &buffer[1];////[1] -> Status Code
-	header.HD_TransactionNum = &buffer[2];//[2] -> Transaction Number
-	header.HD_Data_Function_Code = &buffer[4];//[1] -> Data Function Code
-	
-	/*Determine what command is being requested*/
-	new_pccc_length = Command_Protocol(header,buffer,buffer_size);
-	
-	return new_pccc_length; //Return the new pccc length
+{    
+    /*Variables*/
+    int new_pccc_length; //Variable for new PCCC length
+    pccc_header header;
+    
+    header.HD_CMD_Code = &buffer[0];//[1] -> Command Code
+    header.HD_Status = &buffer[1];////[1] -> Status Code
+    header.HD_TransactionNum = &buffer[2];//[2] -> Transaction Number
+    header.HD_Data_Function_Code = &buffer[4];//[1] -> Data Function Code
+    
+    /*Determine what command is being requested*/
+    new_pccc_length = Command_Protocol(header,buffer,buffer_size);
+    
+    return new_pccc_length; //Return the new pccc length
 }
 
 /* Determine the Command that is being requested to execute */
 uint16_t Command_Protocol(pccc_header header, unsigned char *buffer, int buffer_size)
 {
-	uint16_t var_pccc_length;
-	
-	/*If Statement to determine the command code from the Command Packet*/
-	if(((unsigned int)*header.HD_CMD_Code == 0x0f) && ((unsigned int)*header.HD_Data_Function_Code == 0xA2))//Protected Logical Read
-	{	
-		var_pccc_length = Protected_Logical_Read_Reply(header,buffer,buffer_size);
-		return var_pccc_length;
-	}
-	else if(((unsigned int)*header.HD_CMD_Code == 0x0f) && ( ((unsigned int)*header.HD_Data_Function_Code == 0xAA) || ((unsigned int)*header.HD_Data_Function_Code == 0xAB)))//Protected Logical Write
-	{	
-		var_pccc_length = Protected_Logical_Write_Reply(header,buffer,buffer_size);
-		return var_pccc_length;
-	}
-	else
-	{
-		/*initialize logging system*/
-		unsigned char log_msg[1000];
-		unsigned char *p = log_msg;
-		spdlog::info("PCCC: Unsupported Command/Data Function Code!"); 
-		return -1;
-	}//return length as -1 to signify that the CMD Code/Function Code was not recognize
+    uint16_t var_pccc_length;
+    
+    /*If Statement to determine the command code from the Command Packet*/
+    if(((unsigned int)*header.HD_CMD_Code == 0x0f) && ((unsigned int)*header.HD_Data_Function_Code == 0xA2))//Protected Logical Read
+    {    
+        var_pccc_length = Protected_Logical_Read_Reply(header,buffer,buffer_size);
+        return var_pccc_length;
+    }
+    else if(((unsigned int)*header.HD_CMD_Code == 0x0f) && ( ((unsigned int)*header.HD_Data_Function_Code == 0xAA) || ((unsigned int)*header.HD_Data_Function_Code == 0xAB)))//Protected Logical Write
+    {    
+        var_pccc_length = Protected_Logical_Write_Reply(header,buffer,buffer_size);
+        return var_pccc_length;
+    }
+    else
+    {
+        /*initialize logging system*/
+        unsigned char log_msg[1000];
+        unsigned char *p = log_msg;
+        spdlog::info("PCCC: Unsupported Command/Data Function Code!"); 
+        return -1;
+    }//return length as -1 to signify that the CMD Code/Function Code was not recognize
 }
 
 uint16_t Protected_Logical_Read_Reply(pccc_header header, unsigned char *buffer, int buffer_size)
 {
-	/*Variables*/
-	protected_logical_read_command protected_LR;
-	protected_LR.CMD_Byte_Size = &buffer[5];//Byte Size of data to be read
-	
-	/*Determining Data Length*/
-	unsigned int len_resp = 4;
-	len_resp = len_resp + (unsigned int)*protected_LR.CMD_Byte_Size;
-	
-	/*check if the message is long enough- Left in for future error handling setup*/
-	/*if (buffer_size < 8)
-	{
-		//PCCC Error Handling; Make sure that the buffer size is at least 8
-	}*/
+    /*Variables*/
+    protected_logical_read_command protected_LR;
+    protected_LR.CMD_Byte_Size = &buffer[5];//Byte Size of data to be read
+    
+    /*Determining Data Length*/
+    unsigned int len_resp = 4;
+    len_resp = len_resp + (unsigned int)*protected_LR.CMD_Byte_Size;
+    
+    /*check if the message is long enough- Left in for future error handling setup*/
+    /*if (buffer_size < 8)
+    {
+        //PCCC Error Handling; Make sure that the buffer size is at least 8
+    }*/
 
-	//****************** Read Coils **********************//
-	if(buffer[6] == PCCC_FN_OUTPUT && buffer[7] == PCCC_OUTPUT_LOGICAL_SLOT) // Done/Tested
-	{
-		Pccc_ReadCoils(buffer, buffer_size);
-	}
-	
-	//*************** Read Discrete Inputs ***************//
-	else if(buffer[6] == PCCC_FN_INPUT && buffer[7] == PCCC_INPUT_LOGICAL_SLOT)// Done/Tested
-	{
-		Pccc_ReadDiscreteInputs(buffer, buffer_size);
-	}
+    //****************** Read Coils **********************//
+    if(buffer[6] == PCCC_FN_OUTPUT && buffer[7] == PCCC_OUTPUT_LOGICAL_SLOT) // Done/Tested
+    {
+        Pccc_ReadCoils(buffer, buffer_size);
+    }
+    
+    //*************** Read Discrete Inputs ***************//
+    else if(buffer[6] == PCCC_FN_INPUT && buffer[7] == PCCC_INPUT_LOGICAL_SLOT)// Done/Tested
+    {
+        Pccc_ReadDiscreteInputs(buffer, buffer_size);
+    }
 
-	//****************** Read Holding Registers[PURE, 16Bit Mem, 32bit MEM] ******************//
-	else if((buffer[6] == PCCC_FN_INT || buffer[6] == PCCC_FN_FLOAT)  && (buffer[7] == PCCC_INTEGER || buffer[7] == PCCC_FLOATING_POINT))//Done/Tested
-	{
-		Pccc_ReadHoldingRegisters(buffer, buffer_size);
-	}
-	else
-	{
-		unsigned char log_msg[1000];
-		unsigned char *p = log_msg;
-		spdlog::info("PCCC: Error occurred while processing Protected Logical Read");
-		return -1;
-	}//return length as -1 to signify that the CMD Code/Function Code was not recognize
-	
-	/*Creating the reply packet and memcpy the data into the buffer*/
-	memmove(&buffer[0], (unsigned int)header.RP_CMD_Code, 1); //0x4f Response Code
+    //****************** Read Holding Registers[PURE, 16Bit Mem, 32bit MEM] ******************//
+    else if((buffer[6] == PCCC_FN_INT || buffer[6] == PCCC_FN_FLOAT)  && (buffer[7] == PCCC_INTEGER || buffer[7] == PCCC_FLOATING_POINT))//Done/Tested
+    {
+        Pccc_ReadHoldingRegisters(buffer, buffer_size);
+    }
+    else
+    {
+        unsigned char log_msg[1000];
+        unsigned char *p = log_msg;
+        spdlog::info("PCCC: Error occurred while processing Protected Logical Read");
+        return -1;
+    }//return length as -1 to signify that the CMD Code/Function Code was not recognize
+    
+    /*Creating the reply packet and memcpy the data into the buffer*/
+    memmove(&buffer[0], (unsigned int)header.RP_CMD_Code, 1); //0x4f Response Code
     memmove(&buffer[1], (unsigned int)header.HD_Status, 1); //Same from COMMAND REQUEST
     memmove(&buffer[2], (unsigned int)header.HD_TransactionNum, 2);//Same from COMMAND REQUEST
-	
-	return len_resp; //Return the Resonse Packet Length for PCCC	
+    
+    return len_resp; //Return the Resonse Packet Length for PCCC
 }
 
 uint16_t Protected_Logical_Write_Reply(pccc_header header,unsigned char *buffer, int buffer_size) // Connected
-{	
-	/*Variables*/
-	protected_logical_write_command protected_LW;	
-	protected_LW.CMD_Byte_Size = &buffer[5];//Byte Size of data to be read
-	
-	/*Determining link of new PCCC Packet*/
-	uint16_t len_resp = header.HD_length - 1;
-	
-	/*Creating the reply packet and memcpy the data into the buffer*/
-	memmove(&buffer[0], (unsigned int)header.RP_CMD_Code, 1);
+{    
+    /*Variables*/
+    protected_logical_write_command protected_LW;
+    protected_LW.CMD_Byte_Size = &buffer[5];//Byte Size of data to be read
+    
+    /*Determining link of new PCCC Packet*/
+    uint16_t len_resp = header.HD_length - 1;
+    
+    /*Creating the reply packet and memcpy the data into the buffer*/
+    memmove(&buffer[0], (unsigned int)header.RP_CMD_Code, 1);
     memmove(&buffer[1], (unsigned int)header.HD_Status, 1);
     memmove(&buffer[2], (unsigned int)header.HD_TransactionNum, 2);
-	
-	/*check if the message is long enough- Left in for future error handling setup*/
-	/*if (buffer_size < 8)
-	{
-		//PCCC Error Handling; Make sure that the buffer size is at least 8
-	}*/
-	
-	//****************** Write Coil **********************//
-	if(buffer[6] == PCCC_FN_OUTPUT && buffer[7] == PCCC_OUTPUT_LOGICAL_SLOT)// Done/Tested
-	{
-		Pccc_WriteCoil(buffer, buffer_size);
-	}
+    
+    /*check if the message is long enough- Left in for future error handling setup*/
+    /*if (buffer_size < 8)
+    {
+        //PCCC Error Handling; Make sure that the buffer size is at least 8
+    }*/
+    
+    //****************** Write Coil **********************//
+    if(buffer[6] == PCCC_FN_OUTPUT && buffer[7] == PCCC_OUTPUT_LOGICAL_SLOT)// Done/Tested
+    {
+        Pccc_WriteCoil(buffer, buffer_size);
+    }
 
-	//****************** Write Register ******************//
-	else if((buffer[6] == PCCC_FN_FLOAT || buffer[6] == PCCC_FN_INT) && (buffer[7] == PCCC_INTEGER || buffer[7] == PCCC_FLOATING_POINT))//Done/Tested
-	{
-		Pccc_WriteRegister(buffer, buffer_size);
-	}
+    //****************** Write Register ******************//
+    else if((buffer[6] == PCCC_FN_FLOAT || buffer[6] == PCCC_FN_INT) && (buffer[7] == PCCC_INTEGER || buffer[7] == PCCC_FLOATING_POINT))//Done/Tested
+    {
+        Pccc_WriteRegister(buffer, buffer_size);
+    }
 
-	//****************** Function Code Error ******************/
-	/*Left in for future error handling setup*/
-	else
-	{
-		//PCCC Error Handling; Make sure that the buffer size is at least 8. If none of the defined File Type and File Numbers match, error unrecognized File Type and File Number.
-	}
-	return len_resp;	
+    //****************** Function Code Error ******************/
+    /*Left in for future error handling setup*/
+    else
+    {
+        //PCCC Error Handling; Make sure that the buffer size is at least 8. If none of the defined File Type and File Numbers match, error unrecognized File Type and File Number.
+    }
+    return len_resp;
 }
 
 //-----------------------------------------------------------------------------
@@ -276,20 +276,20 @@ uint16_t Protected_Logical_Write_Reply(pccc_header header,unsigned char *buffer,
 //-----------------------------------------------------------------------------
 int word_pccc(unsigned char byte1, unsigned char byte2)
 {
-	int returnValue;
-	returnValue = (int)(byte1) | (int)byte2;
+    int returnValue;
+    returnValue = (int)(byte1) | (int)byte2;
 
-	return returnValue;
+    return returnValue;
 }
 //-----------------------------------------------------------------------------
 // Concatenate two bytes into an int
 //-----------------------------------------------------------------------------
 int an_word_pccc(unsigned char byte1, unsigned char byte2)
 {
-	int returnValue;
-	returnValue = (int)(byte1) | (int)(byte2 << 8);
+    int returnValue;
+    returnValue = (int)(byte1) | (int)(byte2 << 8);
 
-	return returnValue;
+    return returnValue;
 }
 
 //-----------------------------------------------------------------------------
@@ -297,49 +297,49 @@ int an_word_pccc(unsigned char byte1, unsigned char byte2)
 //-----------------------------------------------------------------------------
 void Pccc_ReadCoils(unsigned char *buffer, int buffer_size) //Working QX Read
 {
-	int Start, ByteDataLength, Mask;
-	
-	/*check if the message is long enough- Left in for future error handling setup*/
-	/*if (buffer_size < 10)
-	{
-		//PCCC Error Handling (Fill in?); This Request must have at least 10 bytes. If it doesn't, its a corrupted message
-	}*/
-	
-	Start = word_pccc(buffer[8],buffer[9]); //Start based on the Element and Subelemnt values in the Command Packet
-	Mask = log2( word_pccc(buffer[10],buffer[11]) ); //Save the byte size or byte data length to the variable from the command packet
-	ByteDataLength = buffer[5];
+    int Start, ByteDataLength, Mask;
+    
+    /*check if the message is long enough- Left in for future error handling setup*/
+    /*if (buffer_size < 10)
+    {
+        //PCCC Error Handling (Fill in?); This Request must have at least 10 bytes. If it doesn't, its a corrupted message
+    }*/
+    
+    Start = word_pccc(buffer[8],buffer[9]); //Start based on the Element and Subelemnt values in the Command Packet
+    Mask = log2( word_pccc(buffer[10],buffer[11]) ); //Save the byte size or byte data length to the variable from the command packet
+    ByteDataLength = buffer[5];
 
-	std::lock_guard<std::mutex> guard(bufferLock);
-	
-	/*----Reading the values from the PLC bool_output buffer and writing to the PCCC buffer based on position----*/
-	for (int i = 0; i < ByteDataLength; i++)
-	{
-		for(int j = 0; j < 8; j++)
-		{
-			int position = Start + i * 8 + j;
-			if (position < MAX_COILS)
-			{
-				if(bool_output[position/8][position%8] != NULL)
-				{
-					bitWrite(buffer[4+i], j, *bool_output[position/8][position%8]);
-				}
-				else
-				{
-					bitWrite(buffer[4+i],j,0);
-				}
-			}
-			else
-			{
-				//PCCC Error Handling (Fill in?); If the position is greater than the MAX COILS, ERROR Overflow?
-			}
-		}
-	}
-	
-	/*Left in for future error handling setup*/
-	/*if (pccc_error != ERR_NONE)
-	{
-		//PCCC Error Handling (Fill in?); Deetermine if there was an error:
-	}*/
+    std::lock_guard<std::mutex> guard(bufferLock);
+    
+    /*----Reading the values from the PLC bool_output buffer and writing to the PCCC buffer based on position----*/
+    for (int i = 0; i < ByteDataLength; i++)
+    {
+        for(int j = 0; j < 8; j++)
+        {
+            int position = Start + i * 8 + j;
+            if (position < MAX_COILS)
+            {
+                if(bool_output[position/8][position%8] != NULL)
+                {
+                    bitWrite(buffer[4+i], j, *bool_output[position/8][position%8]);
+                }
+                else
+                {
+                    bitWrite(buffer[4+i],j,0);
+                }
+            }
+            else
+            {
+                //PCCC Error Handling (Fill in?); If the position is greater than the MAX COILS, ERROR Overflow?
+            }
+        }
+    }
+    
+    /*Left in for future error handling setup*/
+    /*if (pccc_error != ERR_NONE)
+    {
+        //PCCC Error Handling (Fill in?); Deetermine if there was an error:
+    }*/
 }
 
 //-----------------------------------------------------------------------------
@@ -347,130 +347,130 @@ void Pccc_ReadCoils(unsigned char *buffer, int buffer_size) //Working QX Read
 //-----------------------------------------------------------------------------
 void Pccc_ReadDiscreteInputs(unsigned char *buffer, int buffer_size) //Working IX Read Only
 {
-	int Start, ByteDataLength;
-	
-	/*This Request must have at least 10 bytes. If it doesn't, its a corrupted messageLeft in for future error handling setup*/
-	/*if (buffer_size < 10)
-	{
-		//PCCC Error Handling (Fill in?); This Request must have at least 10 bytes. If it doesn't, its a corrupted message
-	}*/
-	
-	Start = word_pccc(buffer[8],buffer[9]);//Start based on the Element and Subelemnt values in the Command Packet
-	ByteDataLength = buffer[5];//Save the byte size or byte data length to the variable from the command packet
-	std::lock_guard<std::mutex> guard(bufferLock);
-	
-	/*--------Reading the values from the PLC bool_input buffer and writing to the PCCC buffer based on position--------*/
-	for (int i = 0; i < ByteDataLength; i++)
-	{
-		for(int j = 0; j < 8; j++)
-		{
-			int position = Start + i * 8 + j;
-			if (position < MAX_DISCRETE_INPUT)
-			{
-				if(bool_input[position/8][position%8] != NULL)
-				{
-					bitWrite(buffer[4+i], j, *bool_input[position/8][position%8]);
-				}
-				else
-				{
-					bitWrite(buffer[4+i],j,0);
-				}
-			}
-			else
-			{
-				//PCCC Error Handling (Fill in?); If the position is greater than the MAX, ERROR Overflow?
-			}
-		}
-	}
-	
-	/*Left in for future error handling setup*/
-	/*if (mb_error != ERR_NONE)
-	{
-		//PCCC Error Handling (Fill in?); Deetermine if there was an error:
-	}*/
-	
+    int Start, ByteDataLength;
+    
+    /*This Request must have at least 10 bytes. If it doesn't, its a corrupted messageLeft in for future error handling setup*/
+    /*if (buffer_size < 10)
+    {
+        //PCCC Error Handling (Fill in?); This Request must have at least 10 bytes. If it doesn't, its a corrupted message
+    }*/
+    
+    Start = word_pccc(buffer[8],buffer[9]);//Start based on the Element and Subelemnt values in the Command Packet
+    ByteDataLength = buffer[5];//Save the byte size or byte data length to the variable from the command packet
+    std::lock_guard<std::mutex> guard(bufferLock);
+    
+    /*--------Reading the values from the PLC bool_input buffer and writing to the PCCC buffer based on position--------*/
+    for (int i = 0; i < ByteDataLength; i++)
+    {
+        for(int j = 0; j < 8; j++)
+        {
+            int position = Start + i * 8 + j;
+            if (position < MAX_DISCRETE_INPUT)
+            {
+                if(bool_input[position/8][position%8] != NULL)
+                {
+                    bitWrite(buffer[4+i], j, *bool_input[position/8][position%8]);
+                }
+                else
+                {
+                    bitWrite(buffer[4+i],j,0);
+                }
+            }
+            else
+            {
+                //PCCC Error Handling (Fill in?); If the position is greater than the MAX, ERROR Overflow?
+            }
+        }
+    }
+    
+    /*Left in for future error handling setup*/
+    /*if (mb_error != ERR_NONE)
+    {
+        //PCCC Error Handling (Fill in?); Deetermine if there was an error:
+    }*/
+    
 }
 
 //-----------------------------------------------------------------------------
 // Implementation of PCCC Read Holding Registers
 //-----------------------------------------------------------------------------
 void Pccc_ReadHoldingRegisters(unsigned char *buffer, int buffer_size) // QW Read
-{	
-	int Start, an_Start, WordDataLength, ByteDataLength;
+{    
+    int Start, an_Start, WordDataLength, ByteDataLength;
 
-	/*this request must have at least 10 bytes. If it doesn't, it's a corrupted message - Left in for future error handling setup*/
-	/*if (buffer_size < 10)
-	{
-		//PCCC Error Handling (Fill in?); This Request must have at least 10 bytes. If it doesn't, its a corrupted message
-	}*/
+    /*this request must have at least 10 bytes. If it doesn't, it's a corrupted message - Left in for future error handling setup*/
+    /*if (buffer_size < 10)
+    {
+        //PCCC Error Handling (Fill in?); This Request must have at least 10 bytes. If it doesn't, its a corrupted message
+    }*/
 
-	Start = word_pccc(buffer[8],buffer[9]);//Start based on the Element and Subelemnt values in the Command Packet
-	ByteDataLength = buffer[5];//Save the byte size or byte data length to the variable from the command packet
-	WordDataLength = ByteDataLength / 2;//Calculate the word data length based on the byte data length
-	unsigned int Temp_FileT = buffer[7];//Value will be changed potentially during this process, save the File Type Value from command packet
-	unsigned int Temp_FileN = buffer[6];//Value will be changed potentially during this process, save the File Number Value from command packet
+    Start = word_pccc(buffer[8],buffer[9]);//Start based on the Element and Subelemnt values in the Command Packet
+    ByteDataLength = buffer[5];//Save the byte size or byte data length to the variable from the command packet
+    WordDataLength = ByteDataLength / 2;//Calculate the word data length based on the byte data length
+    unsigned int Temp_FileT = buffer[7];//Value will be changed potentially during this process, save the File Type Value from command packet
+    unsigned int Temp_FileN = buffer[6];//Value will be changed potentially during this process, save the File Number Value from command packet
 
-	/*asked for too many registers - Left in for future error handling setup*/
-	/*if (ByteDataLength > 255)
-	{
-		//PCCC Error Handling (Fill in?); This Request must have at greater than 255 bytes. If it does, its a corrupted message
-		//return;
-	}*/
+    /*asked for too many registers - Left in for future error handling setup*/
+    /*if (ByteDataLength > 255)
+    {
+        //PCCC Error Handling (Fill in?); This Request must have at greater than 255 bytes. If it does, its a corrupted message
+        //return;
+    }*/
 
-	std::lock_guard<std::mutex> guard(bufferLock);
-	/*--------Reading the values from the PLC int_output, int_memory, and dint_memory buffer and writing to the PCCC buffer based on position--------*/
-	for(int i = 0; i < WordDataLength; i++)
-	{
-		int position = Start + i;
-		//int an_position = an_Start + i;
-		if ((position <= MIN_16B_RANGE) && (Temp_FileN == PCCC_FN_INT && Temp_FileT == PCCC_INTEGER))
-		{
-			if (int_output[position] != NULL)
-			{
-				buffer[ 4 + position * 2] = lowByte(*int_output[position]);
-				buffer[5 + position * 2] = highByte(*int_output[position]);
-			}
-			else
-			{
-				buffer[ 4 + position * 2] = 0;
-				buffer[5 + position * 2] = 0;
-			}
-		}
-		//accessing memory
-		//16-bit registers
-		else if ((position >= MIN_16B_RANGE && position <= MAX_16B_RANGE) && (Temp_FileN == PCCC_FN_INT && Temp_FileT == PCCC_INTEGER))
-		{
-			if (int_memory[position - MIN_16B_RANGE] != NULL)
-			{
-				buffer[ 4 + position * 2] = lowByte(*int_memory[position - MIN_16B_RANGE]);
-				buffer[5 + position * 2] = highByte(*int_memory[position - MIN_16B_RANGE]);
-			}
-			else
-			{
-				buffer[ 4 + position * 2] = 0;
-				buffer[5 + position * 2] = 0;
-			}
-		}
-		
-		//32-bit registers
-		else if (Temp_FileN == PCCC_FN_FLOAT && Temp_FileT == PCCC_FLOATING_POINT && (position % 2 == 0))
-		{
-			position = position/2;
-			uint32_t tempValue = *dint_memory[position];
-			
-			buffer[4+(4*position)] = tempValue;
-			buffer[5+(4*position)] = tempValue >> 8;
-			buffer[6+(4*position)] = tempValue >> 16;
-			buffer[7+(4*position)] = tempValue >> 24;
-		
-		}
-		/*Left in for future error handling setup-Invalid Address*/
-		else
-		{
-			//PCCC Error Handling (Fill in?); If none of the above are recognized, error
-		}
+    std::lock_guard<std::mutex> guard(bufferLock);
+    /*--------Reading the values from the PLC int_output, int_memory, and dint_memory buffer and writing to the PCCC buffer based on position--------*/
+    for(int i = 0; i < WordDataLength; i++)
+    {
+        int position = Start + i;
+        //int an_position = an_Start + i;
+        if ((position <= MIN_16B_RANGE) && (Temp_FileN == PCCC_FN_INT && Temp_FileT == PCCC_INTEGER))
+        {
+            if (int_output[position] != NULL)
+            {
+                buffer[ 4 + position * 2] = lowByte(*int_output[position]);
+                buffer[5 + position * 2] = highByte(*int_output[position]);
+            }
+            else
+            {
+                buffer[ 4 + position * 2] = 0;
+                buffer[5 + position * 2] = 0;
+            }
+        }
+        //accessing memory
+        //16-bit registers
+        else if ((position >= MIN_16B_RANGE && position <= MAX_16B_RANGE) && (Temp_FileN == PCCC_FN_INT && Temp_FileT == PCCC_INTEGER))
+        {
+            if (int_memory[position - MIN_16B_RANGE] != NULL)
+            {
+                buffer[ 4 + position * 2] = lowByte(*int_memory[position - MIN_16B_RANGE]);
+                buffer[5 + position * 2] = highByte(*int_memory[position - MIN_16B_RANGE]);
+            }
+            else
+            {
+                buffer[ 4 + position * 2] = 0;
+                buffer[5 + position * 2] = 0;
+            }
+        }
+        
+        //32-bit registers
+        else if (Temp_FileN == PCCC_FN_FLOAT && Temp_FileT == PCCC_FLOATING_POINT && (position % 2 == 0))
+        {
+            position = position/2;
+            uint32_t tempValue = *dint_memory[position];
+            
+            buffer[4+(4*position)] = tempValue;
+            buffer[5+(4*position)] = tempValue >> 8;
+            buffer[6+(4*position)] = tempValue >> 16;
+            buffer[7+(4*position)] = tempValue >> 24;
+        
+        }
+        /*Left in for future error handling setup-Invalid Address*/
+        else
+        {
+            //PCCC Error Handling (Fill in?); If none of the above are recognized, error
+        }
 
-	}
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -478,45 +478,45 @@ void Pccc_ReadHoldingRegisters(unsigned char *buffer, int buffer_size) // QW Rea
 //-----------------------------------------------------------------------------
  void Pccc_WriteCoil(unsigned char *buffer, int buffer_size) //QX Write NEEDS WRITE MULTIPLE
  {
-	int Start, Mask;
-	int mask_offset = 0;
-	
-	/*Left in for future error handling setup*/
-	/*if(buffer_size < 10)
-	{
-		//ModbusError(buffer, ERR_ILLEGAL_DATA_ADDRESS);
-		//return;
-	}
-	*/
-	
-	/*For the Write Mask, there has to be a maskoffset due to an extra two bytes */
-	if((unsigned int)buffer[4] == 0xAB)
-	{
-		mask_offset = buffer[5]; //Byte Size 
-	}
-	
-	Start = word_pccc(buffer[8],buffer[9]);//Start based on the Element and Subelemnt values in the Command Packet
-	Mask = log2( word_pccc(buffer[10],buffer[11]) );// Maskoffset based on the mask value in Masked Protected Write Command Packet
-	
-	/*--------Determines if the values inside the PCCC data has a 1 or 0 in it. Writes that value to the bool_output based on the contents of the data in PCCC Buffer-------*/
-	if(Start < MAX_COILS)
-	{
-		unsigned char value;
-		if(word_pccc(buffer[10 + mask_offset],buffer[11 + mask_offset]) > 0)
-		{
-			value = 1;
-		}
-		else
-		{
-			value = 0; 
-		}
-		std::lock_guard<std::mutex> guard(bufferLock);
-		if(bool_output[Start][Mask] != NULL)
-		{
-			*bool_output[Start][Mask] = value;
-		}
-	}
-	
+    int Start, Mask;
+    int mask_offset = 0;
+    
+    /*Left in for future error handling setup*/
+    /*if(buffer_size < 10)
+    {
+        //ModbusError(buffer, ERR_ILLEGAL_DATA_ADDRESS);
+        //return;
+    }
+    */
+    
+    /*For the Write Mask, there has to be a maskoffset due to an extra two bytes */
+    if((unsigned int)buffer[4] == 0xAB)
+    {
+        mask_offset = buffer[5]; //Byte Size 
+    }
+    
+    Start = word_pccc(buffer[8],buffer[9]);//Start based on the Element and Subelemnt values in the Command Packet
+    Mask = log2( word_pccc(buffer[10],buffer[11]) );// Maskoffset based on the mask value in Masked Protected Write Command Packet
+    
+    /*--------Determines if the values inside the PCCC data has a 1 or 0 in it. Writes that value to the bool_output based on the contents of the data in PCCC Buffer-------*/
+    if(Start < MAX_COILS)
+    {
+        unsigned char value;
+        if(word_pccc(buffer[10 + mask_offset],buffer[11 + mask_offset]) > 0)
+        {
+            value = 1;
+        }
+        else
+        {
+            value = 0; 
+        }
+        std::lock_guard<std::mutex> guard(bufferLock);
+        if(bool_output[Start][Mask] != NULL)
+        {
+            *bool_output[Start][Mask] = value;
+        }
+    }
+    
 }
 
 
@@ -525,47 +525,47 @@ void Pccc_ReadHoldingRegisters(unsigned char *buffer, int buffer_size) // QW Rea
 //-----------------------------------------------------------------------------
 void Pccc_WriteRegister(unsigned char *buffer, int buffer_size) // QW Write
 {
-	int Start, WordDataLength, ByteDataLength;
+    int Start, WordDataLength, ByteDataLength;
 
-	Start = word_pccc(buffer[8],buffer[9]);//Start based on the Element and Subelemnt values in the Command Packet
-	int an_Start = an_word_pccc(buffer[8],buffer[9]);//Different Start method for INTs based on the Element and Subelemnt values in the Command Packet
-	ByteDataLength = buffer[5];//Save the byte size or byte data length to the variable from the command packet
-	WordDataLength = ByteDataLength / 2;//Calculate the word data length based on the byte data length
-	unsigned int Temp_FileT = buffer[7];//Value will be changed potentially during this process, save the File Type Value from command packet
-	unsigned int Temp_FileN = buffer[6];//Value will be changed potentially during this process, save the File Number Value from command packet
+    Start = word_pccc(buffer[8],buffer[9]);//Start based on the Element and Subelemnt values in the Command Packet
+    int an_Start = an_word_pccc(buffer[8],buffer[9]);//Different Start method for INTs based on the Element and Subelemnt values in the Command Packet
+    ByteDataLength = buffer[5];//Save the byte size or byte data length to the variable from the command packet
+    WordDataLength = ByteDataLength / 2;//Calculate the word data length based on the byte data length
+    unsigned int Temp_FileT = buffer[7];//Value will be changed potentially during this process, save the File Type Value from command packet
+    unsigned int Temp_FileN = buffer[6];//Value will be changed potentially during this process, save the File Number Value from command packet
 
-	std::lock_guard<std::mutex> guard(bufferLock);
-	
-	/*--------Determines if the values inside the PCCC data has data. Writes that value to the appropriate PLC Buffer based on the contents of the data in PCCC Buffer-------*/
-	for(int i = 0; i < WordDataLength; i++)
-	{
-		int position = Start + i;
-		//analog outputs
-		if ((position <= MIN_16B_RANGE) && (Temp_FileN == PCCC_FN_INT && (Temp_FileT == PCCC_INTEGER)))
-		{
-			if (int_output[position] != NULL) *int_output[position] =  an_word_pccc(buffer[10 + i], buffer[11 + i]);//look at this closer
-		}
-		//accessing memory
-		//16-bit registers
-		else if ((position >= MIN_16B_RANGE && position <= MAX_16B_RANGE) && (Temp_FileN == PCCC_FN_OUTPUT && (Temp_FileT == PCCC_INTEGER)))
-		{
-			if (int_memory[position - MIN_16B_RANGE] != NULL) *int_memory[position - MIN_16B_RANGE] = an_word_pccc(buffer[10 + i], buffer[11 + i]);//look at this closer
-		}
-		//32-bit registers
-		if (Temp_FileN == PCCC_FN_FLOAT && (Temp_FileT == PCCC_FLOATING_POINT))
-		{
-			if (dint_memory[position] != NULL)
-			{
-				uint32_t tempValue = buffer[10 + i] | buffer[11 + i] << 8 | buffer[12 + i] << 16 | buffer[13 + i] <<24;//look at this closer
-				
-				*dint_memory[position] = tempValue;
-				
-				i += 4;
-			}
-			else
-			{
-				pccc_holding_regs[position] = an_word_pccc(buffer[10 + i], buffer[11 + i]);//look at this closer might need to copy from temp
-			}
-		}
-	}
+    std::lock_guard<std::mutex> guard(bufferLock);
+    
+    /*--------Determines if the values inside the PCCC data has data. Writes that value to the appropriate PLC Buffer based on the contents of the data in PCCC Buffer-------*/
+    for(int i = 0; i < WordDataLength; i++)
+    {
+        int position = Start + i;
+        //analog outputs
+        if ((position <= MIN_16B_RANGE) && (Temp_FileN == PCCC_FN_INT && (Temp_FileT == PCCC_INTEGER)))
+        {
+            if (int_output[position] != NULL) *int_output[position] =  an_word_pccc(buffer[10 + i], buffer[11 + i]);//look at this closer
+        }
+        //accessing memory
+        //16-bit registers
+        else if ((position >= MIN_16B_RANGE && position <= MAX_16B_RANGE) && (Temp_FileN == PCCC_FN_OUTPUT && (Temp_FileT == PCCC_INTEGER)))
+        {
+            if (int_memory[position - MIN_16B_RANGE] != NULL) *int_memory[position - MIN_16B_RANGE] = an_word_pccc(buffer[10 + i], buffer[11 + i]);//look at this closer
+        }
+        //32-bit registers
+        if (Temp_FileN == PCCC_FN_FLOAT && (Temp_FileT == PCCC_FLOATING_POINT))
+        {
+            if (dint_memory[position] != NULL)
+            {
+                uint32_t tempValue = buffer[10 + i] | buffer[11 + i] << 8 | buffer[12 + i] << 16 | buffer[13 + i] <<24;//look at this closer
+                
+                *dint_memory[position] = tempValue;
+                
+                i += 4;
+            }
+            else
+            {
+                pccc_holding_regs[position] = an_word_pccc(buffer[10 + i], buffer[11 + i]);//look at this closer might need to copy from temp
+            }
+        }
+    }
 }

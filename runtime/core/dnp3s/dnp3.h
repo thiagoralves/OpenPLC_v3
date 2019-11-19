@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_DNP3S_DNP3_H_
-#define CORE_DNP3S_DNP3_H_
+#ifndef RUNTIME_CORE_DNP3S_DNP3_H_
+#define RUNTIME_CORE_DNP3S_DNP3_H_
 
 #include <cstdint>
+#include <chrono>
 #include <istream>
 #include <memory>
 #include <utility>
 #include <sstream>
 #include <string>
+
+#include "ini_util.h"
 
 namespace asiodnp3 {
 class OutstationStackConfig;
@@ -100,20 +103,23 @@ struct Dnp3MappedGroup {
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief The mapping of glue variables into this DNP3 outstation.
 ////////////////////////////////////////////////////////////////////////////////
-struct Dnp3BoundGlueVariables {
+class Dnp3BoundGlueVariables {
+ public:
     Dnp3BoundGlueVariables(
         std::mutex* buffer_lock,
         std::uint16_t binary_commands_size,
         std::uint16_t analog_commands_size,
-        std::uint16_t measurements_size
-    ) :
-
+        std::uint16_t measurements_size) :
         buffer_lock(buffer_lock),
-        binary_commands({ .size=0, .items=nullptr }),
-        analog_commands({ .size=0, .items=nullptr }),
-        measurements({ .size=0, .items=nullptr })
+        binary_commands({ .size = 0, .items = nullptr }),
+        analog_commands({ .size = 0, .items = nullptr }),
+        measurements({ .size = 0, .items = nullptr })
     {}
 
+ private:
+    Dnp3BoundGlueVariables(Dnp3BoundGlueVariables&);
+
+ public:
     /// @brief Mutex for the glue variables associated with this structures.
     std::mutex* buffer_lock;
 
@@ -156,7 +162,7 @@ asiodnp3::OutstationStackConfig dnp3_create_config(std::istream& cfg_stream,
 ///            this signal is false.
 /// @param glue_variables The glue variables that may be bound into this
 ///                       server.
-void dnp3s_start_server(std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+void dnp3s_start_server(oplc::config_stream& cfg_stream,
                         const char* cfg_overrides,
                         volatile bool& run,
                         const GlueVariablesBinding& glue_variables);
@@ -176,4 +182,4 @@ void dnp3s_service_run(const GlueVariablesBinding& binding,
 
 /** @}*/
 
-#endif  // CORE_DNP3S_DNP3_H_
+#endif  // RUNTIME_CORE_DNP3S_DNP3_H_
