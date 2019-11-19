@@ -260,8 +260,8 @@ void startServer(uint16_t port, volatile bool& run_server, process_message_fn pr
             .user_data=user_data
         };
         spdlog::trace("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
-        int ret = pthread_create(&thread, NULL, handleConnections, args);
-        if (ret == 0) {
+        int success = pthread_create(&thread, NULL, handleConnections, args);
+        if (success == 0) {
             pthread_detach(thread);
         } else {
             delete args;

@@ -98,7 +98,7 @@ SCENARIO("indexed_strategy", "")
         {
             int_val = 0;
             uint8_t buffer[2] = { 0, 1 };
-            REQUIRE(strategy.WriteHoldingRegister(0, buffer) == 0);
+            REQUIRE(strategy.WriteHoldingRegisters(0, 1, buffer) == 0);
             strategy.Exchange();
             REQUIRE(int_val == 1);
         }
@@ -139,7 +139,7 @@ SCENARIO("indexed_strategy", "")
         {
             int_val = 0;
             uint8_t buffer[2] = { 0, 1 };
-            REQUIRE(strategy.WriteHoldingRegister(1024, buffer) == 0);
+            REQUIRE(strategy.WriteHoldingRegisters(1024, 1, buffer) == 0);
             strategy.Exchange();
             REQUIRE(int_val == 1);
         }

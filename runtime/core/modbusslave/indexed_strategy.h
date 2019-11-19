@@ -34,6 +34,12 @@ struct MappedBool {
   MappedBool() : cached_value(0), value(nullptr) {}
   IEC_BOOL cached_value;
   IEC_BOOL *value;
+
+  inline void update_cache() {
+    if (this->value) {
+      this->cached_value = *this->value;
+    }
+  }
 };
 
 /// Defines a write that has been submitted via Modbus
@@ -42,6 +48,12 @@ struct PendingBool {
   PendingBool() : has_pending(false), value(0) {}
   bool has_pending;
   IEC_BOOL value;
+
+  /// Set the value and mark it as updated.
+  inline void set(IEC_BOOL val) {
+    this->has_pending = true;
+    this->value = val;
+  }
 };
 
 /// Defines the mapping between a located value
@@ -51,6 +63,19 @@ struct MappedValue {
   MappedValue() : cached_value(0), value(nullptr) {}
   T cached_value;
   T* value;
+
+  /// Initialize the glue link and the cached value.
+  /// @param val The glue variable to initialize from.
+  inline void init(T* val) {
+    this->value = val;
+    this->cached_value = *val;
+  }
+
+  inline void update_cache() {
+    if (this->value) {
+      this->cached_value = *this->value;
+    }
+  }
 };
 
 /// Defines a write that has been submitted via Modbus
@@ -60,6 +85,12 @@ struct PendingValue {
   PendingValue() : has_pending(false), value(0) {}
   bool has_pending;
   T value;
+
+  /// Set the value and mark it as updated.
+  inline void set(T val) {
+    this->has_pending = true;
+    this->value = val;
+  }
 };
 
 typedef std::uint8_t modbus_errno;
@@ -107,13 +138,6 @@ class IndexedStrategy {
     modbus_errno ReadDiscreteInputs(std::uint16_t coil_start_index,
                                     std::uint16_t num_coils,
                                     std::uint8_t* values);
-
-    /// Write the values from a single holding resister into the cache.
-    /// @param hr_start_index The index of the first holding register that
-    /// was written.
-    /// @param value An array of at least 2 bytes to read from.
-    modbus_errno WriteHoldingRegister(std::uint16_t hr_start_index,
-                                      std::uint8_t* values);
    
     /// Write the values from holding resisters into the cache.
     /// @param hr_start_index Index of the first holding register that
@@ -141,6 +165,14 @@ class IndexedStrategy {
     modbus_errno ReadInputRegisters(std::uint16_t hr_start_index,
                                     std::uint16_t num_registers,
                                     std::uint8_t* value);
+
+  private:
+    /// Read the boolean values from the mapped structure into the values.
+    modbus_errno ReadBools(const std::vector<MappedBool>& buffer,
+                           std::uint16_t coil_start_index,
+                           std::uint16_t num_values,
+                           std::uint8_t* values);
+
   private:
     std::vector<MappedBool> coil_read_buffer;
     std::vector<PendingBool> coil_write_buffer;
@@ -162,6 +194,7 @@ class IndexedStrategy {
 
     // Protects access to the cached values in this class.
     std::mutex buffer_mutex;
+    std::mutex* glue_mutex;
 };
 
 /** @}*/

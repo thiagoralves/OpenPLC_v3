@@ -1,4 +1,5 @@
 // Copyright 2015 Thiago Alves
+// Copyright 2019 Smarter Grid Solutions
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,8 +23,8 @@
  */
 
 inline std::int16_t mb_to_word(std::uint8_t byte1, std::uint8_t byte2) {
-	std::int16_t returnValue = (std::int16_t)(byte1 << 8) | (std::int16_t)byte2;
-	return returnValue;
+    std::int16_t returnValue = (std::int16_t)(byte1 << 8) | (std::int16_t)byte2;
+    return returnValue;
 }
 
 inline std::uint8_t mb_low_byte(std::uint16_t w) {

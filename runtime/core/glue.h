@@ -192,6 +192,15 @@ class GlueVariablesBinding {
     /// @return the variable or null if there is no variable that matches all
     /// criteria in the specification.
     const GlueVariable* find(const std::string& location) const;
+
+    /// @brief Find the maximum most significant index for glued variables
+    /// that match the specified type and direction.
+    /// @param type the type to match on.
+    /// @param dir the direction to match on.
+    /// @return The maximum MSI or less than 0 if there are none with the
+    /// specified type.
+    std::int32_t find_max_msi(IecGlueValueType type,
+                              IecLocationDirection dir) const;
 };
 
 #endif // CORE_GLUE_H
