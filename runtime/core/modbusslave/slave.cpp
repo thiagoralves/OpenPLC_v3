@@ -31,7 +31,7 @@
 #include "slave.h"
 #include "indexed_strategy.h"
 #include "mb_util.h"
-#include  "../ladder.h"
+#include "../ladder.h"
 #include "../glue.h"
 #include "../ini_util.h"
 
