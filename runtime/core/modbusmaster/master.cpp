@@ -75,14 +75,17 @@ void updateBuffersOut_MB()
     pthread_mutex_unlock(&ioLock);
 }
 
+/// Defines the protocol that is selected by ser configuration.
 enum MasterProtocol {
     ProtocolInvalid,
     ProtocolTcp,
     ProtocolRtu,
 };
 
+/// How big of a buffer do we reserve for string items.
 const uint8_t MASTER_ITEM_SIZE(100);
 
+/// Define the mapping for modbus addresses located variables.
 struct ModbusAddress
 {
     uint16_t start_address;
@@ -106,8 +109,11 @@ struct Master {
     uint8_t rtu_parity;
     uint16_t rtu_data_bit;
     uint16_t rtu_stop_bit;  
+    /// The context for communcating with the device.
     modbus_t* mb_ctx;
+    /// Device specific timeout.
     uint16_t timeout;
+    /// Is the device currently connected.
     bool is_connected;
 
     struct ModbusAddress discrete_inputs;
@@ -124,6 +130,8 @@ struct Master {
         is_connected(false)
     {}
 
+    /// Create the context for the device according to the configuration
+    /// parameters provided by the user.
     void create() {
         if (protocol == ProtocolTcp) {
             mb_ctx = modbus_new_tcp(ip_address, ip_port);
@@ -139,11 +147,15 @@ struct Master {
     }
 };
 
+/// Configuration structure that is passed into the ini parsing library.
+/// This structure is populated as we process configuration items.
 struct ModbusMasterConfig {
 
     chrono::milliseconds polling_period;
     vector<Master>* masters;
 
+    /// Get (or create) the configuration items at the specified index.
+    /// This ensure that this index is addessable.
     Master* config_item(uint8_t index) {
         size_t required_size = max(masters->size(), static_cast<size_t>(index + 1));
         if (masters->size() < required_size) {
@@ -153,6 +165,8 @@ struct ModbusMasterConfig {
     }
 };
 
+/// Callback function for the ini parser. This function is called for every
+/// configuration item.
 int modbus_master_cfg_handler(void* user_data, const char* section,
                             const char* name, const char* value) {
     if (strcmp("modbusmaster", section) != 0) {
@@ -216,12 +230,15 @@ int modbus_master_cfg_handler(void* user_data, const char* section,
     return 0;
 }
 
+/// Arguments provided to the master polling thread.
 struct MasterArgs {
     volatile bool* run;
     chrono::milliseconds polling_period;
     vector<Master>* masters;
 };
 
+/// Polls modbus slaves. This is the main function created by this modbus
+/// master.
 void* modbus_master_poll_slaves(void* args) {
     auto master_args = reinterpret_cast<MasterArgs*>(args);
 
@@ -433,6 +450,8 @@ void* modbus_master_poll_slaves(void* args) {
     return 0;
 }
 
+/// Run the modbus master. This function does not return until
+/// this service is terminated.
 void modbus_master_run(oplc::config_stream& cfg_stream,
                        const char* cfg_overrides,
                        const GlueVariablesBinding& bindings,
@@ -476,7 +495,9 @@ void modbus_master_run(oplc::config_stream& cfg_stream,
         this_thread::sleep_for(chrono::milliseconds(500));
     }
 
-    // Terminate the unified polling thread.
+    // Terminate the unified polling thread. It is important to wait
+    // here because we passed information to the modbus thread that is
+    // on this stack.
     pthread_join(thread, nullptr);
 }
 
