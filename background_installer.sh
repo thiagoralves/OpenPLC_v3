@@ -31,15 +31,12 @@ cp webserver/openplc.db ./etc/
 function linux_install_deps {
     $1 apt-get update
     $1 apt-get install -y build-essential pkg-config bison flex autoconf \
-                          automake libtool make git python2.7 python-pip  \
+                          automake libtool make git python3 python3-pip   \
                           sqlite3 cmake git
 }
 
 function install_py_deps {
-    $1 pip install flask
-    $1 pip install flask-login
-    $1 pip install pyserial
-    $1 pip install pymodbus
+    $1 pip3 install -r requirements.txt
 }
 
 function OPLC_background_service {
@@ -87,14 +84,11 @@ if [ "$1" == "win" ]; then
     apt-cyg update
     apt-cyg install lynx
     rm -f /bin/wget.exe
-    apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
-    apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3
+    apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python3 python3-pip sqlite3
+    apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python3 python3-pip sqlite3
     lynx -source https://bootstrap.pypa.io/get-pip.py > get-pip.py
-    python get-pip.py
-    pip install flask
-    pip install flask-login
-    pip install pyserial
-    pip install pymodbus
+    python3 get-pip.py
+    pip install -r requirements.txt
 
     rm apt-cyg
     rm get-pip.py

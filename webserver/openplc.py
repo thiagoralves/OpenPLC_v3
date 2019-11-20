@@ -23,7 +23,7 @@ import errno
 import time
 import os
 from threading import Thread
-from Queue import Queue, Empty
+from queue import Queue, Empty
 
 self_path = os.path.dirname(__file__)
 
@@ -115,7 +115,7 @@ class runtime:
                     time.sleep(1)  # https://www.reddit.com/r/learnpython/comments/776r96/defunct_python_process_when_using_subprocesspopen/
 
             except socket.error as serr:
-                print("Failed to stop the runtime. Error: " + str(serr))
+                print(("Failed to stop the runtime. Error: " + str(serr)))
     
     def compile_program(self, st_file):
         if (self.status() == "Running"):
@@ -156,7 +156,7 @@ class runtime:
                 s.close()
                 self.runtime_status = "Running"
             except socket.error as serr:
-                print("OpenPLC Runtime is not running. Error: " + str(serr))
+                print(("OpenPLC Runtime is not running. Error: " + str(serr)))
                 self.runtime_status = "Stopped"
         
         return self.runtime_status
