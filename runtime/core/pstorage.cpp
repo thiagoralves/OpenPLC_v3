@@ -27,6 +27,7 @@
 #include <chrono>
 #include <istream>
 #include <fstream>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <type_traits>
@@ -159,9 +160,9 @@ size_t pstorage_copy_glue(const GlueVariablesBinding& bindings, char* buffer) {
 /// This is populated with values from the config file.
 struct PstorageConfig {
     PstorageConfig() :
-        poll_interval(std::chrono::seconds(10))
+        poll_interval(chrono::seconds(10))
     {}
-    std::chrono::seconds poll_interval;
+    chrono::seconds poll_interval;
 };
 
 int pstorage_cfg_handler(void* user_data, const char* section,
@@ -175,7 +176,7 @@ int pstorage_cfg_handler(void* user_data, const char* section,
     if (strcmp(name, "poll_interval") == 0) {
         // We do not allow a poll period of less than 1 second as that
         // might cause lock contention problems.
-        config->poll_interval = std::chrono::seconds(max(1, atoi(value)));
+        config->poll_interval = chrono::seconds(max(1, atoi(value)));
     } else if (strcmp(name, "enabled") == 0) {
         // Nothing to do here - we already know this is enabled
     } else {
@@ -190,7 +191,7 @@ int8_t pstorage_run(oplc::config_stream& cfg_stream,
                     const char* cfg_overrides,
                     const GlueVariablesBinding& bindings,
                     volatile bool& run,
-                    function<std::ostream*(void)> stream_fn) {
+                    function<ostream*(void)> stream_fn) {
     PstorageConfig config;
     ini_parse_stream(oplc::istream_fgets, cfg_stream.get(),
                      pstorage_cfg_handler, &config);
@@ -200,8 +201,9 @@ int8_t pstorage_run(oplc::config_stream& cfg_stream,
     cfg_stream.reset(nullptr);
 
     if (strlen(cfg_overrides) > 0) {
-        config.poll_interval = std::chrono::seconds(max(1, atoi(cfg_overrides)));
+        config.poll_interval = chrono::seconds(max(1, atoi(cfg_overrides)));
     }
+
 
     const char endianness_header[2] = { IS_BIG_ENDIAN, '\n'};
 

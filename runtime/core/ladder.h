@@ -5,7 +5,7 @@
 // You may obtain a copy of the License at
 //
 // http ://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@
  *  @{
  */
 
-//Internal buffers for I/O and memory. These buffers are defined in the
-//auto-generated glueVars.cpp file
+// Internal buffers for I/O and memory. These buffers are defined in the
+// auto-generated glueVars.cpp file
 #define BUFFER_SIZE         1024
 /*********************/
 /*  IEC Types defs   */
@@ -53,30 +53,30 @@ typedef uint64_t   IEC_LWORD;
 typedef float    IEC_REAL;
 typedef double   IEC_LREAL;
 
-//Booleans
+// Booleans
 extern IEC_BOOL *bool_input[BUFFER_SIZE][8];
 extern IEC_BOOL *bool_output[BUFFER_SIZE][8];
 
-//Bytes
+// Bytes
 extern IEC_BYTE *byte_input[BUFFER_SIZE];
 extern IEC_BYTE *byte_output[BUFFER_SIZE];
 
-//Analog I/O
+// Analog I/O
 extern IEC_UINT *int_input[BUFFER_SIZE];
 extern IEC_UINT *int_output[BUFFER_SIZE];
 
-//Memory
+// Memory
 extern IEC_UINT *int_memory[BUFFER_SIZE];
 extern IEC_DINT *dint_memory[BUFFER_SIZE];
 extern IEC_LINT *lint_memory[BUFFER_SIZE];
 
-//Special Functions
+// Special Functions
 extern IEC_LINT *special_functions[BUFFER_SIZE];
 
-//lock for the buffer
+// lock for the buffer
 extern std::mutex bufferLock;
 
-//Common task timer
+// Common task timer
 extern unsigned long long common_ticktime__;
 
 struct GlueVariable;
@@ -88,25 +88,25 @@ extern const char OPLCGLUE_MD5_DIGEST[];
 
 
 //----------------------------------------------------------------------
-//FUNCTION PROTOTYPES
+// FUNCTION PROTOTYPES
 //----------------------------------------------------------------------
 
-//MatIEC Compiler
+// MatIEC Compiler
 extern "C" {
     void config_run__(unsigned long tick);  
     void config_init__(void);
 }
-//glueVars.cpp
+// glueVars.cpp
 void glueVars();
 void updateTime();
 
-//hardware_layer.cpp
+// hardware_layer.cpp
 void initializeHardware();
 void finalizeHardware();
 void updateBuffersIn();
 void updateBuffersOut();
 
-//custom_layer.h
+// custom_layer.h
 void initCustomLayer();
 void updateCustomIn();
 void updateCustomOut();
@@ -115,31 +115,31 @@ extern int ignored_bool_outputs[];
 extern int ignored_int_inputs[];
 extern int ignored_int_outputs[];
 
-//main.cpp
+// main.cpp
 void sleep_until(struct timespec *ts, int delay);
 bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber);
 extern uint8_t run_openplc;
 void handleSpecialFunctions();
 
-//server.cpp
+// server.cpp
 typedef int (*process_message_fn)(unsigned char *buffer, int buffer_size, void* user_data);
 void startServer(uint16_t port, volatile bool& run_server, process_message_fn process_message, void* user_data);
 int getSO_ERROR(int fd);
 void closeSocket(int fd);
 bool SetSocketBlockingEnabled(int fd, bool blocking);
 
-//interactive_server.cpp
-void initialize_logging(int argc,char **argv);
+// interactive_server.cpp
+void initialize_logging(int argc, char **argv);
 extern bool run_enip;
 extern time_t start_time;
 
-//enip.cpp
+// enip.cpp
 int processEnipMessage(unsigned char *buffer, int buffer_size, void* user_data);
 
-//pccc.cpp ADDED Ulmer
+// pccc.cpp ADDED Ulmer
 uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size);
 
-//modbus_master.cpp
+// modbus_master.cpp
 void initializeMB();
 void *querySlaveDevices(void *arg);
 void updateBuffersIn_MB();

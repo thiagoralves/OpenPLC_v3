@@ -140,7 +140,7 @@ void bootstrap() {
     // Lock memory to ensure no swapping is done.
     spdlog::info("Locking main thread memory");
     if (mlockall(MCL_FUTURE|MCL_CURRENT)) {
-        spdlog::warn("WARNING: Failed to lock memory");
+        spdlog::warn("Failed to lock memory");
     }
 #endif
 

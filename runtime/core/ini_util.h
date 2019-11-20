@@ -67,11 +67,12 @@ static char* istream_fgets(char* str, int num, void* stream) {
 
 typedef std::unique_ptr<std::istream, std::function<void(std::istream*)>> config_stream;
 
+/// Open the standard configuration file as an closable stream.
+/// @return A stream for the configuration file.
 inline config_stream open_config() {
     return config_stream(
             new std::ifstream("../etc/config.ini"),
-            [](std::istream* s)
-                {
+            [] (std::istream* s) {
                     reinterpret_cast<std::ifstream*>(s)->close();
                     delete s;
                 }

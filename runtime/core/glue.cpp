@@ -44,13 +44,13 @@ const GlueVariable* GlueVariablesBinding::find(IecLocationDirection dir,
     return nullptr;
 }
 
-const GlueVariable* GlueVariablesBinding::find(const std::string& loc) const {
-    if (loc.length() < 4 || loc[0] != '%') {
+const GlueVariable* GlueVariablesBinding::find(const string& location) const {
+    if (location.length() < 4 || location[0] != '%') {
         return nullptr;
     }
 
     IecLocationDirection direction;
-    switch (loc[1]) {
+    switch (location[1]) {
         case 'I':
             direction = IECLDT_IN;
             break;
@@ -65,7 +65,7 @@ const GlueVariable* GlueVariablesBinding::find(const std::string& loc) const {
     }
 
     IecLocationSize size;
-    switch (loc[2]) {
+    switch (location[2]) {
         case 'X':
             size = IECLST_BIT;
             break;
@@ -86,11 +86,11 @@ const GlueVariable* GlueVariablesBinding::find(const std::string& loc) const {
     }
 
     char* end_msi;
-    uint16_t msi = strtol(loc.c_str() + 3, &end_msi, 10);
+    uint16_t msi = strtol(location.c_str() + 3, &end_msi, 10);
 
     // Do we have more characters left in the string to read for lsi?
-    size_t start_lsi = end_msi + 1 - loc.c_str();
-    if (start_lsi >= loc.length()) {
+    size_t start_lsi = end_msi + 1 - location.c_str();
+    if (start_lsi >= location.length()) {
         find(direction, size, msi, 0);
     }
 
