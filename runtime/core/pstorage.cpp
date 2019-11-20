@@ -204,7 +204,6 @@ int8_t pstorage_run(oplc::config_stream& cfg_stream,
         config.poll_interval = chrono::seconds(max(1, atoi(cfg_overrides)));
     }
 
-
     const char endianness_header[2] = { IS_BIG_ENDIAN, '\n'};
 
     // This isn't ideal because we really only need enough space for

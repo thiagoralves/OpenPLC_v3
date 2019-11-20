@@ -59,11 +59,7 @@ ServiceDefinition::ServiceDefinition(const char* name,
     running(false),
     thread(0),
     config_buffer()
-{
-    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE,
-                                  oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
-    this->finalize_fn(bindings);
-}
+{}
 
 void ServiceDefinition::initialize() {
     GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE,
