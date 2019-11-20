@@ -672,7 +672,7 @@ def reload_program():
                 return_str += "<label for='prog_descr'><b>Description</b></label><textarea type='text' rows='10' style='resize:vertical' id='prog_descr' name='program_descr' disabled>" + str(row[2]) + "</textarea>"
                 return_str += "<label for='prog_file'><b>File</b></label><input type='text' id='prog_file' name='program_file' value='" + str(row[3]) + "' disabled>"
                 return_str += "<label for='prog_date'><b>Date Uploaded</b></label><input type='text' id='prog_date' name='program_date' value='" + time.strftime('%b %d, %Y - %I:%M%p', time.localtime(row[4])) + "' disabled>"
-                return_str += "<br><br><center><a href='compile-program?file=" + str(row[3]) + "' class='button' style='width: 310px; height: 53px; margin: 0px 20px 0px 20px;'><b>Reload program</b></a><a href='remove-program?id=" + str(prog_id) + "' class='button' style='width: 310px; height: 53px; margin: 0px 20px 0px 20px;'><b>Remove program</b></a></center>"
+                return_str += "<br><br><center><a href='compile-program?file=" + str(row[3]) + "' class='button' style='width: 200px; height: 53px; margin: 0px 20px 0px 20px;'><b>Launch program</b></a><a href='update-program?id=" + str(prog_id) + "' class='button' style='width: 200px; height: 53px; margin: 0px 20px 0px 20px;'><b>Update program</b></a><a href='remove-program?id=" + str(prog_id) + "' class='button' style='width: 200px; height: 53px; margin: 0px 20px 0px 20px;'><b>Remove program</b></a></center>"
                 return_str += """
                 </div>
             </div>
@@ -689,6 +689,93 @@ def reload_program():
         return return_str
         
         
+@app.route('/update-program', methods=['GET', 'POST'])
+def update_program():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        prog_id = flask.request.args.get('id')
+        
+        return_str = pages.w3_style + pages.style + draw_top_div()
+        return_str += """
+            <div class='main'>
+                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#3D3D3D'>
+                    <br>
+                    <br>
+                    <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
+                    <a href="programs" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Programs</p></a>
+                    <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
+                    <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
+                    <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
+                    <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
+                    <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
+                    <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
+                    <br>
+                    <br>"""
+        return_str += draw_status()
+        return_str += """
+        </div>
+            <div style="margin-left:320px; margin-right:70px">
+                <div style="w3-container">
+                    <br>
+                    <h2>Upload Program</h2>
+                    <form   id    = "uploadForm"
+                        enctype   =  "multipart/form-data"
+                        action    =  "update-program-action"
+                        method    =  "post">
+                        <br>
+                        <input type="file" name="file" id="file" class="inputfile" accept=".st">
+                        <input type="submit" value="Upload Program" name="submit">
+                        <input type='hidden' name='prog_id' id='prog_id' value='""" + prog_id + """'/>
+                        <input type='hidden' value='""" + str(int(time.time())) + """' id='epoch_time' name='epoch_time'/>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>"""
+        
+        
+        return return_str
+
+
+@app.route('/update-program-action', methods=['GET', 'POST'])
+def update_program_action():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        if ('file' not in flask.request.files):
+            return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
+        prog_file = flask.request.files['file']
+        if (prog_file.filename == ''):
+            return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
+        prog_id = flask.request.form['prog_id']
+        epoch_time = flask.request.form['epoch_time']
+        
+        database = "openplc.db"
+        conn = create_connection(database)
+        if (conn != None):
+            try:
+                cur = conn.cursor()
+                cur.execute("SELECT * FROM Programs WHERE Prog_ID = ?", (int(prog_id),))
+                row = cur.fetchone()
+                cur.close()
+                
+                filename = str(row[3])
+                prog_file.save(os.path.join('st_files', filename))
+                
+                #Redirect back to the compiling page
+                return '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/compile-program?file=' + filename + '"></head></html>'
+                
+            except Error as e:
+                print("error connecting to the database" + str(e))
+                return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+        else:
+            return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+
+
 @app.route('/remove-program', methods=['GET', 'POST'])
 def remove_program():
     if (flask_login.current_user.is_authenticated == False):
