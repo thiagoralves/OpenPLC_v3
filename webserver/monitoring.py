@@ -39,9 +39,9 @@ def parse_st(st_file):
                 debug_vars.append(debug_data)
     
     for debugs in debug_vars:
-        print('Name: ' + debugs.name)
-        print('Location: ' + debugs.location)
-        print('Type: ' + debugs.type)
+        print(('Name: ' + debugs.name))
+        print(('Location: ' + debugs.location))
+        print(('Type: ' + debugs.type))
         print('')
 
 
