@@ -5,20 +5,21 @@
 // You may obtain a copy of the License at
 //
 // http ://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_GLUE_H
-#define CORE_GLUE_H
+#ifndef RUNTIME_CORE_GLUE_H_
+#define RUNTIME_CORE_GLUE_H_
 
 #include <cstdint>
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <string>
 
 #include "iec_types.h"
 
@@ -84,7 +85,7 @@ enum IecGlueValueType {
     /// and have a way to indicate a value that is not assigned a type.
     IECVT_UNASSIGNED
 };
-#endif // OPLC_IEC_GLUE_VALUE_TYPE
+#endif  // OPLC_IEC_GLUE_VALUE_TYPE
 
 #ifndef OPLC_GLUE_BOOL_GROUP
 #define OPLC_GLUE_BOOL_GROUP
@@ -102,14 +103,14 @@ struct GlueBoolGroup {
     /// value at the index points to nullptr.
     IEC_BOOL* values[8];
 };
-#endif // OPLC_GLUE_BOOL_GROUP
+#endif  // OPLC_GLUE_BOOL_GROUP
 
 #ifndef OPLC_GLUE_VARIABLE
 #define OPLC_GLUE_VARIABLE
 
 
 /// @brief Defines the mapping for a glued variable. This defines a simple,
-/// space efficient lookup table. It has all of the mapping information that 
+/// space efficient lookup table. It has all of the mapping information that
 /// you need to find the variable based on the location name (e.g. %IB1.1).
 /// While this is space efficient, this should be searched once to construct a
 /// fast lookup into this table used for the remainder of the application
@@ -142,8 +143,7 @@ struct GlueVariable {
 /// allows a straightforward way to inject definitions into tests, so it is
 /// preferred to use this structure rather than globals.
 class GlueVariablesBinding {
-
-  public:
+ public:
     /// Initialize a new instance of the glue bindings.
     /// @param buffer_lock A lock for accessing the value part of bindings
     /// @param size The number of bindings we have
@@ -159,11 +159,11 @@ class GlueVariablesBinding {
         checksum(checksum)
     {}
 
-  private:
+ private:
     // Don't allow copying of the bindings.
     GlueVariablesBinding(const GlueVariablesBinding& copy);
 
-  public:
+ public:
     /// @brief Mutex for the glue variables
     std::mutex* buffer_lock;
 
@@ -189,9 +189,10 @@ class GlueVariablesBinding {
 
     /// @brief Find a glue variable based on the location of the variable, for
     /// example %IX0.1
+    /// @param loc The location name to find.
     /// @return the variable or null if there is no variable that matches all
     /// criteria in the specification.
-    const GlueVariable* find(const std::string& location) const;
+    const GlueVariable* find(const std::string& loc) const;
 
     /// @brief Find the maximum most significant index for glued variables
     /// that match the specified type and direction.
@@ -203,6 +204,6 @@ class GlueVariablesBinding {
                               IecLocationDirection dir) const;
 };
 
-#endif // CORE_GLUE_H
+#endif  // RUNTIME_CORE_GLUE_H_
 
 /** @}*/

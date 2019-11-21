@@ -121,7 +121,6 @@ uint32_t Dnp3Publisher::ExchangeGlue() {
             } else {
                 builder.Update(BinaryOutputStatus(*(bool_group->values[0])), point_index_number);
             }
-            
         } else if (group == GROUP_ANALOG_INPUT || group == GROUP_ANALOG_OUTPUT_STATUS) {
             double double_val = cast_variable<double>(var);
             if (group == GROUP_ANALOG_INPUT) {
@@ -129,7 +128,6 @@ uint32_t Dnp3Publisher::ExchangeGlue() {
             } else {
                 builder.Update(AnalogOutputStatus(double_val), point_index_number);
             }
-            
         } else if (group == GROUP_COUNTER || group == GROUP_FROZEN_COUNTER) {
             uint32_t int_val = cast_variable<uint32_t>(var);
             if (group == GROUP_COUNTER) {

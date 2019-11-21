@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_SERVICE_SERVICE_REGISTRY_H_
-#define CORE_SERVICE_SERVICE_REGISTRY_H_
+#ifndef RUNTIME_CORE_SERVICE_SERVICE_REGISTRY_H_
+#define RUNTIME_CORE_SERVICE_SERVICE_REGISTRY_H_
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -37,4 +37,4 @@ void services_finalize();
 
 /** @}*/
 
-#endif  // CORE_SERVICE_SERVICE_DEFINITION_H_
+#endif  // RUNTIME_CORE_SERVICE_SERVICE_DEFINITION_H_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#include <algorithm>
 #include <spdlog/spdlog.h>
+#include <algorithm>
 
 #include "service_definition.h"
 #include "../glue.h"
@@ -62,12 +62,14 @@ ServiceDefinition::ServiceDefinition(const char* name,
 {}
 
 void ServiceDefinition::initialize() {
-    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE, oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
+    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE,
+                                  oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
     this->init_fn(bindings);
 }
 
 void ServiceDefinition::finalize() {
-    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE, oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
+    GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE,
+                                  oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
     this->finalize_fn(bindings);
 }
 
@@ -81,12 +83,14 @@ void ServiceDefinition::start(const char* config) {
 
     size_t config_len = strlen(config);
     if (config_len > MAX_INTERACTIVE_CONFIG_SIZE - 1) {
-        spdlog::warn("{} cannot be started because config is longer than {}.", this->name, MAX_INTERACTIVE_CONFIG_SIZE);
+        spdlog::warn("{} cannot be started because config is longer than {}.",
+                     this->name, MAX_INTERACTIVE_CONFIG_SIZE);
         return;
     }
 
     // Copy the configuration information into our configuration buffer
-    strncpy(this->config_buffer, config, min(config_len, MAX_INTERACTIVE_CONFIG_SIZE));
+    strncpy(this->config_buffer, config,
+            min(config_len, MAX_INTERACTIVE_CONFIG_SIZE));
 
     spdlog::info("Starting service {}", this->name);
 
@@ -117,4 +121,6 @@ void* ServiceDefinition::run_service(void* user_data) {
     service->start_fn(bindings, service->running, service->config_buffer);
 
     service->running = false;
+
+    return nullptr;
 }

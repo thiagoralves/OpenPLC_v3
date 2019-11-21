@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_PSTORAGE_H_
-#define CORE_PSTORAGE_H_
+#ifndef RUNTIME_CORE_PSTORAGE_H_
+#define RUNTIME_CORE_PSTORAGE_H_
 
 #include <cstdint>
-#include <chrono>
-#include <functional>
-#include <memory>
+#include "ini_util.h"
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -77,7 +75,7 @@ std::int8_t pstorage_read(std::istream& input_stream,
 /// @param run A flag that indicates if we should terminate the process.
 /// @return Zero on success, otherwise non-zero. This function may fail
 /// part way through. Failure does not mean no variables have been set.
-std::int8_t pstorage_run(std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+std::int8_t pstorage_run(oplc::config_stream& cfg_stream,
                          const char* custom_config,
                          const GlueVariablesBinding& bindings,
                          volatile bool& run,
@@ -85,4 +83,4 @@ std::int8_t pstorage_run(std::unique_ptr<std::istream, std::function<void(std::i
 
 /** @}*/
 
-#endif  // CORE_PSTORAGE_H_
+#endif  // RUNTIME_CORE_PSTORAGE_H_

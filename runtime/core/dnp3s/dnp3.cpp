@@ -35,6 +35,7 @@
 #include <tuple>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include <asiodnp3/DNP3Manager.h>
 #include <asiodnp3/PrintingSOEHandler.h>
@@ -73,18 +74,15 @@ using namespace asiodnp3;
 /// Implements the ILogHandler interface from OpenDNP3 to forward log messages
 /// from OpenDNP3 to spdlog. This allows those log messages to be accessed
 /// via the log message API.
-class Dnp3ToSpdLogger final : public openpal::ILogHandler, private openpal::Uncopyable
-{
-public:
-
+class Dnp3ToSpdLogger final : public openpal::ILogHandler, private openpal::Uncopyable {
+ public:
     virtual void Log(const openpal::LogEntry& entry) override {
         spdlog::info("{}", entry.message);
     }
 
-    static std::shared_ptr<openpal::ILogHandler>Create()
-    {
+    static std::shared_ptr<openpal::ILogHandler>Create() {
         return std::make_shared<Dnp3ToSpdLogger>();
-    };
+    }
 
     Dnp3ToSpdLogger() {}
 };
@@ -199,7 +197,7 @@ void bind_variables(const vector<string>& binding_defs,
 
         const GlueVariable* var = binding.find(name);
         if (!var) {
-            spdlog::error("Unable to bind DNP3 location {} because it is not defined in the application", name); 
+            spdlog::error("Unable to bind DNP3 location {} because it is not defined in the application", name);
             continue;
         }
 
@@ -316,7 +314,7 @@ int dnp3s_cfg_handler(void* user_data, const char* section,
             config->link.KeepAliveTimeout = openpal::TimeDuration::Seconds(atoi(value));
         }
     } else if (strcmp(name, "enable_unsolicited") == 0) {
-        config->outstation.params.allowUnsolicited = ini_atob(value);
+        config->outstation.params.allowUnsolicited = oplc::ini_atob(value);
     } else if (strcmp(name, "select_timeout") == 0) {
         config->outstation.params.selectTimeout = openpal::TimeDuration::Seconds(atoi(value));
     } else if (strcmp(name, "max_controls_per_request") == 0) {
@@ -358,7 +356,8 @@ OutstationStackConfig dnp3_create_config(istream& cfg_stream,
     // everything into a map, then get the database size, and finally
     // process the remaining items
     Dnp3Config dnp3_config;
-    ini_parse_stream(istream_fgets, &cfg_stream, dnp3s_cfg_handler, &dnp3_config);
+    ini_parse_stream(oplc::istream_fgets, &cfg_stream,
+                     dnp3s_cfg_handler, &dnp3_config);
 
     // We need to know the size of the DNP3 database (the size of each of the
     // groups) before we can create the configuration. We can figure that out
@@ -368,15 +367,14 @@ OutstationStackConfig dnp3_create_config(istream& cfg_stream,
                    analog_commands, measurements);
 
     auto config = asiodnp3::OutstationStackConfig(DatabaseSizes(
-        measurements.group_size(1), // Binary
-        measurements.group_size(3), // Double binary
-        measurements.group_size(30), // Analog
-        measurements.group_size(20), // Counter
-        measurements.group_size(21), // Frozen counter
-        measurements.group_size(10), // Binary output status
-        measurements.group_size(40), // Analog output status
-        measurements.group_size(50) // Time and interval
-    ));
+        measurements.group_size(1),  // Binary
+        measurements.group_size(3),  // Double binary
+        measurements.group_size(30),  // Analog
+        measurements.group_size(20),  // Counter
+        measurements.group_size(21),  // Frozen counter
+        measurements.group_size(10),  // Binary output status
+        measurements.group_size(40),  // Analog output status
+        measurements.group_size(50)));  // Time and interval
 
     config.outstation = dnp3_config.outstation;
     config.link = dnp3_config.link;

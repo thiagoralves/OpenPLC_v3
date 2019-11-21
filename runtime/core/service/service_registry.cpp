@@ -22,6 +22,8 @@
 #include "../modbusslave/slave.h"
 #include "../dnp3s/dnp3.h"
 
+using namespace std;
+
 ServiceInitFunction pstorage_init_fn(pstorage_service_init);
 ServiceStartFunction pstorage_start_service_fn(pstorage_service_run);
 ServiceStartFunction dnp3s_start_service_fn(dnp3s_service_run);
@@ -38,27 +40,27 @@ ServiceDefinition* services[] = {
 };
 
 ServiceDefinition* services_find(const char* name) {
-    ServiceDefinition** item = std::find_if(std::begin(services), std::end(services), [name] (ServiceDefinition* def) {
+    ServiceDefinition** item = find_if(begin(services), end(services), [name] (ServiceDefinition* def) {
         return strcmp(def->id(), name) == 0;
     });
 
-    return (item != std::end(services)) ? *item : nullptr;
+    return (item != end(services)) ? *item : nullptr;
 }
 
 void services_stop() {
-    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def){
+    for_each(begin(services), end(services), [] (ServiceDefinition* def) {
         def->stop();
     });
 }
 
 void services_init() {
-    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def){
+    for_each(begin(services), end(services), [] (ServiceDefinition* def) {
         def->initialize();
     });
 }
 
 void services_finalize() {
-    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def){
+    for_each(begin(services), end(services), [] (ServiceDefinition* def) {
         def->finalize();
     });
 }

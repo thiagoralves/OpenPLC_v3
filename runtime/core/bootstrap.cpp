@@ -41,10 +41,9 @@ struct PlcConfig {
 /// Handle reading values from the configuration file
 int config_handler(void* user_data, const char* section,
                    const char* name, const char* value) {
-
     auto config = reinterpret_cast<PlcConfig*>(user_data);
 
-    if (ini_matches("logging", "level", section, name)) {
+    if (oplc::ini_matches("logging", "level", section, name)) {
         if (strcmp(value, "trace") == 0) {
             spdlog::set_level(spdlog::level::trace);
         } else if (strcmp(value, "debug") == 0) {
@@ -56,11 +55,15 @@ int config_handler(void* user_data, const char* section,
         } else if (strcmp(value, "error") == 0) {
             spdlog::set_level(spdlog::level::err);
         }
-    } else if (strcmp("enabled", name) == 0 && ini_atob(value) && services_find(section)) {
+    } else if (strcmp("enabled", name) == 0
+               && oplc::ini_atob(value)
+               && services_find(section)) {
         // This is the name of service that we can enable, so add it
         // to the list of services that we will enable.
         config->services.push_back(section);
     }
+
+    return 0;
 }
 
 /// Initialize the PLC runtime
@@ -130,16 +133,14 @@ void bootstrap() {
     struct sched_param sp;
     sp.sched_priority = 30;
     spdlog::info("Setting main thread priority to RT");
-    if(pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
-    {
-        spdlog::warn("WARNING: Failed to set main thread to real-time priority");
+    if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp)) {
+        spdlog::warn("Failed to set main thread to real-time priority");
     }
 
     // Lock memory to ensure no swapping is done.
     spdlog::info("Locking main thread memory");
-    if(mlockall(MCL_FUTURE|MCL_CURRENT))
-    {
-        spdlog::warn("WARNING: Failed to lock memory");
+    if (mlockall(MCL_FUTURE|MCL_CURRENT)) {
+        spdlog::warn("Failed to lock memory");
     }
 #endif
 
@@ -150,8 +151,7 @@ void bootstrap() {
     // Our next step here is to start the main loop, so start any
     // services that we want now.
 
-    for (auto it = config.services.begin(); it != config.services.end(); ++it)
-    {
+    for (auto it = config.services.begin(); it != config.services.end(); ++it) {
         const char* service_config = "";
         ServiceDefinition* def = services_find(it->c_str());
         def->start(service_config);

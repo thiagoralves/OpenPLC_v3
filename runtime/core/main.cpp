@@ -5,7 +5,7 @@
 // You may obtain a copy of the License at
 //
 // http ://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,14 +41,13 @@
 #define OPLC_CYCLE          50000000
 
 extern int opterr;
-//extern int common_ticktime__;
 IEC_BOOL __DEBUG;
 
 IEC_LINT cycle_counter = 0;
 
 unsigned long __tick = 0;
-std::mutex bufferLock; //mutex for the internal buffers
-uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
+std::mutex bufferLock;  // Mutex for the internal buffers
+uint8_t run_openplc = 1;  // Variable to control OpenPLC Runtime execution
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Helper function - Makes the running thread sleep for the amount of
@@ -56,17 +55,14 @@ uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
 /// \param ts
 /// \param delay in milliseconds
 ////////////////////////////////////////////////////////////////////////////////
-void sleep_until(struct timespec *ts, int delay)
-{
+void sleep_until(struct timespec *ts, int delay) {
     ts->tv_nsec += delay;
-    if(ts->tv_nsec >= 1000*1000*1000)
-    {
+    if (ts->tv_nsec >= 1000*1000*1000) {
         ts->tv_nsec -= 1000*1000*1000;
         ts->tv_sec++;
     }
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ts,  NULL);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Verify if pin is present in one of the ignored vectors
@@ -75,40 +71,34 @@ void sleep_until(struct timespec *ts, int delay)
 /// \param
 /// \return
 ////////////////////////////////////////////////////////////////////////////////
-bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
-{
-    for (int i = 0; i < vector_size; i++)
-    {
-        if (ignored_vector[i] == pinNumber)
+bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber) {
+    for (int i = 0; i < vector_size; i++) {
+        if (ignored_vector[i] == pinNumber) {
             return false;
+        }
     }
-    
+
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Disables all outputs
 ////////////////////////////////////////////////////////////////////////////////
-void disableOutputs()
-{
-    //Disable digital outputs
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
+void disableOutputs() {
+    // Disable digital outputs
+    for (int i = 0; i < BUFFER_SIZE; i++) {
+        for (int j = 0; j < 8; j++) {
             if (bool_output[i][j] != NULL) *bool_output[i][j] = 0;
         }
     }
-    
-    //Disable byte outputs
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
+
+    // Disable byte outputs
+    for (int i = 0; i < BUFFER_SIZE; i++) {
         if (byte_output[i] != NULL) *byte_output[i] = 0;
     }
-    
-    //Disable analog outputs
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
+
+    // Disable analog outputs
+    for (int i = 0; i < BUFFER_SIZE; i++) {
         if (int_output[i] != NULL) *int_output[i] = 0;
     }
 }
@@ -116,33 +106,34 @@ void disableOutputs()
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Special Functions
 ////////////////////////////////////////////////////////////////////////////////
-void handleSpecialFunctions()
-{
-    //current time [%ML1024]
+void handleSpecialFunctions() {
+    // Current time [%ML1024]
     struct tm *current_time;
     time_t rawtime;
-    
+
     tzset();
     time(&rawtime);
     current_time = localtime(&rawtime);
-    
-    rawtime = rawtime - timezone;
-    if (current_time->tm_isdst > 0) rawtime = rawtime + 3600;
-        
-    if (special_functions[0] != NULL) *special_functions[0] = rawtime;
-    
-    //number of cycles [%ML1025]
-    cycle_counter++;
-    if (special_functions[1] != NULL) *special_functions[1] = cycle_counter;
-    
-    //comm error counter [%ML1026]
-    /* Implemented in modbus_master.cpp */
 
-    //insert other special functions below
+    rawtime = rawtime - timezone;
+    if (current_time->tm_isdst > 0) {
+        rawtime = rawtime + 3600;
+    }
+
+    if (special_functions[0] != NULL) {
+        *special_functions[0] = rawtime;
+    }
+
+    // Number of cycles [%ML1025]
+    cycle_counter++;
+    if (special_functions[1] != NULL) {
+        *special_functions[1] = cycle_counter;
+    }
+
+    // Insert other special functions below
 }
 
-int main(int argc,char **argv)
-{
+int main(int argc, char **argv) {
     initialize_logging(argc, argv);
     spdlog::info("OpenPLC Runtime starting...");
 
@@ -153,7 +144,7 @@ int main(int argc,char **argv)
     // automatically start
     bootstrap();
 
-    //gets the starting point for the clock
+    // Gets the starting point for the clock
     spdlog::debug("Getting current time");
     struct timespec timer_start;
     clock_gettime(CLOCK_MONOTONIC, &timer_start);
@@ -161,31 +152,33 @@ int main(int argc,char **argv)
     //======================================================
     //                    MAIN LOOP
     //======================================================
-    while(run_openplc)
-    {
-        //make sure the buffer pointers are correct and
-        //attached to the user variables
-        glueVars();
-        
-        updateBuffersIn(); //read input image
-        
+    while (run_openplc) {
+        // Read input image - this method tries to get the lock
+        // so don't put it in the lock context.
+        updateBuffersIn();
+
         {
             std::lock_guard<std::mutex> guard(bufferLock);
             updateCustomIn();
-            updateBuffersIn_MB(); //update input image table with data from slave devices
+            // Update input image table with data from slave devices
+            updateBuffersIn_MB();
             handleSpecialFunctions();
-            config_run__(__tick++); // execute plc program logic
+            // Execute plc program logic
+            config_run__(__tick++);
             updateCustomOut();
-            updateBuffersOut_MB(); //update slave devices with data from the output image table
+            // Update slave devices with data from the output image table
+            updateBuffersOut_MB();
         }
 
-        updateBuffersOut(); //write output image
+        // Write output image - this method tries to get the lock
+        // so don't put it in the lock context.
+        updateBuffersOut();
 
         updateTime();
 
         sleep_until(&timer_start, common_ticktime__);
     }
-    
+
     //======================================================
     //             SHUTTING DOWN OPENPLC RUNTIME
     //======================================================

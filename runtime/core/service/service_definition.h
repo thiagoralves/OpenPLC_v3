@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissionsand
 // limitations under the License.
 
-#ifndef CORE_SERVICE_SERVICE_DEFINITION_H_
-#define CORE_SERVICE_SERVICE_DEFINITION_H_
+#ifndef RUNTIME_CORE_SERVICE_SERVICE_DEFINITION_H_
+#define RUNTIME_CORE_SERVICE_SERVICE_DEFINITION_H_
 
+#include <pthread.h>
 #include <cstdint>
 #include <functional>
-#include <pthread.h>
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -46,7 +46,7 @@ typedef std::function<void(const GlueVariablesBinding& binding, volatile bool& r
 /// or from start to stop. That's only because we haven't had such a need
 /// yet. If that comes up, then we'll add that.
 class ServiceDefinition final {
-  public:
+ public:
     /// Initialize a new instance of a service definition that can be started
     /// and stopped but does not participate in initialize or finalize.
     /// @param name The unique name of this service.
@@ -91,11 +91,12 @@ class ServiceDefinition final {
     /// service.
     const char* config() const { return this->config_buffer; }
 
-  private:
+ private:
     // Hide the copy constructor
     ServiceDefinition(ServiceDefinition &);
     static void* run_service(void* user_data);
-  private:
+
+ private:
     /// The type name of the service.
     const char* name;
     /// The function to initialize the service.
@@ -115,4 +116,4 @@ class ServiceDefinition final {
 
 /** @}*/
 
-#endif  // CORE_SERVICE_SERVICE_DEFINITION_H_
+#endif  // RUNTIME_CORE_SERVICE_SERVICE_DEFINITION_H_

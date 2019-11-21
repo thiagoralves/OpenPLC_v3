@@ -35,7 +35,8 @@ const GlueVariable* GlueVariablesBinding::find(IecLocationDirection dir,
                                                uint8_t lsi) const {
     for (uint16_t i = 0; i < this->size; ++i) {
         const GlueVariable& cur_var = glue_variables[i];
-        if (cur_var.dir == dir && cur_var.size == size && cur_var.msi == msi && cur_var.lsi == lsi) {
+        if (cur_var.dir == dir && cur_var.size == size
+            && cur_var.msi == msi && cur_var.lsi == lsi) {
             return &glue_variables[i];
         }
     }
@@ -85,7 +86,7 @@ const GlueVariable* GlueVariablesBinding::find(const string& location) const {
     }
 
     char* end_msi;
-    long msi = strtol(location.c_str() + 3, &end_msi, 10);
+    uint16_t msi = strtol(location.c_str() + 3, &end_msi, 10);
 
     // Do we have more characters left in the string to read for lsi?
     size_t start_lsi = end_msi + 1 - location.c_str();
@@ -94,7 +95,7 @@ const GlueVariable* GlueVariablesBinding::find(const string& location) const {
     }
 
     char* end_lsi;
-    long lsi = strtol(end_msi + 1, &end_lsi, 10);
+    uint8_t lsi = strtol(end_msi + 1, &end_lsi, 10);
 
     return find(direction, size, msi, lsi);
 }

@@ -412,13 +412,13 @@ int modbus_slave_cfg_handler(void* user_data, const char* section,
     return 0;
 }
 
-int8_t modbus_slave_run(std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+int8_t modbus_slave_run(oplc::config_stream& cfg_stream,
                         const char* cfg_overrides,
                         const GlueVariablesBinding& bindings,
                         volatile bool& run) {
     ModbusSlaveConfig config;
 
-    ini_parse_stream(istream_fgets, cfg_stream.get(), modbus_slave_cfg_handler, &config);
+    ini_parse_stream(oplc::istream_fgets, cfg_stream.get(), modbus_slave_cfg_handler, &config);
 
     cfg_stream.reset(nullptr);
 
@@ -449,12 +449,7 @@ int8_t modbus_slave_run(std::unique_ptr<std::istream, std::function<void(std::is
 void modbus_slave_service_run(const GlueVariablesBinding& binding,
                               volatile bool& run, const char* config) {
 
-    unique_ptr<istream, function<void(istream*)>> cfg_stream(new ifstream("../etc/config.ini"), [](istream* s)
-        {
-            reinterpret_cast<ifstream*>(s)->close();
-            delete s;
-        });
-
+    auto cfg_stream = oplc::open_config();
     modbus_slave_run(cfg_stream, config, binding, run);
 }
 

@@ -8,7 +8,7 @@
 // You may obtain a copy of the License at
 //
 // http ://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,21 +19,23 @@
 // Thiago Alves, Jun 2019
 //-----------------------------------------------------------------------------
 
+#include <ini.h>
+#include <spdlog/spdlog.h>
 #include <cstdio>
 #include <cstdint>
+#include <algorithm>
 #include <chrono>
 #include <istream>
 #include <fstream>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <type_traits>
 
-#include <ini.h>
-#include <spdlog/spdlog.h>
-
 #include "glue.h"
 #include "ini_util.h"
 #include "ladder.h"
+#include "pstorage.h"
 #include "lib/iec_types_all.h"
 
 /** \addtogroup openplc_runtime
@@ -158,9 +160,9 @@ size_t pstorage_copy_glue(const GlueVariablesBinding& bindings, char* buffer) {
 /// This is populated with values from the config file.
 struct PstorageConfig {
     PstorageConfig() :
-        poll_interval(std::chrono::seconds(10))
+        poll_interval(chrono::seconds(10))
     {}
-    std::chrono::seconds poll_interval;
+    chrono::seconds poll_interval;
 };
 
 int pstorage_cfg_handler(void* user_data, const char* section,
@@ -172,9 +174,9 @@ int pstorage_cfg_handler(void* user_data, const char* section,
     auto config = reinterpret_cast<PstorageConfig*>(user_data);
 
     if (strcmp(name, "poll_interval") == 0) {
-        // We do not allow a poll period of less than 1 second as that 
+        // We do not allow a poll period of less than 1 second as that
         // might cause lock contention problems.
-        config->poll_interval = std::chrono::seconds(max(1, atoi(value)));
+        config->poll_interval = chrono::seconds(max(1, atoi(value)));
     } else if (strcmp(name, "enabled") == 0) {
         // Nothing to do here - we already know this is enabled
     } else {
@@ -185,21 +187,21 @@ int pstorage_cfg_handler(void* user_data, const char* section,
     return 0;
 }
 
-int8_t pstorage_run(std::unique_ptr<std::istream, std::function<void(std::istream*)>>& cfg_stream,
+int8_t pstorage_run(oplc::config_stream& cfg_stream,
                     const char* cfg_overrides,
                     const GlueVariablesBinding& bindings,
                     volatile bool& run,
-                    function<std::ostream*(void)> stream_fn)
-{
+                    function<ostream*(void)> stream_fn) {
     PstorageConfig config;
-    ini_parse_stream(istream_fgets, cfg_stream.get(), pstorage_cfg_handler, &config);
+    ini_parse_stream(oplc::istream_fgets, cfg_stream.get(),
+                     pstorage_cfg_handler, &config);
 
     // We are done with the file, so release the unique ptr. Normally this
     // will close the reference to the file
     cfg_stream.reset(nullptr);
 
     if (strlen(cfg_overrides) > 0) {
-        config.poll_interval = std::chrono::seconds(max(1, atoi(cfg_overrides)));
+        config.poll_interval = chrono::seconds(max(1, atoi(cfg_overrides)));
     }
 
     const char endianness_header[2] = { IS_BIG_ENDIAN, '\n'};
@@ -270,8 +272,7 @@ inline int8_t read_and_check(istream& input_stream, const char header[],
 }
 
 int8_t pstorage_read(istream& input_stream,
-                     const GlueVariablesBinding& bindings)
-{
+                     const GlueVariablesBinding& bindings) {
     // Read the file header - we define the file header as a constant that
     // must be present as the header. We don't allow UTF BOMs here.
     char header_check[FILE_HEADER_SIZE];
@@ -314,7 +315,7 @@ int8_t pstorage_read(istream& input_stream,
         switch (glue.size) {
             case IECLST_BIT:
                 num_bytes = 1;
-                break; 
+                break;
             case IECLST_BYTE:
                 num_bytes = 1;
                 break;
@@ -383,17 +384,13 @@ void pstorage_service_finalize(const GlueVariablesBinding& binding) {
 
 void pstorage_service_run(const GlueVariablesBinding& binding,
                           volatile bool& run, const char* config) {
-
     // We don't allow a poll duration of less than one second otherwise
     // that can have detrimental effects on performance
-    auto create_stream = []() { return new ofstream("persistent.file", ios::binary); };
+    auto create_stream = []() {
+        return new ofstream("persistent.file", ios::binary);
+    };
 
-    unique_ptr<istream, function<void(istream*)>> cfg_stream(new ifstream("../etc/config.ini"), [](istream* s)
-        {
-            reinterpret_cast<ifstream*>(s)->close();
-            delete s;
-        });
-
+    auto cfg_stream = oplc::open_config();
     pstorage_run(cfg_stream, config, binding, run, create_stream);
 }
 

@@ -74,7 +74,7 @@ IndexedStrategy::IndexedStrategy(const GlueVariablesBinding& bindings) :
     // values. The caches ensure that we are unlikely to have to wait
     // for a lock.
 
-    // Allocate a big enough read and write buffers. For the "int" types,
+    // Allocate big enough read and write buffers. For the "int" types,
     // we know the size in advance. For the boolean types, we don't, so
     // figure out how big of a buffer we need for boolean types.
     const int32_t max_coil_index = bindings.find_max_msi(IECVT_BOOL, IECLDT_OUT);
@@ -143,10 +143,11 @@ void exchange(array<PendingValue<T>, NUM_REGISTER_VALUES>& write_buffer,
             continue;
         }
 
-        // If there was a write that hasn't be written, then transfer the
+        // If there was a write that hasn't been written, then transfer the
         // value to the read buffer.
         if (write_buffer[index].has_pending) {
             *read_buffer[index].value = write_buffer[index].value;
+            write_buffer[index].has_pending = false;
         }
 
         // Finally, update our cached value so that we can read the value
@@ -163,10 +164,11 @@ void IndexedStrategy::Exchange() {
     // handle populating writes into the structure.
 
     // Update the read caches for coils and discrete inputs.
-    // Only the coils can be set, so we only only to check for pending
+    // Only the coils can be set, so we only need to check for pending
     // writes to those.
     for (size_t index = 0; index < coil_write_buffer.size(); ++index) {
         if (coil_write_buffer[index].has_pending) {
+            coil_write_buffer[index].has_pending = false;
             *coil_read_buffer[index].value = coil_write_buffer[index].value;
         }
         coil_read_buffer[index].update_cache();
