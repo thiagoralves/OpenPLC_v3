@@ -28,7 +28,11 @@ SCENARIO("indexed_strategy", "")
     GIVEN("glue variables with single bit output glue variable")
     {
         IEC_BOOL bool_val(0);
-        auto group = GlueBoolGroup { .index=0, .values={ &bool_val, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr } };
+        auto group = GlueBoolGroup {
+            .index = 0,
+            .values = { &bool_val, nullptr, nullptr, nullptr,
+                        nullptr, nullptr, nullptr, nullptr }
+        };
 
         const GlueVariable glue_vars[] = {
             { IECLDT_OUT, IECLST_BIT, 0, 0, IECVT_BOOL, &group },

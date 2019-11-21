@@ -67,7 +67,7 @@ extern unsigned long long common_ticktime__;
 #ifndef OPLC_IEC_GLUE_DIRECTION
 #define OPLC_IEC_GLUE_DIRECTION
 enum IecLocationDirection {
-    IECLDT_IN,
+    IECLDT_IN = 0,
     IECLDT_OUT,
     IECLDT_MEM,
 };
@@ -77,7 +77,7 @@ enum IecLocationDirection {
 #define OPLC_IEC_GLUE_SIZE
 enum IecLocationSize {
     /// Variables that are a single bit
-    IECLST_BIT,
+    IECLST_BIT = 0,
     /// Variables that are 1 byte
     IECLST_BYTE,
     /// Variables that are 2 bytes
@@ -92,7 +92,7 @@ enum IecLocationSize {
 #ifndef OPLC_IEC_GLUE_VALUE_TYPE
 #define OPLC_IEC_GLUE_VALUE_TYPE
 enum IecGlueValueType {
-    IECVT_BOOL,
+    IECVT_BOOL = 0,
     IECVT_BYTE,
     IECVT_SINT,
     IECVT_USINT,

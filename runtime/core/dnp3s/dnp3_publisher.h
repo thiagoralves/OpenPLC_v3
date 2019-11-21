@@ -29,22 +29,21 @@ namespace asiodnp3 {
 class IOutstation;
 }
 
-////////////////////////////////////////////////////////////////////////////////
 /// @brief The publisher defines the interface between the glue arrays
 /// of variables that are read from PLC application and written to
 /// the DNP3 channel. This published all of the available glue
-/// information over DNP3, incuding inputs, outputs, memory.
-////////////////////////////////////////////////////////////////////////////////
-class Dnp3Publisher {
+/// information over DNP3, including inputs, outputs, memory.
+class Dnp3Publisher
+{
  public:
-    /// \brief Constructs a new instance of the publisher object.
+    /// @brief Constructs a new instance of the publisher object.
     /// @param outstation The outstation that is ourselves
     /// @param measurements The buffers that we use for data transfer
     Dnp3Publisher(
         std::shared_ptr<asiodnp3::IOutstation> outstation,
         const Dnp3MappedGroup& measurements);
 
-    /// \brief Publish the values from the in-memory buffers to DNP3 points.
+    /// @brief Publish the values from the in-memory buffers to DNP3 points.
     ///
     /// Writing to the points executes asynchronously. This function returns
     /// once the points have been queued to write but in general will return

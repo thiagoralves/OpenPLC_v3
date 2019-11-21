@@ -53,11 +53,14 @@ const uint8_t BOOL_BIT_MASK[8] = {
 
 inline void initialize_mapped_from_group(uint16_t msi,
                                          const GlueBoolGroup* group,
-                                         vector<MappedBool>& buffer) {
+                                         vector<MappedBool>& buffer)
+{
     auto start_index = msi * BOOL_PER_GROUP;
-    for (size_t bool_index = 0; bool_index < BOOL_PER_GROUP; ++bool_index) {
+    for (size_t bool_index = 0; bool_index < BOOL_PER_GROUP; ++bool_index)
+    {
         auto mapped_index = start_index + bool_index;
-        if (group->values[bool_index]) {
+        if (group->values[bool_index])
+        {
             buffer[mapped_index].value = group->values[bool_index];
             buffer[mapped_index].cached_value = *group->values[bool_index];
         }
@@ -80,12 +83,14 @@ IndexedStrategy::IndexedStrategy(const GlueVariablesBinding& bindings) :
     const int32_t max_coil_index = bindings.find_max_msi(IECVT_BOOL, IECLDT_OUT);
     const int32_t max_di_index = bindings.find_max_msi(IECVT_BOOL, IECLDT_IN);
 
-    if (max_coil_index >= 0) {
+    if (max_coil_index >= 0)
+    {
         coil_read_buffer.resize((max_coil_index + 1) * BOOL_PER_GROUP);
         coil_write_buffer.resize((max_coil_index + 1) * BOOL_PER_GROUP);
     }
 
-    if (max_di_index >= 0) {
+    if (max_di_index >= 0)
+    {
         di_read_buffer.resize((max_di_index + 1) * BOOL_PER_GROUP);
     }
 
@@ -93,35 +98,48 @@ IndexedStrategy::IndexedStrategy(const GlueVariablesBinding& bindings) :
     // Note that if we have persistent storage, then the values have already
     // been initialized.
     const GlueVariable* glue_variables = bindings.glue_variables;
-    for (size_t index = 0; index < bindings.size; ++index) {
+    for (size_t index = 0; index < bindings.size; ++index)
+    {
         IecGlueValueType type = glue_variables[index].type;
         IecLocationDirection dir = glue_variables[index].dir;
         uint16_t msi = glue_variables[index].msi;
 
-        if (type == IECVT_BOOL) {
+        if (type == IECVT_BOOL)
+        {
             const GlueBoolGroup* group = reinterpret_cast<const GlueBoolGroup*>(glue_variables[index].value);
             // The first coil index for this variable is always
             // multiplied by the number of booleans in that group
             // If this index is out of range, then skip it.
-            if (dir == IECLDT_OUT) {
+            if (dir == IECLDT_OUT)
+            {
                 initialize_mapped_from_group(msi, group, coil_read_buffer);
-            } else if (dir == IECLDT_IN) {
+            }
+            else if (dir == IECLDT_IN)
+            {
                 initialize_mapped_from_group(msi, group, di_read_buffer);
             }
         }
-        else if (type == IECVT_INT) {
-            if (dir == IECLDT_OUT) {
+        else if (type == IECVT_INT)
+        {
+            if (dir == IECLDT_OUT)
+            {
                 int_register_read_buffer[msi].init(reinterpret_cast<IEC_INT*>(glue_variables[index].value));
-            } else if (dir == IECLDT_MEM && msi >= MIN_16B_RANGE && msi < MAX_16B_RANGE) {
+            }
+            else if (dir == IECLDT_MEM && msi >= MIN_16B_RANGE && msi < MAX_16B_RANGE)
+            {
                 intm_register_read_buffer[msi - MIN_16B_RANGE].init(reinterpret_cast<IEC_INT*>(glue_variables[index].value));
-            } else if (dir == IECLDT_IN) {
+            }
+            else if (dir == IECLDT_IN)
+            {
                 int_input_read_buffer[msi].init(reinterpret_cast<IEC_INT*>(glue_variables[index].value));
             }
         }
-        else if (type == IECVT_DINT && dir == IECLDT_MEM && msi <= MIN_32B_RANGE && msi < MAX_32B_RANGE) {
+        else if (type == IECVT_DINT && dir == IECLDT_MEM && msi <= MIN_32B_RANGE && msi < MAX_32B_RANGE)
+        {
             dintm_register_read_buffer[msi - MIN_32B_RANGE].init(reinterpret_cast<IEC_DINT*>(glue_variables[index].value));
         }
-        else if (type == IECVT_LINT && dir == IECLDT_MEM && msi <= MIN_64B_RANGE && msi < MAX_64B_RANGE) {
+        else if (type == IECVT_LINT && dir == IECLDT_MEM && msi <= MIN_64B_RANGE && msi < MAX_64B_RANGE)
+        {
             lintm_register_read_buffer[msi - MIN_64B_RANGE].init(reinterpret_cast<IEC_LINT*>(glue_variables[index].value));
         }
     }
@@ -136,16 +154,20 @@ IndexedStrategy::IndexedStrategy(const GlueVariablesBinding& bindings) :
 /// and a local cache of the value.
 template <typename T>
 void exchange(array<PendingValue<T>, NUM_REGISTER_VALUES>& write_buffer,
-              array<MappedValue<T>, NUM_REGISTER_VALUES>& read_buffer) {
-    for (size_t index = 0; index < write_buffer.size(); ++index) {
+              array<MappedValue<T>, NUM_REGISTER_VALUES>& read_buffer)
+{
+    for (size_t index = 0; index < write_buffer.size(); ++index)
+    {
         // Skip any index that is not mapped to a located variable.
-        if (!read_buffer[index].value) {
+        if (!read_buffer[index].value)
+        {
             continue;
         }
 
         // If there was a write that hasn't been written, then transfer the
         // value to the read buffer.
-        if (write_buffer[index].has_pending) {
+        if (write_buffer[index].has_pending)
+        {
             *read_buffer[index].value = write_buffer[index].value;
             write_buffer[index].has_pending = false;
         }
@@ -156,7 +178,8 @@ void exchange(array<PendingValue<T>, NUM_REGISTER_VALUES>& write_buffer,
     }
 }
 
-void IndexedStrategy::Exchange() {
+void IndexedStrategy::Exchange()
+{
     lock_guard<mutex> guard(*this->glue_mutex);
 
     // Since we already figured out the mapping in an efficient structure
@@ -166,8 +189,10 @@ void IndexedStrategy::Exchange() {
     // Update the read caches for coils and discrete inputs.
     // Only the coils can be set, so we only need to check for pending
     // writes to those.
-    for (size_t index = 0; index < coil_write_buffer.size(); ++index) {
-        if (coil_write_buffer[index].has_pending) {
+    for (size_t index = 0; index < coil_write_buffer.size(); ++index)
+    {
+        if (coil_write_buffer[index].has_pending)
+        {
             coil_write_buffer[index].has_pending = false;
             *coil_read_buffer[index].value = coil_write_buffer[index].value;
         }
@@ -175,7 +200,8 @@ void IndexedStrategy::Exchange() {
     }
 
     // Update the boolean values.
-    for (size_t index = 0; index < di_read_buffer.size(); ++index) {
+    for (size_t index = 0; index < di_read_buffer.size(); ++index)
+    {
         di_read_buffer[index].update_cache();
     }
 
@@ -184,15 +210,18 @@ void IndexedStrategy::Exchange() {
     exchange(dintm_register_write_buffer, dintm_register_read_buffer);
     exchange(lintm_register_write_buffer, lintm_register_read_buffer);
 
-    for (size_t index = 0; index < int_input_read_buffer.size(); ++index) {
+    for (size_t index = 0; index < int_input_read_buffer.size(); ++index)
+    {
         int_input_read_buffer[index].update_cache();
     }
 }
 
-modbus_errno IndexedStrategy::WriteCoil(uint16_t coil_index, bool value) {
+modbus_errno IndexedStrategy::WriteCoil(uint16_t coil_index, bool value)
+{
     lock_guard<mutex> guard(buffer_mutex);
     if (coil_index < coil_write_buffer.size()
-        && coil_read_buffer[coil_index].value) {
+        && coil_read_buffer[coil_index].value)
+    {
         coil_write_buffer[coil_index].set(value);
         return 0;
     }
@@ -201,13 +230,16 @@ modbus_errno IndexedStrategy::WriteCoil(uint16_t coil_index, bool value) {
 
 modbus_errno IndexedStrategy::WriteMultipleCoils(uint16_t coil_start_index,
                                                  uint16_t num_coils,
-                                                 uint8_t* values) {
-    if (coil_start_index + num_coils >= coil_write_buffer.size()) {
+                                                 uint8_t* values)
+{
+    if (coil_start_index + num_coils >= coil_write_buffer.size())
+    {
         return -1;
     }
 
     lock_guard<mutex> guard(buffer_mutex);
-    for (uint16_t index = 0; index < num_coils; ++index) {
+    for (uint16_t index = 0; index < num_coils; ++index)
+    {
         // Get the value from the packed structure
         bool value = values[index / 8] & BOOL_BIT_MASK[index % 8];
         coil_write_buffer[coil_start_index + index].set(value);
@@ -218,22 +250,26 @@ modbus_errno IndexedStrategy::WriteMultipleCoils(uint16_t coil_start_index,
 
 modbus_errno IndexedStrategy::ReadCoils(uint16_t coil_start_index,
                                         uint16_t num_values,
-                                        uint8_t* values) {
+                                        uint8_t* values)
+{
     return this->ReadBools(coil_read_buffer, coil_start_index, num_values, values);
 }
 
 modbus_errno IndexedStrategy::ReadDiscreteInputs(uint16_t di_start_index,
                                                  uint16_t num_values,
-                                                 uint8_t* values) {
+                                                 uint8_t* values)
+{
     return this->ReadBools(di_read_buffer, di_start_index, num_values, values);
 }
 
 modbus_errno IndexedStrategy::ReadBools(const vector<MappedBool>& buffer,
                                         uint16_t start_index,
                                         uint16_t num_values,
-                                        uint8_t* values) {
+                                        uint8_t* values)
+{
    auto max_index = start_index + num_values - 1;
-    if (max_index >= buffer.size()) {
+    if (max_index >= buffer.size())
+    {
         return -1;
     }
 
@@ -241,7 +277,8 @@ modbus_errno IndexedStrategy::ReadBools(const vector<MappedBool>& buffer,
     memset(values, 0, num_values / 8 + 1);
 
     lock_guard<mutex> guard(buffer_mutex);
-    for (uint16_t index = 0; index < num_values; ++index) {
+    for (uint16_t index = 0; index < num_values; ++index)
+    {
         values[index / 8] |= buffer[start_index + index].cached_value ? BOOL_BIT_MASK[index % 8] : 0;
     }
 
@@ -250,22 +287,29 @@ modbus_errno IndexedStrategy::ReadBools(const vector<MappedBool>& buffer,
 
 modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
                                                     uint16_t num_registers,
-                                                    uint8_t* value) {
+                                                    uint8_t* value)
+{
     // Each holding register is 2 bytes. Depending on the destination value
     // we are either updating the entire value or part of the value.
     // Here we go through each index and update the appropriate part of the value.
     lock_guard<mutex> guard(buffer_mutex);
 
-    for (uint16_t index = 0; index < num_registers; ++index) {
+    for (uint16_t index = 0; index < num_registers; ++index)
+    {
         uint16_t hr_index = hr_start_index + index;
         uint16_t word = mb_to_word(value[0], value[1]);
 
-        if (hr_index < MIN_16B_RANGE) {
+        if (hr_index < MIN_16B_RANGE)
+        {
             int_register_write_buffer[hr_index].set(word);
-        } else if (hr_index < MAX_16B_RANGE) {
+        }
+        else if (hr_index < MAX_16B_RANGE)
+        {
             hr_index -= MIN_16B_RANGE;
             intm_register_write_buffer[hr_index].set(word);
-        } else if (hr_index < MAX_32B_RANGE) {
+        }
+        else if (hr_index < MAX_32B_RANGE)
+        {
             hr_index -= MIN_32B_RANGE;
             // The word we got is part of a larger 32-bit value, and we will
             // bit shift to write the appropriate part. Resize to 32-bits
@@ -274,16 +318,21 @@ modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
             PendingValue<IEC_DINT>& dst = dintm_register_write_buffer[hr_index / 2];
             dst.has_pending = true;
 
-            if (hr_index % 2 == 0) {
+            if (hr_index % 2 == 0)
+            {
                 // First word
                 dst.value = dst.value & 0x0000ffff;
                 dst.value = dst.value | partial_value;
-            } else {
+            }
+            else
+            {
                 // Second word
                 dst.value = dst.value & 0xffff0000;
                 dst.value = dst.value | partial_value;
             }
-        } else if (hr_index < MAX_64B_RANGE) {
+        }
+        else if (hr_index < MAX_64B_RANGE)
+        {
             hr_index -= MIN_64B_RANGE;
             // Same as with a 32-bit value, here we are updating part of a
             // 64-bit value, so resize so we can bit-shift appropriately.
@@ -292,7 +341,8 @@ modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
             dst.has_pending = true;
 
             auto word_index = hr_index % 4;
-            switch (word_index) {
+            switch (word_index)
+            {
                 case 0:
                     // First word
                     dst.value = dst.value & 0x0000ffffffffffff;
@@ -314,7 +364,9 @@ modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
                     dst.value = dst.value | partial_value;
                     break;
             }
-        } else {
+        }
+        else
+        {
             return -1;
         }
 
@@ -327,33 +379,53 @@ modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
 modbus_errno IndexedStrategy::ReadHoldingRegisters(uint16_t hr_start_index, uint16_t num_registers, uint8_t* value) {
     lock_guard<mutex> guard(buffer_mutex);
 
-    for (uint16_t index = 0; index < num_registers; ++index) {
+    for (uint16_t index = 0; index < num_registers; ++index)
+    {
         uint16_t hr_index = hr_start_index + index;
         uint16_t val;
-        if (hr_index < MIN_16B_RANGE) {
+        if (hr_index < MIN_16B_RANGE)
+        {
             val = int_register_read_buffer[hr_index].cached_value;
-        } else if (hr_index < MAX_16B_RANGE) {
+        }
+        else if (hr_index < MAX_16B_RANGE)
+        {
             hr_index -= MIN_16B_RANGE;
             val = intm_register_read_buffer[hr_index].cached_value;
-        } else if (hr_index < MAX_32B_RANGE) {
+        }
+        else if (hr_index < MAX_32B_RANGE)
+        {
             hr_index -= MIN_32B_RANGE;
-            if (hr_index % 2 == 0) {
+            if (hr_index % 2 == 0)
+            {
                 val = (uint16_t)(dintm_register_read_buffer[hr_index / 2].cached_value >> 16);
-            } else {
+            }
+            else
+            {
                 val = (uint16_t)(dintm_register_read_buffer[hr_index / 2].cached_value & 0xffff);
             }
-        } else if (hr_index < MAX_64B_RANGE) {
+        }
+        else if (hr_index < MAX_64B_RANGE)
+        {
             hr_index -= MIN_64B_RANGE;
-            if (hr_index %4 == 0) {
+            if (hr_index %4 == 0)
+            {
                 val = (uint16_t)(lintm_register_read_buffer[hr_index / 4].cached_value >> 48);
-            } else if (hr_index %4 == 1) {
+            }
+            else if (hr_index %4 == 1)
+            {
                 val = (uint16_t)(lintm_register_read_buffer[hr_index / 4].cached_value >> 32);
-            } else if (hr_index %4 == 2) {
+            }
+            else if (hr_index %4 == 2)
+            {
                 val = (uint16_t)(lintm_register_read_buffer[hr_index / 4].cached_value >> 16);
-            } else if (hr_index %4 == 3) {
+            }
+            else if (hr_index %4 == 3)
+            {
                 val = (uint16_t)(lintm_register_read_buffer[hr_index / 4].cached_value & 0xffff);
             }
-        } else {
+        }
+        else
+        {
             return -1;
         }
 
@@ -365,13 +437,16 @@ modbus_errno IndexedStrategy::ReadHoldingRegisters(uint16_t hr_start_index, uint
     return 0;
 }
 
-modbus_errno IndexedStrategy::ReadInputRegisters(uint16_t hr_start_index, uint16_t num_registers, uint8_t* value) {
+modbus_errno IndexedStrategy::ReadInputRegisters(uint16_t hr_start_index, uint16_t num_registers, uint8_t* value)
+{
     lock_guard<mutex> guard(buffer_mutex);
 
-    for (uint16_t index = 0; index < num_registers; ++index) {
+    for (uint16_t index = 0; index < num_registers; ++index)
+    {
         uint16_t hr_index = hr_start_index + index;
 
-        if (hr_index >= MIN_16B_RANGE) {
+        if (hr_index >= MIN_16B_RANGE)
+        {
             return -1;
         }
 

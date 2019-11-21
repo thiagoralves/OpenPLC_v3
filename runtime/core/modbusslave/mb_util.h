@@ -22,16 +22,19 @@
  *  @{
  */
 
-inline std::int16_t mb_to_word(std::uint8_t byte1, std::uint8_t byte2) {
+inline std::int16_t mb_to_word(std::uint8_t byte1, std::uint8_t byte2)
+{
     std::int16_t returnValue = (std::int16_t)(byte1 << 8) | (std::int16_t)byte2;
     return returnValue;
 }
 
-inline std::uint8_t mb_low_byte(std::uint16_t w) {
+inline std::uint8_t mb_low_byte(std::uint16_t w)
+{
     return (std::uint8_t) ((w) & 0xff);
 }
 
-inline std::uint8_t mb_high_byte(std::uint16_t w) {
+inline std::uint8_t mb_high_byte(std::uint16_t w)
+{
     return (std::uint8_t) ((w) >> 8);
 }
 

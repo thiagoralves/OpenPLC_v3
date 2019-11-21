@@ -55,9 +55,14 @@ SCENARIO("dnp3 receiver", "Receiver") {
 
     GIVEN("One boolean command") {
         IEC_BOOL bool_val(0);
-        auto group = GlueBoolGroup { .index=0, .values={ &bool_val, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr } };
+        auto group = GlueBoolGroup {
+            .index = 0,
+            .values = { &bool_val, nullptr, nullptr, nullptr,
+                        nullptr, nullptr, nullptr, nullptr}
+        };
 
-        const GlueVariable glue_var = { IECLDT_IN, IECLST_BIT, 0, 0, IECVT_BOOL, &group };
+        const GlueVariable glue_var = { IECLDT_IN, IECLST_BIT, 0, 0,
+                                        IECVT_BOOL, &group };
         const GlueVariable* glue_vars[] = { &glue_var };
         binary_commands.size = 1;
         binary_commands.items = glue_vars;
@@ -73,7 +78,8 @@ SCENARIO("dnp3 receiver", "Receiver") {
 
             THEN("sets output to true") {
                 REQUIRE(receiver.Select(crob, 0) == CommandStatus::SUCCESS);
-                REQUIRE(receiver.Operate(crob, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
+                REQUIRE(receiver.Operate(crob, 0, OperateType::DirectOperate)
+                        == CommandStatus::SUCCESS);
 
                 receiver.ExchangeGlue();
 
@@ -86,7 +92,8 @@ SCENARIO("dnp3 receiver", "Receiver") {
 
             THEN("sets output to false") {
                 REQUIRE(receiver.Select(crob, 0) == CommandStatus::SUCCESS);
-                REQUIRE(receiver.Operate(crob, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
+                REQUIRE(receiver.Operate(crob, 0, OperateType::DirectOperate)
+                    == CommandStatus::SUCCESS);
 
                 receiver.ExchangeGlue();
 
@@ -97,7 +104,8 @@ SCENARIO("dnp3 receiver", "Receiver") {
 
     GIVEN("One analog 16 output glue") {
         IEC_SINT int_val(0);
-        const GlueVariable glue_var = { IECLDT_IN, IECLST_BYTE, 0, 0, IECVT_SINT, &int_val };
+        const GlueVariable glue_var = { IECLDT_IN, IECLST_BYTE, 0, 0,
+                                        IECVT_SINT, &int_val };
         const GlueVariable* glue_vars[] = { &glue_var };
         analog_commands.size = 1;
         analog_commands.items = glue_vars;
@@ -113,7 +121,8 @@ SCENARIO("dnp3 receiver", "Receiver") {
 
             THEN("sets output to 9") {
                 REQUIRE(receiver.Select(aoi, 0) == CommandStatus::SUCCESS);
-                REQUIRE(receiver.Operate(aoi, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
+                REQUIRE(receiver.Operate(aoi, 0, OperateType::DirectOperate)
+                        == CommandStatus::SUCCESS);
 
                 receiver.ExchangeGlue();
 
@@ -124,7 +133,8 @@ SCENARIO("dnp3 receiver", "Receiver") {
 
     GIVEN("One analog 32 output glue") {
         IEC_INT int_val(0);
-        const GlueVariable glue_var = { IECLDT_IN, IECLST_WORD, 0, 0, IECVT_INT, &int_val };
+        const GlueVariable glue_var = { IECLDT_IN, IECLST_WORD, 0, 0,
+                                        IECVT_INT, &int_val };
         const GlueVariable* glue_vars[] = { &glue_var };
         analog_commands.size = 1;
         analog_commands.items = glue_vars;
@@ -141,7 +151,8 @@ SCENARIO("dnp3 receiver", "Receiver") {
 
             THEN("sets output to true") {
                 REQUIRE(receiver.Select(aoi, 0) == CommandStatus::SUCCESS);
-                REQUIRE(receiver.Operate(aoi, 0, OperateType::DirectOperate) == CommandStatus::SUCCESS);
+                REQUIRE(receiver.Operate(aoi, 0, OperateType::DirectOperate)
+                        == CommandStatus::SUCCESS);
 
                 receiver.ExchangeGlue();
 
@@ -152,7 +163,8 @@ SCENARIO("dnp3 receiver", "Receiver") {
 
     GIVEN("One float 32 output glue") {
         IEC_LINT int_val(0);
-        const GlueVariable glue_var = { IECLDT_IN, IECLST_DOUBLEWORD, 0, 0, IECVT_LINT, &int_val };
+        const GlueVariable glue_var = { IECLDT_IN, IECLST_DOUBLEWORD, 0, 0,
+                                        IECVT_LINT, &int_val };
         const GlueVariable* glue_vars[] = { &glue_var };
         analog_commands.size = 1;
         analog_commands.items = glue_vars;

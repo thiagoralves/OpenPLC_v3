@@ -32,7 +32,10 @@
 // handles initializing glue and reading configuration to start up the
 // runtime according to the config.
 
-struct PlcConfig {
+/// @brief Data object for reading configuration information from the
+/// configuration file.
+struct PlcConfig
+{
     /// A list of services that we will enable once the runtime has
     /// started.
     std::vector<std::string> services;
@@ -40,24 +43,37 @@ struct PlcConfig {
 
 /// Handle reading values from the configuration file
 int config_handler(void* user_data, const char* section,
-                   const char* name, const char* value) {
+                   const char* name, const char* value)
+{
     auto config = reinterpret_cast<PlcConfig*>(user_data);
 
-    if (oplc::ini_matches("logging", "level", section, name)) {
-        if (strcmp(value, "trace") == 0) {
+    if (oplc::ini_matches("logging", "level", section, name))
+    {
+        if (strcmp(value, "trace") == 0)
+        {
             spdlog::set_level(spdlog::level::trace);
-        } else if (strcmp(value, "debug") == 0) {
+        }
+        else if (strcmp(value, "debug") == 0)
+        {
             spdlog::set_level(spdlog::level::debug);
-        } else if (strcmp(value, "info") == 0) {
+        }
+        else if (strcmp(value, "info") == 0)
+        {
             spdlog::set_level(spdlog::level::info);
-        } else if (strcmp(value, "warn") == 0) {
+        }
+        else if (strcmp(value, "warn") == 0)
+        {
             spdlog::set_level(spdlog::level::warn);
-        } else if (strcmp(value, "error") == 0) {
+        }
+        else if (strcmp(value, "error") == 0)
+        {
             spdlog::set_level(spdlog::level::err);
         }
-    } else if (strcmp("enabled", name) == 0
-               && oplc::ini_atob(value)
-               && services_find(section)) {
+    }
+    else if (strcmp("enabled", name) == 0
+             && oplc::ini_atob(value)
+             && services_find(section))
+    {
         // This is the name of service that we can enable, so add it
         // to the list of services that we will enable.
         config->services.push_back(section);
@@ -67,7 +83,8 @@ int config_handler(void* user_data, const char* section,
 }
 
 /// Initialize the PLC runtime
-void bootstrap() {
+void bootstrap()
+{
     //======================================================
     //                 BOOSTRAP CONFIGURATION
     //======================================================
@@ -82,7 +99,8 @@ void bootstrap() {
     // configuration information in in the etc subfolder and use
     // a relative path to find it.
     const char* config_path = "../etc/config.ini";
-    if (ini_parse(config_path, config_handler, &config) < 0) {
+    if (ini_parse(config_path, config_handler, &config) < 0)
+    {
         spdlog::info("Config file {} could not be read", config_path);
         // If we don't have the config file, then default to always
         // starting the interactive server.
@@ -133,13 +151,15 @@ void bootstrap() {
     struct sched_param sp;
     sp.sched_priority = 30;
     spdlog::info("Setting main thread priority to RT");
-    if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp)) {
+    if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
+    {
         spdlog::warn("Failed to set main thread to real-time priority");
     }
 
     // Lock memory to ensure no swapping is done.
     spdlog::info("Locking main thread memory");
-    if (mlockall(MCL_FUTURE|MCL_CURRENT)) {
+    if (mlockall(MCL_FUTURE|MCL_CURRENT))
+    {
         spdlog::warn("Failed to lock memory");
     }
 #endif
@@ -151,7 +171,8 @@ void bootstrap() {
     // Our next step here is to start the main loop, so start any
     // services that we want now.
 
-    for (auto it = config.services.begin(); it != config.services.end(); ++it) {
+    for (auto it = config.services.begin(); it != config.services.end(); ++it)
+    {
         const char* service_config = "";
         ServiceDefinition* def = services_find(it->c_str());
         def->start(service_config);

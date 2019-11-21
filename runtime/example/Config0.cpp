@@ -17,19 +17,17 @@
 // of the ability to compile everything together, which is useful since
 // much of this is only determined when we have a structured text input file.
 
-
 /** @addtogroup example_app
   *  @{ */
-
 
 extern "C" {
 void config_init__(void)
 {}
 
-void config_run__(unsigned long tick)
+void config_run__(unsigned long tick)   //  NS
 {}
-}
 
-unsigned long long common_ticktime__ = 50000000ULL; /*ns*/
+}  // extern "C"
+unsigned long long common_ticktime__ = 50000000ULL; /*ns*/   //  NS
 
 /** @} */

@@ -24,13 +24,15 @@
 #include <istream>
 #include <memory>
 
-namespace oplc {
+namespace oplc
+{
 
 /// Convert a boolean value in the INI file to a boolean.
 /// The value must be "true", otherwise it is interpreted as false.
 /// @param value the value to convert.
 /// @return The converted value.
-inline bool ini_atob(const char* value) {
+inline bool ini_atob(const char* value)
+{
     return strcmp("true", value) == 0;
 }
 
@@ -43,7 +45,8 @@ inline bool ini_atob(const char* value) {
 inline bool ini_matches(const char* section_expected,
                         const char* value_expected,
                         const char* section,
-                        const char* value) {
+                        const char* value)
+{
     return strcmp(section_expected, section) == 0
         && strcmp(value_expected, value) == 0;
 }
@@ -53,9 +56,11 @@ inline bool ini_matches(const char* section_expected,
 /// @param num Maximum number of characters to be copied into str.
 /// @param stream The stream object. The string must be null terminated.
 /// @return the string or null if cannot read more.
-static char* istream_fgets(char* str, int num, void* stream) {
+static char* istream_fgets(char* str, int num, void* stream)
+{
     auto st = reinterpret_cast<std::istream*>(stream);
-    if (!st->good() || st->eof()) {
+    if (!st->good() || st->eof())
+    {
         // We previously reached the end of the file, so return the end signal.
         return nullptr;
     }
@@ -69,13 +74,15 @@ typedef std::unique_ptr<std::istream, std::function<void(std::istream*)>> config
 
 /// Open the standard configuration file as an closable stream.
 /// @return A stream for the configuration file.
-inline config_stream open_config() {
+inline config_stream open_config()
+{
     return config_stream(
             new std::ifstream("../etc/config.ini"),
-            [] (std::istream* s) {
-                    reinterpret_cast<std::ifstream*>(s)->close();
-                    delete s;
-                }
+            [] (std::istream* s)
+            {
+                reinterpret_cast<std::ifstream*>(s)->close();
+                delete s;
+            }
         );
 }
 

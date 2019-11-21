@@ -45,7 +45,8 @@ typedef std::function<void(const GlueVariablesBinding& binding, volatile bool& r
 /// @note There is presently no way to pass state from init to finalize
 /// or from start to stop. That's only because we haven't had such a need
 /// yet. If that comes up, then we'll add that.
-class ServiceDefinition final {
+class ServiceDefinition final
+{
  public:
     /// Initialize a new instance of a service definition that can be started
     /// and stopped but does not participate in initialize or finalize.

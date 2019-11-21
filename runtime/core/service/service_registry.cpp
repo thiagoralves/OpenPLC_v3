@@ -39,7 +39,8 @@ ServiceDefinition* services[] = {
 #endif
 };
 
-ServiceDefinition* services_find(const char* name) {
+ServiceDefinition* services_find(const char* name)
+{
     ServiceDefinition** item = find_if(begin(services), end(services), [name] (ServiceDefinition* def) {
         return strcmp(def->id(), name) == 0;
     });
@@ -47,19 +48,22 @@ ServiceDefinition* services_find(const char* name) {
     return (item != end(services)) ? *item : nullptr;
 }
 
-void services_stop() {
+void services_stop()
+{
     for_each(begin(services), end(services), [] (ServiceDefinition* def) {
         def->stop();
     });
 }
 
-void services_init() {
+void services_init()
+{
     for_each(begin(services), end(services), [] (ServiceDefinition* def) {
         def->initialize();
     });
 }
 
-void services_finalize() {
+void services_finalize()
+{
     for_each(begin(services), end(services), [] (ServiceDefinition* def) {
         def->finalize();
     });
