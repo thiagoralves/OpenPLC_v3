@@ -106,7 +106,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('quit()\n')
+                s.send(b'quit()\n')
                 data = s.recv(1000)
                 s.close()
                 self.runtime_status = "Stopped"
@@ -129,7 +129,8 @@ class runtime:
         a = subprocess.Popen([compile_program_path, str(st_file)],
                              cwd=self_path,
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+                             stderr=subprocess.STDOUT,
+                             encoding='UTF-8')
         compilation_object = NonBlockingStreamReader(a.stdout)
     
     def compilation_status(self):
@@ -151,7 +152,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('exec_time()\n')
+                s.send(b'exec_time()\n')
                 data = s.recv(10000)
                 s.close()
                 self.runtime_status = "Running"
@@ -166,7 +167,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('start_modbus(' + str(port_num) + ')\n')
+                s.send(b'start_modbus(' + str(port_num) + ')\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -177,7 +178,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('stop_modbus()\n')
+                s.send(b'stop_modbus()\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -188,7 +189,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('start_dnp3(' + str(port_num) + ')\n')
+                s.send(b'start_dnp3(' + str(port_num) + ')\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -199,7 +200,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('stop_dnp3()\n')
+                s.send(b'stop_dnp3()\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -210,7 +211,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('start_enip(' + str(port_num) + ')\n')
+                s.send(b'start_enip(' + str(port_num) + ')\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -221,7 +222,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('stop_enip()\n')
+                s.send(b'stop_enip()\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -232,7 +233,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('start_pstorage(' + str(poll_rate) + ')\n')
+                s.send(b'start_pstorage(' + str(poll_rate) + ')\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -243,7 +244,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('stop_pstorage()\n')
+                s.send(b'stop_pstorage()\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -254,7 +255,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('runtime_logs()\n')
+                s.send(b'runtime_logs()\n')
                 data = s.recv(1000000)
                 s.close()
                 return data
@@ -270,7 +271,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send('exec_time()\n')
+                s.send(b'exec_time()\n')
                 data = s.recv(10000)
                 s.close()
                 return display_time(int(data), 4)
