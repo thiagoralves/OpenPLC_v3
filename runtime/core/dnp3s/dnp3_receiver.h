@@ -25,11 +25,10 @@
  *  @{
  */
 
-////////////////////////////////////////////////////////////////////////////////
-/// \brief The receiver defines the interface between the DNP3 channel
+/// @brief The receiver defines the interface between the DNP3 channel
 /// and the glue arrays that are written to from DNP3.
-////////////////////////////////////////////////////////////////////////////////
-class Dnp3Receiver : public opendnp3::ICommandHandler {
+class Dnp3Receiver : public opendnp3::ICommandHandler
+{
  public:
     /// Initialize a new instance of the DNP3 receiver. The receiver listens for point value updates
     /// over the DNP3 channel and then maps those to the glue variables.
@@ -68,7 +67,8 @@ class Dnp3Receiver : public opendnp3::ICommandHandler {
     opendnp3::CommandStatus CacheUpdatedValue(T value, std::uint16_t dnp3_index);
 
     template <typename T>
-    struct CacheItem {
+    struct CacheItem
+    {
        volatile bool has_value;
        volatile T value;
     };

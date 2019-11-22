@@ -61,28 +61,33 @@ ServiceDefinition::ServiceDefinition(const char* name,
     config_buffer()
 {}
 
-void ServiceDefinition::initialize() {
+void ServiceDefinition::initialize()
+{
     GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE,
                                   oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
     this->init_fn(bindings);
 }
 
-void ServiceDefinition::finalize() {
+void ServiceDefinition::finalize()
+{
     GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE,
                                   oplc_glue_vars, OPLCGLUE_MD5_DIGEST);
     this->finalize_fn(bindings);
 }
 
-void ServiceDefinition::start(const char* config) {
+void ServiceDefinition::start(const char* config)
+{
     // TODO there is a race condition here in creating the thread. This race
     // condition is old so I'm not trying to solve it now.
-    if (this->running) {
+    if (this->running)
+    {
         spdlog::debug("{} cannot start because it is running.", this->name);
         return;
     }
 
     size_t config_len = strlen(config);
-    if (config_len > MAX_INTERACTIVE_CONFIG_SIZE - 1) {
+    if (config_len > MAX_INTERACTIVE_CONFIG_SIZE - 1)
+    {
         spdlog::warn("{} cannot be started because config is longer than {}.",
                      this->name, MAX_INTERACTIVE_CONFIG_SIZE);
         return;
@@ -99,19 +104,24 @@ void ServiceDefinition::start(const char* config) {
     pthread_setname_np(this->thread, this->name);
 }
 
-void ServiceDefinition::stop() {
+void ServiceDefinition::stop()
+{
     // TODO there is a threading issue here with access to the thread
     // and detecting if the service is running.
-    if (this->running) {
+    if (this->running)
+    {
         spdlog::info("Stopping service {}", this->name);
         this->running = false;
         pthread_join(this->thread, nullptr);
-    } else {
+    }
+    else
+    {
         spdlog::debug("Service {} was not running", this->name);
     }
 }
 
-void* ServiceDefinition::run_service(void* user_data) {
+void* ServiceDefinition::run_service(void* user_data)
+{
     auto service = reinterpret_cast<ServiceDefinition*>(user_data);
 
     GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE,

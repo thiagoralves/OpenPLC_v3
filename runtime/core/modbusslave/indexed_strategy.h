@@ -30,13 +30,16 @@ const std::uint16_t NUM_REGISTER_VALUES(1024);
 
 /// Defines the mapping between a located boolean value
 /// and a cache of the value for reading with modbus.
-struct MappedBool {
+struct MappedBool
+{
   MappedBool() : cached_value(0), value(nullptr) {}
   IEC_BOOL cached_value;
   IEC_BOOL *value;
 
-  inline void update_cache() {
-    if (this->value) {
+  inline void update_cache()
+  {
+    if (this->value)
+    {
       this->cached_value = *this->value;
     }
   }
@@ -44,13 +47,15 @@ struct MappedBool {
 
 /// Defines a write that has been submitted via Modbus
 /// but may not have been applied to the located variable yet.
-struct PendingBool {
+struct PendingBool
+{
   PendingBool() : has_pending(false), value(0) {}
   bool has_pending;
   IEC_BOOL value;
 
   /// Set the value and mark it as updated.
-  inline void set(IEC_BOOL val) {
+  inline void set(IEC_BOOL val)
+  {
     this->has_pending = true;
     this->value = val;
   }
@@ -59,19 +64,22 @@ struct PendingBool {
 /// Defines the mapping between a located value
 /// and a cache of the value for reading with modbus.
 template <typename T>
-struct MappedValue {
+struct MappedValue
+{
   MappedValue() : cached_value(0), value(nullptr) {}
   T cached_value;
   T* value;
 
   /// Initialize the glue link and the cached value.
   /// @param val The glue variable to initialize from.
-  inline void init(T* val) {
+  inline void init(T* val)
+  {
     this->value = val;
     this->cached_value = *val;
   }
 
-  inline void update_cache() {
+  inline void update_cache()
+  {
     if (this->value) {
       this->cached_value = *this->value;
     }
@@ -81,13 +89,15 @@ struct MappedValue {
 /// Defines a write that has been submitted via Modbus
 /// but may not have been applied to the located variable yet.
 template <typename T>
-struct PendingValue {
+struct PendingValue
+{
   PendingValue() : has_pending(false), value(0) {}
   bool has_pending;
   T value;
 
   /// Set the value and mark it as updated.
-  inline void set(T val) {
+  inline void set(T val)
+  {
     this->has_pending = true;
     this->value = val;
   }
@@ -101,7 +111,8 @@ typedef std::uint8_t modbus_errno;
 /// constructed so that we can quickly apply changes. This obviously uses
 /// more memory, but is far more efficient over the lifetime of the
 /// application.
-class IndexedStrategy {
+class IndexedStrategy
+{
   public:
     /// Initialize a new instance of the strategy using the bindings.
     IndexedStrategy(const GlueVariablesBinding& bindings);

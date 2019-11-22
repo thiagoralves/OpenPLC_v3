@@ -33,8 +33,9 @@
 
 #ifndef OPLC_IEC_GLUE_DIRECTION
 #define OPLC_IEC_GLUE_DIRECTION
-enum IecLocationDirection {
-    IECLDT_IN,
+enum IecLocationDirection
+{
+    IECLDT_IN = 0,
     IECLDT_OUT,
     IECLDT_MEM,
 };
@@ -42,9 +43,10 @@ enum IecLocationDirection {
 
 #ifndef OPLC_IEC_GLUE_SIZE
 #define OPLC_IEC_GLUE_SIZE
-enum IecLocationSize {
+enum IecLocationSize
+{
     /// Variables that are a single bit
-    IECLST_BIT,
+    IECLST_BIT = 0,
     /// Variables that are 1 byte
     IECLST_BYTE,
     /// Variables that are 2 bytes
@@ -64,8 +66,9 @@ enum IecLocationSize {
 /// by the /// Defines the type of a glue variable (so that we can read and
 /// write). This definition must be consistent with what is produced
 /// by the @ref glue_generator.
-enum IecGlueValueType {
-    IECVT_BOOL,
+enum IecGlueValueType
+{
+    IECVT_BOOL = 0,
     IECVT_BYTE,
     IECVT_SINT,
     IECVT_USINT,
@@ -94,7 +97,8 @@ enum IecGlueValueType {
 ///
 /// This definition must be consistent with what is produced by the @ref
 /// glue_generator.
-struct GlueBoolGroup {
+struct GlueBoolGroup
+{
     /// The first index for this array. If we are iterating over the glue
     /// variables, then this index is superfluous, but it is very helpful
     /// for debugging.
@@ -118,7 +122,8 @@ struct GlueBoolGroup {
 ///
 /// This definition must be consistent with what is produced by the
 /// @ref glue_generator.
-struct GlueVariable {
+struct GlueVariable
+{
     /// The direction of the variable - this is determined by I/Q/M.
     IecLocationDirection dir;
     /// The size of the variable - this is determined by X/B/W/D/L.
@@ -142,7 +147,8 @@ struct GlueVariable {
 /// This structure wraps up items that are available as globals, but this
 /// allows a straightforward way to inject definitions into tests, so it is
 /// preferred to use this structure rather than globals.
-class GlueVariablesBinding {
+class GlueVariablesBinding
+{
  public:
     /// Initialize a new instance of the glue bindings.
     /// @param buffer_lock A lock for accessing the value part of bindings

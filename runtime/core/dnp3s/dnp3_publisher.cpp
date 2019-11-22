@@ -39,10 +39,12 @@ Dnp3Publisher::Dnp3Publisher(
 { }
 
 template<class T>
-T cast_variable(const GlueVariable* var) {
+T cast_variable(const GlueVariable* var)
+{
     T val;
     void* value = var->value;
-    switch (var->type) {
+    switch (var->type)
+    {
         case IECVT_SINT:
         {
             IEC_SINT* tval = reinterpret_cast<IEC_SINT*>(value);
@@ -101,38 +103,54 @@ T cast_variable(const GlueVariable* var) {
 /// Writing to the DNP3 channel happens asynchronously, so completion of this
 /// function doesn't mean anything has been sent.
 /// @return the number of values that were sent to the channel.
-uint32_t Dnp3Publisher::ExchangeGlue() {
+uint32_t Dnp3Publisher::ExchangeGlue()
+{
     uint32_t num_writes(0);
     asiodnp3::UpdateBuilder builder;
 
     spdlog::trace("Writing glue variables to DNP3 points");
 
-    for (uint16_t i(0); i < measurements.size; ++i) {
+    for (uint16_t i(0); i < measurements.size; ++i)
+    {
         const DNP3MappedGlueVariable& mapping = measurements.items[i];
         const uint8_t group = mapping.group;
         const uint16_t point_index_number = mapping.point_index_number;
         const GlueVariable* var = mapping.variable;
         void* value = var->value;
 
-        if (group == GROUP_BINARY_INPUT || group == GROUP_BINARY_OUTPUT_STATUS) {
+        if (group == GROUP_BINARY_INPUT || group == GROUP_BINARY_OUTPUT_STATUS)
+        {
             const GlueBoolGroup* bool_group = reinterpret_cast<const GlueBoolGroup*>(value);
-            if (group == GROUP_BINARY_INPUT) {
+            if (group == GROUP_BINARY_INPUT)
+            {
                 builder.Update(Binary(*(bool_group->values[0])), point_index_number);
-            } else {
+            }
+            else
+            {
                 builder.Update(BinaryOutputStatus(*(bool_group->values[0])), point_index_number);
             }
-        } else if (group == GROUP_ANALOG_INPUT || group == GROUP_ANALOG_OUTPUT_STATUS) {
+        }
+        else if (group == GROUP_ANALOG_INPUT || group == GROUP_ANALOG_OUTPUT_STATUS)
+        {
             double double_val = cast_variable<double>(var);
-            if (group == GROUP_ANALOG_INPUT) {
+            if (group == GROUP_ANALOG_INPUT)
+            {
                 builder.Update(Analog(double_val), point_index_number);
-            } else {
+            }
+            else
+            {
                 builder.Update(AnalogOutputStatus(double_val), point_index_number);
             }
-        } else if (group == GROUP_COUNTER || group == GROUP_FROZEN_COUNTER) {
+        }
+        else if (group == GROUP_COUNTER || group == GROUP_FROZEN_COUNTER)
+        {
             uint32_t int_val = cast_variable<uint32_t>(var);
-            if (group == GROUP_COUNTER) {
+            if (group == GROUP_COUNTER)
+            {
                 builder.Update(Counter(int_val), point_index_number);
-            } else {
+            }
+            else
+            {
                 builder.Update(FrozenCounter(int_val), point_index_number);
             }
         }

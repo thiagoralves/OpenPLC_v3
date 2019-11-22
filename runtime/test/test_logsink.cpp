@@ -19,6 +19,7 @@
 #include "catch.hpp"
 
 using Catch::Matchers::Contains;
+using namespace spdlog;
 
 SCENARIO("logsink", "")
 {
@@ -41,7 +42,8 @@ SCENARIO("logsink", "")
 
             fmt::memory_buffer buf;
             fmt::format_to(buf, "Hello");
-            spdlog::details::log_msg msg(&logger_name, spdlog::level::info, spdlog::string_view_t(buf.data(), buf.size()));
+            details::log_msg msg(&logger_name, level::info,
+                                 string_view_t(buf.data(), buf.size()));
 
             sink->log(msg);
             std::string data = sink->data();
@@ -54,11 +56,13 @@ SCENARIO("logsink", "")
 
             fmt::memory_buffer buf1;
             fmt::format_to(buf1, "Hello");
-            spdlog::details::log_msg msg1(&logger_name, spdlog::level::info, spdlog::string_view_t(buf1.data(), buf1.size()));
+            details::log_msg msg1(&logger_name, level::info,
+                                  string_view_t(buf1.data(), buf1.size()));
 
             fmt::memory_buffer buf2;
             fmt::format_to(buf2, "There");
-            spdlog::details::log_msg msg2(&logger_name, spdlog::level::info, spdlog::string_view_t(buf2.data(), buf2.size()));
+            details::log_msg msg2(&logger_name, level::info,
+                                  string_view_t(buf2.data(), buf2.size()));
 
             sink->log(msg1);
             sink->log(msg2);
@@ -73,11 +77,13 @@ SCENARIO("logsink", "")
 
             fmt::memory_buffer buf1;
             fmt::format_to(buf1, "Hello");
-            spdlog::details::log_msg msg1(&logger_name, spdlog::level::info, spdlog::string_view_t(buf1.data(), buf1.size()));
+            details::log_msg msg1(&logger_name, level::info,
+                                  string_view_t(buf1.data(), buf1.size()));
 
             fmt::memory_buffer buf2;
             fmt::format_to(buf2, "There");
-            spdlog::details::log_msg msg2(&logger_name, spdlog::level::info, spdlog::string_view_t(buf2.data(), buf2.size()));
+            details::log_msg msg2(&logger_name, level::info,
+                                  string_view_t(buf2.data(), buf2.size()));
 
             sink->log(msg1);
             sink->log(msg2);
@@ -86,17 +92,20 @@ SCENARIO("logsink", "")
             REQUIRE_THAT(data, Contains("There\n"));
         }
 
-        WHEN("message is longer than buffer size then truncates but still has newline")
+        WHEN("message is longer than buffer size truncates still has newline")
         {
             std::string logger_name = "test";
 
             fmt::memory_buffer buf;
-            fmt::format_to(buf, "01234567890123456789012345678901234567890123456789ABCDEFG");
-            spdlog::details::log_msg msg(&logger_name, spdlog::level::info, spdlog::string_view_t(buf.data(), buf.size()));
+            fmt::format_to(buf, "012345678901234567890123456789"\
+                           "01234567890123456789ABCDEFG");
+            details::log_msg msg(&logger_name, level::info,
+                                 string_view_t(buf.data(), buf.size()));
 
             sink->log(msg);
             std::string data = sink->data();
-            REQUIRE_THAT(data, Contains("0123456789012345678901234567890123456789012345678"));
+            REQUIRE_THAT(data, Contains("012345678901234567890123456789"\
+                         "0123456789012345678"));
         }
 
         WHEN("multiple messages exhaust buffer then starts from beginning")
@@ -105,11 +114,13 @@ SCENARIO("logsink", "")
 
             fmt::memory_buffer buf;
             fmt::format_to(buf, "0123456789");
-            spdlog::details::log_msg msg(&logger_name, spdlog::level::info, spdlog::string_view_t(buf.data(), buf.size()));
+            details::log_msg msg(&logger_name, level::info,
+                                 string_view_t(buf.data(), buf.size()));
 
             fmt::memory_buffer buf2;
             fmt::format_to(buf2, "ABCDEFG");
-            spdlog::details::log_msg msg2(&logger_name, spdlog::level::info, spdlog::string_view_t(buf2.data(), buf2.size()));
+            details::log_msg msg2(&logger_name, level::info,
+                                  string_view_t(buf2.data(), buf2.size()));
 
             sink->log(msg);
             sink->log(msg);

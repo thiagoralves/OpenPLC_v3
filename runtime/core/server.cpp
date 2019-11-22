@@ -95,7 +95,7 @@ int createSocket(uint16_t port)
 
     //Create TCP Socket
     socket_fd = socket(AF_INET,SOCK_STREAM,0);
-    if (socket_fd<0)
+    if (socket_fd < 0)
     {
         spdlog::error("Server: error creating stream socket => {}", strerror(errno));
         return -1;
@@ -175,7 +175,8 @@ int listenToClient(int client_fd, unsigned char *buffer)
 }
 
 /// Arguments passed to the server thread.
-struct ServerArgs {
+struct ServerArgs
+{
     /// The client file descriptor for reading and writing.
     int client_fd;
     /// Set to false when the server should terminate.
@@ -200,9 +201,6 @@ void *handleConnections(void *arguments)
 
     while(*args->run)
     {
-        //unsigned char buffer[NET_BUFFER_SIZE];
-        //int messageSize;
-
         messageSize = listenToClient(args->client_fd, buffer);
         if (messageSize <= 0 || messageSize > NET_BUFFER_SIZE)
         {
@@ -253,7 +251,8 @@ void startServer(uint16_t port, volatile bool& run_server, process_message_fn pr
         }
 
         pthread_t thread;
-        auto args = new ServerArgs {
+        auto args = new ServerArgs
+        {
             .client_fd=client_fd,
             .run=&run_server,
             .process_message=process_message,
@@ -261,9 +260,12 @@ void startServer(uint16_t port, volatile bool& run_server, process_message_fn pr
         };
         spdlog::trace("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
         int success = pthread_create(&thread, NULL, handleConnections, args);
-        if (success == 0) {
+        if (success == 0)
+        {
             pthread_detach(thread);
-        } else {
+        }
+        else
+        {
             delete args;
         }
     }

@@ -32,11 +32,14 @@ using namespace std;
 const GlueVariable* GlueVariablesBinding::find(IecLocationDirection dir,
                                                IecLocationSize size,
                                                uint16_t msi,
-                                               uint8_t lsi) const {
-    for (uint16_t i = 0; i < this->size; ++i) {
+                                               uint8_t lsi) const
+{
+    for (uint16_t i = 0; i < this->size; ++i)
+    {
         const GlueVariable& cur_var = glue_variables[i];
         if (cur_var.dir == dir && cur_var.size == size
-            && cur_var.msi == msi && cur_var.lsi == lsi) {
+            && cur_var.msi == msi && cur_var.lsi == lsi)
+        {
             return &glue_variables[i];
         }
     }
@@ -44,13 +47,16 @@ const GlueVariable* GlueVariablesBinding::find(IecLocationDirection dir,
     return nullptr;
 }
 
-const GlueVariable* GlueVariablesBinding::find(const string& location) const {
-    if (location.length() < 4 || location[0] != '%') {
+const GlueVariable* GlueVariablesBinding::find(const string& location) const
+{
+    if (location.length() < 4 || location[0] != '%')
+    {
         return nullptr;
     }
 
     IecLocationDirection direction;
-    switch (location[1]) {
+    switch (location[1])
+    {
         case 'I':
             direction = IECLDT_IN;
             break;
@@ -65,7 +71,8 @@ const GlueVariable* GlueVariablesBinding::find(const string& location) const {
     }
 
     IecLocationSize size;
-    switch (location[2]) {
+    switch (location[2])
+    {
         case 'X':
             size = IECLST_BIT;
             break;
@@ -90,7 +97,8 @@ const GlueVariable* GlueVariablesBinding::find(const string& location) const {
 
     // Do we have more characters left in the string to read for lsi?
     size_t start_lsi = end_msi + 1 - location.c_str();
-    if (start_lsi >= location.length()) {
+    if (start_lsi >= location.length())
+    {
         find(direction, size, msi, 0);
     }
 
@@ -101,12 +109,15 @@ const GlueVariable* GlueVariablesBinding::find(const string& location) const {
 }
 
 int32_t GlueVariablesBinding::find_max_msi(IecGlueValueType type,
-                                           IecLocationDirection dir) const {
+                                           IecLocationDirection dir) const
+{
     int32_t max_index(-1);
 
     const GlueVariable* glue_variables = this->glue_variables;
-    for (size_t index = 0; index < this->size; ++index) {
-        if (type == glue_variables[index].type && dir == glue_variables[index].dir) {
+    for (size_t index = 0; index < this->size; ++index)
+    {
+        if (type == glue_variables[index].type && dir == glue_variables[index].dir)
+        {
             max_index = max(max_index, static_cast<int32_t>(glue_variables[index].msi));
         }
     }

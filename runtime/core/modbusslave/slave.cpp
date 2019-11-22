@@ -73,7 +73,8 @@ int modbus_error(unsigned char *buffer, int mb_error)
 }
 
 inline int read_sizes(unsigned char* buffer, int buffer_size, int16_t& start,
-               int16_t& num_items) {
+               int16_t& num_items)
+{
     // This request must have at least 12 bytes. If it doesn't, it's a corrupted message
     if (buffer_size < 12)
     {
@@ -87,8 +88,8 @@ inline int read_sizes(unsigned char* buffer, int buffer_size, int16_t& start,
 }
 
 inline int read_sized_bytes(unsigned char* buffer, int buffer_size, int16_t& start,
-                   int16_t& num_coils, int16_t& num_bytes) {
-
+                   int16_t& num_coils, int16_t& num_bytes)
+{
     int ret = read_sizes(buffer, buffer_size, start, num_coils);
 
     // Calculate the size of the message in bytes - they are packed into
@@ -96,7 +97,8 @@ inline int read_sized_bytes(unsigned char* buffer, int buffer_size, int16_t& sta
     // if that many were requested.
     num_bytes = ((num_coils + 7) / 8);
 
-    if (num_bytes > 255) {
+    if (num_bytes > 255)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
 
@@ -112,7 +114,8 @@ int read_coils(unsigned char *buffer, int buffer_size, IndexedStrategy* strategy
     int16_t coil_data_length;
     int16_t byte_data_length;
     int ret = read_sized_bytes(buffer, buffer_size, start, coil_data_length, byte_data_length);
-    if (ret != 0) {
+    if (ret != 0)
+	{
         return ret;
     }
 
@@ -124,7 +127,8 @@ int read_coils(unsigned char *buffer, int buffer_size, IndexedStrategy* strategy
     buffer[8] = byte_data_length;
 
     modbus_errno err = strategy->ReadCoils(start, coil_data_length, reinterpret_cast<uint8_t*>(buffer + 9));
-    if (err) {
+    if (err)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
 
@@ -140,7 +144,8 @@ int read_discrete_inputs(unsigned char *buffer, int buffer_size, IndexedStrategy
     int16_t input_data_length;
     int16_t byte_data_length;
     int ret = read_sized_bytes(buffer, buffer_size, start, input_data_length, byte_data_length);
-    if (ret != 0) {
+    if (ret != 0)
+	{
         return ret;
     }
 
@@ -150,7 +155,8 @@ int read_discrete_inputs(unsigned char *buffer, int buffer_size, IndexedStrategy
     buffer[8] = byte_data_length;     //Number of bytes of data
 
     modbus_errno err = strategy->ReadDiscreteInputs(start, input_data_length, reinterpret_cast<uint8_t*>(buffer + 9));
-    if (err) {
+    if (err)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
 
@@ -165,7 +171,8 @@ int read_holding_registers(unsigned char *buffer, int buffer_size, IndexedStrate
     int16_t start;
     int16_t num_registers;
     int ret = read_sizes(buffer, buffer_size, start, num_registers);
-    if (ret != 0) {
+    if (ret != 0)
+	{
         return ret;
     }
 
@@ -177,7 +184,8 @@ int read_holding_registers(unsigned char *buffer, int buffer_size, IndexedStrate
     buffer[8] = byte_data_length;     //Number of bytes of data
 
     modbus_errno err = strategy->ReadHoldingRegisters(start, num_registers, reinterpret_cast<uint8_t*>(buffer + 9));
-    if (err) {
+    if (err)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
 
@@ -192,7 +200,8 @@ int read_input_registers(unsigned char *buffer, int buffer_size, IndexedStrategy
     int16_t start;
     int16_t num_registers;
     int ret = read_sizes(buffer, buffer_size, start, num_registers);
-    if (ret != 0) {
+    if (ret != 0)
+	{
         return ret;
     }
 
@@ -204,7 +213,8 @@ int read_input_registers(unsigned char *buffer, int buffer_size, IndexedStrategy
     buffer[8] = byte_data_length;     //Number of bytes of data
 
     modbus_errno err = strategy->ReadInputRegisters(start, num_registers, reinterpret_cast<uint8_t*>(buffer + 9));
-    if (err) {
+    if (err)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
 
@@ -217,7 +227,8 @@ int write_coil(unsigned char* buffer, int buffer_size, IndexedStrategy* strategy
     bool value = mb_to_word(buffer[10], buffer[11]) != 0;
 
     modbus_errno err = strategy->WriteCoil(start, value);
-    if (err) {
+    if (err)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
 
@@ -232,7 +243,8 @@ int write_holding_register(unsigned char* buffer, int buffer_size, IndexedStrate
     int16_t start = mb_to_word(buffer[8], buffer[9]);
 
     modbus_errno err = strategy->WriteHoldingRegisters(start, 1, buffer + 9);
-    if (err) {
+    if (err)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
 
@@ -248,7 +260,8 @@ int write_multiple_coils(unsigned char* buffer, int buffer_size, IndexedStrategy
     int16_t input_data_length;
     int16_t byte_data_length;
     int ret = read_sized_bytes(buffer, buffer_size, start, input_data_length, byte_data_length);
-    if (ret != 0) {
+    if (ret != 0)
+	{
         return ret;
     }
 
@@ -258,7 +271,8 @@ int write_multiple_coils(unsigned char* buffer, int buffer_size, IndexedStrategy
     }
 
     modbus_errno err = strategy->WriteMultipleCoils(start, input_data_length, buffer + 13);
-    if (err) {
+    if (err)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
 
@@ -273,17 +287,20 @@ int write_multiple_registers(unsigned char* buffer, int buffer_size, IndexedStra
     int16_t start;
     int16_t num_registers;
     int ret = read_sizes(buffer, buffer_size, start, num_registers);
-    if (ret != 0) {
+    if (ret != 0)
+	{
         return ret;
     }
 
     // Check that we have enough bytes
-    if (buffer_size < (num_registers * 2 + 13) || buffer[12] != num_registers * 2) {
+    if (buffer_size < (num_registers * 2 + 13) || buffer[12] != num_registers * 2)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_VALUE);
     }
 
     modbus_errno err = strategy->WriteHoldingRegisters(start, num_registers, buffer + 13);
-    if (err) {
+    if (err)
+	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
     }
 
@@ -298,7 +315,7 @@ int write_multiple_registers(unsigned char* buffer, int buffer_size, IndexedStra
 /// @param buffer_size
 /// @param user_data The mapping strategy.
 /// @return size of the response message in bytes
-int modbus_process_message(unsigned char *buffer, int buffer_size, void* user_data)
+int16_t modbus_process_message(unsigned char *buffer, int16_t buffer_size, void* user_data)
 {
     auto strategy = reinterpret_cast<IndexedStrategy*>(user_data);
 
@@ -308,7 +325,8 @@ int modbus_process_message(unsigned char *buffer, int buffer_size, void* user_da
         return modbus_error(buffer, ERR_ILLEGAL_FUNCTION);
     }
 
-    switch (buffer[7]) {
+    switch (buffer[7])
+	{
         case MB_FC_READ_COILS:
             return read_coils(buffer, buffer_size, strategy);
         case MB_FC_READ_INPUTS:
@@ -332,7 +350,8 @@ int modbus_process_message(unsigned char *buffer, int buffer_size, void* user_da
 
 /// Arguments that are passed to the thread to exchange modbus data with the
 /// runtime.
-struct ModbusExchangeArgs {
+struct ModbusExchangeArgs
+{
     IndexedStrategy* strategy;
     volatile bool* run;
     std::chrono::milliseconds interval;
@@ -340,10 +359,12 @@ struct ModbusExchangeArgs {
 
 /// The main function for the thread that is responsible for exchanging
 /// modbus data with the located variables.
-void* modbus_exchange_data(void* args) {
+void* modbus_exchange_data(void* args)
+{
     auto exchange_args = reinterpret_cast<ModbusExchangeArgs*>(args);
 
-    while (*exchange_args->run) {
+    while (*exchange_args->run)
+	{
         spdlog::trace("Exchanging modbus master data");
         exchange_args->strategy->Exchange();
         this_thread::sleep_for(exchange_args->interval);
@@ -356,7 +377,8 @@ void* modbus_exchange_data(void* args) {
 
 /// Container for reading in configuration from the config.ini
 /// This is populated with values from the config file.
-struct ModbusSlaveConfig {
+struct ModbusSlaveConfig
+{
     ModbusSlaveConfig() :
         address("127.0.0.1"),
         port(502),
@@ -391,20 +413,29 @@ struct ModbusSlaveConfig {
 };
 
 int modbus_slave_cfg_handler(void* user_data, const char* section,
-                            const char* name, const char* value) {
-    if (strcmp("modbuslave", section) != 0) {
+                            const char* name, const char* value)
+{
+    if (strcmp("modbuslave", section) != 0)
+	{
         return 0;
     }
 
     auto config = reinterpret_cast<ModbusSlaveConfig*>(user_data);
 
-    if (strcmp(name, "port") == 0) {
+    if (strcmp(name, "port") == 0)
+	{
         config->port = atoi(value);
-    } else if (strcmp(name, "address") == 0) {
+    }
+	else if (strcmp(name, "address") == 0)
+	{
         config->address = value;
-    } else if (strcmp(name, "enabled") == 0) {
+    }
+	else if (strcmp(name, "enabled") == 0)
+	{
         // Nothing to do here - we already know this is enabled
-    } else {
+    }
+	else
+	{
         spdlog::warn("Unknown configuration item {}", name);
         return -1;
     }
@@ -415,26 +446,32 @@ int modbus_slave_cfg_handler(void* user_data, const char* section,
 int8_t modbus_slave_run(oplc::config_stream& cfg_stream,
                         const char* cfg_overrides,
                         const GlueVariablesBinding& bindings,
-                        volatile bool& run) {
+                        volatile bool& run)
+{
     ModbusSlaveConfig config;
 
-    ini_parse_stream(oplc::istream_fgets, cfg_stream.get(), modbus_slave_cfg_handler, &config);
+    ini_parse_stream(oplc::istream_fgets, cfg_stream.get(),
+	                 modbus_slave_cfg_handler, &config);
 
     cfg_stream.reset(nullptr);
 
     IndexedStrategy strategy(bindings);
 
     pthread_t exchange_data_thread;
-    auto args = new ModbusExchangeArgs {
+    auto args = new ModbusExchangeArgs
+	{
         .strategy=&strategy,
         .run=&run,
         .interval=std::chrono::milliseconds(100)
     };
 
     int ret = pthread_create(&exchange_data_thread, NULL, modbus_exchange_data, args);
-    if (ret == 0) {
+    if (ret == 0)
+	{
         pthread_detach(exchange_data_thread);
-    } else {
+    }
+	else
+	{
         delete args;
     }
 
@@ -447,8 +484,8 @@ int8_t modbus_slave_run(oplc::config_stream& cfg_stream,
 }
 
 void modbus_slave_service_run(const GlueVariablesBinding& binding,
-                              volatile bool& run, const char* config) {
-
+                              volatile bool& run, const char* config)
+{
     auto cfg_stream = oplc::open_config();
     modbus_slave_run(cfg_stream, config, binding, run);
 }

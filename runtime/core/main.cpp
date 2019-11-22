@@ -55,9 +55,11 @@ uint8_t run_openplc = 1;  // Variable to control OpenPLC Runtime execution
 /// \param ts
 /// \param delay in milliseconds
 ////////////////////////////////////////////////////////////////////////////////
-void sleep_until(struct timespec *ts, int delay) {
+void sleep_until(struct timespec *ts, int delay)
+{
     ts->tv_nsec += delay;
-    if (ts->tv_nsec >= 1000*1000*1000) {
+    if (ts->tv_nsec >= 1000*1000*1000)
+    {
         ts->tv_nsec -= 1000*1000*1000;
         ts->tv_sec++;
     }
@@ -71,9 +73,12 @@ void sleep_until(struct timespec *ts, int delay) {
 /// \param
 /// \return
 ////////////////////////////////////////////////////////////////////////////////
-bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber) {
-    for (int i = 0; i < vector_size; i++) {
-        if (ignored_vector[i] == pinNumber) {
+bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
+{
+    for (int i = 0; i < vector_size; i++)
+    {
+        if (ignored_vector[i] == pinNumber)
+        {
             return false;
         }
     }
@@ -84,21 +89,26 @@ bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber) {
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Disables all outputs
 ////////////////////////////////////////////////////////////////////////////////
-void disableOutputs() {
+void disableOutputs()
+{
     // Disable digital outputs
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-        for (int j = 0; j < 8; j++) {
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
             if (bool_output[i][j] != NULL) *bool_output[i][j] = 0;
         }
     }
 
     // Disable byte outputs
-    for (int i = 0; i < BUFFER_SIZE; i++) {
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
         if (byte_output[i] != NULL) *byte_output[i] = 0;
     }
 
     // Disable analog outputs
-    for (int i = 0; i < BUFFER_SIZE; i++) {
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
         if (int_output[i] != NULL) *int_output[i] = 0;
     }
 }
@@ -106,7 +116,8 @@ void disableOutputs() {
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Special Functions
 ////////////////////////////////////////////////////////////////////////////////
-void handleSpecialFunctions() {
+void handleSpecialFunctions()
+{
     // Current time [%ML1024]
     struct tm *current_time;
     time_t rawtime;
@@ -116,24 +127,28 @@ void handleSpecialFunctions() {
     current_time = localtime(&rawtime);
 
     rawtime = rawtime - timezone;
-    if (current_time->tm_isdst > 0) {
+    if (current_time->tm_isdst > 0)
+    {
         rawtime = rawtime + 3600;
     }
 
-    if (special_functions[0] != NULL) {
+    if (special_functions[0] != NULL)
+    {
         *special_functions[0] = rawtime;
     }
 
     // Number of cycles [%ML1025]
     cycle_counter++;
-    if (special_functions[1] != NULL) {
+    if (special_functions[1] != NULL)
+    {
         *special_functions[1] = cycle_counter;
     }
 
     // Insert other special functions below
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     initialize_logging(argc, argv);
     spdlog::info("OpenPLC Runtime starting...");
 
@@ -152,7 +167,8 @@ int main(int argc, char **argv) {
     //======================================================
     //                    MAIN LOOP
     //======================================================
-    while (run_openplc) {
+    while (run_openplc)
+    {
         // Read input image - this method tries to get the lock
         // so don't put it in the lock context.
         updateBuffersIn();

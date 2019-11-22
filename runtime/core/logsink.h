@@ -33,7 +33,8 @@
 /// use to query logs in memory so that they can be provided to a front
 /// end in an efficient (but not necessarily complete) manner.
 ////////////////////////////////////////////////////////////////////////////////
-class buffered_sink : public spdlog::sinks::base_sink<std::mutex> {
+class buffered_sink : public spdlog::sinks::base_sink<std::mutex>
+{
  public:
     /// \brief Initialize a new instance of the sink with the provided buffer.
     ///
@@ -50,12 +51,14 @@ class buffered_sink : public spdlog::sinks::base_sink<std::mutex> {
 
     /// \brief Gets the data from this sink.
     /// \return The data formatted as a string.
-    std::string data() {
+    std::string data()
+    {
         return std::string(reinterpret_cast<char*>(this->buffer));
     }
 
  protected:
-    void sink_it_(const spdlog::details::log_msg& msg) override {
+    void sink_it_(const spdlog::details::log_msg& msg) override
+    {
         fmt::memory_buffer formatted;
         sink::formatter_->format(msg, formatted);
 
@@ -63,7 +66,8 @@ class buffered_sink : public spdlog::sinks::base_sink<std::mutex> {
 
         // Where will our message end?
         std::size_t next_end_pos = end_pos + msg_size;
-        if (next_end_pos > buffer_size - 1) {
+        if (next_end_pos > buffer_size - 1)
+        {
             // If adding this message would put us past the end
             // of the buffer, then start back at the beginning.
             end_pos = 0;

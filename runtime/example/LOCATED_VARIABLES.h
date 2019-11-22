@@ -15,7 +15,6 @@
 /** @addtogroup example_app
   *  @{ */
 
-
 // A simple application that defines the items normally that are provided
 // by the glue generator and MATIEC. This allows us to do a simple check
 // of the ability to compile everything together, which is useful since

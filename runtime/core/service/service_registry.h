@@ -21,7 +21,7 @@
 
 class ServiceDefinition;
 
-/// Finds the service in the registry by the name of the service.
+/// @brief Finds the service in the registry by the name of the service.
 /// @param name The identifier for the service.
 /// @return The service if found, or nullptr if there is no such service.
 ServiceDefinition* services_find(const char* name);

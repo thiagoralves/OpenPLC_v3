@@ -55,7 +55,8 @@ const std::uint8_t GROUP_FROZEN_COUNTER(21);
 /// These are indexed for fast lookup based on the point index number and are
 /// therefore used for commands that are received from the DNP3 master.
 ////////////////////////////////////////////////////////////////////////////////
-struct Dnp3IndexedGroup {
+struct Dnp3IndexedGroup
+{
     /// The size of the items array
     std::uint16_t size;
     /// The items array. Members in this array may be nullptr if they are
@@ -67,7 +68,8 @@ struct Dnp3IndexedGroup {
 /// @brief Defines a glue variable that is mapped to a particular group and
 /// variation for DNP3.
 ////////////////////////////////////////////////////////////////////////////////
-struct DNP3MappedGlueVariable {
+struct DNP3MappedGlueVariable
+{
     /// The DNP3 group for this variable.
     std::uint8_t group;
     /// The DNP3 point index number for this variable.
@@ -81,7 +83,8 @@ struct DNP3MappedGlueVariable {
 /// to DNP3. You can essentially iterate over this list to find every
 /// located variable that is mapped.
 ////////////////////////////////////////////////////////////////////////////////
-struct Dnp3MappedGroup {
+struct Dnp3MappedGroup
+{
     /// The size of the items array
     std::uint16_t size;
     /// The items array. Members in this array may be nullptr if they are
@@ -89,10 +92,13 @@ struct Dnp3MappedGroup {
     DNP3MappedGlueVariable* items;
 
     /// Gets the number of items in the specified group.
-    std::uint16_t group_size(const std::uint8_t group) {
+    std::uint16_t group_size(const std::uint8_t group)
+    {
         std::uint16_t num(0);
-        for (std::uint16_t i(0); i < size; ++i) {
-            if (items[i].group == group) {
+        for (std::uint16_t i(0); i < size; ++i)
+        {
+            if (items[i].group == group)
+            {
                 num += 1;
             }
         }
@@ -103,7 +109,8 @@ struct Dnp3MappedGroup {
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief The mapping of glue variables into this DNP3 outstation.
 ////////////////////////////////////////////////////////////////////////////////
-class Dnp3BoundGlueVariables {
+class Dnp3BoundGlueVariables
+{
  public:
     Dnp3BoundGlueVariables(
         std::mutex* buffer_lock,
