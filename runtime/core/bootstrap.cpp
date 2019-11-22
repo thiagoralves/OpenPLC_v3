@@ -126,7 +126,6 @@ void bootstrap()
     // a standard part the platform where we have implemented capabilities
     // for specific hardware targes.
     initializeHardware();
-    initializeMB();
     // User provided logic that runs on initialization.
     initCustomLayer();
     updateBuffersIn();
@@ -139,7 +138,7 @@ void bootstrap()
     //                 SERVICE INITIALIZATION
     //======================================================
 
-    // Initializes any services that is known and wants to participate
+    // Initializes any services that are known and want to participate
     // in bootstrapping.
     services_init();
 

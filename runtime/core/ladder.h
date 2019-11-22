@@ -139,6 +139,7 @@ int processEnipMessage(unsigned char *buffer, int buffer_size, void* user_data);
 // pccc.cpp ADDED Ulmer
 uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size);
 
+
 // modbus_master.cpp
 void initializeMB();
 void *querySlaveDevices(void *arg);

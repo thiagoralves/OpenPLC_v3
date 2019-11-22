@@ -160,7 +160,7 @@ int interactive_open_socket(uint16_t port) {
 
     // Set SO_REUSEADDR
     int enable = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR,
         &enable, sizeof(int)) < 0)
     {
         perror("setsockopt(SO_REUSEADDR) failed");
