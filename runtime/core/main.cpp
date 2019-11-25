@@ -166,30 +166,24 @@ int main(int argc, char **argv)
     //======================================================
     //                    MAIN LOOP
     //======================================================
-    while (run_openplc)
-    {
+    while (run_openplc) {
+
         // Read input image - this method tries to get the lock
         // so don't put it in the lock context.
         updateBuffersIn();
 
         {
             std::lock_guard<std::mutex> guard(bufferLock);
-            // Make sure the buffer pointers are correct and
-            // attached to the user variables
-            glueVars();
-
-            // Read input image
-            updateBuffersIn();
-
             updateCustomIn();
             // Update input image table with data from slave devices
-            updateBuffersIn_MB();
+            services_before_cycle();
             handleSpecialFunctions();
             // Execute plc program logic
             config_run__(__tick++);
             updateCustomOut();
             // Update slave devices with data from the output image table
-            updateBuffersOut_MB();
+
+            services_after_cycle();
         }
 
         // Write output image - this method tries to get the lock

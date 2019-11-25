@@ -20,25 +20,19 @@
 #include "interactive_server.h"
 #include "pstorage.h"
 #include "../modbusslave/slave.h"
-#include "../modbusmaster/master.h"
+#include "../modbusmaster/master_indexed.h"
 #include "../dnp3s/dnp3.h"
 
 using namespace std;
-
-ServiceInitFunction pstorage_init_fn(pstorage_service_init);
-ServiceStartFunction pstorage_start_service_fn(pstorage_service_run);
-ServiceStartFunction dnp3s_start_service_fn(dnp3s_service_run);
-ServiceStartFunction interactive_start_service_fn(interactive_service_run);
-ServiceStartFunction modbus_slave_start_service_fn(modbus_slave_service_run);
-ServiceStartFunction modbus_master_start_service_fn(modbus_master_service_run);
+using namespace oplc::modbusm;
 
 ServiceDefinition* services[] = {
-    new ServiceDefinition("interactive", interactive_start_service_fn),
-    new ServiceDefinition("pstorage", pstorage_start_service_fn, pstorage_init_fn),
-    new ServiceDefinition("modbusslave", modbus_slave_start_service_fn),
-    new ServiceDefinition("modbusmaster", modbus_master_start_service_fn),
+    new ServiceDefinition("interactive", interactive_service_run),
+    new ServiceDefinition("pstorage", pstorage_service_run, pstorage_service_init),
+    new ServiceDefinition("modbusslave", modbus_slave_service_run),
+    new ServiceDefinition("modbusmaster", modbus_master_service_run, modbus_master_before_cycle, modbus_master_after_cycle),
 #ifdef OPLC_DNP3_OUTSTATION
-    new ServiceDefinition("dnp3s", dnp3s_start_service_fn),
+    new ServiceDefinition("dnp3s", dnp3s_service_run),
 #endif
 };
 
@@ -69,5 +63,17 @@ void services_finalize()
 {
     for_each(begin(services), end(services), [] (ServiceDefinition* def) {
         def->finalize();
+    });
+}
+
+void services_before_cycle() {
+    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def) {
+        def->before_cycle();
+    });
+}
+
+void services_after_cycle() {
+    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def) {
+        def->after_cycle();
     });
 }

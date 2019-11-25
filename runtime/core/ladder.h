@@ -122,7 +122,7 @@ extern uint8_t run_openplc;
 void handleSpecialFunctions();
 
 // server.cpp
-typedef int (*process_message_fn)(unsigned char *buffer, int buffer_size, void* user_data);
+typedef std::int16_t (*process_message_fn)(unsigned char *buffer, std::int16_t buffer_size, void* user_data);
 void startServer(uint16_t port, volatile bool& run_server, process_message_fn process_message, void* user_data);
 int getSO_ERROR(int fd);
 void closeSocket(int fd);
@@ -134,14 +134,10 @@ extern bool run_enip;
 extern time_t start_time;
 
 // enip.cpp
-int processEnipMessage(unsigned char *buffer, int buffer_size, void* user_data);
+std::int16_t processEnipMessage(unsigned char *buffer, std::int16_t buffer_size, void* user_data);
 
 // pccc.cpp ADDED Ulmer
 uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size);
-
-// modbus_master.cpp
-void updateBuffersIn_MB();
-void updateBuffersOut_MB();
 
 void bootstrap();
 

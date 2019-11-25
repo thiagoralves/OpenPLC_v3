@@ -20,6 +20,7 @@
  */
 
 #include <cstring>
+#include <functional>
 #include <fstream>
 #include <istream>
 #include <memory>
@@ -51,7 +52,7 @@ inline bool ini_matches(const char* section_expected,
         && strcmp(value_expected, value) == 0;
 }
 
-/// Compare a INI declaration name that has a postfix with an index,
+/// @brief Compare a INI declaration name that has a postfix with an index,
 /// for example "example.1". This returns 0 if the provided name matches
 /// the expected value and there is a postfix. Returns the postfix
 /// number to the caller.
@@ -65,9 +66,14 @@ inline bool ini_matches(const char* section_expected,
 /// a marker for the index.
 /// @param index If the return value of this function is 0, then this will
 /// contain the index that was read as the postfix.
+/// @param max_index The maximum index this will return. If the read index
+/// is greater than this value, then this will return non-zero.
+/// This maximum is designed to prevent unintentionally allocating far more
+/// space than would be expected under normal use.
 /// @return 0 if there is a match, otherwise non-zero.
-inline int cmpnameid(const char* name, const char* expected,
-                     std::uint8_t* index) {
+inline int strcmp_with_id(const char* name, const char* expected,
+                          std::uint8_t max_index,
+                          std::uint8_t* index) {
     size_t expected_len = strlen(expected);
     int ret = strncmp(name, expected, expected_len);
     if (ret != 0) {
@@ -75,15 +81,18 @@ inline int cmpnameid(const char* name, const char* expected,
     }
 
     size_t name_len = strlen(name);
-    if (name_len > expected_len + 1 && name[expected_len] == '.') {
-        *index = atoi(name + (expected_len + 1));
-        return 0;
+    if (name_len >= expected_len + 2 && name[expected_len] == '.') {
+        auto read_index = atoi(name + (expected_len + 1));
+        if (read_index <= max_index) {
+            *index = read_index;
+            return 0;
+        }
     }
 
     return -1;
 }
 
-/// Implementation for fgets based on istream.
+/// @brief Implementation for fgets based on istream.
 /// @param str pointer to an array of chars where the string read is copied.
 /// @param num Maximum number of characters to be copied into str.
 /// @param stream The stream object. The string must be null terminated.

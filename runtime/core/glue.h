@@ -27,6 +27,9 @@
  *  @{
  */
 
+#define IEC_TRUE 1
+#define IEC_FALSE 0
+
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 1024
 #endif

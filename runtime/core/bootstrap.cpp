@@ -109,6 +109,7 @@ void bootstrap()
         // If we don't have the config file, then default to always
         // starting the interactive server.
         config.services.push_back("interactive");
+        config.services.push_back("modbusmaster");
     }
 
     //======================================================

@@ -24,7 +24,7 @@ using namespace std;
 
 #define HEADER 0, 0, 0, 0, 0, 0, 0
 
-SCENARIO("slave", "")
+SCENARIO("modbusslave", "")
 {
     mutex glue_mutex;
 
