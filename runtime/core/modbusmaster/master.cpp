@@ -75,12 +75,12 @@ std::int16_t oplc::modbusm::common_cfg_handler(
 {
     const uint8_t max = MODBUS_MASTER_MAX - 1;
     uint8_t index;
-    if (oplc::strcmp_with_id(name, "name", max, &index) == 0)
+    if (oplc::strcmp_with_index(name, "name", max, &index) == 0)
     {
         strncpy(masters[index].name, value, MASTER_ITEM_SIZE);
         masters[index].name[MASTER_ITEM_SIZE - 1] = '\0';
     }
-    else if (oplc::strcmp_with_id(name, "protocol", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "protocol", max, &index) == 0)
     {
         if (strcmp(value, "tcp") == 0)
         {
@@ -95,7 +95,7 @@ std::int16_t oplc::modbusm::common_cfg_handler(
             spdlog::warn("Unknown protocol configuration value {}", value);
         }
     }
-    else if (oplc::strcmp_with_id(name, "backoff_strategy", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "backoff_strategy", max, &index) == 0)
     {
         if (strcmp(value, "linear_bounded") == 0)
         {
@@ -106,40 +106,40 @@ std::int16_t oplc::modbusm::common_cfg_handler(
             spdlog::warn("Unknown backoff strategy configuration value {}", value);
         }
     }
-    else if (oplc::strcmp_with_id(name, "slave_id", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "slave_id", max, &index) == 0)
     {
         masters[index].slave_id = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "response_timeout", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "response_timeout", max, &index) == 0)
     {
         masters[index].response_timeout = chrono::microseconds(atoi(value));
     }
-    else if (oplc::strcmp_with_id(name, "poll_interval", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "poll_interval", max, &index) == 0)
     {
         masters[index].poll_interval = chrono::microseconds(atoi(value));
     }
-    else if (oplc::strcmp_with_id(name, "ip_address", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "ip_address", max, &index) == 0)
     {
         strncpy(masters[index].ip_address, value, MASTER_ITEM_SIZE);
         masters[index].ip_address[MASTER_ITEM_SIZE - 1] = '\0';
     }
-    else if (oplc::strcmp_with_id(name, "ip_port", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "ip_port", max, &index) == 0)
     {
         masters[index].ip_port = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "rtu_baud_rate", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "rtu_baud_rate", max, &index) == 0)
     {
         masters[index].rtu_baud_rate = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "rtu_parity", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "rtu_parity", max, &index) == 0)
     {
         masters[index].rtu_parity = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "rtu_data_bit", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "rtu_data_bit", max, &index) == 0)
     {
         masters[index].rtu_data_bit = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "rtu_stop_bit", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "rtu_stop_bit", max, &index) == 0)
     {
         masters[index].rtu_stop_bit = atoi(value);
     }

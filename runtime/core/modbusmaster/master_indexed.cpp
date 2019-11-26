@@ -100,43 +100,43 @@ int cfg_handler(void* user_data, const char* section,
     {
         // It was already handled
     }
-    else if (oplc::strcmp_with_id(name, "discrete_inputs_start", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "discrete_inputs_start", max, &index) == 0)
     {
         mappings->at(index).discrete_inputs.start_address = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "discrete_inputs_size", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "discrete_inputs_size", max, &index) == 0)
     {
         mappings->at(index).discrete_inputs.num_regs = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "coils_start", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "coils_start", max, &index) == 0)
     {
         mappings->at(index).coils.start_address = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "coils_size", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "coils_size", max, &index) == 0)
     {
         mappings->at(index).coils.num_regs = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "input_registers_start", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "input_registers_start", max, &index) == 0)
     {
         mappings->at(index).input_registers.start_address = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "input_registers_size", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "input_registers_size", max, &index) == 0)
     {
         mappings->at(index).input_registers.num_regs = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "holding_registers_read_start", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "holding_registers_read_start", max, &index) == 0)
     {
         mappings->at(index).holding_read_registers.start_address = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "holding_registers_read_size", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "holding_registers_read_size", max, &index) == 0)
     {
         mappings->at(index).holding_read_registers.num_regs = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "holding_registers_start", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "holding_registers_start", max, &index) == 0)
     {
         mappings->at(index).holding_registers.start_address = atoi(value);
     }
-    else if (oplc::strcmp_with_id(name, "holding_registers_size", max, &index) == 0)
+    else if (oplc::strcmp_with_index(name, "holding_registers_size", max, &index) == 0)
     {
         mappings->at(index).holding_registers.num_regs = atoi(value);
     }
@@ -334,27 +334,11 @@ void* oplc::modbusm::modbus_master_indexed_poll(void* args)
     return 0;
 }
 
-
-/// Run the modbus master. This function does not return until
-/// this service is terminated.
-void modbus_master_run(oplc::config_stream& cfg_stream,
-                       const char* cfg_overrides,
-                       const GlueVariablesBinding& bindings,
-                       volatile bool& run)
+/// Assign the mappings from our bindings according to the strategy
+/// that this master expect. In general, we map items starting from
+/// 100 to the modbus master.
+void assign_mappings(const GlueVariablesBinding& bindings)
 {
-    // Read the configuration information for the masters
-    array<MasterConfig, MODBUS_MASTER_MAX> master_defs;
-    array<IndexedMapping, MODBUS_MASTER_MAX> mapping_defs;
-    array<pthread_t, MODBUS_MASTER_MAX> threads; 
-    IndexedMasterConfig config
-    {
-        .masters = &master_defs,
-        .mappings = &mapping_defs,
-    };
-    ini_parse_stream(oplc::istream_fgets, cfg_stream.get(),
-                     cfg_handler, &config);
-    cfg_stream.reset(nullptr);
-
     // Initialize comm error counter. For historical reasons,
     // this is defined to be at index 1026 in the IEC_LINT with
     // the memory storage class.
@@ -407,6 +391,29 @@ void modbus_master_run(oplc::config_stream& cfg_stream,
             }
         }
     }
+}
+
+/// Run the modbus master. This function does not return until
+/// this service is terminated.
+void modbus_master_run(oplc::config_stream& cfg_stream,
+                       const char* cfg_overrides,
+                       const GlueVariablesBinding& bindings,
+                       volatile bool& run)
+{
+    // Read the configuration information for the masters
+    array<MasterConfig, MODBUS_MASTER_MAX> master_defs;
+    array<IndexedMapping, MODBUS_MASTER_MAX> mapping_defs;
+    array<pthread_t, MODBUS_MASTER_MAX> threads; 
+    IndexedMasterConfig config
+    {
+        .masters = &master_defs,
+        .mappings = &mapping_defs,
+    };
+    ini_parse_stream(oplc::istream_fgets, cfg_stream.get(),
+                     cfg_handler, &config);
+    cfg_stream.reset(nullptr);
+
+    assign_mappings(bindings);
 
     // Create a thread for polling each master. We use multiple threads
     // so that communication timeouts related to one master will not
@@ -436,7 +443,8 @@ void modbus_master_run(oplc::config_stream& cfg_stream,
         };
 
         int ret = pthread_create(&threads[index], nullptr,
-                                 oplc::modbusm::modbus_master_indexed_poll, master_args);
+                                 oplc::modbusm::modbus_master_indexed_poll,
+                                 master_args);
         if (ret == 0)
         {
             pthread_detach(threads[index]);

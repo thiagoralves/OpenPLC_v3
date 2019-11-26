@@ -71,9 +71,9 @@ inline bool ini_matches(const char* section_expected,
 /// This maximum is designed to prevent unintentionally allocating far more
 /// space than would be expected under normal use.
 /// @return 0 if there is a match, otherwise non-zero.
-inline int strcmp_with_id(const char* name, const char* expected,
-                          std::uint8_t max_index,
-                          std::uint8_t* index) {
+inline int strcmp_with_index(const char* name, const char* expected,
+                             std::uint8_t max_index,
+                             std::uint8_t* index) {
     size_t expected_len = strlen(expected);
     int ret = strncmp(name, expected, expected_len);
     if (ret != 0) {
