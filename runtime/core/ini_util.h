@@ -81,9 +81,11 @@ inline int strcmp_with_index(const char* name, const char* expected,
     }
 
     size_t name_len = strlen(name);
-    if (name_len >= expected_len + 2 && name[expected_len] == '.') {
+    if (name_len >= expected_len + 2 && name[expected_len] == '.')
+    {
         auto read_index = atoi(name + (expected_len + 1));
-        if (read_index <= max_index) {
+        if (read_index <= max_index)
+        {
             *index = read_index;
             return 0;
         }

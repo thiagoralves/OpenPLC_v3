@@ -80,7 +80,8 @@ class Dnp3ToSpdLogger final : public openpal::ILogHandler, private openpal::Unco
         spdlog::info("{}", entry.message);
     }
 
-    static std::shared_ptr<openpal::ILogHandler>Create() {
+    static std::shared_ptr<openpal::ILogHandler>Create()
+    {
         return std::make_shared<Dnp3ToSpdLogger>();
     }
 

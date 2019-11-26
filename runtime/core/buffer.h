@@ -217,24 +217,25 @@ struct ContiguousMappedValues
 template <typename T>
 struct MappedValue
 {
-  MappedValue() : cached_value(0), value(nullptr) {}
-  T cached_value;
-  T* value;
+    MappedValue() : cached_value(0), value(nullptr) {}
+    T cached_value;
+    T* value;
 
-  /// Initialize the glue link and the cached value.
-  /// @param val The glue variable to initialize from.
-  inline void init(T* val)
-  {
-    this->value = val;
-    this->cached_value = *val;
-  }
-
-  inline void update_cache()
-  {
-    if (this->value) {
-      this->cached_value = *this->value;
+    /// Initialize the glue link and the cached value.
+    /// @param val The glue variable to initialize from.
+    inline void init(T* val)
+    {
+        this->value = val;
+        this->cached_value = *val;
     }
-  }
+
+    inline void update_cache()
+    {
+        if (this->value)
+        {
+            this->cached_value = *this->value;
+        }
+    }
 };
 
 /// Defines a write that has been submitted via a protocol
@@ -243,16 +244,17 @@ struct MappedValue
 /// items having the same indices for efficient lookup to the
 /// located variable.
 template <typename T>
-struct PendingValue {
-  PendingValue() : has_pending(false), value(0) {}
-  bool has_pending;
-  T value;
+struct PendingValue
+{
+    PendingValue() : has_pending(false), value(0) {}
+    bool has_pending;
+    T value;
 
-  /// Set the value and mark it as updated.
-  inline void set(T val) {
-    this->has_pending = true;
-    this->value = val;
-  }
+    /// Set the value and mark it as updated.
+    inline void set(T val) {
+        this->has_pending = true;
+        this->value = val;
+    }
 };
 
 }  //  namespace oplc

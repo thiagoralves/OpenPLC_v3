@@ -38,7 +38,8 @@ ServiceDefinition* services[] = {
 
 ServiceDefinition* services_find(const char* name)
 {
-    ServiceDefinition** item = find_if(begin(services), end(services), [name] (ServiceDefinition* def) {
+    ServiceDefinition** item = find_if(begin(services), end(services), [name] (ServiceDefinition* def)
+    {
         return strcmp(def->id(), name) == 0;
     });
 
@@ -47,33 +48,38 @@ ServiceDefinition* services_find(const char* name)
 
 void services_stop()
 {
-    for_each(begin(services), end(services), [] (ServiceDefinition* def) {
+    for_each(begin(services), end(services), [] (ServiceDefinition* def)
+    {
         def->stop();
     });
 }
 
 void services_init()
 {
-    for_each(begin(services), end(services), [] (ServiceDefinition* def) {
+    for_each(begin(services), end(services), [] (ServiceDefinition* def)
+    {
         def->initialize();
     });
 }
 
 void services_finalize()
 {
-    for_each(begin(services), end(services), [] (ServiceDefinition* def) {
+    for_each(begin(services), end(services), [] (ServiceDefinition* def)
+    {
         def->finalize();
     });
 }
 
 void services_before_cycle() {
-    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def) {
+    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def)
+    {
         def->before_cycle();
     });
 }
 
 void services_after_cycle() {
-    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def) {
+    std::for_each(std::begin(services), std::end(services), [] (ServiceDefinition* def)
+    {
         def->after_cycle();
     });
 }

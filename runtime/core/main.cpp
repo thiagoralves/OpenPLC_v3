@@ -166,12 +166,12 @@ int main(int argc, char **argv)
     //======================================================
     //                    MAIN LOOP
     //======================================================
-    while (run_openplc) {
+    while (run_openplc)
+    {
 
         // Read input image - this method tries to get the lock
         // so don't put it in the lock context.
         updateBuffersIn();
-
         {
             std::lock_guard<std::mutex> guard(bufferLock);
             updateCustomIn();

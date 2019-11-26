@@ -32,18 +32,6 @@ namespace modbusm
 
 #define MAX_MB_IO           400
 
-struct InputOutputBuffer {
-    std::uint8_t bool_input_buf[MAX_MB_IO];
-    std::uint8_t bool_output_buf[MAX_MB_IO];
-    std::uint16_t int_input_buf[MAX_MB_IO];
-    std::uint16_t int_output_buf[MAX_MB_IO];
-
-    /// A count of how many errors have occurred since the last
-    /// exchange. This value should be reset to 0 after each
-    /// write-cycle.
-    IEC_LINT error;
-};
-
 /// @brief Define the mapping for modbus addresses to located variables
 /// that is is based on a sequence starting an an offset in the located
 /// variables and an offset in the Modbus server.
