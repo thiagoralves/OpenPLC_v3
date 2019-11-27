@@ -258,7 +258,8 @@ void interactive_client_command(const char* command, int client_fd)
     else if (strncmp(command, "stop_modbus()", 13) == 0)
     {
         ServiceDefinition* def = services_find("modbusslave");
-        if (def) {
+        if (def)
+        {
             def->stop();
         }
     }
@@ -274,7 +275,8 @@ void interactive_client_command(const char* command, int client_fd)
     else if (strncmp(command, "stop_dnp3()", 11) == 0)
     {
         ServiceDefinition* def = services_find("dnp3s");
-        if (def) {
+        if (def)
+        {
             def->stop();
         }
     }
@@ -315,7 +317,8 @@ void interactive_client_command(const char* command, int client_fd)
     else if (strncmp(command, "stop_pstorage()", 15) == 0)
     {
         ServiceDefinition* def = services_find("pstorage");
-        if (def) {
+        if (def)
+        {
             def->stop();
         }
     }

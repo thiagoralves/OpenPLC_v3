@@ -18,6 +18,7 @@
 #ifndef OPLC_UNIT_TEST
 #include <modbus.h>
 #endif  // OPLC_UNIT_TEST
+#include <modbus.h>
 
 #include <cstdint>
 #include <cstring>

@@ -118,3 +118,4 @@ std::int16_t common_cfg_handler(
 /** @}*/
 
 #endif  // RUNTIME_CORE_MODBUSMASTER_MASTER_H_
+
