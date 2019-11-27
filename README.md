@@ -69,3 +69,12 @@ _Devices can be passed to the `docker` daemon using the `-v` flag (e.g. `-v /dev
 ```bash
 docker run -it --rm --privileged -p 8080:8080 openplc:v3
 ```
+
+## Running Standalone
+
+The normal approach for running OpenPLC is though the web interface. However,
+it is possible to run OpenPLC without the web interface using configuration
+information supplied in a configuration file.
+
+See the file `config.ini.example` in this repository for information about
+how to run standalone.

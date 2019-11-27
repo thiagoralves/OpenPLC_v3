@@ -31,7 +31,7 @@
 #include "slave.h"
 #include "indexed_strategy.h"
 #include "mb_util.h"
-#include  "../ladder.h"
+#include "../ladder.h"
 #include "../glue.h"
 #include "../ini_util.h"
 
@@ -415,7 +415,7 @@ struct ModbusSlaveConfig
 int modbus_slave_cfg_handler(void* user_data, const char* section,
                             const char* name, const char* value)
 {
-    if (strcmp("modbuslave", section) != 0)
+    if (strcmp("modbusslave", section) != 0)
 	{
         return 0;
     }
