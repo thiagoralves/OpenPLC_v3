@@ -69,6 +69,10 @@ int config_handler(void* user_data, const char* section,
         {
             spdlog::set_level(spdlog::level::err);
         }
+        else
+        {
+            spdlog::warn("Unknown log level {}", value);
+        }
     }
     else if (strcmp("enabled", name) == 0
              && oplc::ini_atob(value)
@@ -105,6 +109,7 @@ void bootstrap()
         // If we don't have the config file, then default to always
         // starting the interactive server.
         config.services.push_back("interactive");
+        config.services.push_back("modbusmaster");
     }
 
     //======================================================

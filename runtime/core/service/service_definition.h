@@ -17,7 +17,6 @@
 
 #include <pthread.h>
 #include <cstdint>
-#include <functional>
 
 /** \addtogroup openplc_runtime
  *  @{
@@ -27,9 +26,11 @@ class GlueVariablesBinding;
 
 const std::size_t MAX_INTERACTIVE_CONFIG_SIZE(1024);
 
-typedef std::function<void(const GlueVariablesBinding& binding)> ServiceInitFunction;
-typedef std::function<void(const GlueVariablesBinding& binding)> ServiceFinalizeFunction;
-typedef std::function<void(const GlueVariablesBinding& binding, volatile bool& run, const char* config)> ServiceStartFunction;
+typedef void (*service_init_fn) (const GlueVariablesBinding& binding);
+typedef void (*service_finalize_fn) (const GlueVariablesBinding& binding);
+typedef void (*service_start_fn) (const GlueVariablesBinding& binding, volatile bool& run, const char* config);
+typedef void (*service_before_cycle_fn) ();
+typedef void (*service_after_cycle_fn) ();
 
 /// A service is the primary extension point for adding support for new
 /// protocols or hardware specific capabilities. You should not implement
@@ -42,6 +43,10 @@ typedef std::function<void(const GlueVariablesBinding& binding, volatile bool& r
 /// keep only a very short lock on the glue variables so that it cannot
 /// prevent the main PLC loop from accessing the variables.
 ///
+/// Services can also participate with the runtime with the before and after
+/// cycle functions. These functions do not receive the mutex because the
+/// PLC cycle already has the mutex ownership.
+///
 /// @note There is presently no way to pass state from init to finalize
 /// or from start to stop. That's only because we haven't had such a need
 /// yet. If that comes up, then we'll add that.
@@ -52,15 +57,15 @@ class ServiceDefinition final
     /// and stopped but does not participate in initialize or finalize.
     /// @param name The unique name of this service.
     /// @param start_fn A function to start the service.
-    ServiceDefinition(const char* name, ServiceStartFunction& start_fn);
+    ServiceDefinition(const char* name, service_start_fn start_fn);
 
     /// Initialize a new instance of a service definition that can be started
     /// and stopped and participates in initialize.
     /// @param name The unique name of this service.
     /// @param start_fn A function to start the service.
     /// @param init_fn A function to run when the runtime initializes.
-    ServiceDefinition(const char* name, ServiceStartFunction& start_fn,
-                      ServiceInitFunction& init_fn);
+    ServiceDefinition(const char* name, service_start_fn start_fn,
+                      service_init_fn init_fn);
 
     /// Initialize a new instance of a service that participates in all
     /// lifecycle events (initialize, finalize, start, stop).
@@ -68,9 +73,19 @@ class ServiceDefinition final
     /// @param start_fn A function to start the service.
     /// @param init_fn A function to run when the runtime initializes.
     /// @param finalize_fn A function to run when the runtime finalizes.
-    ServiceDefinition(const char* name, ServiceStartFunction& start_fn,
-                      ServiceInitFunction& init_fn,
-                      ServiceFinalizeFunction& finalize_fn);
+    ServiceDefinition(const char* name, service_start_fn start_fn,
+                      service_init_fn init_fn,
+                      service_finalize_fn finalize_fn);
+
+    /// Initialize a new instance of a service that participates in the start
+    /// lifecycle and in cycle events.
+    /// @param name The unique name of this service.
+    /// @param start_fn A function to start the service.
+    /// @param before_cycle_fn A function to run before each PLC cycle.
+    /// @param after_cycle_fn A function to run after each PLC cycle.
+    ServiceDefinition(const char* name, service_start_fn start_fn,
+                      service_before_cycle_fn before_cycle_fn,
+                      service_after_cycle_fn fafter_cycle_fn);
 
     /// Lifecycle method for when the runtime starts. This is called for
     /// the service before the runtime loop beings. This does not mean
@@ -84,6 +99,9 @@ class ServiceDefinition final
     void start(const char* config);
     /// Lifecycle method for when this service has been stopped on demand.
     void stop();
+
+    void before_cycle();
+    void after_cycle();
 
     /// Get the descriptive identifier for this service type.
     const char* id() const { return this->name; }
@@ -101,11 +119,15 @@ class ServiceDefinition final
     /// The type name of the service.
     const char* name;
     /// The function to initialize the service.
-    ServiceInitFunction& init_fn;
+    service_init_fn init_fn;
     /// The function to finalize the service.
-    ServiceFinalizeFunction& finalize_fn;
+    service_finalize_fn finalize_fn;
     /// The function to start the service.
-    ServiceStartFunction& start_fn;
+    service_start_fn start_fn;
+    /// The function to run before the PLC cycle.
+    service_before_cycle_fn before_cycle_fn;
+    /// The function to run after the PLC cycle.
+    service_after_cycle_fn after_cycle_fn;
     /// Is the service running.
     volatile bool running;
     /// The thread the service is running on.

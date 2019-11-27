@@ -18,6 +18,7 @@
 
 #include <mutex>
 #include <vector>
+#include "buffer.h"
 #include "lib/iec_types_all.h"
 
 /** \addtogroup openplc_runtime
@@ -55,48 +56,6 @@ struct PendingBool
 
   /// Set the value and mark it as updated.
   inline void set(IEC_BOOL val)
-  {
-    this->has_pending = true;
-    this->value = val;
-  }
-};
-
-/// Defines the mapping between a located value
-/// and a cache of the value for reading with modbus.
-template <typename T>
-struct MappedValue
-{
-  MappedValue() : cached_value(0), value(nullptr) {}
-  T cached_value;
-  T* value;
-
-  /// Initialize the glue link and the cached value.
-  /// @param val The glue variable to initialize from.
-  inline void init(T* val)
-  {
-    this->value = val;
-    this->cached_value = *val;
-  }
-
-  inline void update_cache()
-  {
-    if (this->value) {
-      this->cached_value = *this->value;
-    }
-  }
-};
-
-/// Defines a write that has been submitted via Modbus
-/// but may not have been applied to the located variable yet.
-template <typename T>
-struct PendingValue
-{
-  PendingValue() : has_pending(false), value(0) {}
-  bool has_pending;
-  T value;
-
-  /// Set the value and mark it as updated.
-  inline void set(T val)
   {
     this->has_pending = true;
     this->value = val;
@@ -189,19 +148,19 @@ class IndexedStrategy
     std::vector<PendingBool> coil_write_buffer;
     std::vector<MappedBool> di_read_buffer;
 
-    std::array<PendingValue<IEC_INT>, NUM_REGISTER_VALUES> int_register_write_buffer;
-    std::array<MappedValue<IEC_INT>, NUM_REGISTER_VALUES> int_register_read_buffer;
+    std::array<oplc::PendingValue<IEC_INT>, NUM_REGISTER_VALUES> int_register_write_buffer;
+    std::array<oplc::MappedValue<IEC_INT>, NUM_REGISTER_VALUES> int_register_read_buffer;
 
-    std::array<PendingValue<IEC_INT>, NUM_REGISTER_VALUES> intm_register_write_buffer;
-    std::array<MappedValue<IEC_INT>, NUM_REGISTER_VALUES> intm_register_read_buffer;
+    std::array<oplc::PendingValue<IEC_INT>, NUM_REGISTER_VALUES> intm_register_write_buffer;
+    std::array<oplc::MappedValue<IEC_INT>, NUM_REGISTER_VALUES> intm_register_read_buffer;
 
-    std::array<PendingValue<IEC_DINT>, NUM_REGISTER_VALUES> dintm_register_write_buffer;
-    std::array<MappedValue<IEC_DINT>, NUM_REGISTER_VALUES> dintm_register_read_buffer;
+    std::array<oplc::PendingValue<IEC_DINT>, NUM_REGISTER_VALUES> dintm_register_write_buffer;
+    std::array<oplc::MappedValue<IEC_DINT>, NUM_REGISTER_VALUES> dintm_register_read_buffer;
 
-    std::array<PendingValue<IEC_LINT>, NUM_REGISTER_VALUES> lintm_register_write_buffer;
-    std::array<MappedValue<IEC_LINT>, NUM_REGISTER_VALUES> lintm_register_read_buffer;
+    std::array<oplc::PendingValue<IEC_LINT>, NUM_REGISTER_VALUES> lintm_register_write_buffer;
+    std::array<oplc::MappedValue<IEC_LINT>, NUM_REGISTER_VALUES> lintm_register_read_buffer;
 
-    std::array<MappedValue<IEC_INT>, NUM_REGISTER_VALUES> int_input_read_buffer;
+    std::array<oplc::MappedValue<IEC_INT>, NUM_REGISTER_VALUES> int_input_read_buffer;
 
     // Protects access to the cached values in this class.
     std::mutex buffer_mutex;

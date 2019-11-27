@@ -285,8 +285,7 @@ void interactive_client_command(const char* command, int client_fd)
     {
         spdlog::info("Issued start_enip() command to start on port: {}", readCommandArgument(command));
         enip_port = readCommandArgument(command);
-        if (run_enip)
-        {
+        if (run_enip) {
             spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
             //Stop Enip server
             run_enip = 0;

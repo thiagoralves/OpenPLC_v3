@@ -35,6 +35,12 @@ void services_init();
 /// Finalize all known services.
 void services_finalize();
 
+/// Run the service function before the cycle.
+void services_before_cycle();
+
+/// Run the service function after the cycle.
+void services_after_cycle();
+
 /** @}*/
 
 #endif  // RUNTIME_CORE_SERVICE_SERVICE_DEFINITION_H_

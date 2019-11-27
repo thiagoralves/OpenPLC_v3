@@ -429,9 +429,13 @@ int modbus_slave_cfg_handler(void* user_data, const char* section,
 	else if (strcmp(name, "address") == 0)
 	{
         config->address = value;
+    } 
+    else if (strcmp(name, "binding") == 0)
+    {
+        // Nothing to do here - we only support one binding strategy.
     }
-	else if (strcmp(name, "enabled") == 0)
-	{
+    else if (strcmp(name, "enabled") == 0)
+    {
         // Nothing to do here - we already know this is enabled
     }
 	else

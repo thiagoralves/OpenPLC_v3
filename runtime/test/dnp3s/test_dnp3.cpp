@@ -133,7 +133,7 @@ SCENARIO("create_config", "")
                 { IECLDT_IN, IECLST_BIT, 0, 0, IECVT_BOOL, &bool_var },
             };
             GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
-            auto input = "[dnp3s]\nbind_location=name:%IX0.0,group:12,index:1,"
+            auto input = "[dnp3s]\nbind_location=name:%IX0.0,group:12,index:1,";
             std::stringstream input_stream(input);
             auto config(dnp3_create_config(input_stream, bindings,
                                            binary_commands, analog_commands,

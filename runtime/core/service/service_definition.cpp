@@ -21,41 +21,62 @@
 
 using namespace std;
 
-void null_handler(const GlueVariablesBinding& binding) {}
-ServiceInitFunction null_init_fn(null_handler);
-ServiceFinalizeFunction null_finalize_fn(null_handler);
+
+void null_binding_handler(const GlueVariablesBinding& binding) {}
+void null_handler() {}
 
 ServiceDefinition::ServiceDefinition(const char* name,
-                                     ServiceStartFunction& start_fn) :
+                                     service_start_fn start_fn) :
     name(name),
-    init_fn(null_init_fn),
-    finalize_fn(null_finalize_fn),
+    init_fn(null_binding_handler),
+    finalize_fn(null_binding_handler),
     start_fn(start_fn),
+    before_cycle_fn(null_handler),
+    after_cycle_fn(null_handler),
     running(false),
     thread(0),
     config_buffer()
 {}
 
 ServiceDefinition::ServiceDefinition(const char* name,
-                                     ServiceStartFunction& start_fn,
-                                     ServiceInitFunction& init_fn) :
+                                     service_start_fn start_fn,
+                                     service_init_fn init_fn) :
     name(name),
     start_fn(start_fn),
     init_fn(init_fn),
-    finalize_fn(null_finalize_fn),
+    finalize_fn(null_binding_handler),
+    before_cycle_fn(null_handler),
+    after_cycle_fn(null_handler),
     running(false),
     thread(0),
     config_buffer()
 {}
 
 ServiceDefinition::ServiceDefinition(const char* name,
-                                     ServiceStartFunction& start_fn,
-                                     ServiceInitFunction& init_fn,
-                                     ServiceFinalizeFunction& finalize_fn) :
+                                     service_start_fn start_fn,
+                                     service_init_fn init_fn,
+                                     service_finalize_fn finalize_fn) :
     name(name),
     start_fn(start_fn),
     init_fn(init_fn),
     finalize_fn(finalize_fn),
+    before_cycle_fn(null_handler),
+    after_cycle_fn(null_handler),
+    running(false),
+    thread(0),
+    config_buffer()
+{}
+
+ServiceDefinition::ServiceDefinition(const char* name,
+                                     service_start_fn start_fn,
+                                     service_before_cycle_fn before_cycle_fn,
+                                     service_after_cycle_fn fafter_cycle_fn) :
+    name(name),
+    start_fn(start_fn),
+    init_fn(null_binding_handler),
+    finalize_fn(null_binding_handler),
+    before_cycle_fn(before_cycle_fn),
+    after_cycle_fn(fafter_cycle_fn),
     running(false),
     thread(0),
     config_buffer()
@@ -117,6 +138,22 @@ void ServiceDefinition::stop()
     else
     {
         spdlog::debug("Service {} was not running", this->name);
+    }
+}
+
+void ServiceDefinition::before_cycle()
+{
+    if (this->running)
+    {
+        this->before_cycle_fn();
+    }
+}
+
+void ServiceDefinition::after_cycle()
+{
+    if (this->running)
+    {
+        this->after_cycle_fn();
     }
 }
 

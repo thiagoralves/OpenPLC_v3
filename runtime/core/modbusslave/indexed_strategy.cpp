@@ -153,8 +153,8 @@ IndexedStrategy::IndexedStrategy(const GlueVariablesBinding& bindings) :
 /// @param read_buffer The read buffer that contains the glue variable
 /// and a local cache of the value.
 template <typename T>
-void exchange(array<PendingValue<T>, NUM_REGISTER_VALUES>& write_buffer,
-              array<MappedValue<T>, NUM_REGISTER_VALUES>& read_buffer)
+void exchange(array<oplc::PendingValue<T>, NUM_REGISTER_VALUES>& write_buffer,
+              array<oplc::MappedValue<T>, NUM_REGISTER_VALUES>& read_buffer)
 {
     for (size_t index = 0; index < write_buffer.size(); ++index)
     {
@@ -315,7 +315,7 @@ modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
             // bit shift to write the appropriate part. Resize to 32-bits
             // so we can shift appropriately.
             uint32_t partial_value = (uint32_t) word;
-            PendingValue<IEC_DINT>& dst = dintm_register_write_buffer[hr_index / 2];
+            oplc::PendingValue<IEC_DINT>& dst = dintm_register_write_buffer[hr_index / 2];
             dst.has_pending = true;
 
             if (hr_index % 2 == 0)
@@ -337,7 +337,7 @@ modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
             // Same as with a 32-bit value, here we are updating part of a
             // 64-bit value, so resize so we can bit-shift appropriately.
             uint64_t partial_value = (uint64_t) word;
-            PendingValue<IEC_LINT>& dst = lintm_register_write_buffer[hr_index / 4];
+            oplc::PendingValue<IEC_LINT>& dst = lintm_register_write_buffer[hr_index / 4];
             dst.has_pending = true;
 
             auto word_index = hr_index % 4;
