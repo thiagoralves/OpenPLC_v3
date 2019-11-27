@@ -19,6 +19,7 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+mkdir -p bin
 touch etc/Config0.c
 touch etc/Res0.c
 touch etc/glueVars.cpp
