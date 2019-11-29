@@ -25,7 +25,10 @@
 
 #include <pthread.h>
 #include <stdint.h>
+#ifndef ENIPSTRUCT_H
+#define ENIPSTRUCT_H
 #include "enipStruct.h"	//This header file contains necessary structs for enip.cpp
+#endif
 
 #define MODBUS_PROTOCOL     0
 #define DNP3_PROTOCOL       1
