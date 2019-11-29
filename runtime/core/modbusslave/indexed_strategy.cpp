@@ -19,7 +19,7 @@
 
 #include "indexed_strategy.h"
 #include "mb_util.h"
-#include "../glue.h"
+#include "glue.h"
 
 /** \addtogroup openplc_runtime
  *  @{

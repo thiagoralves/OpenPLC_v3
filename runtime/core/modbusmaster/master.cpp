@@ -31,8 +31,8 @@
 #include "ladder.h"
 #include "master.h"
 #include "master_indexed.h"
-#include "../glue.h"
-#include "../ini_util.h"
+#include "glue.h"
+#include "ini_util.h"
 
 using namespace std;
 

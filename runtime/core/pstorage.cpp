@@ -36,7 +36,7 @@
 #include "ini_util.h"
 #include "ladder.h"
 #include "pstorage.h"
-#include "lib/iec_types_all.h"
+#include "iec_types_all.h"
 
 /** \addtogroup openplc_runtime
  *  @{

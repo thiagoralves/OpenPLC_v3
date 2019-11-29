@@ -19,7 +19,7 @@
 #include <mutex>
 #include <vector>
 #include "buffer.h"
-#include "lib/iec_types_all.h"
+#include "iec_types_all.h"
 
 /** \addtogroup openplc_runtime
  *  @{
