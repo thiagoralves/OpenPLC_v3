@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "ladder.h"
+#include "enipStruct.h"	//This header file contains necessary structs for enip.cpp
 
 #define ENIP_MIN_LENGTH     28
 
