@@ -55,8 +55,8 @@
 #include "dnp3.h"
 #include "dnp3_publisher.h"
 #include "dnp3_receiver.h"
-#include "../ini_util.h"
-#include "../service/service_definition.h"
+#include "ini_util.h"
+#include "service/service_definition.h"
 
 
 /** \addtogroup openplc_runtime

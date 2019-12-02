@@ -19,9 +19,9 @@
 #include "service_registry.h"
 #include "interactive_server.h"
 #include "pstorage.h"
-#include "../modbusslave/slave.h"
-#include "../modbusmaster/master_indexed.h"
-#include "../dnp3s/dnp3.h"
+#include "modbusslave/slave.h"
+#include "modbusmaster/master_indexed.h"
+#include "dnp3s/dnp3.h"
 
 using namespace std;
 using namespace oplc::modbusm;

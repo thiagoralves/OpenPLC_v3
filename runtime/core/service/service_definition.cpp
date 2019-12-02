@@ -16,8 +16,8 @@
 #include <algorithm>
 
 #include "service_definition.h"
-#include "../glue.h"
-#include "../ladder.h"
+#include "glue.h"
+#include "ladder.h"
 
 using namespace std;
 
