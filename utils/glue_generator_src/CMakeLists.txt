@@ -13,7 +13,7 @@
 # limitations under the License.
 cmake_minimum_required(VERSION 3.0.0)
 
-project(glue_generator LANGUAGES CXX VERSION 0.0.1)
+project(glue_generator VERSION 0.0.1)
 
 # CMake build for OpenPLC glue generator. The glue generator takes
 # generated C code from the MATIEC compiler and then generates necessary

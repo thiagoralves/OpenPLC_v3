@@ -473,7 +473,9 @@ void generateBottom(ostream& glueVars) {
 })";
 }
 
-void generateBody(istream& locatedVars, ostream& glueVars, md5_byte_t digest[16]) {
+/// Generate the body by parsing the located variables and write into the glue variables.
+/// @return 0 on success, or non-zero on failure.
+uint8_t generateBody(istream& locatedVars, ostream& glueVars, md5_byte_t digest[16]) {
     // We will generate a checksum of the located variables so that
     // we can detect likely changes (not intended to be cryptographically
     // secure). This is only to prevent obvious problems.
@@ -502,6 +504,12 @@ void generateBody(istream& locatedVars, ostream& glueVars, md5_byte_t digest[16]
         uint16_t pos1;
         uint16_t pos2;
         findPositions(iecVar_name, &pos1, &pos2);
+
+        if (pos2 > 7) {
+            cout << "Sub-position of variable " << iecVar_name << " must be in the range 0 to 7";
+            return -1;
+        }
+
         max_index = max(max_index, (int32_t)pos1);
 
         all_vars.push_back(IecVar{ iecVar_name, iecVar_type, pos1, pos2 });
@@ -520,6 +528,8 @@ void generateBody(istream& locatedVars, ostream& glueVars, md5_byte_t digest[16]
 
     // Finish the checksum value
     md5_finish(&md5_state, digest);
+
+    return 0;
 }
 
 void generateChecksum(ostream& glueVars, md5_byte_t digest[16]) {
@@ -576,19 +586,21 @@ int mainImpl(int argc, char const * const *argv) {
         cout << endl;
         return 1;
     }
-    ofstream glueVars(output_file_name, ios::trunc);
-    if (!glueVars.is_open()) {
+    ofstream output_stream(output_file_name, ios::trunc);
+    if (!output_stream.is_open()) {
         cout << "Error opening glue variables file at " << output_file_name;
         cout << endl;
         return 2;
     }
 
-    generateHeader(glueVars);
+    generateHeader(output_stream);
 
     md5_byte_t digest[16];
-    generateBody(locatedVars, glueVars, digest);
-    generateChecksum(glueVars, digest);
-    generateBottom(glueVars);
+    if (!generateBody(locatedVars, output_stream, digest)) {
+        return 1;
+    }
+    generateChecksum(output_stream, digest);
+    generateBottom(output_stream);
 
     return 0;
 }
