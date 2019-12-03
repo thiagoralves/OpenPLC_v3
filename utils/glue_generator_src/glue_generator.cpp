@@ -506,7 +506,8 @@ uint8_t generateBody(istream& locatedVars, ostream& glueVars, md5_byte_t digest[
         findPositions(iecVar_name, &pos1, &pos2);
 
         if (pos2 > 7) {
-            cout << "Sub-position of variable " << iecVar_name << " must be in the range 0 to 7";
+            cout << "Sub-position of variable " << iecVar_name
+                << " must be in the range 0 to 7" << endl;
             return -1;
         }
 
@@ -596,7 +597,7 @@ int mainImpl(int argc, char const * const *argv) {
     generateHeader(output_stream);
 
     md5_byte_t digest[16];
-    if (!generateBody(locatedVars, output_stream, digest)) {
+    if (generateBody(locatedVars, output_stream, digest) != 0) {
         return 1;
     }
     generateChecksum(output_stream, digest);
