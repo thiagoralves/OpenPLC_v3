@@ -99,13 +99,10 @@ void bootstrap()
     // and we want that to happen early on.
     PlcConfig config;
 
-    // We just assume that the file we are reading with the
-    // configuration information in in the etc subfolder and use
-    // a relative path to find it.
-    const char* config_path = "../etc/config.ini";
-    if (ini_parse(config_path, config_handler, &config) < 0)
+    // Try to read the config file
+    if (ini_parse(oplc::config_file, config_handler, &config) < 0)
     {
-        spdlog::info("Config file {} could not be read", config_path);
+        spdlog::info("Config file {} could not be read", oplc::config_file);
         // If we don't have the config file, then default to always
         // starting the interactive server.
         config.services.push_back("interactive");
