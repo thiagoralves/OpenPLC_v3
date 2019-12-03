@@ -28,6 +28,9 @@
 namespace oplc
 {
 
+/// Define location of config file once so others can use it
+static const char* config_file = "../etc/config.ini";
+
 /// Convert a boolean value in the INI file to a boolean.
 /// The value must be "true", otherwise it is interpreted as false.
 /// @param value the value to convert.
@@ -122,7 +125,7 @@ typedef std::unique_ptr<std::istream, std::function<void(std::istream*)>> config
 inline config_stream open_config()
 {
     return config_stream(
-            new std::ifstream("../etc/config.ini"),
+            new std::ifstream(config_file),
             [] (std::istream* s)
             {
                 reinterpret_cast<std::ifstream*>(s)->close();
