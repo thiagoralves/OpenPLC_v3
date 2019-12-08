@@ -51,12 +51,12 @@ SCENARIO("Command line", "[main]") {
     GIVEN("<no pre-conditions>") {
         WHEN("-h command line arguments") {
             const char* args[2] = { "glue_generator", "-h" };
-            REQUIRE(mainImpl(2, args) == 0);
+            REQUIRE(main_impl(2, args) == 0);
         }
 
         WHEN("--help command line arguments") {
             const char* args[2] = { "glue_generator", "--help" };
-            REQUIRE(mainImpl(2, args) == 0);
+            REQUIRE(main_impl(2, args) == 0);
         }
     }
 }
@@ -66,9 +66,15 @@ SCENARIO("", "") {
         std::stringstream output_stream;
         md5_byte_t digest[16];
 
+        WHEN("Contains single BOOL at %IX0.8 is invalid index") {
+            std::stringstream input_stream("__LOCATED_VAR(BOOL,__IX0,I,X,0, 8)");
+            auto result = generate_body(input_stream, output_stream, digest);
+            REQUIRE(result != 0);
+        }
+
         WHEN("Contains single BOOL at %IX0") {
-            std::stringstream input_stream("__LOCATED_VAR(BOOL,__IX0,I,X,0)");
-            generateBody(input_stream, output_stream, digest);
+            std::stringstream input_stream("__LOCATED_VAR(BOOL,__IX0_8,I,X,0)");
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tbool_input[0][0] = __IX0;\n" POSTFIX
                 "GlueBoolGroup ___IG0 { .index=0, .values={ __IX0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, } };\n"
                 "GlueBoolGroup* __IG0(&___IG0);\n"
@@ -83,7 +89,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single BOOL at %QX0") {
             std::stringstream input_stream("__LOCATED_VAR(BOOL,__QX0,Q,X,0)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tbool_output[0][0] = __QX0;\n" POSTFIX
                 "GlueBoolGroup ___QG0 { .index=0, .values={ __QX0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, } };\n"
                 "GlueBoolGroup* __QG0(&___QG0);\n"
@@ -98,7 +104,7 @@ SCENARIO("", "") {
 
         WHEN("Contains multiple BOOL at %QX0") {
             std::stringstream input_stream("__LOCATED_VAR(BOOL,__QX0_0,Q,X,0,0)\n__LOCATED_VAR(BOOL,__QX0_2,Q,X,0,2)\n__LOCATED_VAR(BOOL,__QX1_3,Q,X,1,3)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tbool_output[0][0] = __QX0_0;\n\tbool_output[0][2] = __QX0_2;\n\tbool_output[1][3] = __QX1_3;\n" POSTFIX
                 "GlueBoolGroup ___QG0 { .index=0, .values={ __QX0_0, nullptr, __QX0_2, nullptr, nullptr, nullptr, nullptr, nullptr, } };\n"
                 "GlueBoolGroup* __QG0(&___QG0);\n"
@@ -116,7 +122,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single BYTE at %IB0") {
             std::stringstream input_stream("__LOCATED_VAR(BYTE,__IB0,I,B,0)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX"\tbyte_input[0] = __IB0;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -128,7 +134,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single SINT at %IB1") {
             std::stringstream input_stream("__LOCATED_VAR(SINT,__IB1,I,B,1)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tbyte_input[1] = __IB1;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -140,7 +146,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single SINT at %QB1") {
             std::stringstream input_stream("__LOCATED_VAR(SINT,__QB1,Q,B,1)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tbyte_output[1] = __QB1;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -152,7 +158,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single USINT at %IB2") {
             std::stringstream input_stream("__LOCATED_VAR(USINT,__IB2,I,B,2)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tbyte_input[2] = __IB2;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -164,7 +170,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single WORD at %IW0") {
             std::stringstream input_stream("__LOCATED_VAR(WORD,__IW0,I,W,0)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tint_input[0] = __IW0;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -176,7 +182,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single WORD at %QW0") {
             std::stringstream input_stream("__LOCATED_VAR(WORD,__QW0,Q,W,0)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tint_output[0] = __QW0;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -188,7 +194,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single INT at %IW1") {
             std::stringstream input_stream("__LOCATED_VAR(INT,__IW1,I,W,1)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tint_input[1] = __IW1;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -200,7 +206,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single UINT at %IW2") {
             std::stringstream input_stream("__LOCATED_VAR(UINT,__IW2,I,W,2)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
 
             const char* expected = PREFIX "\tint_input[2] = __IW2;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
@@ -213,7 +219,7 @@ SCENARIO("", "") {
 
         WHEN("Contains two REAL at %ID0 and %ID10") {
             std::stringstream input_stream("__LOCATED_VAR(REAL,__ID0,I,D,0)\n__LOCATED_VAR(REAL,__ID10,I,D,10)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
 
             // Note that the type-separate glue does not support REAL types
             const char* expected = PREFIX POSTFIX GLUE_PREFIX
@@ -228,7 +234,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single INT at %MW2") {
             std::stringstream input_stream("__LOCATED_VAR(INT,__MW2,M,W,2)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tint_memory[2] = __MW2;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -240,7 +246,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single DWORD at %MD0") {
             std::stringstream input_stream("__LOCATED_VAR(DWORD,__MD2,M,D,2)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tdint_memory[2] = (IEC_DINT *)__MD2;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -252,7 +258,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single LINT at %ML1") {
             std::stringstream input_stream("__LOCATED_VAR(LINT,__ML1,M,L,1)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tlint_memory[1] = (IEC_LINT *)__ML1;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"
@@ -264,7 +270,7 @@ SCENARIO("", "") {
 
         WHEN("Contains single LINT at %ML1024") {
             std::stringstream input_stream("__LOCATED_VAR(LINT,__ML1024,M,L,1024)");
-            generateBody(input_stream, output_stream, digest);
+            generate_body(input_stream, output_stream, digest);
             const char* expected = PREFIX "\tspecial_functions[0] = (IEC_LINT *)__ML1024;\n" POSTFIX GLUE_PREFIX
                 "extern std::size_t const OPLCGLUE_GLUE_SIZE(1);\n"
                 "/// The packed glue variables.\n"

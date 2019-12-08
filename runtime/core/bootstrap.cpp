@@ -99,9 +99,7 @@ void bootstrap()
     // and we want that to happen early on.
     PlcConfig config;
 
-    // We just assume that the file we are reading with the
-    // configuration information in in the etc subfolder and use
-    // a relative path to find it.
+    // Try to read the config file
     const char* config_path = oplc::get_config_path();
     if (ini_parse(config_path, config_handler, &config) < 0)
     {
