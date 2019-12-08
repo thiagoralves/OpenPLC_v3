@@ -76,5 +76,5 @@ The normal approach for running OpenPLC is though the web interface. However,
 it is possible to run OpenPLC without the web interface using configuration
 information supplied in a configuration file.
 
-See the file `config.ini.example` in this repository for information about
+See the file `config.example.ini` in this repository for information about
 how to run standalone.

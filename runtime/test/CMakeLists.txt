@@ -29,7 +29,7 @@ endif()
 
 # This is all of our test files
 file(GLOB oplctest_SRC *.cpp **/*.cpp)
-file(GLOB oplc_core_SRC ../core/pstorage.cpp ../core/server.cpp ../core/dnp3s/*.cpp ../core/modbusslave/*.cpp)
+file(GLOB oplc_core_SRC ../core/ini_util.cpp ../core/pstorage.cpp ../core/server.cpp ../core/dnp3s/*.cpp ../core/modbusslave/*.cpp)
 
 add_executable(oplc_unit_test ${oplctest_SRC} ${oplc_core_SRC} ../core/glue.cpp ../vendor/inih-r46/ini.c)
 

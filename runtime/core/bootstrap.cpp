@@ -102,7 +102,7 @@ void bootstrap()
     // We just assume that the file we are reading with the
     // configuration information in in the etc subfolder and use
     // a relative path to find it.
-    const char* config_path = "../etc/config.ini";
+    const char* config_path = oplc::get_config_path();
     if (ini_parse(config_path, config_handler, &config) < 0)
     {
         spdlog::info("Config file {} could not be read", config_path);

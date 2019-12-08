@@ -73,7 +73,7 @@ IndexedStrategy::IndexedStrategy(const GlueVariablesBinding& bindings) :
     lock_guard<mutex> guard(*this->glue_mutex);
     // This constructor is pretty long - what we are doing here is
     // setting up structures that map between caches and the bound
-    // glue. These structures give fast (index -based) read/write of
+    // glue. These structures give fast (index-based) read/write of
     // values. The caches ensure that we are unlikely to have to wait
     // for a lock.
 
@@ -125,22 +125,22 @@ IndexedStrategy::IndexedStrategy(const GlueVariablesBinding& bindings) :
             {
                 int_register_read_buffer[msi].init(reinterpret_cast<IEC_INT*>(glue_variables[index].value));
             }
-            else if (dir == IECLDT_MEM && msi >= MIN_16B_RANGE && msi < MAX_16B_RANGE)
+            else if (dir == IECLDT_MEM && msi < intm_register_read_buffer.size())
             {
-                intm_register_read_buffer[msi - MIN_16B_RANGE].init(reinterpret_cast<IEC_INT*>(glue_variables[index].value));
+                intm_register_read_buffer[msi].init(reinterpret_cast<IEC_INT*>(glue_variables[index].value));
             }
             else if (dir == IECLDT_IN)
             {
                 int_input_read_buffer[msi].init(reinterpret_cast<IEC_INT*>(glue_variables[index].value));
             }
         }
-        else if (type == IECVT_DINT && dir == IECLDT_MEM && msi <= MIN_32B_RANGE && msi < MAX_32B_RANGE)
+        else if (type == IECVT_DINT && dir == IECLDT_MEM && msi < dintm_register_read_buffer.size())
         {
-            dintm_register_read_buffer[msi - MIN_32B_RANGE].init(reinterpret_cast<IEC_DINT*>(glue_variables[index].value));
+            dintm_register_read_buffer[msi].init(reinterpret_cast<IEC_DINT*>(glue_variables[index].value));
         }
         else if (type == IECVT_LINT && dir == IECLDT_MEM && msi <= MIN_64B_RANGE && msi < MAX_64B_RANGE)
         {
-            lintm_register_read_buffer[msi - MIN_64B_RANGE].init(reinterpret_cast<IEC_LINT*>(glue_variables[index].value));
+            lintm_register_read_buffer[msi].init(reinterpret_cast<IEC_LINT*>(glue_variables[index].value));
         }
     }
 }
@@ -232,13 +232,8 @@ modbus_errno IndexedStrategy::WriteMultipleCoils(uint16_t coil_start_index,
                                                  uint16_t num_coils,
                                                  uint8_t* values)
 {
-    if (coil_start_index + num_coils >= coil_write_buffer.size())
-    {
-        return -1;
-    }
-
     lock_guard<mutex> guard(buffer_mutex);
-    for (uint16_t index = 0; index < num_coils; ++index)
+    for (uint16_t index = 0; index < num_coils && (coil_start_index + index) < coil_write_buffer.size(); ++index)
     {
         // Get the value from the packed structure
         bool value = values[index / 8] & BOOL_BIT_MASK[index % 8];
@@ -267,7 +262,7 @@ modbus_errno IndexedStrategy::ReadBools(const vector<MappedBool>& buffer,
                                         uint16_t num_values,
                                         uint8_t* values)
 {
-   auto max_index = start_index + num_values - 1;
+    auto max_index = start_index + num_values - 1;
     if (max_index >= buffer.size())
     {
         return -1;
@@ -314,7 +309,7 @@ modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
             // The word we got is part of a larger 32-bit value, and we will
             // bit shift to write the appropriate part. Resize to 32-bits
             // so we can shift appropriately.
-            uint32_t partial_value = (uint32_t) word;
+            uint32_t partial_value = static_cast<uint32_t>(word);
             oplc::PendingValue<IEC_DINT>& dst = dintm_register_write_buffer[hr_index / 2];
             dst.has_pending = true;
 
@@ -322,7 +317,7 @@ modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
             {
                 // First word
                 dst.value = dst.value & 0x0000ffff;
-                dst.value = dst.value | partial_value;
+                dst.value = dst.value | (partial_value << 16);
             }
             else
             {
@@ -336,7 +331,7 @@ modbus_errno IndexedStrategy::WriteHoldingRegisters(uint16_t hr_start_index,
             hr_index -= MIN_64B_RANGE;
             // Same as with a 32-bit value, here we are updating part of a
             // 64-bit value, so resize so we can bit-shift appropriately.
-            uint64_t partial_value = (uint64_t) word;
+            uint64_t partial_value = static_cast<uint64_t>(word);
             oplc::PendingValue<IEC_LINT>& dst = lintm_register_write_buffer[hr_index / 4];
             dst.has_pending = true;
 
@@ -397,11 +392,11 @@ modbus_errno IndexedStrategy::ReadHoldingRegisters(uint16_t hr_start_index, uint
             hr_index -= MIN_32B_RANGE;
             if (hr_index % 2 == 0)
             {
-                val = (uint16_t)(dintm_register_read_buffer[hr_index / 2].cached_value >> 16);
+                val = static_cast<uint16_t>(dintm_register_read_buffer[hr_index / 2].cached_value >> 16);
             }
             else
             {
-                val = (uint16_t)(dintm_register_read_buffer[hr_index / 2].cached_value & 0xffff);
+                val = static_cast<uint16_t>(dintm_register_read_buffer[hr_index / 2].cached_value & 0x0000ffff);
             }
         }
         else if (hr_index < MAX_64B_RANGE)
@@ -409,19 +404,19 @@ modbus_errno IndexedStrategy::ReadHoldingRegisters(uint16_t hr_start_index, uint
             hr_index -= MIN_64B_RANGE;
             if (hr_index %4 == 0)
             {
-                val = (uint16_t)(lintm_register_read_buffer[hr_index / 4].cached_value >> 48);
+                val = static_cast<uint16_t>(lintm_register_read_buffer[hr_index / 4].cached_value >> 48);
             }
-            else if (hr_index %4 == 1)
+            else if (hr_index % 4 == 1)
             {
-                val = (uint16_t)(lintm_register_read_buffer[hr_index / 4].cached_value >> 32);
+                val = static_cast<uint16_t>(lintm_register_read_buffer[hr_index / 4].cached_value >> 32);
             }
-            else if (hr_index %4 == 2)
+            else if (hr_index % 4 == 2)
             {
-                val = (uint16_t)(lintm_register_read_buffer[hr_index / 4].cached_value >> 16);
+                val = static_cast<uint16_t>(lintm_register_read_buffer[hr_index / 4].cached_value >> 16);
             }
-            else if (hr_index %4 == 3)
+            else if (hr_index % 4 == 3)
             {
-                val = (uint16_t)(lintm_register_read_buffer[hr_index / 4].cached_value & 0xffff);
+                val = static_cast<uint16_t>(lintm_register_read_buffer[hr_index / 4].cached_value & 0xffff);
             }
         }
         else

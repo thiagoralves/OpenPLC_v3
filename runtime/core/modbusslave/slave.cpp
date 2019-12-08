@@ -46,7 +46,7 @@
 #define MB_FC_READ_HOLDING_REGISTERS    3
 #define MB_FC_READ_INPUT_REGISTERS      4
 #define MB_FC_WRITE_COIL                5
-#define MB_FC_WRITE_REGISTER            6
+#define MB_FC_WRITE_HOLDING_REGISTER    6
 #define MB_FC_WRITE_MULTIPLE_COILS      15
 #define MB_FC_WRITE_MULTIPLE_REGISTERS  16
 #define MB_FC_ERROR                     255
@@ -65,6 +65,7 @@ using namespace std;
 /// \param mb_error
 int modbus_error(unsigned char *buffer, int mb_error)
 {
+    spdlog::warn("Error encountered in modbus slave {}", mb_error);
     buffer[4] = 0;
     buffer[5] = 3;
     buffer[7] = buffer[7] | 0x80; //set the highest bit
@@ -242,7 +243,7 @@ int write_holding_register(unsigned char* buffer, int buffer_size, IndexedStrate
 {
     int16_t start = mb_to_word(buffer[8], buffer[9]);
 
-    modbus_errno err = strategy->WriteHoldingRegisters(start, 1, buffer + 9);
+    modbus_errno err = strategy->WriteHoldingRegisters(start, 1, buffer + 10);
     if (err)
 	{
         return modbus_error(buffer, ERR_ILLEGAL_DATA_ADDRESS);
@@ -266,7 +267,8 @@ int write_multiple_coils(unsigned char* buffer, int buffer_size, IndexedStrategy
     }
 
     // Check that we have enough bytes
-    if (buffer_size < (byte_data_length + 13) || buffer[12] != byte_data_length) {
+    if (buffer_size < (byte_data_length + 13) || buffer[12] != byte_data_length)
+    {
         return modbus_error(buffer, ERR_ILLEGAL_DATA_VALUE);
     }
 
@@ -325,6 +327,8 @@ int16_t modbus_process_message(unsigned char *buffer, int16_t buffer_size, void*
         return modbus_error(buffer, ERR_ILLEGAL_FUNCTION);
     }
 
+    spdlog::trace("Modbus slave message function {} received", buffer[7]);
+
     switch (buffer[7])
 	{
         case MB_FC_READ_COILS:
@@ -337,7 +341,7 @@ int16_t modbus_process_message(unsigned char *buffer, int16_t buffer_size, void*
             return read_input_registers(buffer, buffer_size, strategy);
         case MB_FC_WRITE_COIL:
             return write_coil(buffer, buffer_size, strategy);
-        case MB_FC_WRITE_REGISTER:
+        case MB_FC_WRITE_HOLDING_REGISTER:
             return write_holding_register(buffer, buffer_size, strategy);
         case MB_FC_WRITE_MULTIPLE_COILS:
             return write_multiple_coils(buffer, buffer_size, strategy);
@@ -365,7 +369,6 @@ void* modbus_exchange_data(void* args)
 
     while (*exchange_args->run)
 	{
-        spdlog::trace("Exchanging modbus master data");
         exchange_args->strategy->Exchange();
         this_thread::sleep_for(exchange_args->interval);
     }
@@ -456,7 +459,6 @@ int8_t modbus_slave_run(oplc::config_stream& cfg_stream,
 
     ini_parse_stream(oplc::istream_fgets, cfg_stream.get(),
 	                 modbus_slave_cfg_handler, &config);
-
     cfg_stream.reset(nullptr);
 
     IndexedStrategy strategy(bindings);
@@ -469,7 +471,7 @@ int8_t modbus_slave_run(oplc::config_stream& cfg_stream,
         .interval=std::chrono::milliseconds(100)
     };
 
-    int ret = pthread_create(&exchange_data_thread, NULL, modbus_exchange_data, args);
+    int ret = pthread_create(&exchange_data_thread, nullptr, modbus_exchange_data, args);
     if (ret == 0)
 	{
         pthread_detach(exchange_data_thread);

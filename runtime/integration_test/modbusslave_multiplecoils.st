@@ -1,0 +1,19 @@
+PROGRAM program0
+  VAR
+    Coil0 AT %QX0.0 : BOOL;
+    Coil1 AT %QX0.1 : BOOL;
+    Coil2 AT %QX0.2 : BOOL;
+  END_VAR
+
+  Coil0 := Coil0;
+
+END_PROGRAM
+
+
+CONFIGURATION Config0
+
+  RESOURCE Res0 ON PLC
+    TASK task0(INTERVAL := T#20ms,PRIORITY := 0);
+    PROGRAM instance0 WITH task0 : program0;
+  END_RESOURCE
+END_CONFIGURATION
