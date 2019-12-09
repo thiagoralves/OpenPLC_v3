@@ -160,6 +160,7 @@ void ServiceDefinition::after_cycle()
 void* ServiceDefinition::run_service(void* user_data)
 {
     auto service = reinterpret_cast<ServiceDefinition*>(user_data);
+    spdlog::debug("Service {} thread started", service->name);
 
     GlueVariablesBinding bindings(&bufferLock, OPLCGLUE_GLUE_SIZE,
                                   oplc_glue_vars, OPLCGLUE_MD5_DIGEST);

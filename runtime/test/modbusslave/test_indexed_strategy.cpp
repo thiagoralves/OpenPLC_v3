@@ -112,7 +112,7 @@ SCENARIO("indexed_strategy", "")
     {
         IEC_INT int_val(0);
         const GlueVariable glue_vars[] = {
-            { IECLDT_MEM, IECLST_WORD, 1024, 0, IECVT_INT, &int_val },
+            { IECLDT_MEM, IECLST_WORD, 0, 0, IECVT_INT, &int_val },
         };
         GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
         IndexedStrategy strategy(bindings);
@@ -153,7 +153,7 @@ SCENARIO("indexed_strategy", "")
     {
         IEC_DINT dint_val(0);
         const GlueVariable glue_vars[] = {
-            { IECLDT_MEM, IECLST_DOUBLEWORD, 2048, 0, IECVT_DINT, &dint_val },
+            { IECLDT_MEM, IECLST_DOUBLEWORD, 0, 0, IECVT_DINT, &dint_val },
         };
         GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
         IndexedStrategy strategy(bindings);
@@ -189,7 +189,7 @@ SCENARIO("indexed_strategy", "")
     {
         IEC_LINT lint_val(0);
         const GlueVariable glue_vars[] = {
-            { IECLDT_MEM, IECLST_LONGWORD, 4096, 0, IECVT_LINT, &lint_val },
+            { IECLDT_MEM, IECLST_LONGWORD, 0, 0, IECVT_LINT, &lint_val },
         };
         GlueVariablesBinding bindings(&glue_mutex, 1, glue_vars, nullptr);
         IndexedStrategy strategy(bindings);

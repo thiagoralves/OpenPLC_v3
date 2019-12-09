@@ -30,6 +30,7 @@
 #include <spdlog/spdlog.h>
 
 #include "iec_types.h"
+#include "ini_util.h"
 #include "ladder.h"
 #include "service/service_definition.h"
 #include "service/service_registry.h"
@@ -146,9 +147,25 @@ void handleSpecialFunctions()
     // Insert other special functions below
 }
 
+/// Handle the command line arguments by setting things as appropriate.
+void handle_args(int argc, char** argv)
+{
+    for (auto i = 0; i < argc; ++i)
+    {
+        if (strcmp(argv[i], "--config") == 0 && i + 1 < argc)
+        {
+            // The next argument is interpreted as the path to
+            // the configuration file
+            oplc::set_config_path(argv[i + 1], strlen(argv[i + 1]));
+            ++i;
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     initialize_logging(argc, argv);
+    handle_args(argc, argv);
     spdlog::info("OpenPLC Runtime starting...");
 
     time(&start_time);
@@ -166,9 +183,9 @@ int main(int argc, char **argv)
     //======================================================
     //                    MAIN LOOP
     //======================================================
+    spdlog::trace("Beginning main loop");
     while (run_openplc)
     {
-
         // Read input image - this method tries to get the lock
         // so don't put it in the lock context.
         updateBuffersIn();
@@ -177,9 +194,6 @@ int main(int argc, char **argv)
             // Make sure the buffer pointers are correct and
             // attached to the user variables
             glueVars();
-
-            // Read input image
-            updateBuffersIn();
 
             updateCustomIn();
             // Update input image table with data from slave devices

@@ -195,36 +195,45 @@ void *handleConnections(void *arguments)
     auto args = reinterpret_cast<ServerArgs*>(arguments);
 
     unsigned char buffer[NET_BUFFER_SIZE];
-    int messageSize;
+    int message_size;
+    int client_fd = args->client_fd;
 
-    spdlog::debug("Server: Thread created for client ID: {}", args->client_fd);
+    spdlog::debug("Server: Thread created for client ID: {}", client_fd);
 
     while(*args->run)
     {
-        messageSize = listenToClient(args->client_fd, buffer);
-        if (messageSize <= 0 || messageSize > NET_BUFFER_SIZE)
+        message_size = listenToClient(client_fd, buffer);
+        if (message_size <= 0 || message_size > NET_BUFFER_SIZE)
         {
             // something has  gone wrong or the client has closed connection
-            if (messageSize == 0)
+            if (message_size == 0)
             {
-                spdlog::debug("Server: client ID: {} has closed the connection", args->client_fd);
+                spdlog::debug("Server: client ID: {} has closed the connection", client_fd);
             }
             else
             {
-                spdlog::error("Server: Something is wrong with the  client ID: {} message Size : {}", args->client_fd, messageSize);
+                spdlog::error("Server: Something is wrong with the  client ID: {} message Size : {}", client_fd, message_size);
             }
             break;
         }
 
-        int messageSize = args->process_message(buffer, NET_BUFFER_SIZE, args->user_data);
-        write(args->client_fd, buffer, messageSize);
+        spdlog::trace("Message received for client {}", client_fd);
+        int response_size = args->process_message(buffer, NET_BUFFER_SIZE, args->user_data);
+        spdlog::trace("Message processing completed for client {}", client_fd);
+        auto result = write(client_fd, buffer, response_size);
+
+        if (!result) {
+            spdlog::warn("Unable to write to client {}", client_fd);
+        }
     }
     
-    spdlog::debug("Closing client socket and calling pthread_exit");
+    spdlog::trace("Closing client socket and calling pthread_exit");
     close(args->client_fd);
-    spdlog::info("Terminating server connections thread");
+    spdlog::trace("Terminating server connections thread");
     pthread_exit(NULL);
     delete args;
+
+    return nullptr;
 }
 
 /// @brief Function to start a socket server.
@@ -258,7 +267,7 @@ void startServer(uint16_t port, volatile bool& run_server, process_message_fn pr
             .process_message=process_message,
             .user_data=user_data
         };
-        spdlog::trace("Server: Client accepted! Creating thread for the new client ID: {}...", client_fd);
+        spdlog::trace("Server: Client accepted on {}! Creating thread for the new client ID: {}...", port, client_fd);
         int success = pthread_create(&thread, NULL, handleConnections, args);
         if (success == 0)
         {

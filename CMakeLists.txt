@@ -41,6 +41,11 @@ if(NOT program_name)
 endif()
 message("User program = ${program_name}")
 
+if(NOT USER_STSOURCE_DIR)
+    set(USER_STSOURCE_DIR "../etc/st_files")
+endif()
+message("User program directory = ${USER_STSOURCE_DIR}")
+
 # Enable building the application with different set of capabilties
 # depending on the capabilities that we want.
 
@@ -200,8 +205,8 @@ if(OPLC_ST_TO_C)
     # Dummy output rebuilded everytime. Needed for Config0.c and Res0.c files generation
     add_custom_command(OUTPUT dummy_output
         COMMAND ${CMAKE_COMMAND} -E make_directory ../etc/src
-        COMMAND ./st_optimizer${PLATFORM_EXTENSION} ../etc/st_files/${program_name} ../etc/st_files/${program_name}
-        COMMAND ./iec2c${PLATFORM_EXTENSION} -I ../runtime/lib -T ../etc/src ../etc/st_files/${program_name}
+        COMMAND ./st_optimizer${PLATFORM_EXTENSION} ${USER_STSOURCE_DIR}/${program_name} ${USER_STSOURCE_DIR}/${program_name}
+        COMMAND ./iec2c${PLATFORM_EXTENSION} -I ../runtime/lib -T ../etc/src ${USER_STSOURCE_DIR}/${program_name}
         COMMAND ./glue_generator${PLATFORM_EXTENSION} ../etc/src/LOCATED_VARIABLES.h ../etc/src/glueVars.cpp
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/bin
         DEPENDS always_rebuild dependent_tools

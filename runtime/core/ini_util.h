@@ -28,10 +28,22 @@
 namespace oplc
 {
 
-/// Define location of config file once so others can use it
-static const char* config_file = "../etc/config.ini";
+/// @brief Gets the path to the INI file.
+const char* get_config_path();
 
-/// Convert a boolean value in the INI file to a boolean.
+/// @brief Sets the path to the configuration INI file. This allows
+/// the runtime to use an alternative configuration file, for example by
+/// specifying the alternative through a command line argument.
+///
+/// @note This function is not thread safe and it is not safe to call this
+/// function where other thread may call this or any function that gets
+/// the ini path.
+///
+/// @param new_path The new path to use
+/// @param count The number of characters in new_path
+void set_config_path(const char* new_path, std::size_t count);
+
+/// @brief Convert a boolean value in the INI file to a boolean.
 /// The value must be "true", otherwise it is interpreted as false.
 /// @param value the value to convert.
 /// @return The converted value.
@@ -40,7 +52,7 @@ inline bool ini_atob(const char* value)
     return strcmp("true", value) == 0;
 }
 
-/// Is the section and value equal to the expected section and value?
+/// @brief Is the section and value equal to the expected section and value?
 /// @param section_expected The expected section.
 /// @param value_expected The expected value.
 /// @param section The current section.
@@ -122,17 +134,7 @@ typedef std::unique_ptr<std::istream, std::function<void(std::istream*)>> config
 
 /// Open the standard configuration file as an closable stream.
 /// @return A stream for the configuration file.
-inline config_stream open_config()
-{
-    return config_stream(
-            new std::ifstream(config_file),
-            [] (std::istream* s)
-            {
-                reinterpret_cast<std::ifstream*>(s)->close();
-                delete s;
-            }
-        );
-}
+config_stream open_config();
 
 }  // namespace oplc
 

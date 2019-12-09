@@ -100,9 +100,10 @@ void bootstrap()
     PlcConfig config;
 
     // Try to read the config file
-    if (ini_parse(oplc::config_file, config_handler, &config) < 0)
+    const char* config_path = oplc::get_config_path();
+    if (ini_parse(config_path, config_handler, &config) < 0)
     {
-        spdlog::info("Config file {} could not be read", oplc::config_file);
+        spdlog::info("Config file {} could not be read", config_path);
         // If we don't have the config file, then default to always
         // starting the interactive server.
         config.services.push_back("interactive");
