@@ -116,7 +116,7 @@ void disableOutputs()
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Special Functions
 ////////////////////////////////////////////////////////////////////////////////
-void handleSpecialFunctions()
+void handle_special_functions()
 {
     // Current time [%ML1024]
     struct tm *current_time;
@@ -191,14 +191,11 @@ int main(int argc, char **argv)
         updateBuffersIn();
         {
             std::lock_guard<std::mutex> guard(bufferLock);
-            // Make sure the buffer pointers are correct and
-            // attached to the user variables
-            glueVars();
 
             updateCustomIn();
             // Update input image table with data from slave devices
             services_before_cycle();
-            handleSpecialFunctions();
+            handle_special_functions();
             // Execute plc program logic
             config_run__(__tick++);
             updateCustomOut();

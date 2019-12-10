@@ -482,7 +482,7 @@ int8_t modbus_slave_run(oplc::config_stream& cfg_stream,
     }
 
     spdlog::info("Starting modbus slave on port {}", config.port);
-    startServer(config.port, run, &modbus_process_message, &strategy);
+    start_server(config.port, run, &modbus_process_message, &strategy);
 
     pthread_join(exchange_data_thread, nullptr);
 

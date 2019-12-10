@@ -167,7 +167,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'start_modbus(' + str(port_num) + ')\n')
+                s.send(b'start_modbusslave(' + str(port_num) + ')\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -178,7 +178,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'stop_modbus()\n')
+                s.send(b'stop_modbusslave()\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -189,7 +189,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'start_dnp3(' + str(port_num) + ')\n')
+                s.send(b'start_dnp3s(' + str(port_num) + ')\n')
                 data = s.recv(1000)
                 s.close()
             except:
@@ -200,7 +200,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'stop_dnp3()\n')
+                s.send(b'stop_dnp3s()\n')
                 data = s.recv(1000)
                 s.close()
             except:

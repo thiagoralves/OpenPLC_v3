@@ -442,7 +442,7 @@ void generate_bool_groups(ostream& glueVars, list<IecVar>& all_vars) {
 
 void generate_integrated_glue(ostream& glueVars, const list<IecVar>& all_vars) {
     glueVars << "/// The size of the array of glue variables.\n";
-    glueVars << "extern std::size_t const OPLCGLUE_GLUE_SIZE(";
+    glueVars << "extern const std::size_t OPLCGLUE_GLUE_SIZE(";
     glueVars << all_vars.size() << ");\n";
 
     glueVars << "/// The packed glue variables.\n";

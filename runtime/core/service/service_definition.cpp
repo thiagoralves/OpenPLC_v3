@@ -14,10 +14,19 @@
 
 #include <spdlog/spdlog.h>
 #include <algorithm>
+#include <mutex>
 
 #include "service_definition.h"
 #include "glue.h"
-#include "ladder.h"
+
+// These definitions are provided by the glueVars.cpp
+// implementation file. They define the information about
+// glue variables that we pass to services during a lifecycle
+// function.
+extern std::mutex bufferLock;
+extern const std::uint16_t OPLCGLUE_GLUE_SIZE;
+extern const GlueVariable oplc_glue_vars[];
+extern const char OPLCGLUE_MD5_DIGEST[];
 
 using namespace std;
 
