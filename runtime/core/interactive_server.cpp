@@ -221,7 +221,7 @@ void interactive_client_command(const char* command, int client_fd)
         return;
     }
 
-    spdlog::trace("Process command received {}", command);
+    spdlog::trace("Command received {}", command);
 
     if (strncmp(command, "quit()", 6) == 0)
     {
@@ -230,14 +230,14 @@ void interactive_client_command(const char* command, int client_fd)
     }
     else if (strncmp(command, "start_", 6) == 0)
     {
-        char service_name[512];
-        auto config_start = get_service_name(command + 6, service_name, 512);
+        char service_name[MAX_SERVICE_NAME_SIZE];
+        auto config_start = get_service_name(command + 6, service_name, MAX_SERVICE_NAME_SIZE);
 
         ServiceDefinition* def = services_find(service_name);
         if (!def)
         {
             spdlog::error("Unrecognized service name {}", service_name);
-            int count_char = sprintf(command_buffer, "Error: unrecognized service name\n");
+            int count_char = sprintf(command_buffer, "Error: unrecognized service name '%s'\n", service_name);
             write(client_fd, command_buffer, count_char);
             return;
         }
@@ -246,16 +246,21 @@ void interactive_client_command(const char* command, int client_fd)
         {
             def->start(command_buffer);
         }
+        else
+        {
+           spdlog::error("Unable to start service due {} to missing config", service_name);
+        }
+
     }
     else if (strncmp(command, "stop_", 5) == 0)
     {
-        char service_name[512];
-        auto config_start = get_service_name(command + 6, service_name, 512);
+        char service_name[MAX_SERVICE_NAME_SIZE];
+        auto config_start = get_service_name(command + 5, service_name, MAX_SERVICE_NAME_SIZE);
 
         ServiceDefinition* def = services_find(service_name);
         if (!def)
         {
-            int count_char = sprintf(command_buffer, "Error: unrecognized service name\n");
+            int count_char = sprintf(command_buffer, "Error: unrecognized service name '%s'\n", service_name);
             write(client_fd, command_buffer, count_char);
             return;
         }
@@ -264,7 +269,7 @@ void interactive_client_command(const char* command, int client_fd)
     }
     else if (strncmp(command, "runtime_logs()", 14) == 0)
     {
-        spdlog::debug("Issued runtime_logs() command");
+        spdlog::trace("Issued runtime_logs() command");
         std::string data = log_sink->data();
         write(client_fd, data.c_str(), data.size());
         return;
@@ -279,6 +284,7 @@ void interactive_client_command(const char* command, int client_fd)
     }
     else
     {
+        spdlog::error("Unrecognized command {}", command_buffer);
         int count_char = sprintf(command_buffer, "Error: unrecognized command\n");
         write(client_fd, command_buffer, count_char);
         return;

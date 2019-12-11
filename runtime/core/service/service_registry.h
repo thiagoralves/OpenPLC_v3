@@ -15,11 +15,15 @@
 #ifndef RUNTIME_CORE_SERVICE_SERVICE_REGISTRY_H_
 #define RUNTIME_CORE_SERVICE_SERVICE_REGISTRY_H_
 
+#include <cstdint>
+
 /** \addtogroup openplc_runtime
  *  @{
  */
 
 class ServiceDefinition;
+
+const std::size_t MAX_SERVICE_NAME_SIZE = 512;
 
 /// @brief Finds the service in the registry by the name of the service.
 /// @param name The identifier for the service.
