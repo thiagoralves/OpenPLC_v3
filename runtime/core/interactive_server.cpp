@@ -52,13 +52,7 @@
 const uint16_t BUFFER_MAX_SIZE(1024);
 std::mutex command_mutex;
 
-// TODO Globals to move into services
-bool run_enip = 0;
-uint16_t enip_port = 44818;
 time_t start_time;
-
-// Global Threads
-pthread_t enip_thread;
 
 // Log Buffer
 #define LOG_BUFFER_SIZE 1000000
@@ -66,43 +60,6 @@ unsigned char log_buffer[LOG_BUFFER_SIZE];
 std::shared_ptr<buffered_sink> log_sink;
 
 using namespace std;
-
-/// @brief Start the Enip Thread
-/// @param *arg
-void *enipThread(void *arg)
-{
-    startServer(enip_port, run_enip, &processEnipMessage, nullptr);
-    return nullptr;
-}
-
-/// @brief Read the argument from a command function
-/// @param *command
-int readCommandArgument(const char *command)
-{
-    int i = 0;
-    int j = 0;
-    char argument[BUFFER_MAX_SIZE];
-
-    while (command[i] != '(' && command[i] != '\0')
-    {
-        i++;
-    }
-
-    if (command[i] == '(')
-    {
-        i++;
-    }
-
-    while (command[i] != ')' && command[i] != '\0')
-    {
-        argument[j] = command[i];
-        i++;
-        j++;
-        argument[j] = '\0';
-    }
-
-    return atoi(reinterpret_cast<char *>(argument));
-}
 
 /// Copy the configuration argument from the command into the buffer
 /// @param source The source of the command. This should be pointing to the
@@ -139,6 +96,30 @@ std::int8_t copy_command_config(const char *source, char target[],
     target[end_index] = '\0';
 
     return 0;
+}
+
+/// @brief Get the name of the service from the command.
+/// @param command The command, starting with the character after "_"
+/// @return The start of the configuration information.
+const char* get_service_name(const char* command, char target[], size_t target_size)
+{
+    size_t end_index = 0;
+    while (command[end_index] != '(' && command[end_index] != '\0')
+    {
+        end_index++;
+    }
+    
+    // Now we want to copy everything from the beginning of source
+    // into target, up to the length of target. This may or many not
+    // fill our target, but the size ensure we don't go over the buffer
+    // size.
+    std::memcpy(target, command, min(end_index, target_size));
+
+    // And set the final null terminating character in target. In general
+    // this is replacing the null terminating character with the right end.
+    target[end_index] = '\0';
+
+    return command + end_index + 1;
 }
 
 /// @brief Create the socket and bind it.
@@ -240,91 +221,55 @@ void interactive_client_command(const char* command, int client_fd)
         return;
     }
 
-    spdlog::trace("Process command received {}", command);
+    spdlog::trace("Command received {}", command);
 
     if (strncmp(command, "quit()", 6) == 0)
     {
         spdlog::info("Issued quit() command");
         run_openplc = 0;
     }
-    else if (strncmp(command, "start_modbus(", 13) == 0)
+    else if (strncmp(command, "start_", 6) == 0)
     {
-        ServiceDefinition* def = services_find("modbusslave");
-        if (def && copy_command_config(command + 13, command_buffer, BUFFER_MAX_SIZE) == 0)
+        char service_name[MAX_SERVICE_NAME_SIZE];
+        auto config_start = get_service_name(command + 6, service_name, MAX_SERVICE_NAME_SIZE);
+
+        ServiceDefinition* def = services_find(service_name);
+        if (!def)
+        {
+            spdlog::error("Unrecognized service name {}", service_name);
+            int count_char = sprintf(command_buffer, "Error: unrecognized service name '%s'\n", service_name);
+            write(client_fd, command_buffer, count_char);
+            return;
+        }
+
+        if (copy_command_config(config_start, command_buffer, BUFFER_MAX_SIZE) == 0)
         {
             def->start(command_buffer);
         }
-    }
-    else if (strncmp(command, "stop_modbus()", 13) == 0)
-    {
-        ServiceDefinition* def = services_find("modbusslave");
-        if (def)
+        else
         {
-            def->stop();
+           spdlog::error("Unable to start service due {} to missing config", service_name);
         }
+
     }
-#ifdef OPLC_DNP3_OUTSTATION
-    else if (strncmp(command, "start_dnp3(", 11) == 0)
+    else if (strncmp(command, "stop_", 5) == 0)
     {
-        ServiceDefinition* def = services_find("dnp3s");
-        if (def && copy_command_config(command + 11, command_buffer, BUFFER_MAX_SIZE) == 0)
+        char service_name[MAX_SERVICE_NAME_SIZE];
+        auto config_start = get_service_name(command + 5, service_name, MAX_SERVICE_NAME_SIZE);
+
+        ServiceDefinition* def = services_find(service_name);
+        if (!def)
         {
-            def->start(command_buffer);
+            int count_char = sprintf(command_buffer, "Error: unrecognized service name '%s'\n", service_name);
+            write(client_fd, command_buffer, count_char);
+            return;
         }
-    }
-    else if (strncmp(command, "stop_dnp3()", 11) == 0)
-    {
-        ServiceDefinition* def = services_find("dnp3s");
-        if (def)
-        {
-            def->stop();
-        }
-    }
-#endif  // OPLC_DNP3_OUTSTATION
-    else if (strncmp(command, "start_enip(", 11) == 0)
-    {
-        spdlog::info("Issued start_enip() command to start on port: {}", readCommandArgument(command));
-        enip_port = readCommandArgument(command);
-        if (run_enip) {
-            spdlog::info("EtherNet/IP server already active. Restarting on port: {}", enip_port);
-            //Stop Enip server
-            run_enip = 0;
-            pthread_join(enip_thread, NULL);
-            spdlog::info("EtherNet/IP server was stopped");
-        }
-        //Start Enip server
-        run_enip = 1;
-        pthread_create(&enip_thread, NULL, enipThread, NULL);
-    }
-    else if (strncmp(command, "stop_enip()", 11) == 0)
-    {
-        spdlog::info("Issued stop_enip() command");
-        if (run_enip)
-        {
-            run_enip = 0;
-            pthread_join(enip_thread, NULL);
-            spdlog::info("EtherNet/IP server was stopped");
-        }
-    }
-    else if (strncmp(command, "start_pstorage(", 15) == 0)
-    {
-        ServiceDefinition* def = services_find("pstorage");
-        if (def && copy_command_config(command + 15, command_buffer, BUFFER_MAX_SIZE) == 0)
-        {
-            def->start(command_buffer);
-        }
-    }
-    else if (strncmp(command, "stop_pstorage()", 15) == 0)
-    {
-        ServiceDefinition* def = services_find("pstorage");
-        if (def)
-        {
-            def->stop();
-        }
+
+        def->stop();
     }
     else if (strncmp(command, "runtime_logs()", 14) == 0)
     {
-        spdlog::debug("Issued runtime_logs() command");
+        spdlog::trace("Issued runtime_logs() command");
         std::string data = log_sink->data();
         write(client_fd, data.c_str(), data.size());
         return;
@@ -339,6 +284,7 @@ void interactive_client_command(const char* command, int client_fd)
     }
     else
     {
+        spdlog::error("Unrecognized command {}", command_buffer);
         int count_char = sprintf(command_buffer, "Error: unrecognized command\n");
         write(client_fd, command_buffer, count_char);
         return;
@@ -401,7 +347,7 @@ void* interactive_client_run(void* arguments)
         }
     }
 
-    closeSocket(client_args->client_fd);
+    close_socket(client_args->client_fd);
     spdlog::trace("Interactive server connection completed");
     delete client_args;
     pthread_exit(NULL);
@@ -436,7 +382,7 @@ void interactive_run(oplc::config_stream& cfg_stream,
         auto args = new ClientArgs { .client_fd = client_fd, .run = &run };
 
         spdlog::trace("Interactive Server: Client accepted! Creating thread for the new client ID: {}", client_fd);
-        int ret = pthread_create(&thread, NULL, interactive_client_run, args);
+        int ret = pthread_create(&thread, nullptr, interactive_client_run, args);
         if (ret == 0)
         {
             pthread_detach(thread);
@@ -447,7 +393,7 @@ void interactive_run(oplc::config_stream& cfg_stream,
         }
     }
 
-    closeSocket(socket_fd);
+    close_socket(socket_fd);
 }
 
 void interactive_service_run(const GlueVariablesBinding& binding,

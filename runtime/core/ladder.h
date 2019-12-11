@@ -1,4 +1,5 @@
 // Copyright 2015 Thiago Alves
+// Copyright 2019 Garret Fick
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,11 +83,6 @@ extern unsigned long long common_ticktime__;
 struct GlueVariable;
 class GlueVariablesBinding;
 
-extern const std::uint16_t OPLCGLUE_GLUE_SIZE;
-extern const GlueVariable oplc_glue_vars[];
-extern const char OPLCGLUE_MD5_DIGEST[];
-
-
 //----------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //----------------------------------------------------------------------
@@ -119,25 +115,16 @@ extern int ignored_int_outputs[];
 void sleep_until(struct timespec *ts, int delay);
 bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber);
 extern uint8_t run_openplc;
-void handleSpecialFunctions();
 
 // server.cpp
 typedef std::int16_t (*process_message_fn)(unsigned char *buffer, std::int16_t buffer_size, void* user_data);
-void startServer(uint16_t port, volatile bool& run_server, process_message_fn process_message, void* user_data);
-int getSO_ERROR(int fd);
-void closeSocket(int fd);
+void start_server(uint16_t port, volatile bool& run_server, process_message_fn process_message, void* user_data);
+void close_socket(int fd);
 bool SetSocketBlockingEnabled(int fd, bool blocking);
 
 // interactive_server.cpp
 void initialize_logging(int argc, char **argv);
-extern bool run_enip;
 extern time_t start_time;
-
-// enip.cpp
-std::int16_t processEnipMessage(unsigned char *buffer, std::int16_t buffer_size, void* user_data);
-
-// pccc.cpp ADDED Ulmer
-uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size);
 
 void bootstrap();
 

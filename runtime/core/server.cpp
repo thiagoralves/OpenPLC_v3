@@ -44,7 +44,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Verify if all errors were cleared on a socket
 ////////////////////////////////////////////////////////////////////////////////
-int getSO_ERROR(int fd) 
+int get_socket_error(int fd) 
 {
    int err = 1;
    socklen_t len = sizeof err;
@@ -58,11 +58,11 @@ int getSO_ERROR(int fd)
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Properly close a socket
 ////////////////////////////////////////////////////////////////////////////////
-void closeSocket(int fd) 
+void close_socket(int fd) 
 {
    if (fd >= 0) 
    {
-      getSO_ERROR(fd); // first clear any errors, which can cause close to fail
+      get_socket_error(fd); // first clear any errors, which can cause close to fail
       if (shutdown(fd, SHUT_RDWR) < 0) // secondly, terminate the 'reliable' delivery
          if (errno != ENOTCONN && errno != EINVAL) // SGI causes EINVAL
             perror("shutdown");
@@ -88,7 +88,7 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
 /// @param port
 /// @return the file descriptor for the socket created
 ////////////////////////////////////////////////////////////////////////////////
-int createSocket(uint16_t port)
+int create_socket(uint16_t port)
 {
     int socket_fd;
     struct sockaddr_in server_addr;
@@ -136,7 +136,7 @@ int createSocket(uint16_t port)
 /// @param run_server A flag to terminate this client.
 /// @return  file descriptor to communicate with the client
 ////////////////////////////////////////////////////////////////////////////////
-int waitForClient(int socket_fd, volatile bool& run_server)
+int wait_for_client(int socket_fd, volatile bool& run_server)
 {
     int client_fd;
     struct sockaddr_in client_addr;
@@ -167,7 +167,7 @@ int waitForClient(int socket_fd, volatile bool& run_server)
 /// @param buffer
 /// @return  the number of bytes received.
 ////////////////////////////////////////////////////////////////////////////////
-int listenToClient(int client_fd, unsigned char *buffer)
+int listen_to_client(int client_fd, unsigned char *buffer)
 {
     bzero(buffer, NET_BUFFER_SIZE);
     int n = read(client_fd, buffer, NET_BUFFER_SIZE);
@@ -190,19 +190,18 @@ struct ServerArgs
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Thread to handle requests for each connected client
 ////////////////////////////////////////////////////////////////////////////////
-void *handleConnections(void *arguments)
+void *handle_connections(void *arguments)
 {
     auto args = reinterpret_cast<ServerArgs*>(arguments);
 
     unsigned char buffer[NET_BUFFER_SIZE];
-    int message_size;
     int client_fd = args->client_fd;
 
     spdlog::debug("Server: Thread created for client ID: {}", client_fd);
 
     while(*args->run)
     {
-        message_size = listenToClient(client_fd, buffer);
+        auto message_size = listen_to_client(client_fd, buffer);
         if (message_size <= 0 || message_size > NET_BUFFER_SIZE)
         {
             // something has  gone wrong or the client has closed connection
@@ -230,7 +229,7 @@ void *handleConnections(void *arguments)
     spdlog::trace("Closing client socket and calling pthread_exit");
     close(args->client_fd);
     spdlog::trace("Terminating server connections thread");
-    pthread_exit(NULL);
+    pthread_exit(nullptr);
     delete args;
 
     return nullptr;
@@ -244,15 +243,15 @@ void *handleConnections(void *arguments)
 /// @param port The port to listen on.
 /// @param process_message A function to run to process socket messages.
 /// @param user_data Passed into the process_message function as client data.
-void startServer(uint16_t port, volatile bool& run_server, process_message_fn process_message, void* user_data)
+void start_server(uint16_t port, volatile bool& run_server, process_message_fn process_message, void* user_data)
 {
     int socket_fd, client_fd;
     
-    socket_fd = createSocket(port);
+    socket_fd = create_socket(port);
     
     while(run_server)
     {
-        client_fd = waitForClient(socket_fd, run_server); //block until a client connects
+        client_fd = wait_for_client(socket_fd, run_server); //block until a client connects
         if (client_fd < 0)
         {
             spdlog::error("Server: Error accepting client!");
@@ -268,7 +267,7 @@ void startServer(uint16_t port, volatile bool& run_server, process_message_fn pr
             .user_data=user_data
         };
         spdlog::trace("Server: Client accepted on {}! Creating thread for the new client ID: {}...", port, client_fd);
-        int success = pthread_create(&thread, NULL, handleConnections, args);
+        int success = pthread_create(&thread, NULL, handle_connections, args);
         if (success == 0)
         {
             pthread_detach(thread);
