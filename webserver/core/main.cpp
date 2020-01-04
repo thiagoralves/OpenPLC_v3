@@ -159,8 +159,10 @@ void handleSpecialFunctions()
     struct tm *current_time;
     time_t rawtime;
     
-    tzset();
     time(&rawtime);
+    // store the UTC clock in [%ML1027]
+    if (special_functions[3] != NULL) *special_functions[3] = rawtime;
+
     current_time = localtime(&rawtime);
     
     rawtime = rawtime - timezone;
@@ -187,6 +189,7 @@ int main(int argc,char **argv)
     //======================================================
     //                 PLC INITIALIZATION
     //======================================================
+    tzset();
     time(&start_time);
     pthread_t interactive_thread;
     pthread_create(&interactive_thread, NULL, interactiveServerThread, NULL);
