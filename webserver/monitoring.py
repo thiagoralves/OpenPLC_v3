@@ -20,7 +20,7 @@ def parse_st(st_file):
     st_program = open(filepath, 'r')
     
     for line in st_program.readlines():
-        if line.find(' AT ') > 0:
+        if line.find(' AT ') > 0 and line.find('%') > 0 and line.find('(*') < 0 and line.find('*)') < 0:
             debug_data = debug_var()
             tmp = line.strip().split(' ')
             debug_data.name = tmp[0]
@@ -123,13 +123,13 @@ def modbus_monitor():
     if (monitor_active == True):
         threading.Timer(0.5, modbus_monitor).start()
     
-def start_monitor():
+def start_monitor(modbus_port_cfg):
     global monitor_active
     global mb_client
     
     if (monitor_active != True):
         monitor_active = True
-        mb_client = ModbusTcpClient('127.0.0.1')
+        mb_client = ModbusTcpClient('127.0.0.1', port=modbus_port_cfg)
         
         modbus_monitor()
 

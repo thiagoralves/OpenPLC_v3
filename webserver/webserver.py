@@ -1413,31 +1413,74 @@ def monitoring():
                             </tr>"""
         
         if (openplc_runtime.status() == "Running"):
-            monitor.start_monitor()
-            data_index = 0
-            for debug_data in monitor.debug_vars:
-                return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
-                return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
-                if (debug_data.type == 'BOOL'):
-                    if (debug_data.value == 0):
-                        return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
+            #Check Modbus Server status
+            modbus_enabled = False
+            modbus_port_cfg = 502
+            database = "openplc.db"
+            conn = create_connection(database)
+            if (conn != None):
+                try:
+                    print("Openning database")
+                    cur = conn.cursor()
+                    cur.execute("SELECT * FROM Settings")
+                    rows = cur.fetchall()
+                    cur.close()
+                    conn.close()
+
+                    for row in rows:
+                        if (row[0] == "Modbus_port"):
+                            if (row[1] != "disabled"):
+                                modbus_enabled = True
+                                modbus_port_cfg = int(row[1])
+                            else:
+                                modbus_enabled = False
+            
+                except Error as e:
+                    return "error connecting to the database" + str(e)
+            else:
+                return "Error opening DB"
+            
+            if modbus_enabled == True:
+                monitor.start_monitor(modbus_port_cfg)
+                data_index = 0
+                for debug_data in monitor.debug_vars:
+                    return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
+                    return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
+                    if (debug_data.type == 'BOOL'):
+                        if (debug_data.value == 0):
+                            return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
+                        else:
+                            return_str += '<img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</td>'
+                    elif (debug_data.type == 'UINT'):
+                        percentage = (debug_data.value*100)/65535
+                        return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
+                    elif (debug_data.type == 'INT'):
+                        percentage = ((debug_data.value + 32768)*100)/65535
+                        debug_data.value = ctypes.c_short(debug_data.value).value
+                        return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
+                    elif (debug_data.type == 'REAL') or (debug_data.type == 'LREAL'):
+                        return_str += "{:10.4f}".format(debug_data.value)
                     else:
-                        return_str += '<img src="/static/bool_true.png" alt="bool_true" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">TRUE</td>'
-                elif (debug_data.type == 'UINT'):
-                    percentage = (debug_data.value*100)/65535
-                    return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
-                elif (debug_data.type == 'INT'):
-                    percentage = ((debug_data.value + 32768)*100)/65535
-                    debug_data.value = ctypes.c_short(debug_data.value).value
-                    return_str += '<div class="w3-grey w3-round" style="height:40px"><div class="w3-container w3-blue w3-round" style="height:40px;width:' + str(int(percentage)) + '%"><p style="margin-top:10px">' + str(debug_data.value) + '</p></div></div></td>'
-                elif (debug_data.type == 'REAL') or (debug_data.type == 'LREAL'):
-                    return_str += "{:10.4f}".format(debug_data.value)
-                else:
-                    return_str += str(debug_data.value)
-                return_str += '</tr>'
-                data_index += 1
-            return_str += pages.monitoring_tail
-        
+                        return_str += str(debug_data.value)
+                    return_str += '</tr>'
+                    data_index += 1
+                return_str += pages.monitoring_tail
+            
+            #Modbus Server is not enabled
+            else:
+                return_str += """
+                        </table>
+                        <br>
+                        <br>
+                        <h2>You must enable Modbus Server on Settings to be able to monitor your program!</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>"""
+            
+        #Runtime is not running        
         else:
             return_str += """
                         </table>
