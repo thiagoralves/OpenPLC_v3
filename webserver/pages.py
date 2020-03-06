@@ -806,8 +806,6 @@ monitoring_head = """
 
         
 monitoring_tail = """
-                        </table>
-                    </div>
                 </div>
             </div>
         </div>
@@ -819,7 +817,8 @@ monitoring_tail = """
         
         function loadData()
         {
-            url = 'monitor-update'
+            html_modbus_port = document.getElementById('modbus_port_cfg');
+            url = 'monitor-update?mb_port=' + html_modbus_port.value;
             try
             {
                 req = new XMLHttpRequest();

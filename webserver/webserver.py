@@ -1464,6 +1464,10 @@ def monitoring():
                         return_str += str(debug_data.value)
                     return_str += '</tr>'
                     data_index += 1
+                return_str += """
+                        </table>
+                    </div>
+                    <input type='hidden' id='modbus_port_cfg' name='modbus_port_cfg' value='""" + str(modbus_port_cfg) + "'>"
                 return_str += pages.monitoring_tail
             
             #Modbus Server is not enabled
@@ -1508,7 +1512,8 @@ def monitor_update():
         
         #if (openplc_runtime.status() == "Running"):
         if (True):
-            monitor.start_monitor()
+            mb_port_cfg = flask.request.args.get('mb_port')
+            monitor.start_monitor(int(mb_port_cfg))
             data_index = 0
             for debug_data in monitor.debug_vars:
                 return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
