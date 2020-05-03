@@ -204,6 +204,16 @@ int interactive_wait_new_client(volatile bool& run, int socket_fd) {
     return client_fd;
 }
 
+/// Write to the file descriptor and check the result, logging
+/// if the result indicates anything other than success.
+void write_checked(int fd, const void *buf, size_t count)
+{
+    auto result = write(fd, buf, count);
+    if (result < 0) {
+        spdlog::error("Error writing to file descriptor {}", fd);
+    }
+}
+
 /// Handle a single command from the client.
 /// @param command The command as a text string.
 /// @param client_fd The file descriptor to write a response to.
@@ -217,7 +227,7 @@ void interactive_client_command(const char* command, int client_fd)
     {
         spdlog::trace("Command skipped - already processing {}", command);
         int count_char = sprintf(command_buffer, "Another command in progress...\n");
-        write(client_fd, command_buffer, count_char);
+        write_checked(client_fd, command_buffer, count_char);
         return;
     }
 
@@ -238,7 +248,7 @@ void interactive_client_command(const char* command, int client_fd)
         {
             spdlog::error("Unrecognized service name {}", service_name);
             int count_char = sprintf(command_buffer, "Error: unrecognized service name '%s'\n", service_name);
-            write(client_fd, command_buffer, count_char);
+            write_checked(client_fd, command_buffer, count_char);
             return;
         }
 
@@ -261,7 +271,7 @@ void interactive_client_command(const char* command, int client_fd)
         if (!def)
         {
             int count_char = sprintf(command_buffer, "Error: unrecognized service name '%s'\n", service_name);
-            write(client_fd, command_buffer, count_char);
+            write_checked(client_fd, command_buffer, count_char);
             return;
         }
 
@@ -271,7 +281,7 @@ void interactive_client_command(const char* command, int client_fd)
     {
         spdlog::trace("Issued runtime_logs() command");
         std::string data = log_sink->data();
-        write(client_fd, data.c_str(), data.size());
+        write_checked(client_fd, data.c_str(), data.size());
         return;
     }
     else if (strncmp(command, "exec_time()", 11) == 0)
@@ -279,19 +289,19 @@ void interactive_client_command(const char* command, int client_fd)
         time_t end_time;
         time(&end_time);
         int count_char = sprintf(command_buffer, "%llu\n", (unsigned long long)difftime(end_time, start_time));
-        write(client_fd, command_buffer, count_char);
+        write_checked(client_fd, command_buffer, count_char);
         return;
     }
     else
     {
         spdlog::error("Unrecognized command {}", command_buffer);
         int count_char = sprintf(command_buffer, "Error: unrecognized command\n");
-        write(client_fd, command_buffer, count_char);
+        write_checked(client_fd, command_buffer, count_char);
         return;
     }
 
     int count_char = sprintf(command_buffer, "OK\n");
-    write(client_fd, command_buffer, count_char);
+    write_checked(client_fd, command_buffer, count_char);
 }
 
 /// Defines the arguments that client threads receive.
