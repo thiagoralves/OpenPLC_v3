@@ -67,16 +67,16 @@ SCENARIO("", "") {
         md5_byte_t digest[16];
 
         WHEN("Contains single BOOL at %IX0.8 is invalid index") {
-            std::stringstream input_stream("__LOCATED_VAR(BOOL,__IX0,I,X,0, 8)");
+            std::stringstream input_stream("__LOCATED_VAR(BOOL,__IX0_8,I,X,0,8)");
             auto result = generate_body(input_stream, output_stream, digest);
             REQUIRE(result != 0);
         }
 
         WHEN("Contains single BOOL at %IX0") {
-            std::stringstream input_stream("__LOCATED_VAR(BOOL,__IX0_8,I,X,0)");
+            std::stringstream input_stream("__LOCATED_VAR(BOOL,__IX0_0,I,X,0)");
             generate_body(input_stream, output_stream, digest);
-            const char* expected = PREFIX "\tbool_input[0][0] = __IX0;\n" POSTFIX
-                "GlueBoolGroup ___IG0 { .index=0, .values={ __IX0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, } };\n"
+            const char* expected = PREFIX "\tbool_input[0][0] = __IX0_0;\n" POSTFIX
+                "GlueBoolGroup ___IG0 { .index=0, .values={ __IX0_0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, } };\n"
                 "GlueBoolGroup* __IG0(&___IG0);\n"
                 GLUE_PREFIX
                 "extern const std::size_t OPLCGLUE_GLUE_SIZE(1);\n"
