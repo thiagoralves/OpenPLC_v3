@@ -50,7 +50,7 @@ char analog_outputs[1000][200];
 //-----------------------------------------------------------------------------
 // This function is responsible for making I/O requests using SYSFS
 //-----------------------------------------------------------------------------
-int requestSYSFS(char *path, char *command)
+int requestSYSFS(char *path, const char *command)
 {
     int fd, len;
     char buf[100];
@@ -114,7 +114,7 @@ void searchForIO()
             for (int minor = 1; minor < 10; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
-                char *command = "read";
+                const char *command = "read";
                 if (requestSYSFS(path, command) >= 0)
                 {
                     /* valid I/O. Add to the list */
@@ -136,7 +136,7 @@ void searchForIO()
             for (int minor = 1; minor < 10; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
-                char *command = "read";
+                const char *command = "read";
                 if (requestSYSFS(path, command) >= 0)
                 {
                     /* valid I/O. Add to the list */
@@ -157,7 +157,7 @@ void searchForIO()
             for (int minor = 1; minor < 10; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
-                char *command = "read";
+                const char *command = "read";
                 if (requestSYSFS(path, command) >= 0)
                 {
                     /* valid I/O. Add to the list */
@@ -179,7 +179,7 @@ void searchForIO()
             for (int minor = 1; minor < 10; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
-                char *command = "read";
+                const char *command = "read";
                 if (requestSYSFS(path, command) >= 0)
                 {
                     /* valid I/O. Add to the list */
@@ -201,7 +201,7 @@ void searchForIO()
             for (int minor = 1; minor < 10; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
-                char *command = "read";
+                const char *command = "read";
                 if (requestSYSFS(path, command) >= 0)
                 {
                     /* valid I/O. Add to the list */
