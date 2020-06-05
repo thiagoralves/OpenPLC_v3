@@ -23,15 +23,17 @@ fi
 function linux_install_deps {
     $1 apt-get update
     $1 apt-get install -y build-essential pkg-config bison flex autoconf \
-                          automake libtool make git python2.7 python-pip  \
-                          sqlite3 cmake git
+                          automake libtool make git python2.7 \
+                          sqlite3 cmake git curl
+    curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py
+    $1 python2 get-pip.py
 }
 
 function install_py_deps {
-    $1 pip install flask
-    $1 pip install flask-login
-    $1 pip install pyserial
-    $1 pip install pymodbus
+    $1 pip2 install flask
+    $1 pip2 install flask-login
+    $1 pip2 install pyserial
+    $1 pip2 install pymodbus
 }
 
 function install_all_libs {
