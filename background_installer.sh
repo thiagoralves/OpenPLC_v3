@@ -26,7 +26,7 @@ function linux_install_deps {
                           automake libtool make git python2.7 \
                           sqlite3 cmake git curl
     curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py
-    $1 python2 get-pip.py
+    $1 python2.7 get-pip.py
 }
 
 function install_py_deps {
