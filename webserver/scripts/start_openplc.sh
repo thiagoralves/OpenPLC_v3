@@ -1,3 +1,3 @@
 #!/bin/bash
 cd webserver
-python2 webserver.py
+python2.7 webserver.py
