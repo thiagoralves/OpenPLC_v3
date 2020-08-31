@@ -121,23 +121,7 @@ if(OPLC_MATIEC)
     message("Build and install MATIEC enabled")
     set(MATIEC_INSTALL_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
-    # Note that MMATIEC's output adds bin and lib directories, so we
-    # want the install directory to be up one from the normal output
-    # directory.
-    ExternalProject_Add(matiec_proj
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/utils/matiec_src
-        BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND COMMAND autoreconf -i COMMAND ./configure --prefix=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
-        BUILD_COMMAND ${MAKE}
-        COMMENT "MATIEC INSTALLED"
-    )
-
-    include_directories(${MATIEC_INSTALL_DIR}/include)
-    link_directories(${MATIEC_INSTALL_DIR}/lib)
-
-    add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/bin/iec2c${PLATFORM_EXTENSION}
-        COMMAND ${CMAKE_COMMAND} -E echo "iec2c dummy target"
-        DEPENDS matiec_proj)
+    add_subdirectory(utils/matiec_src)
 endif()
 
 # Compile glue generator
