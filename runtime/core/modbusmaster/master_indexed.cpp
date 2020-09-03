@@ -403,7 +403,7 @@ void modbus_master_run(oplc::config_stream& cfg_stream,
     // Read the configuration information for the masters
     array<MasterConfig, MODBUS_MASTER_MAX> master_defs;
     array<IndexedMapping, MODBUS_MASTER_MAX> mapping_defs;
-    array<pthread_t, MODBUS_MASTER_MAX> threads; 
+    array<std::thread, MODBUS_MASTER_MAX> threads; 
     IndexedMasterConfig config
     {
         .masters = &master_defs,
@@ -442,14 +442,12 @@ void modbus_master_run(oplc::config_stream& cfg_stream,
             .mapping = &mapping_defs[index],
         };
 
-        int ret = pthread_create(&threads[index], nullptr,
-                                 oplc::modbusm::modbus_master_indexed_poll,
-                                 master_args);
-        if (ret == 0)
-        {
-            pthread_detach(threads[index]);
-        }
-        else
+        try {
+            threads[index] = std::thread(oplc::modbusm::modbus_master_indexed_poll, 
+                                     master_args);
+            threads[index].detach(); //?
+        } 
+        catch (const std::system_error& ecvt) 
         {
             delete master_args;
         }
@@ -467,9 +465,9 @@ void modbus_master_run(oplc::config_stream& cfg_stream,
     // on this stack.
     for (size_t index = 0; index < threads.size(); ++index)
     {
-        if (threads[index])
+        if (threads[index].joinable())
         {
-            pthread_join(threads[index], nullptr);
+            threads[index].join();
         }
     }
 }

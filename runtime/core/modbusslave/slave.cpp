@@ -463,7 +463,6 @@ int8_t modbus_slave_run(oplc::config_stream& cfg_stream,
 
     IndexedStrategy strategy(bindings);
 
-    pthread_t exchange_data_thread;
     auto args = new ModbusExchangeArgs
 	{
         .strategy=&strategy,
@@ -471,20 +470,19 @@ int8_t modbus_slave_run(oplc::config_stream& cfg_stream,
         .interval=std::chrono::milliseconds(100)
     };
 
-    int ret = pthread_create(&exchange_data_thread, nullptr, modbus_exchange_data, args);
-    if (ret == 0)
-	{
-        pthread_detach(exchange_data_thread);
-    }
-	else
-	{
+    try {
+        std::thread exchange_data_thread = std::thread(modbus_exchange_data, args);
+    } 
+    catch (const std::system_error& ecvt) 
+    {
         delete args;
     }
 
     spdlog::info("Starting modbus slave on port {}", config.port);
     start_server(config.port, run, &modbus_process_message, &strategy);
 
-    pthread_join(exchange_data_thread, nullptr);
+    if( exchange_data_thread.joinable() )
+        exchange_data_thread.join();
 
     return 0;
 }

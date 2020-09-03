@@ -19,7 +19,6 @@
 // Thiago Alves, Oct 2015
 //-----------------------------------------------------------------------------
 
-#include <pthread.h>
 #include <cstdint>
 #include <mutex>
 

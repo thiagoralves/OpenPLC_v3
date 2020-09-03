@@ -165,8 +165,8 @@ void *exchangeData(void *arg)
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
-	pthread_t thread;
-	pthread_create(&thread, NULL, exchangeData, NULL);
+   	std::thread thread = std::thread(exchangeData, NULL);
+	thread.detach();
 }
 
 //-----------------------------------------------------------------------------

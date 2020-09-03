@@ -36,6 +36,7 @@
 #include <wiringSerial.h>
 #include <string.h>
 #include <mutex>
+#include <thread>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -820,8 +821,8 @@ void initializeHardware()
 	Spi_Setup(0);
 	Spi_Setup(1);
 
-	pthread_t piXtend_thread;
-	pthread_create(&piXtend_thread, NULL, updateLocalBuffers, NULL);
+	std::thread piXtend_thread = std::thread(updateLocalBuffers, NULL);
+	piXtend_thread.detach();
 }
 
 //-----------------------------------------------------------------------------

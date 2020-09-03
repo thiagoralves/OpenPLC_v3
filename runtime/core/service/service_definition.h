@@ -15,7 +15,7 @@
 #ifndef RUNTIME_CORE_SERVICE_SERVICE_DEFINITION_H_
 #define RUNTIME_CORE_SERVICE_SERVICE_DEFINITION_H_
 
-#include <pthread.h>
+#include <thread>
 #include <cstdint>
 
 /** \addtogroup openplc_runtime
@@ -131,7 +131,7 @@ class ServiceDefinition final
     /// Is the service running.
     volatile bool running;
     /// The thread the service is running on.
-    pthread_t thread;
+    std::thread thread;
     /// A buffer for holding the configuration information that was part
     /// of the request to start the service.
     char config_buffer[MAX_INTERACTIVE_CONFIG_SIZE];

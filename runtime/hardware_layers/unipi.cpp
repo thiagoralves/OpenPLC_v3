@@ -189,8 +189,8 @@ void initializeHardware()
     if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), ANALOG_OUT_PIN))
 	    pinMode(ANALOG_OUT_PIN, PWM_OUTPUT);
 
-	pthread_t ADCthread;
-	pthread_create(&ADCthread, NULL, readAdcThread, NULL);
+	std::thread ADCthread = std::thread(readAdcThread, NULL);
+	ADCthread.detach();
 }
 
 //-----------------------------------------------------------------------------

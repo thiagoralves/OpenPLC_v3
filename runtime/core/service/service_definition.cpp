@@ -130,8 +130,8 @@ void ServiceDefinition::start(const char* config)
     spdlog::info("Starting service {}", this->name);
 
     this->running = true;
-    pthread_create(&this->thread, NULL, &ServiceDefinition::run_service, this);
-    pthread_setname_np(this->thread, this->name);
+    this->thread = std::thread(&ServiceDefinition::run_service, this);
+    //pthread_setname_np(this->thread, this->name);
 }
 
 void ServiceDefinition::stop()
@@ -142,7 +142,7 @@ void ServiceDefinition::stop()
     {
         spdlog::info("Stopping service {}", this->name);
         this->running = false;
-        pthread_join(this->thread, nullptr);
+        this->thread.join();
     }
     else
     {
