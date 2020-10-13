@@ -18,7 +18,7 @@
     </modules>
 
     <properties>
-        <junit.version>4.9</junit.version>
+        <junit.version>4.13.1</junit.version>
         <license-maven-plugin.version>3.0</license-maven-plugin.version>
         <maven-javadoc-plugin.version>2.9</maven-javadoc-plugin.version>
         <maven-scala.plugin.version>3.1.3</maven-scala.plugin.version>
