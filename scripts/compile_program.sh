@@ -14,7 +14,7 @@ echo ""
 if [ "$OPENPLC_PLATFORM" = "linux" ]; then
     cd ../build
     cmake .. -Dprogram_name=$1
-    make
+    cmake --build .
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
         exit 1
@@ -25,7 +25,7 @@ if [ "$OPENPLC_PLATFORM" = "linux" ]; then
 elif [ "$OPENPLC_PLATFORM" = "win" ]; then
     cd ../build
     cmake .. -Dprogram_name=$1
-    make
+    cmake --build .
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
         exit 1
@@ -37,7 +37,7 @@ elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     
     cd ../build
     cmake .. -Dprogram_name=$1 -DOPLC_PLATFORM_RPI=ON
-    make
+    cmake --build .
     
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
