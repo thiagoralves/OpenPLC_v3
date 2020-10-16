@@ -43,7 +43,6 @@ ServiceDefinition::ServiceDefinition(const char* name,
     before_cycle_fn(null_handler),
     after_cycle_fn(null_handler),
     running(false),
-    thread(0),
     config_buffer()
 {}
 
@@ -57,7 +56,6 @@ ServiceDefinition::ServiceDefinition(const char* name,
     before_cycle_fn(null_handler),
     after_cycle_fn(null_handler),
     running(false),
-    thread(0),
     config_buffer()
 {}
 
@@ -72,7 +70,6 @@ ServiceDefinition::ServiceDefinition(const char* name,
     before_cycle_fn(null_handler),
     after_cycle_fn(null_handler),
     running(false),
-    thread(0),
     config_buffer()
 {}
 
@@ -87,7 +84,6 @@ ServiceDefinition::ServiceDefinition(const char* name,
     before_cycle_fn(before_cycle_fn),
     after_cycle_fn(fafter_cycle_fn),
     running(false),
-    thread(0),
     config_buffer()
 {}
 

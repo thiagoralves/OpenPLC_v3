@@ -472,17 +472,18 @@ int8_t modbus_slave_run(oplc::config_stream& cfg_stream,
 
     try {
         std::thread exchange_data_thread = std::thread(modbus_exchange_data, args);
+        spdlog::info("Starting modbus slave on port {}", config.port);
+        start_server(config.port, run, &modbus_process_message, &strategy);
+
+        if( exchange_data_thread.joinable() )
+            exchange_data_thread.join();
     } 
     catch (const std::system_error& ecvt) 
     {
         delete args;
     }
 
-    spdlog::info("Starting modbus slave on port {}", config.port);
-    start_server(config.port, run, &modbus_process_message, &strategy);
 
-    if( exchange_data_thread.joinable() )
-        exchange_data_thread.join();
 
     return 0;
 }

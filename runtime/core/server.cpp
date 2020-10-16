@@ -268,10 +268,9 @@ void start_server(uint16_t port, volatile bool& run_server, process_message_fn p
         try {
             std::thread thread(handle_connections, args);
             thread.detach();
-        } catch (const std::system_error& ecvt) {
-            spdlog::trace("Server: Thread creation exception {}! Error message: {}...", e.code(), e.what());
+        } catch (const std::system_error& e) {
+            spdlog::trace("Server: Thread creation exception {}! Error message: {}...", e.code().value(), e.what());
             delete args;
-            close(cliend_fd);
         }
     }
     close(socket_fd);

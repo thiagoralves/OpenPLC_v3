@@ -28,6 +28,7 @@
 #include <wiringPiI2C.h>
 #include <mcp23008.h>
 #include <mutex>
+#include <thread>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -189,7 +190,7 @@ void initializeHardware()
     if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), ANALOG_OUT_PIN))
 	    pinMode(ANALOG_OUT_PIN, PWM_OUTPUT);
 
-	std::thread ADCthread = std::thread(readAdcThread, NULL);
+	std::thread ADCthread = std::thread(readAdcThread, nullptr);
 	ADCthread.detach();
 }
 

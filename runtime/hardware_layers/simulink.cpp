@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <mutex>
+#include <thread>
 
 #include "ladder.h"
 #include "custom_layer.h"
@@ -165,7 +166,7 @@ void *exchangeData(void *arg)
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
-   	std::thread thread = std::thread(exchangeData, NULL);
+   	std::thread thread = std::thread(exchangeData, nullptr);
 	thread.detach();
 }
 

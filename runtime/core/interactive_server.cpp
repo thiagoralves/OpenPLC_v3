@@ -394,9 +394,9 @@ void interactive_run(oplc::config_stream& cfg_stream,
             std::thread thread(interactive_client_run, args);
             thread.detach();
         } 
-        catch (const std::system_error& ecvt) 
+        catch (const std::system_error& e) 
         {
-            spdlog::trace("Interactive Server: Thread creation exception {}! Error message: {}...", e.code(), e.what());
+            spdlog::error("Interactive Server: Thread creation exception {}! Error message: {}...", e.code().value(), e.what());
             delete args;
             close_socket(client_fd);
         }
