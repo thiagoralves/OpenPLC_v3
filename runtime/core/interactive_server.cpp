@@ -360,7 +360,6 @@ void* interactive_client_run(void* arguments)
     close_socket(client_args->client_fd);
     spdlog::trace("Interactive server connection completed");
     delete client_args;
-    pthread_exit(NULL);
 
     return nullptr;
 }
@@ -388,18 +387,18 @@ void interactive_run(oplc::config_stream& cfg_stream,
             continue;
         }
 
-        pthread_t thread;
         auto args = new ClientArgs { .client_fd = client_fd, .run = &run };
 
         spdlog::trace("Interactive Server: Client accepted! Creating thread for the new client ID: {}", client_fd);
-        int ret = pthread_create(&thread, nullptr, interactive_client_run, args);
-        if (ret == 0)
+        try {
+            std::thread thread(interactive_client_run, args);
+            thread.detach();
+        } 
+        catch (const std::system_error& e) 
         {
-            pthread_detach(thread);
-        }
-        else
-        {
+            spdlog::error("Interactive Server: Thread creation exception {}! Error message: {}...", e.code().value(), e.what());
             delete args;
+            close_socket(client_fd);
         }
     }
 

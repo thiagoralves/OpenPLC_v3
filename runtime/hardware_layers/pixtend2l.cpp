@@ -605,8 +605,8 @@ void initializeHardware()
     Spi_SetupV2(0);
     Spi_SetupV2(1);
 
-    pthread_t piXtend_thread;
-    pthread_create(&piXtend_thread, NULL, updateLocalBuffers, NULL);
+	std::thread piXtend_thread = std::thread(updateLocalBuffers, NULL);
+	piXtend_thread.detach();
 }
 
 //-----------------------------------------------------------------------------

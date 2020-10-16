@@ -43,7 +43,6 @@ ServiceDefinition::ServiceDefinition(const char* name,
     before_cycle_fn(null_handler),
     after_cycle_fn(null_handler),
     running(false),
-    thread(0),
     config_buffer()
 {}
 
@@ -57,7 +56,6 @@ ServiceDefinition::ServiceDefinition(const char* name,
     before_cycle_fn(null_handler),
     after_cycle_fn(null_handler),
     running(false),
-    thread(0),
     config_buffer()
 {}
 
@@ -72,7 +70,6 @@ ServiceDefinition::ServiceDefinition(const char* name,
     before_cycle_fn(null_handler),
     after_cycle_fn(null_handler),
     running(false),
-    thread(0),
     config_buffer()
 {}
 
@@ -87,7 +84,6 @@ ServiceDefinition::ServiceDefinition(const char* name,
     before_cycle_fn(before_cycle_fn),
     after_cycle_fn(fafter_cycle_fn),
     running(false),
-    thread(0),
     config_buffer()
 {}
 
@@ -130,8 +126,8 @@ void ServiceDefinition::start(const char* config)
     spdlog::info("Starting service {}", this->name);
 
     this->running = true;
-    pthread_create(&this->thread, NULL, &ServiceDefinition::run_service, this);
-    pthread_setname_np(this->thread, this->name);
+    this->thread = std::thread(&ServiceDefinition::run_service, this);
+    //pthread_setname_np(this->thread, this->name);
 }
 
 void ServiceDefinition::stop()
@@ -142,7 +138,7 @@ void ServiceDefinition::stop()
     {
         spdlog::info("Stopping service {}", this->name);
         this->running = false;
-        pthread_join(this->thread, nullptr);
+        this->thread.join();
     }
     else
     {

@@ -15,6 +15,7 @@
 
 #include <string>
 #include <vector>
+#include <thread>
 #ifdef __linux__
 #include <pthread.h>
 #include <sys/mman.h>
@@ -86,6 +87,32 @@ int config_handler(void* user_data, const char* section,
     return 0;
 }
 
+void setThreadPriorityRT() 
+{
+    //======================================================
+    //              REAL-TIME INITIALIZATION
+    //======================================================
+    // Set our thread to real time priority
+
+#if defined( __linux__ )
+    struct sched_param sp;
+    sp.sched_priority = 30;
+    spdlog::info("Setting main thread priority to RT");
+    if (pthread_setschedparam(std::this_thread::native_handle(), SCHED_FIFO, &sp))
+    {
+        spdlog::warn("Failed to set main thread to real-time priority");
+    }
+
+    // Lock memory to ensure no swapping is done.
+    spdlog::info("Locking main thread memory");
+    if (mlockall(MCL_FUTURE|MCL_CURRENT))
+    {
+        spdlog::warn("Failed to lock memory");
+    }
+#elif defined(_WIN32)
+#endif
+}
+
 /// Initialize the PLC runtime
 void bootstrap()
 {
@@ -145,26 +172,7 @@ void bootstrap()
     // in bootstrapping.
     services_init();
 
-#ifdef __linux__
-    //======================================================
-    //              REAL-TIME INITIALIZATION
-    //======================================================
-    // Set our thread to real time priority
-    struct sched_param sp;
-    sp.sched_priority = 30;
-    spdlog::info("Setting main thread priority to RT");
-    if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
-    {
-        spdlog::warn("Failed to set main thread to real-time priority");
-    }
-
-    // Lock memory to ensure no swapping is done.
-    spdlog::info("Locking main thread memory");
-    if (mlockall(MCL_FUTURE|MCL_CURRENT))
-    {
-        spdlog::warn("Failed to lock memory");
-    }
-#endif
+    setThreadPriorityRT();
 
     //======================================================
     //              SERVICE START

@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <string.h>
-#include <pthread.h>
+#include <thread>
 #include <fcntl.h>
 #include <chrono>
 #include <thread>
@@ -226,10 +226,9 @@ void *handle_connections(void *arguments)
         }
     }
     
-    spdlog::trace("Closing client socket and calling pthread_exit");
+    spdlog::trace("Closing client socket");
     close(args->client_fd);
     spdlog::trace("Terminating server connections thread");
-    pthread_exit(nullptr);
     delete args;
 
     return nullptr;
@@ -258,7 +257,6 @@ void start_server(uint16_t port, volatile bool& run_server, process_message_fn p
             continue;
         }
 
-        pthread_t thread;
         auto args = new ServerArgs
         {
             .client_fd=client_fd,
@@ -267,13 +265,11 @@ void start_server(uint16_t port, volatile bool& run_server, process_message_fn p
             .user_data=user_data
         };
         spdlog::trace("Server: Client accepted on {}! Creating thread for the new client ID: {}...", port, client_fd);
-        int success = pthread_create(&thread, NULL, handle_connections, args);
-        if (success == 0)
-        {
-            pthread_detach(thread);
-        }
-        else
-        {
+        try {
+            std::thread thread(handle_connections, args);
+            thread.detach();
+        } catch (const std::system_error& e) {
+            spdlog::trace("Server: Thread creation exception {}! Error message: {}...", e.code().value(), e.what());
             delete args;
         }
     }
