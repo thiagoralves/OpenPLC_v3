@@ -98,7 +98,7 @@ void setThreadPriorityRT()
     struct sched_param sp;
     sp.sched_priority = 30;
     spdlog::info("Setting main thread priority to RT");
-    if (pthread_setschedparam(std::this_thread::native_handle(), SCHED_FIFO, &sp))
+    if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
     {
         spdlog::warn("Failed to set main thread to real-time priority");
     }
