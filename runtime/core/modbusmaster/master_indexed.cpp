@@ -377,7 +377,7 @@ void assign_mappings(const GlueVariablesBinding& bindings)
             for (auto i = 0; i < 8; ++i)
             {
                 auto offset = glue_var.msi - MAPPED_GLUE_START;
-                bool_input_buf.assign(offset * 8 + i, group->values[i]);
+                bool_output_buf.assign(offset * 8 + i, group->values[i]);
             }
         }
         else if (glue_var.dir == IECLDT_IN && glue_var.size == IECLST_BIT)
@@ -387,7 +387,7 @@ void assign_mappings(const GlueVariablesBinding& bindings)
             for (auto i = 0; i < 8; ++i)
             {
                 auto offset = glue_var.msi - MAPPED_GLUE_START;
-                bool_output_buf.assign(offset * 8 + i, group->values[i]);
+                bool_input_buf.assign(offset * 8 + i, group->values[i]);
             }
         }
     }
