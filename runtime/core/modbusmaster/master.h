@@ -78,7 +78,7 @@ struct MasterConfig
     char ip_address[MASTER_ITEM_SIZE];
     /// The port (if using TCP).
     std::uint16_t ip_port;
-    std::uint16_t rtu_baud_rate;
+    std::uint32_t rtu_baud_rate;
     std::uint8_t rtu_parity;
     std::uint16_t rtu_data_bit;
     std::uint16_t rtu_stop_bit;  
