@@ -265,7 +265,7 @@ void* oplc::modbusm::modbus_master_indexed_poll(void* args)
             {
                 {
                     lock_guard<mutex> guard(io_lock);
-                    bool_output_buf.copy_from_cache(rw_buffer, mapping->coils.num_regs, mapping->coils.buffer_offset);
+                    bool_output_buf.copy_from_cache(rw_buffer, mapping->coils.buffer_offset, mapping->coils.num_regs);
                 }
 
                 nanosleep(&ts, NULL); 
