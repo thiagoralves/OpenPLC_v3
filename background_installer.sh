@@ -25,7 +25,7 @@ function linux_install_deps {
     $1 apt-get install -y build-essential pkg-config bison flex autoconf \
                           automake libtool make git python2.7 \
                           sqlite3 cmake git curl
-    curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py
+    curl https://bootstrap.pypa.io/2.7/get-pip.py --output get-pip.py
     $1 python2.7 get-pip.py
 }
 
