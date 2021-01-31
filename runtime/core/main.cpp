@@ -28,6 +28,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <thread>
+
 #include "iec_types.h"
 #include "ini_util.h"
 #include "ladder.h"
@@ -56,6 +58,7 @@ uint8_t run_openplc = 1;  // Variable to control OpenPLC Runtime execution
 /// \param delay in milliseconds
 ////////////////////////////////////////////////////////////////////////////////
 void sleep_until(struct timespec *ts, int delay) {
+#ifdef __linux__
     ts->tv_nsec += delay;
     if (ts->tv_nsec >= 1000*1000*1000)
     {
@@ -63,6 +66,9 @@ void sleep_until(struct timespec *ts, int delay) {
         ts->tv_sec++;
     }
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ts,  NULL);
+#else
+    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -22,14 +22,12 @@
 #include <utility>
 #include <sstream>
 #include <string>
+#include <mutex>
 
 #include "ini_util.h"
 
 namespace asiodnp3 {
 class OutstationStackConfig;
-}
-namespace std {
-class mutex;
 }
 
 struct GlueVariable;

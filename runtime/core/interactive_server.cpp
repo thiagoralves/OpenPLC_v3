@@ -156,7 +156,7 @@ int interactive_open_socket(uint16_t port) {
     server_addr.sin_port = htons(port);
 
     // Bind socket
-    if (bind(socket_fd, (struct sockaddr *)&server_addr,
+    if (::bind(socket_fd, (struct sockaddr *)&server_addr,
              sizeof(server_addr)) < 0)
     {
         spdlog::error("Interactive Server: error binding socket => {}",
