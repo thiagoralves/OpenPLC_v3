@@ -144,6 +144,8 @@ if [ "$1" == "win" ]; then
     cp ./utils/apt-cyg/wget.exe /bin
     install apt-cyg /bin
     apt-cyg update
+    # replace cygwin installed database to avoid installation errors
+    cp ./installed.db /etc/setup/installed.db
     apt-cyg install lynx
     rm -f /bin/wget.exe
     # apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
