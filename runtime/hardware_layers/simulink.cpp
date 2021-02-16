@@ -94,7 +94,7 @@ int createUDPSocket(int port)
 	server_addr.sin_addr.s_addr = INADDR_ANY;
 
 	//Bind socket
-	if (bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+	if (::bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
 	{
 		perror("Server: error binding socket");
 		exit(1);
