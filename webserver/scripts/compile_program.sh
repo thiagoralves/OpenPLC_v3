@@ -17,7 +17,7 @@ cd ..
 echo "Optimizing ST program..."
 ./st_optimizer ./st_files/"$1" ./st_files/"$1"
 echo "Generating C files..."
-./iec2c ./st_files/"$1"
+./iec2c -f -l -p -r -R -a ./st_files/"$1"
 if [ $? -ne 0 ]; then
     echo "Error generating C files"
     echo "Compilation finished with errors!"
