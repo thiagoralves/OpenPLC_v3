@@ -25,7 +25,7 @@ function linux_install_deps {
     $1 apt-get install -y build-essential pkg-config bison flex autoconf \
                           automake libtool make git python2.7 \
                           sqlite3 cmake git curl
-    curl https://bootstrap.pypa.io/2.7/get-pip.py --output get-pip.py
+    curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
     $1 python2.7 get-pip.py
 }
 
@@ -150,7 +150,7 @@ if [ "$1" == "win" ]; then
     rm -f /bin/wget.exe
     # apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
     apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3
-    lynx -source https://bootstrap.pypa.io/2.7/get-pip.py > get-pip.py
+    lynx -source https://bootstrap.pypa.io/pip/2.7/get-pip.py > get-pip.py
     /usr/bin/python get-pip.py
     /usr/bin/pip install flask
     /usr/bin/pip install flask-login
