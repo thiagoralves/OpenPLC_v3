@@ -94,6 +94,20 @@ elif [ "$1" == "unipi" ]; then
     echo rpi > ../scripts/openplc_platform
     echo unipi > ../scripts/openplc_driver
 
+elif [ "$1" == "psm_linux" ]; then
+    echo "Activating PSM driver"
+    cp ./hardware_layers/psm.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo linux > ../scripts/openplc_platform
+    echo psm_linux > ../scripts/openplc_driver
+
+elif [ "$1" == "psm_win" ]; then
+    echo "Activating PSM driver"
+    cp ./hardware_layers/psm.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo win > ../scripts/openplc_platform
+    echo psm_win > ../scripts/openplc_driver
+
 else
     echo "Error: Invalid hardware layer"
 fi
