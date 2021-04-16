@@ -1681,7 +1681,7 @@ def hardware():
                         enctype   =  "multipart/form-data"
                         action    =  "hardware"
                         method    =  "post">
-                        <select id='hardware_layer' name='hardware_layer' style="width:400px;height:30px;font-size: 16px;font-family: 'Roboto', sans-serif;">"""
+                        <select id='hardware_layer' name='hardware_layer' style="width:400px;height:30px;font-size: 16px;font-family: 'Roboto', sans-serif;" onchange='refreshSelector()'>"""
             if (current_driver == "blank"): return_str += "<option selected='selected' value='blank'>Blank</option>"
             else: return_str += "<option value='blank'>Blank</option>"
             if (current_driver == "blank_linux"): return_str += "<option selected='selected' value='blank_linux'>Blank Linux</option>"
@@ -1706,21 +1706,26 @@ def hardware():
             else: return_str += "<option value='simulink_linux'>Simulink with DNP3 (Linux only)</option>"
             if (current_driver == "unipi"): return_str += "<option selected='selected' value='unipi'>UniPi v1.1</option>"
             else: return_str += "<option value='unipi'>UniPi v1.1</option>"
+            if (current_driver == "psm_linux"): return_str += "<option selected='selected' value='psm_linux'>Python on Linux (PSM)</option>"
+            else: return_str += "<option value='psm_linux'>Python on Linux (PSM)</option>"
+            if (current_driver == "psm_win"): return_str += "<option selected='selected' value='psm_win'>Python on Windows (PSM)</option>"
+            else: return_str += "<option value='psm_win'>Python on Windows (PSM)</option>"
             return_str += """
                         </select>
                         <br>
                         <br>
-                        <p><b>Hardware Layer Code Box</b><p>
-                        <p>The Hardware Layer Code Box allows you to extend the functionality of the current driver by adding custom code to it, such as reading I2C, SPI and 1-Wire sensors, or controling port expanders to add more outputs to your hardware</p>
-                        <textarea wrap="off" spellcheck="false" name="custom_layer_code" id="custom_layer_code">"""
-            with open('./core/custom_layer.h') as f: return_str += f.read()
+                        <div id="psm_code" style="visibility:hidden">
+                            <p><b>OpenPLC Python SubModule (PSM)</b><p>
+                            <p>PSM is a powerful bridge that connects OpenPLC core to Python. You can use PSM to write your own OpenPLC driver in pure Python. See below for a sample driver that switches %IX0.0 every second</p>
+                            <textarea wrap="off" spellcheck="false" name="custom_layer_code" id="custom_layer_code">"""
+            with open('./core/psm/main.py') as f: return_str += f.read()
             return_str += pages.hardware_tail
             
         else:
             hardware_layer = flask.request.form['hardware_layer']
             custom_layer_code = flask.request.form['custom_layer_code']
             with open('./active_program') as f: current_program = f.read()
-            with open('./core/custom_layer.h', 'w+') as f: f.write(custom_layer_code)
+            with open('./core/psm/main.py', 'w+') as f: f.write(custom_layer_code)
             
             subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
             return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
@@ -1736,8 +1741,8 @@ def restore_custom_hardware():
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         
         #Restore the original custom layer code
-        with open('./core/custom_layer.original') as f: original_code = f.read()
-        with open('./core/custom_layer.h', 'w+') as f: f.write(original_code)
+        with open('./core/psm/main.original') as f: original_code = f.read()
+        with open('./core/psm/main.py', 'w+') as f: f.write(original_code)
         return flask.redirect(flask.url_for('hardware'))
         
 

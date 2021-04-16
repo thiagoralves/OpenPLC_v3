@@ -1379,9 +1379,10 @@ hardware_head = """
                 <br>"""
 
 hardware_tail = """</textarea>
+                        </div>
                         <br>
                         <br>
-                        <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value="Save changes"><a href="restore_custom_hardware" class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Restore Original Code</b></a></center>
+                        <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value="Save changes"><a href="restore_custom_hardware" id="code_restore" class="button" style="display:none; width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Restore Original Code</b></a></center>
                         <br>
                         <br>
                     </form>
@@ -1391,7 +1392,6 @@ hardware_tail = """</textarea>
     </body>
     
     <script type="text/javascript">
-    
     var myCodeMirror = CodeMirror.fromTextArea(custom_layer_code, 
     {
         lineNumbers: true,
@@ -1415,6 +1415,7 @@ hardware_tail = """</textarea>
     //Insert a dummy script to load something from the server periodically so that the user cookie won't expire
     function loadData()
     {
+        refreshSelector();
         url = 'runtime_logs'
         try
         {
@@ -1449,6 +1450,24 @@ hardware_tail = """</textarea>
         {
             timeoutID = setTimeout('loadData()', 10000);
         }
+    }
+    
+    function refreshSelector()
+    {
+        var drop_down = document.getElementById('hardware_layer');
+        var psm_div = document.getElementById('psm_code');
+        var restore_button = document.getElementById('code_restore');
+        if (drop_down.value == "psm_linux" || drop_down.value == "psm_win")
+        {
+            restore_button.style.display = "inline";
+            psm_div.style.visibility = "visible";
+        }
+        else
+        {
+            restore_button.style.display = "none";
+            psm_div.style.visibility = "hidden";
+        }
+        
     }
     
     </script>
