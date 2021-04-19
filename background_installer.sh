@@ -152,12 +152,14 @@ if [ "$1" == "win" ]; then
     # apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
     apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3 python3
     lynx -source https://bootstrap.pypa.io/pip/2.7/get-pip.py > get-pip.py
-    /usr/bin/python get-pip.py
-    /usr/bin/pip install flask
-    /usr/bin/pip install flask-login
-    /usr/bin/pip install pyserial
-    /usr/bin/pip install pymodbus
-    pip3 install pymodbus
+    lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
+    /usr/bin/python2 get-pip.py
+    /usr/bin/python3 get-pip3.py
+    /usr/bin/python2 -m pip install flask
+    /usr/bin/python2 -m pip install flask-login
+    /usr/bin/python2 -m pip install pyserial
+    /usr/bin/python2 -m pip install pymodbus
+    /usr/bin/python3 -m pip install pymodbus
 
     echo ""
     echo "[MATIEC COMPILER]"
