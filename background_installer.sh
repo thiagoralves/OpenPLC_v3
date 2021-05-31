@@ -19,6 +19,7 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+WORKING_DIR=$(pwd)
 mkdir -p bin
 touch etc/Config0.c
 touch etc/Res0.c
@@ -43,7 +44,6 @@ function install_py_deps {
 function OPLC_background_service {
     echo ""
     echo "[OPENPLC SERVICE]"
-    WORKING_DIR=$(pwd)
     echo -e "[Unit]\nDescription=OpenPLC Service\nAfter=network.target\n\n[Service]\nType=simple\nRestart=always\nRestartSec=1\nUser=root\nGroup=root\nWorkingDirectory=$WORKING_DIR\nExecStart=$WORKING_DIR/start_openplc.sh\n\n[Install]\nWantedBy=multi-user.target" >> openplc.service
     $1 cp -rf ./openplc.service /lib/systemd/system/
     rm -rf openplc.service
