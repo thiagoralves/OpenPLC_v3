@@ -2323,7 +2323,7 @@ def create_connection(db_file):
 
 
 #----------------------------------------------------------------------------
-#Returns a generator that returns the sanitized arguments.
+#Returns a generator that yields the sanitized arguments.
 #----------------------------------------------------------------------------
 def sanitize_input(*args):
    return (escape(a) for a in args)
