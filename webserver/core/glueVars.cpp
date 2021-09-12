@@ -62,7 +62,8 @@ void glueVars()
 
 void updateTime()
 {
-	__CURRENT_TIME.tv_nsec += common_ticktime__;
+	__CURRENT_TIME.tv_sec  += common_ticktime__ / 1000000000;
+	__CURRENT_TIME.tv_nsec += common_ticktime__ % 1000000000;
 
 	if (__CURRENT_TIME.tv_nsec >= 1000000000)
 	{
