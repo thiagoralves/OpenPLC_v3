@@ -139,8 +139,7 @@ def generate_mbconfig():
                 mbconfig += 'device' + str(device_counter) + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
                 mbconfig += 'device' + str(device_counter) + '.RTU_Parity = "' + str(row[6]) + '"\n'
                 mbconfig += 'device' + str(device_counter) + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_TX_Pause = "' + str(row[21]) + '"\n\n'
+                mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
                 
                 mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
                 mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
@@ -892,6 +891,8 @@ def upload_program_action():
         prog_descr = flask.request.form['prog_descr']
         prog_file = flask.request.form['prog_file']
         epoch_time = flask.request.form['epoch_time']
+
+        (prog_name, prog_descr, prog_file, epoch_time) = sanitize_input(prog_name, prog_descr, prog_file, epoch_time)
         
         database = "openplc.db"
         conn = create_connection(database)
@@ -1092,7 +1093,7 @@ def add_modbus_device():
                         <br>
                         <h2>Add new device</h2>
                         <br>
-                        <div style="float:left; width:45%; height:780px">
+                        <div style="float:left; width:45%; height:730px">
                         <form   id    = "uploadForm"
                             enctype   =  "multipart/form-data"
                             action    =  "add-modbus-device"
@@ -1144,7 +1145,6 @@ def add_modbus_device():
             devparity = flask.request.form.get('device_parity')
             devdata = flask.request.form.get('device_data')
             devstop = flask.request.form.get('device_stop')
-            devpause = flask.request.form.get('device_pause')
             
             di_start = flask.request.form.get('di_start')
             di_size = flask.request.form.get('di_size')
@@ -1157,12 +1157,15 @@ def add_modbus_device():
             aow_start = flask.request.form.get('aow_start')
             aow_size = flask.request.form.get('aow_size')
             
+            (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size) \
+                = sanitize_input(devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size)
+
             database = "openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
                     cur = conn.cursor()
-                    cur.execute("INSERT INTO Slave_dev (dev_name, dev_type, slave_id, com_port, baud_rate, parity, data_bits, stop_bits, ip_address, ip_port, di_start, di_size, coil_start, coil_size, ir_start, ir_size, hr_read_start, hr_read_size, hr_write_start, hr_write_size, pause) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devpause))
+                    cur.execute("INSERT INTO Slave_dev (dev_name, dev_type, slave_id, com_port, baud_rate, parity, data_bits, stop_bits, ip_address, ip_port, di_start, di_size, coil_start, coil_size, ir_start, ir_size, hr_read_start, hr_read_size, hr_write_start, hr_write_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size))
                     conn.commit()
                     cur.close()
                     conn.close()
@@ -1209,7 +1212,7 @@ def modbus_edit_device():
                         <br>
                         <h2>Edit slave device</h2>
                         <br>
-                        <div style="float:left; width:45%; height:780px">
+                        <div style="float:left; width:45%; height:730px">
                         <form   id    = "uploadForm"
                             enctype   =  "multipart/form-data"
                             action    =  "modbus-edit-device"
@@ -1264,7 +1267,7 @@ def modbus_edit_device():
                             port_name = port
                         if (str(row[4]) == port_name):
                             return_str += "<option selected='selected' value'" + port_name + "'>" + port_name + "</option>"
-                        else:     
+                        else:   
                             return_str += "<option value='" + port_name + "'>" + port_name + "</option>"
                     
                     return_str += pages.edit_slave_devices_tail
@@ -1293,8 +1296,7 @@ def modbus_edit_device():
                     return_str += 'aorstart.value = "' + str(row[17]) + '";'
                     return_str += 'aorsize.value = "' + str(row[18]) + '";'
                     return_str += 'aowstart.value = "' + str(row[19]) + '";'
-                    return_str += 'aowsize.value = "' + str(row[20]) + '";'
-                    return_str += 'devpause.value = "' + str(row[21]) + '";}</script></html>'
+                    return_str += 'aowsize.value = "' + str(row[20]) + '";}</script></html>'
                     
                 except Error as e:
                     print("error connecting to the database" + str(e))
@@ -1316,7 +1318,6 @@ def modbus_edit_device():
             devparity = flask.request.form.get('device_parity')
             devdata = flask.request.form.get('device_data')
             devstop = flask.request.form.get('device_stop')
-            devpause = flask.request.form.get('device_pause')
             
             di_start = flask.request.form.get('di_start')
             di_size = flask.request.form.get('di_size')
@@ -1329,12 +1330,15 @@ def modbus_edit_device():
             aow_start = flask.request.form.get('aow_start')
             aow_size = flask.request.form.get('aow_size')
             
+            (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devid_db) \
+                = sanitize_input(devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devid_db)
+
             database = "openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
                     cur = conn.cursor()
-                    cur.execute("UPDATE Slave_dev SET dev_name = ?, dev_type = ?, slave_id = ?, com_port = ?, baud_rate = ?, parity = ?, data_bits = ?, stop_bits = ?, ip_address = ?, ip_port = ?, di_start = ?, di_size = ?, coil_start = ?, coil_size = ?, ir_start = ?, ir_size = ?, hr_read_start = ?, hr_read_size = ?, hr_write_start = ?, hr_write_size = ?, pause = ? WHERE dev_id = ?", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devpause, int(devid_db)))
+                    cur.execute("UPDATE Slave_dev SET dev_name = ?, dev_type = ?, slave_id = ?, com_port = ?, baud_rate = ?, parity = ?, data_bits = ?, stop_bits = ?, ip_address = ?, ip_port = ?, di_start = ?, di_size = ?, coil_start = ?, coil_size = ?, ir_start = ?, ir_size = ?, hr_read_start = ?, hr_read_size = ?, hr_write_start = ?, hr_write_size = ? WHERE dev_id = ?", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, int(devid_db)))
                     conn.commit()
                     cur.close()
                     conn.close()
@@ -1849,6 +1853,9 @@ def add_user():
             username = flask.request.form['user_name']
             email = flask.request.form['user_email']
             password = flask.request.form['user_password']
+
+            (name, username, email) = sanitize_input(name, username, email)
+
             form_has_picture = True
             if ('file' not in flask.request.files):
                 form_has_picture = False
@@ -1977,6 +1984,7 @@ def edit_user():
             username = flask.request.form['user_name']
             email = flask.request.form['user_email']
             password = flask.request.form['user_password']
+            (user_id, name, username, email) = sanitize_input(user_id, name, username, email)
             form_has_picture = True
             if ('file' not in flask.request.files):
                 form_has_picture = False
@@ -2225,6 +2233,8 @@ def settings():
             slave_polling = flask.request.form.get('slave_polling_period')
             slave_timeout = flask.request.form.get('slave_timeout')
             
+            (modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, slave_polling, slave_timeout) = sanitize_input(modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, slave_polling, slave_timeout)
+
             database = "openplc.db"
             conn = create_connection(database)
             if (conn != None):
@@ -2310,6 +2320,40 @@ def create_connection(db_file):
       print(e)
 
    return None
+
+
+#----------------------------------------------------------------------------
+#Returns a generator that yields the sanitized arguments.
+#----------------------------------------------------------------------------
+def sanitize_input(*args):
+   return (escape(a) for a in args)
+
+#----------------------------------------------------------------------------
+# Taken from the html module of the python 3.9 standard library
+# exact lines of code can be found here:
+# https://github.com/python/cpython/blob/3.9/Lib/html/__init__.py#L12
+# Modified to convert to String but preserve NoneType.
+# Preserving NoneType is necessary to ensure program logic is not affected by None being converted to "None",
+# this is relevant in setttings()
+#----------------------------------------------------------------------------
+def escape(s, quote=True):
+    """
+    Replace special characters "&", "<" and ">" to HTML-safe sequences.
+    If the optional flag quote is true (the default), the quotation mark
+    characters, both double quote (") and single quote (') characters are also
+    translated.
+    """
+    if s is None: 
+        return s
+    s = str(s) # force string
+    s = s.replace("&", "&amp;") # Must be done first!
+    s = s.replace("<", "&lt;")
+    s = s.replace(">", "&gt;")
+    if quote:
+        s = s.replace('"', "&quot;")
+        s = s.replace('\'', "&#x27;")
+    return s
+
 
 #----------------------------------------------------------------------------
 #Main dummy function. Only displays a message and exits. The app keeps

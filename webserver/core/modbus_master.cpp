@@ -69,7 +69,6 @@ struct MB_device
     char rtu_parity;
     int rtu_data_bit;
     int rtu_stop_bit;
-	int rtu_tx_pause;
     uint8_t dev_id;
 	bool isConnected;
 
@@ -242,12 +241,6 @@ void parseConfig()
                         char temp_buffer[20];
                         getData(line_str, temp_buffer, '"', '"');
                         mb_devices[deviceNumber].rtu_stop_bit = atoi(temp_buffer);
-                    }
-					else if (!strncmp(functionType, "RTU_TX_Pause", 12))
-                    {
-                        char temp_buffer[10];
-                        getData(line_str, temp_buffer, '"', '"');
-                        mb_devices[deviceNumber].rtu_tx_pause = atoi(temp_buffer);
                     }
                     else if (!strncmp(functionType, "Discrete_Inputs_Start", 21))
                     {
@@ -423,7 +416,6 @@ void *querySlaveDevices(void *arg)
                 //Read discrete inputs
                 if (mb_devices[i].discrete_inputs.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
                     uint8_t *tempBuff;
                     tempBuff = (uint8_t *)malloc(mb_devices[i].discrete_inputs.num_regs);
                     nanosleep(&ts, NULL); 
@@ -459,7 +451,6 @@ void *querySlaveDevices(void *arg)
                 //Write coils
                 if (mb_devices[i].coils.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
                     uint8_t *tempBuff;
                     tempBuff = (uint8_t *)malloc(mb_devices[i].coils.num_regs);
 
@@ -492,7 +483,7 @@ void *querySlaveDevices(void *arg)
                 //Read input registers
                 if (mb_devices[i].input_registers.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
+
                     uint16_t *tempBuff;
                     tempBuff = (uint16_t *)malloc(2*mb_devices[i].input_registers.num_regs);
                     nanosleep(&ts, NULL); 
@@ -528,7 +519,6 @@ void *querySlaveDevices(void *arg)
                 //Read holding registers
                 if (mb_devices[i].holding_read_registers.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
                     uint16_t *tempBuff;
                     tempBuff = (uint16_t *)malloc(2*mb_devices[i].holding_read_registers.num_regs);
                     nanosleep(&ts, NULL); 
@@ -563,7 +553,6 @@ void *querySlaveDevices(void *arg)
                 //Write holding registers
                 if (mb_devices[i].holding_registers.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
                     uint16_t *tempBuff;
                     tempBuff = (uint16_t *)malloc(2*mb_devices[i].holding_registers.num_regs);
 
