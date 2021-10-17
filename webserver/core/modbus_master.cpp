@@ -358,7 +358,7 @@ void *querySlaveDevices(void *arg)
         {
             //Check if there is a connected RTU device using the same port
 			bool found_sharing = false;
-            bool rtu_connected = false;
+            bool rtu_port_connected = false;
 			if (mb_devices[i].protocol == MB_RTU)
 			{
 				for (int a = 0; a < num_devices; a++)
