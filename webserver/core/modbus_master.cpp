@@ -60,7 +60,7 @@ struct MB_address
 
 struct MB_device
 {
-	modbus_t *mb_ctx;
+    modbus_t *mb_ctx;
     char dev_name[100];
     uint8_t protocol;
     char dev_address[100];
@@ -69,9 +69,9 @@ struct MB_device
     char rtu_parity;
     int rtu_data_bit;
     int rtu_stop_bit;
-	int rtu_tx_pause;
+    int rtu_tx_pause;
     uint8_t dev_id;
-	bool isConnected;
+    bool isConnected;
 
     struct MB_address discrete_inputs;
     struct MB_address coils;
@@ -167,8 +167,8 @@ void parseConfig()
                     char temp_buffer[5];
                     getData(line_str, temp_buffer, '"', '"');
                     num_devices = atoi(temp_buffer);
-					//initializes the allocated memory to zero
-					mb_devices = calloc(num_devices, sizeof(struct MB_device));
+                    //initializes the allocated memory to zero
+                    mb_devices = calloc(num_devices, sizeof(struct MB_device));
                 }
                 else if (!strncmp(line_str, "Polling_Period", 14))
                 {
@@ -243,7 +243,7 @@ void parseConfig()
                         getData(line_str, temp_buffer, '"', '"');
                         mb_devices[deviceNumber].rtu_stop_bit = atoi(temp_buffer);
                     }
-					else if (!strncmp(functionType, "RTU_TX_Pause", 12))
+                    else if (!strncmp(functionType, "RTU_TX_Pause", 12))
                     {
                         char temp_buffer[10];
                         getData(line_str, temp_buffer, '"', '"');
@@ -364,27 +364,27 @@ void *querySlaveDevices(void *arg)
         for (int i = 0; i < num_devices; i++)
         {
             //Check if there is a connected RTU device using the same port
-			bool found_sharing = false;
+            bool found_sharing = false;
             bool rtu_port_connected = false;
-			if (mb_devices[i].protocol == MB_RTU)
-			{
-				for (int a = 0; a < num_devices; a++)
-				{
-					if (a != i && !strcmp(mb_devices[i].dev_address, mb_devices[a].dev_address))
-					{
-						found_sharing = true;
-						if (mb_devices[a].isConnected)
-						{
-							rtu_port_connected = true;
-						}
-					}
-				}
-				if (found_sharing)
-				{
-					//Must reset mb context to current device's slave id
-					modbus_set_slave(mb_devices[i].mb_ctx, mb_devices[i].dev_id);
-				}
-			}
+            if (mb_devices[i].protocol == MB_RTU)
+            {
+                for (int a = 0; a < num_devices; a++)
+                {
+                    if (a != i && !strcmp(mb_devices[i].dev_address, mb_devices[a].dev_address))
+                    {
+                        found_sharing = true;
+                        if (mb_devices[a].isConnected)
+                        {
+                            rtu_port_connected = true;
+                        }
+                    }
+                }
+                if (found_sharing)
+                {
+                    //Must reset mb context to current device's slave id
+                    modbus_set_slave(mb_devices[i].mb_ctx, mb_devices[i].dev_id);
+                }
+            }
 
             //Verify if device is connected
             if (!mb_devices[i].isConnected && !rtu_port_connected)
@@ -423,7 +423,7 @@ void *querySlaveDevices(void *arg)
                 //Read discrete inputs
                 if (mb_devices[i].discrete_inputs.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
+                    sleepms(mb_devices[i].rtu_tx_pause);
                     uint8_t *tempBuff;
                     tempBuff = (uint8_t *)malloc(mb_devices[i].discrete_inputs.num_regs);
                     nanosleep(&ts, NULL); 
@@ -459,7 +459,7 @@ void *querySlaveDevices(void *arg)
                 //Write coils
                 if (mb_devices[i].coils.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
+                    sleepms(mb_devices[i].rtu_tx_pause);
                     uint8_t *tempBuff;
                     tempBuff = (uint8_t *)malloc(mb_devices[i].coils.num_regs);
 
@@ -492,7 +492,7 @@ void *querySlaveDevices(void *arg)
                 //Read input registers
                 if (mb_devices[i].input_registers.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
+                    sleepms(mb_devices[i].rtu_tx_pause);
                     uint16_t *tempBuff;
                     tempBuff = (uint16_t *)malloc(2*mb_devices[i].input_registers.num_regs);
                     nanosleep(&ts, NULL); 
@@ -528,7 +528,7 @@ void *querySlaveDevices(void *arg)
                 //Read holding registers
                 if (mb_devices[i].holding_read_registers.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
+                    sleepms(mb_devices[i].rtu_tx_pause);
                     uint16_t *tempBuff;
                     tempBuff = (uint16_t *)malloc(2*mb_devices[i].holding_read_registers.num_regs);
                     nanosleep(&ts, NULL); 
@@ -563,7 +563,7 @@ void *querySlaveDevices(void *arg)
                 //Write holding registers
                 if (mb_devices[i].holding_registers.num_regs != 0)
                 {
-					sleepms(mb_devices[i].rtu_tx_pause);
+                    sleepms(mb_devices[i].rtu_tx_pause);
                     uint16_t *tempBuff;
                     tempBuff = (uint16_t *)malloc(2*mb_devices[i].holding_registers.num_regs);
 
@@ -615,34 +615,33 @@ void initializeMB()
         }
         else if (mb_devices[i].protocol == MB_RTU)
         {
-			//Check if there is a device using the same port
-			int share_index = -1;
+            //Check if there is a device using the same port
+            int share_index = -1;
             for (int a = 0; a < num_devices && a < i; a++)
             {
                 if (strcmp(mb_devices[i].dev_address, mb_devices[a].dev_address) == 0)
                 {
-					share_index = a;
-					break;
-				}
-					
+                    share_index = a;
+                    break;
+                }
             }
-			if (share_index != -1)
-			{
-				if (mb_devices[i].rtu_baud != mb_devices[share_index].rtu_baud || mb_devices[i].rtu_parity != mb_devices[share_index].rtu_parity || 
-					mb_devices[i].rtu_data_bit != mb_devices[share_index].rtu_data_bit || mb_devices[i].rtu_stop_bit != mb_devices[share_index].rtu_stop_bit)
-				{
-					unsigned char log_msg[1000];
-					sprintf(log_msg, "Warning MB device %s port setting missmatch\n", mb_devices[i].dev_name);
-					log(log_msg);
-				}
-				mb_devices[i].mb_ctx = mb_devices[share_index].mb_ctx;
+            if (share_index != -1)
+            {
+                if (mb_devices[i].rtu_baud != mb_devices[share_index].rtu_baud || mb_devices[i].rtu_parity != mb_devices[share_index].rtu_parity || 
+                    mb_devices[i].rtu_data_bit != mb_devices[share_index].rtu_data_bit || mb_devices[i].rtu_stop_bit != mb_devices[share_index].rtu_stop_bit)
+                {
+                    unsigned char log_msg[1000];
+                    sprintf(log_msg, "Warning MB device %s port setting missmatch\n", mb_devices[i].dev_name);
+                    log(log_msg);
+                }
+                mb_devices[i].mb_ctx = mb_devices[share_index].mb_ctx;
             }
-			else
-			{
-				mb_devices[i].mb_ctx = modbus_new_rtu(mb_devices[i].dev_address, mb_devices[i].rtu_baud,
-												mb_devices[i].rtu_parity, mb_devices[i].rtu_data_bit,
-												mb_devices[i].rtu_stop_bit);
-			}
+            else
+            {
+                mb_devices[i].mb_ctx = modbus_new_rtu(mb_devices[i].dev_address, mb_devices[i].rtu_baud,
+                                                mb_devices[i].rtu_parity, mb_devices[i].rtu_data_bit,
+                                                mb_devices[i].rtu_stop_bit);
+            }
         }
         
         //slave id
