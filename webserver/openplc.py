@@ -167,10 +167,10 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'start_modbusslave(' + str(port_num) + ')\n')
+                s.send(b'start_modbusslave(' + (b'%d' % port_num) + b')\n')
                 data = s.recv(1000)
                 s.close()
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
                 
     def stop_modbus(self):
@@ -181,7 +181,7 @@ class runtime:
                 s.send(b'stop_modbusslave()\n')
                 data = s.recv(1000)
                 s.close()
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
 
     def start_dnp3(self, port_num):
@@ -189,10 +189,10 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'start_dnp3s(' + str(port_num) + ')\n')
+                s.send(b'start_dnp3s(' + (b'%d' % port_num) + ')\n')
                 data = s.recv(1000)
                 s.close()
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
         
     def stop_dnp3(self):
@@ -203,7 +203,7 @@ class runtime:
                 s.send(b'stop_dnp3s()\n')
                 data = s.recv(1000)
                 s.close()
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
                 
     def start_enip(self, port_num):
@@ -211,10 +211,10 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'start_enip(' + str(port_num) + ')\n')
+                s.send(b'start_enip(' + (b'%d' % port_num) + b')\n')
                 data = s.recv(1000)
                 s.close()
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
                 
     def stop_enip(self):
@@ -225,7 +225,7 @@ class runtime:
                 s.send(b'stop_enip()\n')
                 data = s.recv(1000)
                 s.close()
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
     
     def start_pstorage(self, poll_rate):
@@ -233,10 +233,10 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'start_pstorage(' + str(poll_rate) + ')\n')
+                s.send(b'start_pstorage(' + (b'%d' % poll_rate) + ')\n')
                 data = s.recv(1000)
                 s.close()
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
                 
     def stop_pstorage(self):
@@ -247,7 +247,7 @@ class runtime:
                 s.send(b'stop_pstorage()\n')
                 data = s.recv(1000)
                 s.close()
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
     
     def logs(self):
@@ -259,7 +259,7 @@ class runtime:
                 data = s.recv(1000000)
                 s.close()
                 return data
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
             
             return "Error connecting to OpenPLC runtime"
@@ -275,7 +275,7 @@ class runtime:
                 data = s.recv(10000)
                 s.close()
                 return display_time(int(data), 4)
-            except:
+            except ConnectionRefusedError:
                 print("Error connecting to OpenPLC runtime")
             
             return "Error connecting to OpenPLC runtime"
