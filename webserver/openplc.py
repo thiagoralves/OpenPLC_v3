@@ -189,7 +189,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'start_dnp3s(' + (b'%d' % port_num) + ')\n')
+                s.send(b'start_dnp3s(' + (b'%d' % port_num) + b')\n')
                 data = s.recv(1000)
                 s.close()
             except ConnectionRefusedError:
@@ -233,7 +233,7 @@ class runtime:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect(('localhost', 43628))
-                s.send(b'start_pstorage(' + (b'%d' % poll_rate) + ')\n')
+                s.send(b'start_pstorage(' + (b'%d' % poll_rate) + b')\n')
                 data = s.recv(1000)
                 s.close()
             except ConnectionRefusedError:
