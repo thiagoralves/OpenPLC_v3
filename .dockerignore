@@ -3,6 +3,10 @@
 .exe/
 **/.vs/
 .vscode/
+.idea/
+cmake*/
+include/
+lib/
 
 .deps/
 bin/
