@@ -6,6 +6,7 @@ automake libtool make git python3 python3-pip  \
 sqlite3 cmake git
 
 COPY . /workdir
-RUN cd /workdir && ./install.sh docker
 WORKDIR /workdir
+RUN pip3 install -r requirements.txt
+RUN ./install.sh docker
 ENTRYPOINT ["./start_openplc.sh"]
