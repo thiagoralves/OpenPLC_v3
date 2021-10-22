@@ -139,8 +139,7 @@ def generate_mbconfig():
                 mbconfig += 'device' + str(device_counter) + '.RTU_Baud_Rate = "' + str(row[5]) + '"\n'
                 mbconfig += 'device' + str(device_counter) + '.RTU_Parity = "' + str(row[6]) + '"\n'
                 mbconfig += 'device' + str(device_counter) + '.RTU_Data_Bits = "' + str(row[7]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n'
-                mbconfig += 'device' + str(device_counter) + '.RTU_TX_Pause = "' + str(row[21]) + '"\n\n'
+                mbconfig += 'device' + str(device_counter) + '.RTU_Stop_Bits = "' + str(row[8]) + '"\n\n'
                 
                 mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Start = "' + str(row[11]) + '"\n'
                 mbconfig += 'device' + str(device_counter) + '.Discrete_Inputs_Size = "' + str(row[12]) + '"\n'
@@ -1094,7 +1093,7 @@ def add_modbus_device():
                         <br>
                         <h2>Add new device</h2>
                         <br>
-                        <div style="float:left; width:45%; height:780px">
+                        <div style="float:left; width:45%; height:730px">
                         <form   id    = "uploadForm"
                             enctype   =  "multipart/form-data"
                             action    =  "add-modbus-device"
@@ -1146,7 +1145,6 @@ def add_modbus_device():
             devparity = flask.request.form.get('device_parity')
             devdata = flask.request.form.get('device_data')
             devstop = flask.request.form.get('device_stop')
-            devpause = flask.request.form.get('device_pause')
             
             di_start = flask.request.form.get('di_start')
             di_size = flask.request.form.get('di_size')
@@ -1167,7 +1165,7 @@ def add_modbus_device():
             if (conn != None):
                 try:
                     cur = conn.cursor()
-                    cur.execute("INSERT INTO Slave_dev (dev_name, dev_type, slave_id, com_port, baud_rate, parity, data_bits, stop_bits, ip_address, ip_port, di_start, di_size, coil_start, coil_size, ir_start, ir_size, hr_read_start, hr_read_size, hr_write_start, hr_write_size, pause) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devpause))
+                    cur.execute("INSERT INTO Slave_dev (dev_name, dev_type, slave_id, com_port, baud_rate, parity, data_bits, stop_bits, ip_address, ip_port, di_start, di_size, coil_start, coil_size, ir_start, ir_size, hr_read_start, hr_read_size, hr_write_start, hr_write_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size))
                     conn.commit()
                     cur.close()
                     conn.close()
@@ -1214,7 +1212,7 @@ def modbus_edit_device():
                         <br>
                         <h2>Edit slave device</h2>
                         <br>
-                        <div style="float:left; width:45%; height:780px">
+                        <div style="float:left; width:45%; height:730px">
                         <form   id    = "uploadForm"
                             enctype   =  "multipart/form-data"
                             action    =  "modbus-edit-device"
@@ -1298,8 +1296,7 @@ def modbus_edit_device():
                     return_str += 'aorstart.value = "' + str(row[17]) + '";'
                     return_str += 'aorsize.value = "' + str(row[18]) + '";'
                     return_str += 'aowstart.value = "' + str(row[19]) + '";'
-                    return_str += 'aowsize.value = "' + str(row[20]) + '";'
-                    return_str += 'devpause.value = "' + str(row[21]) + '";}</script></html>'
+                    return_str += 'aowsize.value = "' + str(row[20]) + '";}</script></html>'
                     
                 except Error as e:
                     print("error connecting to the database" + str(e))
@@ -1321,7 +1318,6 @@ def modbus_edit_device():
             devparity = flask.request.form.get('device_parity')
             devdata = flask.request.form.get('device_data')
             devstop = flask.request.form.get('device_stop')
-            devpause = flask.request.form.get('device_pause')
             
             di_start = flask.request.form.get('di_start')
             di_size = flask.request.form.get('di_size')
@@ -1342,7 +1338,7 @@ def modbus_edit_device():
             if (conn != None):
                 try:
                     cur = conn.cursor()
-                    cur.execute("UPDATE Slave_dev SET dev_name = ?, dev_type = ?, slave_id = ?, com_port = ?, baud_rate = ?, parity = ?, data_bits = ?, stop_bits = ?, ip_address = ?, ip_port = ?, di_start = ?, di_size = ?, coil_start = ?, coil_size = ?, ir_start = ?, ir_size = ?, hr_read_start = ?, hr_read_size = ?, hr_write_start = ?, hr_write_size = ?, pause = ? WHERE dev_id = ?", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devpause, int(devid_db)))
+                    cur.execute("UPDATE Slave_dev SET dev_name = ?, dev_type = ?, slave_id = ?, com_port = ?, baud_rate = ?, parity = ?, data_bits = ?, stop_bits = ?, ip_address = ?, ip_port = ?, di_start = ?, di_size = ?, coil_start = ?, coil_size = ?, ir_start = ?, ir_size = ?, hr_read_start = ?, hr_read_size = ?, hr_write_start = ?, hr_write_size = ? WHERE dev_id = ?", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, int(devid_db)))
                     conn.commit()
                     cur.close()
                     conn.close()

@@ -1487,11 +1487,9 @@ add_slave_devices_tail = """
                         <input type='text' id='dev_data' name='device_data' placeholder='8'>
                         <label for='dev_stop'><b>Stop Bits</b></label>
                         <input type='text' id='dev_stop' name='device_stop' placeholder='1'>
-                        <label for='dev_pause'><b>Transmission Pause</b></label>
-                        <input type='text' id='dev_pause' name='device_pause' placeholder='0'>
                         </div>
                     </div>
-                    <div style="float:right; width:45%; height:780px">
+                    <div style="float:right; width:45%; height:730px">
                         <p style='font-size:20px; margin-top:0px'><b>Discrete Inputs (%IX100.0)</b></p>
                         <label for='di_start'><b>Start Address:</b></label>
                         <input type='text' style='width: 20%' id='di_start' name='di_start' placeholder='0'>
@@ -1566,7 +1564,6 @@ add_devices_script = """
             var devparity = document.getElementById("dev_parity");
             var devdata = document.getElementById("dev_data");
             var devstop = document.getElementById("dev_stop");
-            var devpause = document.getElementById("dev_pause");
             
             var distart = document.getElementById("di_start");
             var disize = document.getElementById("di_size");
@@ -1669,8 +1666,6 @@ add_devices_script = """
                 devparity.value = "None"
                 turnElementOn(devdata)
                 turnElementOn(devstop)
-                turnElementOn(devpause)
-                devpause.value = "0"
                 turnElementOn(distart)
                 turnElementOn(disize)
                 turnElementOn(dostart)
@@ -1697,8 +1692,6 @@ add_devices_script = """
                 devdata.value = "8"
                 turnElementOff(devstop)
                 devstop.value = "1"
-                turnElementOff(devpause)
-                devpause.value = "0"
                 turnElementOff(distart)
                 distart.value = "0"
                 turnElementOff(disize)
@@ -1735,8 +1728,6 @@ add_devices_script = """
                 devdata.value = "8"
                 turnElementOff(devstop)
                 devstop.value = "1"
-                turnElementOff(devpause)
-                devpause.value = "0"
                 turnElementOff(distart)
                 distart.value = "0"
                 turnElementOff(disize)
@@ -1777,7 +1768,6 @@ add_devices_script = """
             var devbaud = document.forms["uploadForm"]["dev_baud"].value;
             var devdata = document.forms["uploadForm"]["dev_data"].value;
             var devstop = document.forms["uploadForm"]["dev_stop"].value;
-            var devpause = document.forms["uploadForm"]["dev_pause"].value;
             
             var distart = document.forms["uploadForm"]["di_start"].value;
             var disize = document.forms["uploadForm"]["di_size"].value;
@@ -1836,11 +1826,9 @@ edit_slave_devices_tail = """
                         <input type='text' id='dev_data' name='device_data' placeholder='8'>
                         <label for='dev_stop'><b>Stop Bits</b></label>
                         <input type='text' id='dev_stop' name='device_stop' placeholder='1'>
-                        <label for='dev_pause'><b>Transmission Pause</b></label>
-                        <input type='text' id='dev_pause' name='device_pause' placeholder='0'>
                         </div>
                     </div>
-                    <div style="float:right; width:45%; height:780px">
+                    <div style="float:right; width:45%; height:730px">
                         <p style='font-size:20px; margin-top:0px'><b>Discrete Inputs (%IX100.0)</b></p>
                         <label for='di_start'><b>Start Address:</b></label>
                         <input type='text' style='width: 20%' id='di_start' name='di_start' placeholder='0'>
@@ -1910,7 +1898,6 @@ edit_devices_script = """
             var devparity = document.getElementById("dev_parity");
             var devdata = document.getElementById("dev_data");
             var devstop = document.getElementById("dev_stop");
-            var devpause = document.getElementById("dev_pause");
             
             var distart = document.getElementById("di_start");
             var disize = document.getElementById("di_size");
@@ -2013,8 +2000,6 @@ edit_devices_script = """
                 devparity.value = "None"
                 turnElementOn(devdata)
                 turnElementOn(devstop)
-                turnElementOn(devpause)
-                devpause.value = "0"
                 turnElementOn(distart)
                 turnElementOn(disize)
                 turnElementOn(dostart)
@@ -2041,8 +2026,6 @@ edit_devices_script = """
                 devdata.value = "8"
                 turnElementOff(devstop)
                 devstop.value = "1"
-                turnElementOff(devpause)
-                devpause.value = "0"
                 turnElementOff(distart)
                 distart.value = "0"
                 turnElementOff(disize)
@@ -2079,8 +2062,6 @@ edit_devices_script = """
                 devdata.value = "8"
                 turnElementOff(devstop)
                 devstop.value = "1"
-                turnElementOff(devpause)
-                devpause.value = "0"
                 turnElementOff(distart)
                 distart.value = "0"
                 turnElementOff(disize)
@@ -2121,7 +2102,6 @@ edit_devices_script = """
             var devbaud = document.forms["uploadForm"]["dev_baud"].value;
             var devdata = document.forms["uploadForm"]["dev_data"].value;
             var devstop = document.forms["uploadForm"]["dev_stop"].value;
-            var devpause = document.forms["uploadForm"]["dev_pause"].value;
             
             var distart = document.forms["uploadForm"]["di_start"].value;
             var disize = document.forms["uploadForm"]["di_size"].value;
@@ -2173,7 +2153,6 @@ edit_devices_script = """
             var devparity = document.getElementById("dev_parity");
             var devdata = document.getElementById("dev_data");
             var devstop = document.getElementById("dev_stop");
-            var devpause = document.getElementById("dev_pause");
             
             var distart = document.getElementById("di_start");
             var disize = document.getElementById("di_size");
