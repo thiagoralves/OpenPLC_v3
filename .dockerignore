@@ -4,7 +4,7 @@
 **/.vs/
 .vscode/
 .idea/
-cmake*/
+cmake-*/
 include/
 lib/
 
