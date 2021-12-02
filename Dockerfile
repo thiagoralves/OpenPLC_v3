@@ -1,4 +1,4 @@
-FROM debian
+FROM debian:bullseye-20211201
 
 COPY . /workdir
 RUN cd /workdir && ./install.sh docker
