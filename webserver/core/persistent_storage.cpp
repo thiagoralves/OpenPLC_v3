@@ -27,6 +27,8 @@
 
 #include "ladder.h"
 
+uint8_t pstorage_read = false;
+
 //-----------------------------------------------------------------------------
 // Main function for the thread. Should create a buffer for the persistent
 // data, compare it with the actual data and write back to the persistent
@@ -34,16 +36,20 @@
 //-----------------------------------------------------------------------------
 void startPstorage()
 {
+    //We can only start persistent storage after the persistent.file was read
+    while (pstorage_read == false)
+        sleepms(100);
+    
     unsigned char log_msg[1000];
-	IEC_UINT persistentBuffer[BUFFER_SIZE];
+    IEC_UINT persistentBuffer[BUFFER_SIZE];
 
     //Read initial buffers into persistent struct
-	pthread_mutex_lock(&bufferLock); //lock mutex
-	for (int i = 0; i < BUFFER_SIZE; i++)
-	{
-		if (int_memory[i] != NULL) persistentBuffer[i] = *int_memory[i];
-	}
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
+        if (int_memory[i] != NULL) persistentBuffer[i] = *int_memory[i];
+    }
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
     
     //Perform the first write
     if (access("persistent.file", F_OK) == -1) 
@@ -69,47 +75,47 @@ void startPstorage()
     fclose(ps);
     
     //Run the main thread
-	while (run_pstorage)
-	{
+    while (run_pstorage)
+    {
         
         //Verify if persistent buffer is outdated
-		bool bufferOutdated = false;
-		pthread_mutex_lock(&bufferLock); //lock mutex
-		for (int i = 0; i < BUFFER_SIZE; i++)
-		{
-			if (int_memory[i] != NULL)
-			{
-				if (persistentBuffer[i] != *int_memory[i])
-				{
-					persistentBuffer[i] = *int_memory[i];
-					bufferOutdated = true;
-				}
-			}
-		}
-		pthread_mutex_unlock(&bufferLock); //unlock mutex
+        bool bufferOutdated = false;
+        pthread_mutex_lock(&bufferLock); //lock mutex
+        for (int i = 0; i < BUFFER_SIZE; i++)
+        {
+            if (int_memory[i] != NULL)
+            {
+                if (persistentBuffer[i] != *int_memory[i])
+                {
+                    persistentBuffer[i] = *int_memory[i];
+                    bufferOutdated = true;
+                }
+            }
+        }
+        pthread_mutex_unlock(&bufferLock); //unlock mutex
 
         //If buffer is outdated, write the changes back to the file
-		if (bufferOutdated)
-		{
-			FILE *fd = fopen("persistent.file", "w"); //if file already exists, it will be overwritten
-			if (fd == NULL)
-			{
+        if (bufferOutdated)
+        {
+            FILE *fd = fopen("persistent.file", "w"); //if file already exists, it will be overwritten
+            if (fd == NULL)
+            {
                 sprintf(log_msg, "Persistent Storage: Error creating persistent memory file!\n");
                 log(log_msg);
-				return 0;
-			}
+                return 0;
+            }
 
-			if (fwrite(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, fd) < BUFFER_SIZE)
-			{
+            if (fwrite(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, fd) < BUFFER_SIZE)
+            {
                 sprintf(log_msg, "Persistent Storage: Error writing to persistent memory file!\n");
                 log(log_msg);
-				return 0;
-			}
-			fclose(fd);
-		}
+                return 0;
+            }
+            fclose(fd);
+        }
 
-		sleepms(pstorage_polling*1000);
-	}
+        sleepms(pstorage_polling*1000);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -121,31 +127,35 @@ void startPstorage()
 int readPersistentStorage()
 {
     unsigned char log_msg[1000];
-	FILE *fd = fopen("persistent.file", "r");
-	if (fd == NULL)
-	{
+    FILE *fd = fopen("persistent.file", "r");
+    if (fd == NULL)
+    {
         sprintf(log_msg, "Warning: Persistent Storage file not found\n");
         log(log_msg);
-		return 0;
-	}
+        pstorage_read = true;
+        return 0;
+    }
 
-	IEC_INT persistentBuffer[BUFFER_SIZE];
+    IEC_INT persistentBuffer[BUFFER_SIZE];
 
-	if (fread(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, fd) < BUFFER_SIZE)
-	{
+    if (fread(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, fd) < BUFFER_SIZE)
+    {
         sprintf(log_msg, "Persistent Storage: Error while trying to read persistent.file!\n");
         log(log_msg);
-		return 0;
-	}
-	fclose(fd);
+        pstorage_read = true;
+        return 0;
+    }
+    fclose(fd);
     
     sprintf(log_msg, "Persistent Storage: Reading persistent.file into local buffers\n");
     log(log_msg);
     
-	pthread_mutex_lock(&bufferLock); //lock mutex
-	for (int i = 0; i < BUFFER_SIZE; i++)
-	{
-		if (int_memory[i] != NULL) *int_memory[i] = persistentBuffer[i];
-	}
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
+        if (int_memory[i] != NULL) *int_memory[i] = persistentBuffer[i];
+    }
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
+    
+    pstorage_read = true;
 }
