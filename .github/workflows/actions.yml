@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout
@@ -16,7 +16,6 @@ jobs:
 
     - name: Install package
       run: |
-        sudo apt-get -y install g++-5 doxygen cmake-data cmake
-        eval "CC=gcc-5 && CXX=g++-5"
+        sudo apt-get -y install doxygen
         docker build .
         doxygen docs/doxygen.conf
