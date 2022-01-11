@@ -19,6 +19,7 @@
 #include <chrono>
 #include <istream>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <sstream>
 #include <string>
@@ -27,9 +28,6 @@
 
 namespace asiodnp3 {
 class OutstationStackConfig;
-}
-namespace std {
-class mutex;
 }
 
 struct GlueVariable;
