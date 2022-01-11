@@ -1,0 +1,22 @@
+name: Build and Test openplcproject
+
+on:
+  push:
+    branches: '*'
+  pull_request:
+    branches: '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install package
+      run: |
+        sudo apt-get -y install g++-5 doxygen cmake-data cmake
+        eval "CC=gcc-5 && CXX=g++-5"
+        docker build .
+        doxygen docs/doxygen.conf
