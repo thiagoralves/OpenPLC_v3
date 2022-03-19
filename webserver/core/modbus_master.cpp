@@ -418,7 +418,14 @@ void *querySlaveDevices(void *arg)
 
                 struct timespec ts;
                 ts.tv_sec = 0;
-                ts.tv_nsec = (1000*1000*1000*28)/mb_devices[i].rtu_baud;
+                if (mb_devices[i].protocol == MB_RTU)
+                {
+                    ts.tv_nsec = (1000*1000*1000*28)/mb_devices[i].rtu_baud;
+                }
+                else
+                {
+                    ts.tv_nsec = 0;                    
+                }
 
                 //Read discrete inputs
                 if (mb_devices[i].discrete_inputs.num_regs != 0)
