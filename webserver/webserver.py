@@ -2401,6 +2401,7 @@ if __name__ == '__main__':
                 openplc_runtime.start_runtime()
                 time.sleep(1)
                 configure_runtime()
+		monitor.parse_st(openplc_runtime.project_file)
             
             app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
         
