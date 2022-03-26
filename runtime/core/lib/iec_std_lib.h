@@ -44,6 +44,11 @@
 #include <string.h>
 #include <stdarg.h>
 
+#ifdef OPLC_MUSL
+#define __NEED_time_t
+#include <bits/alltypes.h>
+#endif
+
 #ifdef DEBUG_IEC
 #define DBG(...) printf(__VA_ARGS__);
 #define DBG_TYPE(TYPENAME, name) __print_##TYPENAME(name);

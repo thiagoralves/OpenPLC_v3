@@ -58,7 +58,11 @@
 #else
 # include <sys/ioctl.h>
 # if !defined(__SYMBIAN32__)
-#  include <sys/poll.h>
+#  if defined(OPLC_MUSL)
+#    include <poll.h>
+#  else
+#    include <sys/poll.h>
+#  endif
 # endif
 # include <sys/types.h>
 # include <sys/stat.h>

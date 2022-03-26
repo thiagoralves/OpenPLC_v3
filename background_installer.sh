@@ -7,6 +7,7 @@ if [ $# -eq 0 ]; then
     echo "Usage: ./install.sh [platform]   where [platform] can be"
     echo "  win           Install OpenPLC on Windows over Cygwin"
     echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
+    echo "  alpine        Install OpenPLC on an Alpine-based Linux distribution"
     echo "  docker        Install OpenPLC in a Docker container"
     echo "  rpi           Install OpenPLC on a Raspberry Pi"
     echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
@@ -37,6 +38,13 @@ function linux_install_deps {
                           sqlite3 cmake git
 }
 
+function alpine_install_deps {
+    $1 apk add --no-cache autoconf automake bison cmake flex g++ make \
+                          libtool linux-headers pkgconf python3 py3-flask \
+                          py3-flask-login py3-pip py3-pyserial sqlite
+    $1 pip3 install pymodbus
+}
+
 function install_py_deps {
     $1 pip3 install -r requirements.txt
 }
@@ -52,12 +60,13 @@ function OPLC_background_service {
     $1 systemctl enable openplc.service
 }
 
+# arg1: additional CMAKE args
 function cmake_build_and_test {
     echo ""
     echo "Building the application"
     mkdir build
     cd build
-    cmake .. -DOPLC_ALL=ON
+    cmake .. -DOPLC_ALL=ON $1
     make
 
     echo "Executing platform tests"
@@ -123,6 +132,21 @@ elif [ "$1" == "linux" ]; then
         OPLC_background_service sudo
     fi
     
+    cd ../scripts
+    ./change_hardware_layer.sh blank_linux
+
+elif [ "$1" == "alpine" ]; then
+    echo "Installing OpenPLC on Alpine Linux"
+    alpine_install_deps sudo
+
+    cmake_build_and_test -DOPLC_MUSL=ON
+
+    if [ $? -ne 0 ]; then
+        echo "Compilation finished with errors!"
+        exit 1
+    fi
+    echo "Compilation finished successfully!"
+
     cd ../scripts
     ./change_hardware_layer.sh blank_linux
 
