@@ -147,6 +147,7 @@ elif [ "$1" == "alpine" ]; then
     fi
     echo "Compilation finished successfully!"
 
+    touch ../etc/alpine
     cd ../scripts
     ./change_hardware_layer.sh blank_linux
 
