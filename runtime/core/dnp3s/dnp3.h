@@ -23,6 +23,7 @@
 #include <utility>
 #include <sstream>
 #include <string>
+#include <mutex>
 
 #include "ini_util.h"
 

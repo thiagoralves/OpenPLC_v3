@@ -94,12 +94,12 @@ public:
 		return this->tstack.link->OnLowerLayerDown();
 	}
 
-	virtual bool OnFrame(const opendnp3::LinkHeaderFields& header, const openpal::RSlice& userdata)
+	virtual bool OnFrame(const opendnp3::LinkHeaderFields& header, const openpal::RSlice& userdata) override
 	{
 		return this->tstack.link->OnFrame(header, userdata);
 	}
 
-	virtual void BeginTransmit(const openpal::RSlice& buffer, opendnp3::ILinkSession& context)
+	virtual void BeginTransmit(const openpal::RSlice& buffer, opendnp3::ILinkSession& context) override
 	{
 		this->iohandler->BeginTransmit(shared_from_this(), buffer);
 	}

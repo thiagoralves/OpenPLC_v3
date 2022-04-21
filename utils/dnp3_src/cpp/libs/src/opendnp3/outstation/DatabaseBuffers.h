@@ -67,7 +67,7 @@ public:
 	virtual Range AssignClassToRange(AssignClassType type, PointClass clazz, const Range& range) override final;
 
 	//used to unselect selected points
-	void Unselect();
+	void Unselect() override;
 
 	// stores the most revent values and event information
 	StaticBuffers buffers;
