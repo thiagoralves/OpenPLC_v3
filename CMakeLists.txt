@@ -65,6 +65,7 @@ option(OPLC_ST_TO_C "Build target to convert ST to C" OFF)
 option(OPLC_MAIN_PROGRAM "Only compile the ST file" OFF)
 
 option(OPLC_BUILD_TESTS "Build automated tests" OFF)
+option(OPLC_MUSL "Support for musl libc" OFF)
 
 # Flag to build all dependencies and source
 if(OPLC_ALL)
@@ -172,6 +173,9 @@ endif()
 if(OPLC_DNP3_OUTSTATION)
     message("Build and install OpenDNP3 enabled")
     add_definitions(-DOPLC_DNP3_OUTSTATION)
+    if(OPLC_MUSL)
+        add_definitions(-DOPLC_MUSL)
+    endif()
     add_subdirectory(utils/dnp3_src)
     include_directories(utils/dnp3_src/cpp/libs/include)
 endif()

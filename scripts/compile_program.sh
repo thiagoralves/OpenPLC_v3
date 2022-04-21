@@ -13,7 +13,11 @@ echo ""
     
 if [ "$OPENPLC_PLATFORM" = "linux" ]; then
     cd ../build
-    cmake .. -Dprogram_name=$1
+    x=OFF
+    if [ -e ../etc/alpine ]; then
+        x=ON
+    fi
+    cmake .. -Dprogram_name=$1 -DOPLC_MUSL=$x
     cmake --build .
     if [ $? -ne 0 ]; then
         echo "Compilation finished with errors!"
