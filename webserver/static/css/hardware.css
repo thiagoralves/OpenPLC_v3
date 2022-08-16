@@ -1,0 +1,46 @@
+@font-face {
+  font-family: "Roboto";
+  src: url("../fonts/Roboto.ttf");
+}
+
+textarea {
+  width: 100%;
+  height: 450px;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background-color: #262626;
+  font-size: 12px;
+  font-family: courier;
+  color: #a9875f;
+  resize: vertical;
+}
+
+.CodeMirror {
+  border: 1px;
+  resize: vertical;
+  overflow: auto !important;
+}
+
+#hardware_layer {
+  width: 400px;
+  font-size: 16px;
+  font-family: "Roboto", sans-serif;
+}
+
+#psm_code {
+  visibility: hidden;
+}
+
+#custom_layer_code {
+  display: none;
+}
+
+.cm-s-liquibyte {
+  height: 450px;
+}
+
+.selectedBarIcon {
+  margin-top: 7.5px !important;
+}

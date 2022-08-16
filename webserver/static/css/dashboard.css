@@ -1,0 +1,85 @@
+@font-face {
+  font-family: "Roboto";
+  src: url("../fonts/Roboto.ttf");
+}
+
+.copy {
+  border: 1px solid #1f1f1f;
+  border-radius: 4px;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 20px;
+  font-family: "Roboto", sans-serif;
+  height: 45px;
+  font-size: 16px;
+  padding-top: 10px;
+  background-color: #7d7d7d;
+}
+
+.copy:hover {
+  background-color: #3d3d3d;
+}
+
+textarea {
+  width: 96%;
+  height: 350px;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  font-size: 16px;
+  font-family: courier;
+  resize: none;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  margin: 5px 0px 0px 0px;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 140px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 150%;
+  left: 50%;
+  margin-left: -75px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+.selectedBarIcon {
+  margin-top: 7.5px !important;
+}
+
+/* .bodyText {
+    font-family: "roboto'", sans-serif;
+    font-size: 16px;
+} */

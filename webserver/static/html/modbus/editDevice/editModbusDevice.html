@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="static/css/w3.css" />
+    <link rel="stylesheet" href="static/css/main.css" />
+    <link rel="stylesheet" href="static/css/modbus.css" />
+    <script src="static/javascript/addModbus.js"></script>
+  </head>
+  <body>
+    <div class="top">
+      <img
+        src="static/assets/openplc_logo.gif"
+        alt="OpenPLC"
+        id="logoOpenPLC"
+      />
+      <h3 id="header">
+        <center><span id="headerStatus">Stopped: </span>Blank Program</center>
+      </h3>
+      <div class="user">
+        <img id="userImg" src="static/assets/default-user.png" alt="User" />
+        <h3 id="userTxt">OpenPLC User</h3>
+      </div>
+    </div>
+    <div class="main">
+      <div class="w3-sidebar w3-bar-block sidebar">
+        <br />
+        <br />
+        <a href="/dashboard" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/home-icon.png"
+            alt="Dashboard"
+          />
+          <p class="barButtonText">Dashboard</p>
+        </a>
+        <a href="/programs" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/programs-icon.png"
+            alt="Programs"
+          />
+          <p class="barButtonText">Programs</p>
+        </a>
+        <a href="/modbus" class="w3-bar-item w3-button selectedBarButton">
+          <img
+            class="barIcon selectedBarIcon"
+            src="static/assets/sidebar/modbus-icon.png"
+            alt="Modbus"
+          />
+          <div id="arrowImg"></div>
+          <p class="barButtonText selectedBarButtonText">Slave Devices</p>
+        </a>
+        <a href="/monitoring" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/monitoring-icon.png"
+            alt="Monitoring"
+          />
+          <p class="barButtonText">Monitoring</p>
+        </a>
+        <a href="/hardware" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/hardware-icon.png"
+            alt="Hardware"
+          />
+          <p class="barButtonText">Hardware</p>
+        </a>
+        <a href="/users" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/users-icon.png"
+            alt="Users"
+          />
+          <p class="barButtonText">Users</p>
+        </a>
+        <a href="settings" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/settings-icon.png"
+            alt="Settings"
+          />
+          <p class="barButtonText">Settings</p>
+        </a>
+        <a href="/logout" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/logout-icon.png"
+            alt="Logout"
+          />
+          <p class="barButtonText">Logout</p>
+        </a>
+        <br />
+        <br />
+        <center>
+          <h3 class="barStatusText">Status: <i>Stopped</i></h3>
+        </center>
+        <a href="/start_plc" class="button start"><b>Start PLC</b></a>
+      </div>
+      <div class="mainContainer">
+        <div class="w3-container">
+          <br />
+          <h2 class="addDevice">Edit slave device</h2>
+          <br />
+          <div class="leftFields">
+            <form
+              id="uploadForm"
+              enctype="multipart/form-data"
+              action="/add-modbus-device"
+              method="post"
+              onsubmit="return validateForm()"
+            >
+              <label for="dev_name"><b>Device Name</b></label>
+              <input
+                type="text"
+                id="dev_name"
+                name="device_name"
+                placeholder="My Device"
+              />
+              <label for="dev_protocol"><b>Device Type</b></label>
+              <select id="dev_protocol" name="device_protocol">
+                <option selected="selected" value="Uno">Arduino Uno</option>
+                <option value="Mega">Arduino Mega</option>
+                <option value="ESP32">ESP32</option>
+                <option value="ESP8266">ESP8266</option>
+                <option value="TCP">Generic Modbus TCP Device</option>
+                <option value="RTU">Generic Modbus RTU Device</option>
+              </select>
+              <label for="dev_id"><b>Slave ID</b></label>
+              <input
+                type="text"
+                id="dev_id"
+                name="device_id"
+                placeholder="0"
+                readonly=""
+                class="disabled"
+              />
+              <div id="tcp-stuff">
+                <label for="dev_ip"><b>IP Address</b></label>
+                <input
+                  type="text"
+                  id="dev_ip"
+                  name="device_ip"
+                  placeholder="192.168.0.1"
+                />
+                <label for="dev_port"><b>IP Port</b></label>
+                <input
+                  type="text"
+                  id="dev_port"
+                  name="device_port"
+                  placeholder="502"
+                />
+              </div>
+              <div id="rtu-stuff">
+                <label for="dev_cport"><b>COM Port</b></label>
+                <select id="dev_cport" name="device_cport"></select>
+                <label for="dev_baud"><b>Baud Rate</b></label>
+                <input
+                  type="text"
+                  id="dev_baud"
+                  name="device_baud"
+                  placeholder="19200"
+                  readonly=""
+                  class="disabled"
+                />
+                <label for="dev_parity"><b>Parity</b></label>
+                <select id="dev_parity" name="device_parity" class="disabled">
+                  <option value="None">None</option>
+                  <option value="Even">Even</option>
+                  <option value="Odd">Odd</option>
+                </select>
+                <label for="dev_data"><b>Data Bits</b></label>
+                <input
+                  type="text"
+                  id="dev_data"
+                  name="device_data"
+                  placeholder="8"
+                  readonly=""
+                  class="disabled"
+                />
+                <label for="dev_stop"><b>Stop Bits</b></label>
+                <input
+                  type="text"
+                  id="dev_stop"
+                  name="device_stop"
+                  placeholder="1"
+                  readonly=""
+                  class="disabled"
+                />
+                <label for="dev_pause"><b>Transmission Pause</b></label>
+                <input
+                  type="text"
+                  id="dev_pause"
+                  name="device_pause"
+                  placeholder="0"
+                  readonly=""
+                  class="disabled"
+                />
+              </div>
+            </form>
+          </div>
+          <div class="rightFields">
+            <p id="discInputs">
+              <b>Discrete Inputs (%IX100.0)</b>
+            </p>
+            <label for="di_start"><b>Start Address:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="di_start"
+              name="di_start"
+              placeholder="0"
+              readonly=""
+            />
+            <label for="di_size" id="sizeLabel"><b>Size:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="di_size"
+              name="di_size"
+              placeholder="8"
+              readonly=""
+            />
+
+            <p><b>Coils (%QX100.0)</b></p>
+            <label for="do_start"><b>Start Address:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="do_start"
+              name="do_start"
+              placeholder="0"
+              readonly=""
+            />
+            <label for="do_size" id="sizeLabel"><b>Size:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="do_size"
+              name="do_size"
+              placeholder="8"
+              readonly=""
+            />
+
+            <p><b>Input Registers (%IW100)</b></p>
+            <label for="ai_start"><b>Start Address:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="ai_start"
+              name="ai_start"
+              placeholder="0"
+              readonly=""
+            />
+            <label for="ai_size" id="sizeLabel"><b>Size:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="ai_size"
+              name="ai_size"
+              placeholder="8"
+              readonly=""
+            />
+
+            <p>
+              <b>Holding Registers - Read (%IW100)</b>
+            </p>
+            <label for="aor_start"><b>Start Address:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="aor_start"
+              name="aor_start"
+              placeholder="0"
+              readonly=""
+            />
+            <label for="aor_size" id="sizeLabel"><b>Size:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="aor_size"
+              name="aor_size"
+              placeholder="8"
+              readonly=""
+            />
+
+            <p>
+              <b>Holding Registers - Write (%QW100)</b>
+            </p>
+            <label for="aow_start"><b>Start Address:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="aow_start"
+              name="aow_start"
+              placeholder="0"
+              readonly=""
+            />
+            <label for="aow_size" id="sizeLabel"><b>Size:</b></label>
+            <input
+              type="text"
+              class="disabled mapping"
+              id="aow_size"
+              name="aow_size"
+              placeholder="8"
+              readonly=""
+            />
+            <div class="buttonContainer">
+              <input type="submit" class="button edit" value="Save device" />
+              <a href="delete-device?dev_id=1" class="button edit"
+                ><b>Delete device</b></a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

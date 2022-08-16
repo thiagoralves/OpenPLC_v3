@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="static/css/w3.css" />
+    <link rel="stylesheet" href="static/css/main.css" />
+    <link rel="stylesheet" href="static/css/programs.css" />
+    <script src="static/javascript/programs.js"></script>
+  </head>
+
+  <body>
+    <div class="top">
+      <img
+        src="static/assets/openplc_logo.gif"
+        alt="OpenPLC"
+        id="logoOpenPLC"
+      />
+      <h3 id="header">
+        <center><span id="headerStatus">Stopped: </span>Blank Program</center>
+      </h3>
+      <div class="user">
+        <img id="userImg" src="static/assets/default-user.png" alt="User" />
+        <h3 id="userTxt">OpenPLC User</h3>
+      </div>
+    </div>
+    <div class="main">
+      <div class="w3-sidebar w3-bar-block sidebar">
+        <br />
+        <br />
+        <a href="/dashboard" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/home-icon.png"
+            alt="Dashboard"
+          />
+          <p class="barButtonText">Dashboard</p>
+        </a>
+        <a href="/programs" class="w3-bar-item w3-button selectedBarButton">
+          <img
+            class="barIcon selectedBarIcon"
+            src="static/assets/sidebar/programs-icon.png"
+            alt="Programs"
+          />
+          <div id="arrowImg"></div>
+          <p class="barButtonText selectedBarButtonText">Programs</p>
+        </a>
+        <a href="/modbus" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/modbus-icon.png"
+            alt="Modbus"
+          />
+          <p class="barButtonText">Slave Devices</p>
+        </a>
+        <a href="/monitoring" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/monitoring-icon.png"
+            alt="Monitoring"
+          />
+          <p class="barButtonText">Monitoring</p>
+        </a>
+        <a href="/hardware" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/hardware-icon.png"
+            alt="Hardware"
+          />
+          <p class="barButtonText">Hardware</p>
+        </a>
+        <a href="/users" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/users-icon.png"
+            alt="Users"
+          />
+          <p class="barButtonText">Users</p>
+        </a>
+        <a href="settings" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/settings-icon.png"
+            alt="Settings"
+          />
+          <p class="barButtonText">Settings</p>
+        </a>
+        <a href="/logout" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/logout-icon.png"
+            alt="Logout"
+          />
+          <p class="barButtonText">Logout</p>
+        </a>
+        <br />
+        <br />
+        <center>
+          <h3 class="barStatusText">Status: <i>Stopped</i></h3>
+        </center>
+        <a href="/start_plc" class="button start"><b>Start PLC</b></a>
+      </div>
+      <div class="mainContainer">
+        <div class="w3-container">
+          <br />
+          <h2>Program Info</h2>
+          <br />
+          <label for="prog_name"><b>Name</b></label>
+          <input
+            type="text"
+            id="prog_name"
+            name="program_name"
+            value="Blank Program"
+            disabled=""
+          />
+          <label for="prog_descr"><b>Description</b></label>
+          <textarea
+            type="text"
+            rows="10"
+            style="resize: vertical"
+            id="prog_descr"
+            name="program_descr"
+            disabled=""
+          >
+Dummy empty program</textarea
+          >
+          <label for="prog_file"><b>File</b></label>
+          <input
+            type="text"
+            id="prog_file"
+            name="program_file"
+            value="blank_program.st"
+            disabled=""
+          />
+          <label for="prog_date"><b>Date Uploaded</b></label>
+          <input
+            type="text"
+            id="prog_date"
+            name="program_date"
+            value="May 24, 2018 - 03:02PM"
+            disabled=""
+          />
+          <br /><br />
+          <center>
+            <a
+              href="/compileProgram?file=blank_program.st"
+              class="button programButton"
+              ><b>Launch program</b></a
+            >
+            <a href="/updateProgram?id=1" class="button programButton"
+              ><b>Update program</b></a
+            >
+            <a href="/removeProgram?id=1" class="button programButton"
+              ><b>Remove program</b></a
+            >
+          </center>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!-- saved from url=(0028)http://localhost:8080/modbus -->
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="static/css/w3.css" />
+    <link rel="stylesheet" href="static/css/main.css" />
+    <link rel="stylesheet" href="static/css/modbus.css" />
+  </head>
+
+  <body onload="loadData()">
+    <div class="top">
+      <img
+        src="static/assets/openplc_logo.gif"
+        alt="OpenPLC"
+        id="logoOpenPLC"
+      />
+      <h3 id="header">
+        <center><span id="headerStatus">Stopped: </span>Blank Program</center>
+      </h3>
+      <div class="user">
+        <img id="userImg" src="static/assets/default-user.png" alt="User" />
+        <h3 id="userTxt">OpenPLC User</h3>
+      </div>
+    </div>
+    <div class="main">
+      <div class="w3-sidebar w3-bar-block sidebar">
+        <br />
+        <br />
+        <a href="/dashboard" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/home-icon.png"
+            alt="Dashboard"
+          />
+          <p class="barButtonText">Dashboard</p>
+        </a>
+        <a href="/programs" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/programs-icon.png"
+            alt="Programs"
+          />
+          <p class="barButtonText">Programs</p>
+        </a>
+        <a href="/modbus" class="w3-bar-item w3-button selectedBarButton">
+          <img
+            class="barIcon selectedBarIcon"
+            src="static/assets/sidebar/modbus-icon.png"
+            alt="Modbus"
+          />
+          <div id="arrowImg"></div>
+          <p class="barButtonText selectedBarButtonText">Slave Devices</p>
+        </a>
+        <a href="/monitoring" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/monitoring-icon.png"
+            alt="Monitoring"
+          />
+          <p class="barButtonText">Monitoring</p>
+        </a>
+        <a href="/hardware" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/hardware-icon.png"
+            alt="Hardware"
+          />
+          <p class="barButtonText">Hardware</p>
+        </a>
+        <a href="/users" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/users-icon.png"
+            alt="Users"
+          />
+          <p class="barButtonText">Users</p>
+        </a>
+        <a href="settings" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/settings-icon.png"
+            alt="Settings"
+          />
+          <p class="barButtonText">Settings</p>
+        </a>
+        <a href="/logout" class="w3-bar-item w3-button">
+          <img
+            class="barIcon"
+            src="static/assets/sidebar/logout-icon.png"
+            alt="Logout"
+          />
+          <p class="barButtonText">Logout</p>
+        </a>
+        <br />
+        <br />
+        <center>
+          <h3 class="barStatusText">Status: <i>Stopped</i></h3>
+        </center>
+        <a href="/start_plc" class="button start"><b>Start PLC</b></a>
+      </div>
+      <div class="mainContainer">
+        <div class="w3-container">
+          <br />
+          <h2>Slave Devices</h2>
+          <p>List of Slave devices attached to OpenPLC.</p>
+          <p>
+            <b>Attention:</b> Slave devices are attached to address 100 onward
+            (i.e. %IX100.0, %IW100, %QX100.0, and %QW100)
+          </p>
+          <table>
+            <tbody>
+              <tr class="tableHeader">
+                <th>Device Name</th>
+                <th>Device Type</th>
+                <th>DI</th>
+                <th>DO</th>
+                <th>AI</th>
+                <th>AO</th>
+              </tr>
+            </tbody>
+          </table>
+          <br />
+          <center>
+            <a href="/add-modbus-device" class="button addModbus">
+              <b>Add new device</b>
+            </a>
+          </center>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+.selectedBarIcon {
+  margin-top: 9px !important;
+}
+
+.tableHeader {
+  background-color: white;
+}
+
+.addUser {
+  width: 310px;
+  height: 53px;
+  margin: 0px 20px 0px 20px;
+}
+
+.saveUser {
+  font-weight: bold;
+  margin: 0px 20px 0px 20px;
+}

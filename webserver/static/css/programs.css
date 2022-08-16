@@ -1,0 +1,64 @@
+@font-face {
+  font-family: "Roboto";
+  src: url("../fonts/Roboto.ttf");
+}
+
+.mainContainer {
+  margin-right: 70px;
+}
+
+.row1 {
+  background-color: white;
+}
+
+.listAll {
+  text-align: right;
+  float: right;
+  color: black;
+  font-weight: bold;
+}
+
+input[type="file"]::-webkit-file-upload-button,
+input[type="submit"] {
+  background-color: #7d7d7d;
+  border: 1px solid #1f1f1f;
+  border-radius: 4px;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 15px;
+  font-family: "Roboto", sans-serif;
+  height: 35px;
+  cursor: pointer;
+}
+
+.selectedBarIcon {
+  margin-top: 9px !important;
+}
+
+.upload {
+  font-weight: bold;
+  width: 310px;
+  height: 53px !important;
+  margin: 0px 20px 0px 20px !important;
+}
+
+.programButton {
+  width: 200px;
+  height: 53px;
+  margin: 0px 20px 0px 20px;
+}
+
+#compilationLog {
+  height: 500px;
+  resize: vertical;
+}
+
+#dashboardButton {
+  background: rgb(224, 34, 34);
+  pointer-events: auto;
+  width: 310px;
+  height: 53px;
+  margin: 0px 20px;
+}
