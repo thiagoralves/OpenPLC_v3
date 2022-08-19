@@ -1,0 +1,56 @@
+[
+  { "id": 1, "value": "blank", "label": "Blank", "isSelected": false },
+  {
+    "id": 2,
+    "value": "blank_linux",
+    "label": "Blank Linux",
+    "isSelected": true
+  },
+  {
+    "id": 3,
+    "value": "fischertechnik",
+    "label": "Fischertechnik",
+    "isSelected": false
+  },
+  { "id": 4, "value": "neuron", "label": "Neuron", "isSelected": false },
+  { "id": 5, "value": "pixtend", "label": "PiXtend", "isSelected": false },
+  {
+    "id": 6,
+    "value": "pixtend_2s",
+    "label": "PiXtend 2s",
+    "isSelected": false
+  },
+  {
+    "id": 7,
+    "value": "pixtend_2l",
+    "label": "PiXtend 2l",
+    "isSelected": false
+  },
+  { "id": 8, "value": "rpi", "label": "Raspberry Pi", "isSelected": false },
+  {
+    "id": 9,
+    "value": "rpi_old",
+    "label": "Raspberry Pi - Old Model (2011 model B)",
+    "isSelected": false
+  },
+  { "id": 10, "value": "simulink", "label": "Simulink", "isSelected": false },
+  {
+    "id": 11,
+    "value": "simulink_linux",
+    "label": "Simulink with DNP3 (Linux only)",
+    "isSelected": false
+  },
+  { "id": 12, "value": "unipi", "label": "UniPi v1.1", "isSelected": false },
+  {
+    "id": 13,
+    "value": "psm_linux",
+    "label": "Python on Linux (PSM)",
+    "isSelected": false
+  },
+  {
+    "id": 14,
+    "value": "psm_win",
+    "label": "Python on Windows",
+    "isSelected": false
+  }
+]

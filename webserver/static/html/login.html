@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="static/css/login.css" />
+    <link rel="stylesheet" href="static/css/main.css" />
+  </head>
+
+  <body>
+    <div class="top">
+      <img
+        src="static/assets/openplc_logo.gif"
+        alt="OpenPLC"
+        id="logoOpenPLC"
+      />
+      <h3 class="text title">
+        <center>OpenPLC Webserver</center>
+      </h3>
+    </div>
+    <div class="main">
+      <div class="login-page">
+        <div class="form">
+          <form action="/login" method="POST" class="login-form">
+            <h3 class="text loginTitle">
+              <center><b>Welcome to OpenPLC</b></center>
+            </h3>
+            <h3 class="text loginText">
+              <center>Use your credentials to login</center>
+            </h3>
+            <input
+              type="text"
+              name="username"
+              id="username"
+              placeholder="username"
+            />
+            <input
+              type="password"
+              name="password"
+              id="password"
+              placeholder="password"
+            />
+            <br /><br /><br />
+            <button>login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
