@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="static/css/w3.css" />
     <link rel="stylesheet" href="static/css/main.css" />
     <link rel="stylesheet" href="static/css/modbus.css" />
+    <script src="static/javascript/main.js"></script>
     <script src="static/javascript/addModbus.js"></script>
   </head>
   <body>
@@ -96,14 +97,14 @@
         <center>
           <h3 class="barStatusText">Status: <i>Stopped</i></h3>
         </center>
-        <a href="/start_plc" class="button start"><b>Start PLC</b></a>
+        <a href="/startPlc" class="button start"><b>Start PLC</b></a>
       </div>
       <div class="mainContainer">
         <div class="w3-container">
           <br />
           <h2 class="addDevice">Add new device</h2>
           <br />
-          <div class="leftFields">
+          <div class="leftFields fieldsColumn">
             <form
               id="uploadForm"
               enctype="multipart/form-data"
@@ -170,37 +171,45 @@
                   <option value="Even">Even</option>
                   <option value="Odd">Odd</option>
                 </select>
-                <label for="dev_data"><b>Data Bits</b></label>
-                <input
-                  type="text"
-                  id="dev_data"
-                  name="device_data"
-                  placeholder="8"
-                  readonly=""
-                  class="disabled"
-                />
-                <label for="dev_stop"><b>Stop Bits</b></label>
-                <input
-                  type="text"
-                  id="dev_stop"
-                  name="device_stop"
-                  placeholder="1"
-                  readonly=""
-                  class="disabled"
-                />
-                <label for="dev_pause"><b>Transmission Pause</b></label>
-                <input
-                  type="text"
-                  id="dev_pause"
-                  name="device_pause"
-                  placeholder="0"
-                  readonly=""
-                  class="disabled"
-                />
+                <div class="bitWrapper">
+                  <div class="bitItem">
+                    <label for="dev_data"><b>Data Bits</b></label>
+                    <input
+                      type="text"
+                      id="dev_data"
+                      name="device_data"
+                      placeholder="8"
+                      readonly=""
+                      class="disabled"
+                    />
+                  </div>
+                  <div class="bitItem">
+                    <label for="dev_stop"><b>Stop Bits</b></label>
+                    <input
+                      type="text"
+                      id="dev_stop"
+                      name="device_stop"
+                      placeholder="1"
+                      readonly=""
+                      class="disabled"
+                    />
+                  </div>
+                  <div class="bitItem">
+                    <label for="dev_pause"><b>Transmission Pause</b></label>
+                    <input
+                      type="text"
+                      id="dev_pause"
+                      name="device_pause"
+                      placeholder="0"
+                      readonly=""
+                      class="disabled"
+                    />
+                  </div>
+                </div>
               </div>
             </form>
           </div>
-          <div class="rightFields">
+          <div class="rightFields fieldsColumn">
             <p id="discInputs">
               <b>Discrete Inputs (%IX100.0)</b>
             </p>
@@ -306,12 +315,8 @@
               placeholder="8"
               readonly=""
             />
-            <input
-              type="submit"
-              class="button saveDevice"
-              value="Save device"
-            />
           </div>
+          <input type="submit" class="button saveDevice" value="Save device" />
         </div>
       </div>
     </div>

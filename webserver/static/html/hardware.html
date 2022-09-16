@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="static/css/codemirror.css" />
     <link rel="stylesheet" href="static/css/liquibyte.css" />
     <link rel="stylesheet" href="static/css/hardware.css" />
+    <script src="static/javascript/main.js"></script>
     <script src="static/javascript/javascript.js"></script>
     <script src="static/javascript/active-line.js"></script>
     <script src="static/javascript/matchbrackets.js"></script>
@@ -103,7 +104,7 @@
         <center>
           <h3 class="barStatusText">Status: <i>Stopped</i></h3>
         </center>
-        <a href="/start_plc" class="button start"><b>Start PLC</b></a>
+        <a href="/startPlc" class="button start"><b>Start PLC</b></a>
       </div>
       <div class="mainContainer">
         <div class="w3-container">
@@ -474,7 +475,7 @@
                 "
                 value="Save changes"
               /><a
-                href="http://localhost:8080/restore_custom_hardware"
+                href="/restoreCustomHardware"
                 id="code_restore"
                 class="button"
                 style="

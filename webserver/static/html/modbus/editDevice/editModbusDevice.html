@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="static/css/w3.css" />
     <link rel="stylesheet" href="static/css/main.css" />
     <link rel="stylesheet" href="static/css/modbus.css" />
+    <script src="static/javascript/main.js"></script>
     <script src="static/javascript/addModbus.js"></script>
   </head>
   <body>
@@ -96,7 +97,7 @@
         <center>
           <h3 class="barStatusText">Status: <i>Stopped</i></h3>
         </center>
-        <a href="/start_plc" class="button start"><b>Start PLC</b></a>
+        <a href="/startPlc" class="button start"><b>Start PLC</b></a>
       </div>
       <div class="mainContainer">
         <div class="w3-container">
@@ -308,7 +309,7 @@
             />
             <div class="buttonContainer">
               <input type="submit" class="button edit" value="Save device" />
-              <a href="delete-device?dev_id=1" class="button edit"
+              <a href="deleteDevice?dev_id=1" class="button edit"
                 ><b>Delete device</b></a
               >
             </div>

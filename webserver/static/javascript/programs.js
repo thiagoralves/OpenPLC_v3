@@ -103,3 +103,12 @@ function getInfo() {
   // enviar requisição para url de get info
   // popular
 }
+
+function submitFile() {
+  var file = document.forms["uploadForm"]["file"].value;
+  if (file == "") {
+    popError("No file selected");
+    return false;
+  }
+  return true;
+}
