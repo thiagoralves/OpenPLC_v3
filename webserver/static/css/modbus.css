@@ -27,13 +27,38 @@ p {
 .leftFields {
   float: left;
   width: 45%;
-  height: 780px;
+}
+
+.bitWrapper {
+  display: flex;
+}
+
+.bitWrapper > *:first-child {
+  margin-left: 0px !important;
+}
+
+.bitWrapper > *:last-child {
+  margin-right: 0px !important;
+}
+
+.bitItem {
+  margin: 0px 5px;
+}
+
+#uploadForm > *,
+#tcp-stuff > *,
+#rtu-stuff > * {
+  margin: 10px 0px;
 }
 
 .rightFields {
   float: right;
   width: 45%;
-  height: 780px;
+}
+
+.fieldsColumn {
+  height: 665px;
+  margin-bottom: 20px;
 }
 
 .disabled {
@@ -49,9 +74,8 @@ p {
   font-weight: bold;
   width: 310px;
   height: 53px;
-  margin-top: 45px;
-  margin-left: 20px;
-  margin-right: 20px;
+  display: block;
+  margin: auto;
 }
 
 .tableHeader {

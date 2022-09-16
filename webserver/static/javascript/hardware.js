@@ -20,14 +20,6 @@ var myCodeMirror = CodeMirror.fromTextArea(custom_layer_code, {
 
 myCodeMirror.setSize(null, 450);
 
-fetch("/hardware/python/exampleCode")
-  .then((response) => {
-    return response.text();
-  })
-  .then((text) => {
-    myCodeMirror.setValue(text);
-  });
-
 function populateDropdown() {
   fetch("/hardware/hardwareTypes")
     .then((response) => {
@@ -47,9 +39,18 @@ function populateDropdown() {
     });
 }
 
+populateDropdown();
+
+fetch("/hardware/python/exampleCode")
+  .then((response) => {
+    return response.text();
+  })
+  .then((text) => {
+    myCodeMirror.setValue(text);
+  });
+
 //Insert a dummy script to load something from the server periodically so that the user cookie won't expire
 function loadData() {
-  populateDropdown();
   refreshSelector();
   url = "runtime_logs";
   try {
