@@ -21,10 +21,32 @@ fi
 #set -x 
 # arg1: sudo or blank
 function linux_install_deps {
-    $1 apt-get update
-    $1 apt-get install -y build-essential pkg-config bison flex autoconf \
-                          automake libtool make git python2.7 \
-                          sqlite3 cmake git curl python3 python3-pip
+    #Detecting OS type
+    INSTALLER=""
+    OS=$(awk '/NAME=/' /etc/*-release | sed -n '1 p' | cut -d= -f2 | cut -d\" -f2 | cut -d" " -f1)
+
+    if [ "$OS" = "Fedora" ]; then
+        INSTALLER="yum"
+    elif [ "$OS" = "CentOS" ]; then
+        INSTALLER="yum"
+    elif [ "$OS" = "Red" ]; then
+        INSTALLER="yum"
+    else
+        INSTALLER="apt"
+    fi
+    
+    if [ "$INSTALLER" = "yum" ]; then
+        yum clean expire-cache
+        yum check-update
+        $1 yum -q -y install curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-pip
+        $1 yum -q -y install python2.7 python2-devel
+    #Installing dependencies for Ubuntu/Mint/Debian
+    else
+        $1 apt-get update
+        $1 apt-get install -y build-essential pkg-config bison flex autoconf \
+                              automake libtool make git python2.7 \
+                              sqlite3 cmake git curl python3 python3-pip
+    fi
     curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
     $1 python2.7 get-pip.py
 }
