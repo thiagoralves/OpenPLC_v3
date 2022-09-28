@@ -269,7 +269,27 @@ elif [ "$1" == "linux" ]; then
     install_py_deps "sudo -H"
 
     install_all_libs sudo
+    
+    #Detecting OS type
+    OS_TYPE=""
+    OS=$(awk '/NAME=/' /etc/*-release | sed -n '1 p' | cut -d= -f2 | cut -d\" -f2 | cut -d" " -f1)
 
+    if [ "$OS" = "Fedora" ]; then
+        OS_TYPE="yum"
+    elif [ "$OS" = "CentOS" ]; then
+        OS_TYPE="yum"
+    elif [ "$OS" = "Red" ]; then
+        OS_TYPE="yum"
+    else
+        OS_TYPE="apt"
+    fi
+    
+    #Fix for Fedora
+    if [ "$OS_TYPE" = "yum" ]; then
+        sudo cp /usr/local/lib/pkgconfig/libmodbus.pc /usr/share/pkgconfig/
+        sudo cp /usr/local/lib/lib*.* /lib64/
+    fi
+    
     echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
