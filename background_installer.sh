@@ -21,10 +21,32 @@ fi
 #set -x 
 # arg1: sudo or blank
 function linux_install_deps {
-    $1 apt-get update
-    $1 apt-get install -y build-essential pkg-config bison flex autoconf \
-                          automake libtool make git python2.7 \
-                          sqlite3 cmake git curl python3
+    #Detecting OS type
+    INSTALLER=""
+    OS=$(awk '/NAME=/' /etc/*-release | sed -n '1 p' | cut -d= -f2 | cut -d\" -f2 | cut -d" " -f1)
+
+    if [ "$OS" = "Fedora" ]; then
+        INSTALLER="yum"
+    elif [ "$OS" = "CentOS" ]; then
+        INSTALLER="yum"
+    elif [ "$OS" = "Red" ]; then
+        INSTALLER="yum"
+    else
+        INSTALLER="apt"
+    fi
+    
+    if [ "$INSTALLER" = "yum" ]; then
+        yum clean expire-cache
+        yum check-update
+        $1 yum -q -y install curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-pip
+        $1 yum -q -y install python2.7 python2-devel
+    #Installing dependencies for Ubuntu/Mint/Debian
+    else
+        $1 apt-get update
+        $1 apt-get install -y build-essential pkg-config bison flex autoconf \
+                              automake libtool make git python2.7 \
+                              sqlite3 cmake git curl python3 python3-pip
+    fi
     curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
     $1 python2.7 get-pip.py
 }
@@ -142,15 +164,18 @@ WantedBy=multi-user.target" >> openplc.service
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
     cp ./utils/apt-cyg/apt-cyg ./
-    cp ./utils/apt-cyg/wget.exe /bin
+    if [ -f "/usr/bin/wget" ]
+    then
+        echo "found wget. Skipping install"
+    else
+        echo "wget not found. Installing from binary"
+        cp ./utils/apt-cyg/wget.exe /bin
+    fi
     install apt-cyg /bin
     apt-cyg update
-    # replace cygwin installed database to avoid installation errors
-    cp ./installed.db /etc/setup/installed.db
     apt-cyg install lynx
-    rm -f /bin/wget.exe
     # apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
-    apt-cyg install wget gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3 python3
+    apt-cyg install gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3 python3
     lynx -source https://bootstrap.pypa.io/pip/2.7/get-pip.py > get-pip.py
     lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
     /usr/bin/python2 get-pip.py
@@ -244,7 +269,27 @@ elif [ "$1" == "linux" ]; then
     install_py_deps "sudo -H"
 
     install_all_libs sudo
+    
+    #Detecting OS type
+    OS_TYPE=""
+    OS=$(awk '/NAME=/' /etc/*-release | sed -n '1 p' | cut -d= -f2 | cut -d\" -f2 | cut -d" " -f1)
 
+    if [ "$OS" = "Fedora" ]; then
+        OS_TYPE="yum"
+    elif [ "$OS" = "CentOS" ]; then
+        OS_TYPE="yum"
+    elif [ "$OS" = "Red" ]; then
+        OS_TYPE="yum"
+    else
+        OS_TYPE="apt"
+    fi
+    
+    #Fix for Fedora
+    if [ "$OS_TYPE" = "yum" ]; then
+        sudo cp /usr/local/lib/pkgconfig/libmodbus.pc /usr/share/pkgconfig/
+        sudo cp /usr/local/lib/lib*.* /lib64/
+    fi
+    
     echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
