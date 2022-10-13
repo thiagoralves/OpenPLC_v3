@@ -4,6 +4,9 @@
 #include <cstring>
 #include <cstdlib>
 
+#define MAX_LINE_INPUT 1024
+#define MAX_LOCAL_BUFFER 100
+
 using namespace std;
 
 /// Write the header to the output stream. The header is common among all glueVars files.
@@ -79,28 +82,34 @@ void glueVars()\r\n\
 int parseIecVars(istream& locatedVars, char *varName, char *varType)
 {
 	string line;
-	char buffer[1024];
+	char buffer[MAX_LINE_INPUT];
 
 	if (getline(locatedVars, line))
 	{
 		int i = 0, j = 0;
-		strncpy(buffer, line.c_str(), 1024);
-		for (i = 0; buffer[i] != '('; i++);
+		strncpy(buffer, line.c_str(), MAX_LINE_INPUT);
+		for (i = 0; i < MAX_LINE_INPUT && buffer[i] != '('; i++);
 		i++;
 
-		while (buffer[i] != ',')
+		while (i < MAX_LINE_INPUT && buffer[i] != ',')
 		{
-			varType[j] = buffer[i];
-			i++; j++;
-			varType[j] = '\0';
+			if(j < MAX_LOCAL_BUFFER)
+			{
+				varType[j] = buffer[i];
+				i++; j++;
+				varType[j] = '\0';
+			}
 		}
 		i++; j=0;
 
-		while (buffer[i] != ',')
+		while (i < MAX_LINE_INPUT && buffer[i] != ',')
 		{
-			varName[j] = buffer[i];
-			i++; j++;
-			varName[j] = '\0';
+			if(j < MAX_LOCAL_BUFFER)
+			{
+				varName[j] = buffer[i];
+				i++; j++;
+				varName[j] = '\0';
+			}
 		}
 
 		return 1;
