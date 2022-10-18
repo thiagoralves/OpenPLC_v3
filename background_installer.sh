@@ -56,7 +56,7 @@ function install_py_deps {
     $1 pip2 install flask-login
     $1 pip2 install pyserial
     $1 pip2 install pymodbus
-    $1 pip3 install pymodbus
+    $1 pip3 install pymodbus==2.5.3
 }
 
 function install_all_libs {
@@ -184,7 +184,7 @@ if [ "$1" == "win" ]; then
     /usr/bin/python2 -m pip install flask-login
     /usr/bin/python2 -m pip install pyserial
     /usr/bin/python2 -m pip install pymodbus
-    /usr/bin/python3 -m pip install pymodbus
+    /usr/bin/python3 -m pip install pymodbus==2.5.3
 
     echo ""
     echo "[MATIEC COMPILER]"
