@@ -4,10 +4,10 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/ut3466ixwtyf68qg?svg=true)](https://ci.appveyor.com/project/shrmrf/openplc-v3)
 
 OpenPLC is an open-source [Programmable Logic Controller](https://en.wikipedia.org/wiki/Programmable_logic_controller) that is based on easy to use software. Our focus is to provide a low cost industrial solution for automation and research. OpenPLC has been used in [many research papers](https://scholar.google.com/scholar?as_ylo=2014&q=openplc&hl=en&as_sdt=0,1) as a framework for industrial cyber security research, given that it is the only controller to provide the entire source code.
-The OpenPLC Project consists of three sub-projects:
+The OpenPLC Project consists of two sub-projects:
 1. [Runtime](https://github.com/thiagoralves/OpenPLC_v3)
-2. [Programming editor](http://www.openplcproject.com/plcopen-editor)
-3. [HMI builder](http://www.openplcproject.com/reference-installing-scadabr)
+2. [Programming editor](https://openplcproject.com/docs/installing-openplc-editor/)
+
 
 ## Installation:
 ```bash
