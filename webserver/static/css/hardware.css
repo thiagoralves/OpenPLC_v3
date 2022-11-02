@@ -33,10 +33,6 @@ textarea {
   visibility: hidden;
 }
 
-#custom_layer_code {
-  display: none;
-}
-
 .cm-s-liquibyte {
   height: 450px;
 }

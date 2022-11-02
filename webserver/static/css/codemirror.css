@@ -398,7 +398,9 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {
 }
 
 /* Force content-box sizing for the elements where we expect it */
-.CodeMirror-scroll,
+.CodeMirror-scroll {
+  overflow: hidden;
+}
 .CodeMirror-sizer,
 .CodeMirror-gutter,
 .CodeMirror-gutters,

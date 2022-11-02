@@ -1,130 +1,18 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, jsonify, redirect, request
+from endpoints import blueprint as runtimeApp
 import json
 
 app = Flask(__name__)
 appPort = 2346
 serverURL = f"http://localhost:{appPort}"
+app.register_blueprint(runtimeApp)
 
 
 @app.route("/", methods=["GET", "POST"])
-def index():
-    with open("static/html/login.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    return redirect("/dashboard", code=302)
-
-
-@app.route("/dashboard", methods=["GET", "POST"])
-def dashboard():
-    with open("static/html/dashboard.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/programs", methods=["GET", "POST"])
-def programs():
-    with open("static/html/programs.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-# Remove this when error workflow implemented
-@app.route("/uploadError", methods=["GET", "POST"])
-def uploadError():
-    with open(
-        "static/html/programs/uploadProgram/errorPage/uploadError.html", "r"
-    ) as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/uploadProgram", methods=["GET", "POST"])
-def uploadProgram():
-    with open("static/html/programs/uploadProgram/uploadProgram.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/reloadProgram", methods=["GET", "POST"])
-def reloadProgram():
-    with open("static/html/programs/reloadProgram/reloadProgram.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/updateProgram", methods=["GET", "POST"])
-def updateProgram():
-    with open("static/html/programs/updateProgram/updateProgram.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/compileProgram", methods=["GET", "POST"])
-def compileProgram():
-    with open(
-        "static/html/programs/compileProgram/compileProgram.html", "r"
-    ) as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/hardware", methods=["GET", "POST"])
-def hardware():
-    with open("static/html/hardware.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/hardware/hardwareTypes", methods=["GET", "POST"])
-def hardwareTypes():
-    with open("static/json/hardwareTypes.json", "r") as hardwareTypes:
-        content = json.loads(hardwareTypes.read())
-        return jsonify(content)
-
-
-@app.route("/hardware/python/exampleCode", methods=["GET", "POST"])
-def pythonCode():
-    with open("static/python/psmDefaultCode.py", "r") as defaultCode:
-        content = defaultCode.read()
-        return content
-
-
-@app.route("/modbus", methods=["GET", "POST"])
-def modbus():
-    with open("static/html/modbus.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/addDevice", methods=["GET", "POST"])
-def addDevice():
-    with open("static/html/modbus/addDevice/addModbusDevice.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/editDevice", methods=["GET", "POST"])
-def editDevice():
-    with open("static/html/modbus/editDevice/editModbusDevice.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/monitoring", methods=["GET", "POST"])
-def monitoring():
-    with open("static/html/monitoring.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/users", methods=["GET", "POST"])
-def users():
-    with open("static/html/users.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/addUser", methods=["GET", "POST"])
-def addUser():
-    with open("static/html/users/addUser/addUser.html", "r") as htmlfile:
-        return htmlfile.read()
-
-
-@app.route("/settings", methods=["GET", "POST"])
-def settings():
-    with open("static/html/settings.html", "r") as htmlfile:
-        return htmlfile.read()
+def root():
+    # Check if user is logged in
+    return redirect("/login", 302)
 
 
 def main():

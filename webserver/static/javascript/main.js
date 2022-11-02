@@ -53,6 +53,6 @@ function findGetParameter(parameterName) {
 window.onload = () => {
   error = findGetParameter("error");
   if (error) {
-    popError(error.slice(1, -1));
+    popError(error);
   }
 };
