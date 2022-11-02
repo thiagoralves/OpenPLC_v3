@@ -50,7 +50,7 @@
   {
     "id": 14,
     "value": "psm_win",
-    "label": "Python on Windows",
+    "label": "Python on Windows (PSM)",
     "isSelected": false
   }
 ]

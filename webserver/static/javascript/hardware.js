@@ -1,7 +1,7 @@
-var myCodeMirror = CodeMirror.fromTextArea(custom_layer_code, {
+var myCodeMirror = CodeMirror(document.getElementById("cm_wrapper"), {
   mode: {
     name: "python",
-    version: 2,
+    version: 3,
     singleLineStringErrors: false,
   },
   lineNumbers: true,
@@ -17,8 +17,6 @@ var myCodeMirror = CodeMirror.fromTextArea(custom_layer_code, {
     },
   },
 });
-
-myCodeMirror.setSize(null, 450);
 
 function populateDropdown() {
   fetch("/hardware/hardwareTypes")
