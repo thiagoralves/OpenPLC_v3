@@ -53,9 +53,10 @@ int log_counter = 0;
 // Helper function - Makes the running thread sleep for the ammount of time
 // in milliseconds
 //-----------------------------------------------------------------------------
-void sleep_until(struct timespec *ts, int delay)
+void sleep_until(struct timespec *ts, long long delay)
 {
-    ts->tv_nsec += delay;
+    ts->tv_sec  += delay / (1000*1000*1000);
+    ts->tv_nsec += delay % (1000*1000*1000);
     if(ts->tv_nsec >= 1000*1000*1000)
     {
         ts->tv_nsec -= 1000*1000*1000;

@@ -111,7 +111,7 @@ extern int ignored_int_inputs[];
 extern int ignored_int_outputs[];
 
 //main.cpp
-void sleep_until(struct timespec *ts, int delay);
+void sleep_until(struct timespec *ts, long long delay);
 void sleepms(int milliseconds);
 void log(unsigned char *logmsg);
 bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber);

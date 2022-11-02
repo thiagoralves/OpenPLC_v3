@@ -221,11 +221,12 @@ void generateBottom(ostream& glueVars)
 \r\n\
 void updateTime()\r\n\
 {\r\n\
-	__CURRENT_TIME.tv_nsec += common_ticktime__;\r\n\
+	__CURRENT_TIME.tv_sec  += common_ticktime__ / 1000000000ULL;\r\n\
+	__CURRENT_TIME.tv_nsec += common_ticktime__ % 1000000000ULL;\r\n\
 \r\n\
-	if (__CURRENT_TIME.tv_nsec >= 1000000000)\r\n\
+	if (__CURRENT_TIME.tv_nsec >= 1000000000ULL)\r\n\
 	{\r\n\
-		__CURRENT_TIME.tv_nsec -= 1000000000;\r\n\
+		__CURRENT_TIME.tv_nsec -= 1000000000ULL;\r\n\
 		__CURRENT_TIME.tv_sec += 1;\r\n\
 	}\r\n\
 }";
