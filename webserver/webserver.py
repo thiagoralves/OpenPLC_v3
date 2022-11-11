@@ -1412,11 +1412,11 @@ def monitoring():
                     <br>
                     <h2>Monitoring</h2>
                     <form class="form-inline">
-						<label for="refresh_rate">Refresh Rate (ms):</label>
-						<input type="text" id="refresh_rate" value="100" name="refresh_rate">
-						<button type="button" onclick="updateRefreshRate()">Update</button>
-					</form>
-					<br>
+                        <label for="refresh_rate">Refresh Rate (ms):</label>
+                        <input type="text" id="refresh_rate" value="100" name="refresh_rate">
+                        <button type="button" onclick="updateRefreshRate()">Update</button>
+                    </form>
+                    <br>
                     <div id='monitor_table'>
                         <table>
                             <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">

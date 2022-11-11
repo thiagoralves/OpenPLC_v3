@@ -242,7 +242,7 @@ w3_style = """
         .w3-cell-top{vertical-align:top}.w3-cell-middle{vertical-align:middle}.w3-cell-bottom{vertical-align:bottom}
         .w3-hide{display:none!important}.w3-show-block,.w3-show{display:block!important}.w3-show-inline-block{display:inline-block!important}
         @media (max-width:600px){.w3-modal-content{margin:0 10px;width:auto!important}.w3-modal{padding-top:30px}
-        .w3-dropdown-hover.w3-mobile .w3-dropdown-content,.w3-dropdown-click.w3-mobile .w3-dropdown-content{position:relative}	
+        .w3-dropdown-hover.w3-mobile .w3-dropdown-content,.w3-dropdown-click.w3-mobile .w3-dropdown-content{position:relative}
         .w3-hide-small{display:none!important}.w3-mobile{display:block;width:100%!important}.w3-bar-item.w3-mobile,.w3-dropdown-hover.w3-mobile,.w3-dropdown-click.w3-mobile{text-align:center}
         .w3-dropdown-hover.w3-mobile,.w3-dropdown-hover.w3-mobile .w3-btn,.w3-dropdown-hover.w3-mobile .w3-button,.w3-dropdown-click.w3-mobile,.w3-dropdown-click.w3-mobile .w3-btn,.w3-dropdown-click.w3-mobile .w3-button{width:100%}}
         @media (max-width:768px){.w3-modal-content{width:500px}.w3-modal{padding-top:50px}}
@@ -749,58 +749,58 @@ monitoring_head = """
         }
         
         .form-inline 
-		{  
-			display: flex;
-			flex-flow: row wrap;
-			align-items: center;
-		}
+        {  
+            display: flex;
+            flex-flow: row wrap;
+            align-items: center;
+        }
 
-		.form-inline label 
-		{
-			margin: 5px 10px 5px 0;
-			width: 130px;
-		}
+        .form-inline label 
+        {
+            margin: 5px 10px 5px 0;
+            width: 130px;
+        }
 
-		.form-inline input 
-		{
-			vertical-align: middle;
-			margin: 5px 10px 5px 0;
-			padding: 10px;
-			width: calc(100% - 250px);
-			background-color: #fff;
-			border: 1px solid #ddd;
-		}
+        .form-inline input 
+        {
+            vertical-align: middle;
+            margin: 5px 10px 5px 0;
+            padding: 10px;
+            width: calc(100% - 250px);
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
 
-		.form-inline button 
-		{
-			padding: 10px 20px;
-			background-color: #E02222;
-			width: 100px;
-			border: 1px solid #1F1F1F;
-			color: white;
-			cursor: pointer;
-			font-size: 14px;
+        .form-inline button 
+        {
+            padding: 10px 20px;
+            background-color: #E02222;
+            width: 100px;
+            border: 1px solid #1F1F1F;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
             font-family: "Roboto", sans-serif;
-		}
+        }
 
-		.form-inline button:hover 
-		{
-			background-color: #B51A1A;
-		}
+        .form-inline button:hover 
+        {
+            background-color: #B51A1A;
+        }
 
-		@media (max-width: 800px) 
-		{
-			.form-inline input 
-			{
-				margin: 10px 0;
-			}
+        @media (max-width: 800px) 
+        {
+            .form-inline input 
+            {
+                margin: 10px 0;
+            }
 
-			.form-inline 
-			{
-				flex-direction: column;
-				align-items: stretch;
-			}
-		}
+            .form-inline 
+            {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
         </style>
         <body onload='loadData()'>"""
 
@@ -847,14 +847,14 @@ monitoring_tail = """
         
         function updateRefreshRate()
         {
-			html_refresh_text = document.getElementById('refresh_rate');
+            html_refresh_text = document.getElementById('refresh_rate');
             refresh_rate = parseInt(html_refresh_text.value);
             if (refresh_rate < 100)
             {
                 refresh_rate = 100
             }
-			
-			html_refresh_text.value = refresh_rate;
+            
+            html_refresh_text.value = refresh_rate;
         }
         
         function processReqChange()
