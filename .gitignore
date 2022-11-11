@@ -15,3 +15,4 @@ CMakeSettings.json
 webserver/bin
 webserver/build
 obj/
+utils/dnp3_src/CMakeFiles/
