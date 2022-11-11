@@ -1412,11 +1412,11 @@ def monitoring():
                     <br>
                     <h2>Monitoring</h2>
                     <form class="form-inline">
-						<label for="refresh_rate">Refresh Rate (ms):</label>
-						<input type="text" id="refresh_rate" value="100" name="refresh_rate">
-						<button type="button" onclick="updateRefreshRate()">Update</button>
-					</form>
-					<br>
+                        <label for="refresh_rate">Refresh Rate (ms):</label>
+                        <input type="text" id="refresh_rate" value="100" name="refresh_rate">
+                        <button type="button" onclick="updateRefreshRate()">Update</button>
+                    </form>
+                    <br>
                     <div id='monitor_table'>
                         <table>
                             <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
@@ -2401,7 +2401,7 @@ if __name__ == '__main__':
                 openplc_runtime.start_runtime()
                 time.sleep(1)
                 configure_runtime()
-		monitor.parse_st(openplc_runtime.project_file)
+                monitor.parse_st(openplc_runtime.project_file)
             
             app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
         
