@@ -266,9 +266,15 @@ int main(int argc,char **argv)
 		updateBuffersIn(); //read input image
 
 		pthread_mutex_lock(&bufferLock); //lock mutex
-        if(ethercat_callcyclic(BUFFER_SIZE, (uint8_t*)bool_input, (uint8_t*)bool_output, (uint8_t*)byte_input, (uint8_t*)byte_output, (uint16_t*)int_input, (uint16_t*)int_output)){
+        if(ethercat_callcyclic(BUFFER_SIZE, (uint8_t**)bool_input, (uint8_t**)bool_output, (uint8_t*)byte_input, (uint8_t*)byte_output, (uint16_t*)int_input, (uint16_t*)int_output)){
             printf("EtherCAT cyclic failed\n");
             break;
+        }
+        if(bool_output[0][0]){
+                printf("%QX0.0 := TRUE %i\n", bool_output[0]);
+        }
+        else{
+                printf("%QX0.0 := FALSE\n");
         }
 		updateCustomIn();
         updateBuffersIn_MB(); //update input image table with data from slave devices
