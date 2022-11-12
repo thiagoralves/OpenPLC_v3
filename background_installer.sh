@@ -102,10 +102,10 @@ function install_all_libs {
     echo "[EtherCAT]"
     cd utils/ethercat_src
     mkdir -p build
-    cmake -S . -B build/
-    cmake --build build/
+    sudo cmake -S . -B build/
+    sudo cmake --build build/
     sudo cmake --install build/
-    sudo /sbin/ldconfig -v
+    sudo /sbin/ldconfig -v | grep ethercat
     cd ../..
 
     echo ""
