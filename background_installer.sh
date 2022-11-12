@@ -101,7 +101,7 @@ function install_all_libs {
     echo ""
     echo "[EtherCAT]"
     cd utils/ethercat_src
-    mkdir build
+    mkdir -p build
     cmake -S . -B build/
     cmake --build build/
     sudo cmake --install build/
