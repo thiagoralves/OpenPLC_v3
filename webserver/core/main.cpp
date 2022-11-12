@@ -32,6 +32,7 @@
 
 #include "iec_types.h"
 #include "ladder.h"
+#include "ethercat_src.h"
 
 #define OPLC_CYCLE          50000000
 
@@ -209,6 +210,7 @@ int main(int argc,char **argv)
     //======================================================
     //              HARDWARE INITIALIZATION
     //======================================================
+    ethercat_configure("../utils/ethercat_src/conf/ethercatcfg.txt");
     initializeHardware();
     initializeMB();
     initCustomLayer();
