@@ -104,6 +104,8 @@ function install_all_libs {
     mkdir build
     cmake -S . -B build/
     cmake --build build/
+    sudo cmake --install build/
+    sudo /sbin/ldconfig -v
     cd ../..
 
     echo ""
