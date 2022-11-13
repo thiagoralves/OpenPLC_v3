@@ -189,7 +189,7 @@ u_int8_t *byte_input_call_back(int a){ return byte_input[a]; }
 u_int8_t *byte_output_call_back(int a){ return byte_output[a]; }
 u_int16_t *int_input_call_back(int a){ return int_input[a]; }
 u_int16_t *int_output_call_back(int a){ return int_output[a]; }
-
+void logger_callback(unsigned char *msg){ log(msg);}
 
 int main(int argc,char **argv)
 {
@@ -219,7 +219,8 @@ int main(int argc,char **argv)
     //======================================================
     //              HARDWARE INITIALIZATION
     //======================================================
-    ethercat_configure("../utils/ethercat_src/conf/ethercatcfg.txt");
+    type_logger_callback logger = logger_callback; 
+    ethercat_configure("../utils/ethercat_src/conf/ethercatcfg.txt", logger);
     initializeHardware();
     initializeMB();
     initCustomLayer();
