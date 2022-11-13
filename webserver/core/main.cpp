@@ -182,6 +182,15 @@ void handleSpecialFunctions()
     //insert other special functions below
 }
 
+// pointers to IO *array[const][const] from cpp to c and back again don't work as expected, so instead callbacks
+u_int8_t *bool_input_call_back(int a, int b){ return bool_input[a][b]; }
+u_int8_t *bool_output_call_back(int a, int b){ return bool_output[a][b]; }
+u_int8_t *byte_input_call_back(int a){ return byte_input[a]; }
+u_int8_t *byte_output_call_back(int a){ return byte_output[a]; }
+u_int16_t *int_input_call_back(int a){ return int_input[a]; }
+u_int16_t *int_output_call_back(int a){ return int_output[a]; }
+
+
 int main(int argc,char **argv)
 {
     unsigned char log_msg[1000];
@@ -227,6 +236,8 @@ int main(int argc,char **argv)
     readPersistentStorage();
     //pthread_t persistentThread;
     //pthread_create(&persistentThread, NULL, persistentStorage, NULL);
+    
+
 
 #ifdef __linux__
     //======================================================
@@ -263,11 +274,25 @@ int main(int argc,char **argv)
 		//attached to the user variables
 		glueVars();
         
+        boolvar_call_back bool_input_callback = bool_input_call_back;
+        boolvar_call_back bool_output_callback = bool_output_call_back;
+        int8var_call_back byte_input_callback = byte_input_call_back;
+        int8var_call_back byte_output_callback = byte_output_call_back;
+        int16var_call_back int_input_callback = int_input_call_back;
+        int16var_call_back int_output_callback = int_output_call_back;
+        
 		updateBuffersIn(); //read input image
 
 		pthread_mutex_lock(&bufferLock); //lock mutex
 
-        if(ethercat_callcyclic(BUFFER_SIZE, (uint8_t***)bool_input, (uint8_t***)bool_output, (uint8_t**)byte_input, (uint8_t**)byte_output, (uint16_t**)int_input, (uint16_t**)int_output)){
+
+        if(ethercat_callcyclic(BUFFER_SIZE, 
+                bool_input_callback, 
+                bool_output_callback, 
+                byte_input_callback, 
+                byte_output_callback, 
+                int_input_callback, 
+                int_output_callback)){
             printf("EtherCAT cyclic failed\n");
             break;
         }
