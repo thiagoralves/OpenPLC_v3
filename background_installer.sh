@@ -99,6 +99,16 @@ function install_all_libs {
     cd ../..
 
     echo ""
+    echo "[EtherCAT]"
+    cd utils/ethercat_src
+    mkdir -p build
+    sudo cmake -S . -B build/
+    sudo cmake --build build/
+    sudo cmake --install build/
+    sudo /sbin/ldconfig -v | grep ethercat
+    cd ../..
+
+    echo ""
     echo "[OPEN DNP3]"
     cd utils/dnp3_src
     echo "creating swapfile..."

@@ -36,8 +36,11 @@
 #include <time.h>
 
 #include "ladder.h"
+#define BUFFER_SIZE 1024
 
 //Global Variables
+bool ethercat_configured = 0;
+char ethercat_conf_file[BUFFER_SIZE];
 bool run_modbus = 0;
 uint16_t modbus_port = 502;
 bool run_dnp3 = 0;
@@ -58,6 +61,12 @@ pthread_t dnp3_thread;
 pthread_t enip_thread;
 pthread_t pstorage_thread;
 
+//-----------------------------------------------------------------------------
+// Configure Ethercat
+//-----------------------------------------------------------------------------
+int configureEthercat(){
+    return 1;
+}
 //-----------------------------------------------------------------------------
 // Start the Modbus Thread
 //-----------------------------------------------------------------------------
@@ -110,6 +119,28 @@ int readCommandArgument(unsigned char *command)
     }
     
     return atoi(argument);
+}
+//-----------------------------------------------------------------------------
+// Read string argument from a command function
+//-----------------------------------------------------------------------------
+unsigned char *readCommandArgumentStr(unsigned char *command)
+{
+    int i = 0;
+    int j = 0;
+    unsigned char *argument;
+    argument = (unsigned char *)malloc(1024 * sizeof(unsigned char));
+    
+    while (command[i] != '(' && command[i] != '\0') i++;
+    if (command[i] == '(') i++;
+    while (command[i] != ')' && command[i] != '\0')
+    {
+        argument[j] = command[i];
+        i++;
+        j++;
+        argument[j] = '\0';
+    }
+    
+    return argument;
 }
 
 //-----------------------------------------------------------------------------
@@ -233,6 +264,19 @@ void processCommand(unsigned char *buffer, int client_fd)
             log(log_msg);
         }
         run_openplc = 0;
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "start_ethercat(", 15) == 0)
+    {
+        processing_command = true;
+        char *argument;
+        argument = (char)readCommandArgumentStr(buffer);
+        strcpy(ethercat_conf_file, argument);
+        free(argument);
+        sprintf(log_msg, "Issued start_ethercat() command to start with config: %s\n", ethercat_conf_file);
+        log(log_msg);
+        //Configure ethercat
+        ethercat_configured = configureEthercat();
         processing_command = false;
     }
     else if (strncmp(buffer, "start_modbus(", 13) == 0)
