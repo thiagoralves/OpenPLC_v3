@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, jsonify, redirect, request
+from database.login import loginManager
 from endpoints import blueprint as runtimeApp
+from os import urandom
 import json
 
 app = Flask(__name__)
+app.secret_key = urandom(12).hex()
 appPort = 2346
 serverURL = f"http://localhost:{appPort}"
 app.register_blueprint(runtimeApp)
+loginManager.init_app(app)
 
 
 @app.route("/", methods=["GET", "POST"])

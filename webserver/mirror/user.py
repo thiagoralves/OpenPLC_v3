@@ -1,6 +1,6 @@
 from .classes import Integer, String
 
-User = {
+UserType = {
     "id": Integer,
     "name": String,
     "username": String,

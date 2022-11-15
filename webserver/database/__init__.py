@@ -3,7 +3,7 @@ from sqlite3 import connect
 from sql.createTables import allTables
 from sql.scripts import insert
 from sql.utils import convertData
-from mirror.user import User, UserNullable
+from mirror.user import UserType, UserNullable
 from bcrypt import gensalt, hashpw
 from base64 import b64encode as enc64
 
@@ -20,7 +20,7 @@ def getMainUserScript():
     user["password"] = enc64(h).decode("utf-8")
     user["salt"] = enc64(salt).decode("utf-8")
 
-    convertData(user, User, UserNullable)
+    convertData(user, UserType, UserNullable)
 
     return insert("User", user)
 
