@@ -1,17 +1,39 @@
 from . import db
 from sqlite3 import connect, Row
-from mirror.user import User, UserNullable
+from mirror.user import UserType, UserNullable
 from sql.scripts import insert, select
 from sql.utils import convertData
 from bcrypt import gensalt, hashpw
 from base64 import b64encode as enc64
 
 
+class User:
+
+    __isAuth = True
+    __isActive = True
+    __isAnon = False
+
+    def __init__(self, id):
+        self.__id = id
+
+    def is_authenticated(self):
+        return self.__isAuth
+
+    def is_active(self):
+        return self.__isActive
+
+    def is_anonymous(self):
+        return self.__isAnon
+
+    def get_id(self):
+        return self.__id
+
+
 def getUserInfo(username):
     database = connect(db)
     database.row_factory = Row
 
-    username = User["username"](username, False).data
+    username = UserType["username"](username, False).data
 
     script = select("User", {"username": username})
 
@@ -37,7 +59,7 @@ def createUser(user):
     user["password"] = enc64(h).decode("utf-8")
     user["salt"] = enc64(salt).decode("utf-8")
 
-    convertData(user, User, UserNullable)
+    convertData(user, UserType, UserNullable)
 
     script = insert("User", user)
 
