@@ -15,8 +15,7 @@ loginManager.init_app(app)
 
 @app.route("/", methods=["GET", "POST"])
 def root():
-    # Check if user is logged in
-    return redirect("/login", 302)
+    return redirect("/dashboard", 302)
 
 
 def main():
