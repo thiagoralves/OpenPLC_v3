@@ -220,7 +220,7 @@ int main(int argc,char **argv)
     //              HARDWARE INITIALIZATION
     //======================================================
     type_logger_callback logger = logger_callback; 
-    ethercat_configure("../utils/ethercat_src/conf/ethercatcfg.txt", logger);
+    ethercat_configure("../utils/ethercat_src/build/ethercat.cfg", logger);
     initializeHardware();
     initializeMB();
     initCustomLayer();
