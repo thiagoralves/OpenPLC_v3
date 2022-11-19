@@ -101,11 +101,12 @@ function install_all_libs {
     echo ""
     echo "[EtherCAT]"
     cd utils/ethercat_src
-    mkdir -p build
-    sudo cmake -S . -B build/
-    sudo cmake --build build/
-    sudo cmake --install build/
-    sudo /sbin/ldconfig -v | grep ethercat
+    ./install.sh
+    if [ $? -ne 0 ]; then
+        echo "Error compiling EtherCAT"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
     cd ../..
 
     echo ""
