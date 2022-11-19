@@ -194,7 +194,7 @@ void logger_callback(unsigned char *msg){ log(msg);}
 int main(int argc,char **argv)
 {
     unsigned char log_msg[1000];
-    sprintf(log_msg, "OpenPLC Runtime starting...\n");
+    sprintf((char *)log_msg, "OpenPLC Runtime starting...\n");
     log(log_msg);
 
     //======================================================
@@ -316,6 +316,7 @@ int main(int argc,char **argv)
 	//             SHUTTING DOWN OPENPLC RUNTIME
 	//======================================================
     pthread_join(interactive_thread, NULL);
+    ethercat_terminate_src();
     printf("Disabling outputs\n");
     disableOutputs();
     updateCustomOut();
