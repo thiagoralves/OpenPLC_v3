@@ -18,13 +18,13 @@ echo "Optimizing ST program..."
 ./st_optimizer ./st_files/"$1" ./st_files/"$1"
 echo "Generating C files..."
 ./iec2c -f -l -p -r -R -a ./st_files/"$1"
-# stick reference to ethercat_src in there for CoE access etc functionality that needs to be accessed from PLC
-sed -i '7s/^/#include "ethercat_src.h" /' Res0.c
 if [ $? -ne 0 ]; then
     echo "Error generating C files"
     echo "Compilation finished with errors!"
     exit 1
 fi
+# stick reference to ethercat_src in there for CoE access etc functionality that needs to be accessed from PLC
+sed -i '7s/^/#include "ethercat_src.h" /' Res0.c
 echo "Moving Files..."
 mv -f POUS.c POUS.h LOCATED_VARIABLES.h VARIABLES.csv Config0.c Config0.h Res0.c ./core/
 if [ $? -ne 0 ]; then
