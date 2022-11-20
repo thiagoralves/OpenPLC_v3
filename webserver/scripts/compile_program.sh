@@ -18,6 +18,8 @@ echo "Optimizing ST program..."
 ./st_optimizer ./st_files/"$1" ./st_files/"$1"
 echo "Generating C files..."
 ./iec2c -f -l -p -r -R -a ./st_files/"$1"
+# stick reference to ethercat_src in there for CoE access etc functionality that needs to be accessed from PLC
+sed -i '7s/^/#include "ethercat_src.h" /' Res0.c
 if [ $? -ne 0 ]; then
     echo "Error generating C files"
     echo "Compilation finished with errors!"
@@ -69,7 +71,7 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
         echo "Compilation finished with errors!"
         exit 1
     fi
-    g++ -std=gnu++11 -I ./lib -c Res0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+    g++ -std=gnu++11 -I ./lib -c Res0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w -L../../utils/ethercat_src/build/lib -lethercat_src -I../../utils/ethercat_src/src
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
