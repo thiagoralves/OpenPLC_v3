@@ -44,3 +44,5 @@ _Devices can be passed to the `docker` daemon using the `-v` flag (e.g. `-v /dev
 docker run -it --rm --privileged -p 8080:8080 openplc:v3
 ```
 
+### EtherCAT capability
+To build with EtherCAT capability try `./install.sh linux ethercat` for more information see `utils/ethercat_src`
