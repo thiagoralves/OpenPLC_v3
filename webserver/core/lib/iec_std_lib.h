@@ -734,6 +734,5 @@ __ANY(__move_)
 
 #include "iec_std_functions.h"
 #include "iec_std_FB.h"
-#include "openplc_networking.h"
 
 #endif /* _IEC_STD_LIB_H */

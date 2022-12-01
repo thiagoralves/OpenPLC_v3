@@ -1,0 +1,104 @@
+(*
+ *  This file is part of OpenPLC - an open source Programmable
+ *  Logic Controller compliant with IEC 61131-3
+ *
+ *  Copyright (C) 2022  Thiago Alves
+ *
+ * See COPYING and COPYING.LESSER files for copyright details.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+ * USA
+ *
+ * This code is made available on the understanding that it will not be
+ * used in safety-critical situations without a full and competent review.
+ *)
+
+
+
+(*
+ * An IEC 61131-3 compiler.
+ *
+ * Based on the
+ * FINAL DRAFT - IEC 61131-3, 2nd Ed. (2001-12-10)
+ *
+ *)
+
+
+(*
+ * This is a dummy implementation of those block since
+ * its code is actually written in C, not ST
+ *)
+
+(*
+ * TCP_CONNECT
+ * -------------
+ *)
+FUNCTION_BLOCK TCP_CONNECT
+  VAR_INPUT
+    CONNECT : BOOL;
+    IP_ADDRESS : STRING;
+    PORT : INT;
+  END_VAR
+  VAR_OUTPUT
+    SOCKET_ID : INT;
+  END_VAR
+  SOCKET_ID := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * TCP_SEND
+ * -------------
+ *)
+FUNCTION_BLOCK TCP_SEND
+  VAR_INPUT
+    SEND : BOOL;
+    SOCKET_ID : INT;
+    MSG : STRING;
+  END_VAR
+  VAR_OUTPUT
+    BYTES_SENT : INT;
+  END_VAR
+  BYTES_SENT := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * TCP_RECEIVE
+ * -------------
+ *)
+FUNCTION_BLOCK TCP_RECEIVE
+  VAR_INPUT
+    RECEIVE : BOOL;
+    SOCKET_ID : INT;
+  END_VAR
+  VAR_OUTPUT
+    BYTES_RECEIVED : INT;
+    MSG : STRING;
+  END_VAR
+  BYTES_RECEIVED := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * TCP_CLOSE
+ * -------------
+ *)
+FUNCTION_BLOCK TCP_CLOSE
+  VAR_INPUT
+    CLOSE : BOOL;
+    SOCKET_ID : INT;
+  END_VAR
+  VAR_OUTPUT
+    SUCCESS : INT;
+  END_VAR
+  SUCCESS := 0;
+END_FUNCTION_BLOCK
