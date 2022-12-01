@@ -32,7 +32,9 @@
 
 #include "iec_types.h"
 #include "ladder.h"
+#ifdef _ethercat_src
 #include "ethercat_src.h"
+#endif
 
 #define OPLC_CYCLE          50000000
 
@@ -219,8 +221,10 @@ int main(int argc,char **argv)
     //======================================================
     //              HARDWARE INITIALIZATION
     //======================================================
+#ifdef _ethercat_src
     type_logger_callback logger = logger_callback; 
     ethercat_configure("../utils/ethercat_src/build/ethercat.cfg", logger);
+#endif
     initializeHardware();
     initializeMB();
     initCustomLayer();
@@ -275,18 +279,21 @@ int main(int argc,char **argv)
 		//attached to the user variables
 		glueVars();
         
+#ifdef _ethercat_src
         boolvar_call_back bool_input_callback = bool_input_call_back;
         boolvar_call_back bool_output_callback = bool_output_call_back;
         int8var_call_back byte_input_callback = byte_input_call_back;
         int8var_call_back byte_output_callback = byte_output_call_back;
         int16var_call_back int_input_callback = int_input_call_back;
         int16var_call_back int_output_callback = int_output_call_back;
+#endif
         
 		updateBuffersIn(); //read input image
 
 		pthread_mutex_lock(&bufferLock); //lock mutex
 
 
+#ifdef _ethercat_src
         if(ethercat_callcyclic(BUFFER_SIZE, 
                 bool_input_callback, 
                 bool_output_callback, 
@@ -297,6 +304,7 @@ int main(int argc,char **argv)
             printf("EtherCAT cyclic failed\n");
             break;
         }
+#endif
 		updateCustomIn();
         updateBuffersIn_MB(); //update input image table with data from slave devices
         handleSpecialFunctions();
@@ -316,7 +324,9 @@ int main(int argc,char **argv)
 	//             SHUTTING DOWN OPENPLC RUNTIME
 	//======================================================
     pthread_join(interactive_thread, NULL);
+#ifdef _ethercat_src
     ethercat_terminate_src();
+#endif
     printf("Disabling outputs\n");
     disableOutputs();
     updateCustomOut();

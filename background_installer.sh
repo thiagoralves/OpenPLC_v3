@@ -1,4 +1,7 @@
 #!/bin/bash
+
+ETHERCAT_INSTALL=""
+
 if [ $# -eq 0 ]; then
     echo ""
     echo "Error: You must provide a platform name as argument"
@@ -98,16 +101,18 @@ function install_all_libs {
     fi
     cd ../..
 
-    echo ""
-    echo "[EtherCAT]"
-    cd utils/ethercat_src
-    ./install.sh
-    if [ $? -ne 0 ]; then
-        echo "Error compiling EtherCAT"
-        echo "OpenPLC was NOT installed!"
-        exit 1
+    if [ "$ETHERCAT_INSTALL" == "install" ]; then
+        echo ""
+        echo "[EtherCAT]"
+        cd utils/ethercat_src
+        ./install.sh
+        if [ $? -ne 0 ]; then
+            echo "Error compiling EtherCAT"
+            echo "OpenPLC was NOT installed!"
+            exit 1
+        fi
+        cd ../..
     fi
-    cd ../..
 
     echo ""
     echo "[OPEN DNP3]"
@@ -170,7 +175,6 @@ WantedBy=multi-user.target" >> openplc.service
         $1 systemctl enable openplc
     fi
 }
-
 
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
@@ -273,7 +277,15 @@ if [ "$1" == "win" ]; then
 
 
 elif [ "$1" == "linux" ]; then
+
     echo "Installing OpenPLC on Linux"
+    if [ "$2" == "ethercat" ]; then
+        echo "including EtherCAT"
+        ETHERCAT_INSTALL="install"
+        echo ethercat > webserver/scripts/ethercat
+    else
+        echo "" > webserver/scripts/ethercat
+    fi
     linux_install_deps sudo
     
     install_py_deps
