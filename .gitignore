@@ -6,6 +6,8 @@ public/
 
 *.pyc
 
+/webserver/core/hardware_layer.cpp
+
 # IDE files for Visual Studio Code and Visual Studio
 CMakeSettings.json
 *.vscode/

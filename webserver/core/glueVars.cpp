@@ -48,6 +48,9 @@ IEC_UINT *int_memory[BUFFER_SIZE];
 IEC_DINT *dint_memory[BUFFER_SIZE];
 IEC_LINT *lint_memory[BUFFER_SIZE];
 
+//Special Functions
+IEC_LINT *special_functions[BUFFER_SIZE];
+
 
 #define __LOCATED_VAR(type, name, ...) type __##name;
 #include "LOCATED_VARIABLES.h"
@@ -62,12 +65,12 @@ void glueVars()
 
 void updateTime()
 {
-	__CURRENT_TIME.tv_sec  += common_ticktime__ / 1000000000;
-	__CURRENT_TIME.tv_nsec += common_ticktime__ % 1000000000;
+	__CURRENT_TIME.tv_sec  += common_ticktime__ / 1000000000ULL;
+	__CURRENT_TIME.tv_nsec += common_ticktime__ % 1000000000ULL;
 
-	if (__CURRENT_TIME.tv_nsec >= 1000000000)
+	if (__CURRENT_TIME.tv_nsec >= 1000000000ULL)
 	{
-		__CURRENT_TIME.tv_nsec -= 1000000000;
+		__CURRENT_TIME.tv_nsec -= 1000000000ULL;
 		__CURRENT_TIME.tv_sec += 1;
 	}
 }
