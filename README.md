@@ -29,7 +29,9 @@ Where `[platform]` can be:
 `custom` - Skip all specific package installation and tries to install OpenPLC assuming your system already has all dependencies met. This option can be useful if you're trying to install OpenPLC on an unsuported Linux platform or had manually installed all the dependency packages before.
 
 ### Building, Installing and Running inside Docker
-Make sure [`docker` is installed](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+When using Ubuntu: make sure [`docker for Ubuntu` is installed](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+
+When using Linux Mint 21: make sure [`docker for Linux Mint 21` is installed](https://computingforgeeks.com/install-docker-docker-compose-on-linux-mint/)
 
 #### Build
 ```
