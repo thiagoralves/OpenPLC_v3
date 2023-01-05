@@ -348,7 +348,7 @@ elif [ "$1" == "rpi" ]; then
     echo ""
     echo "[FINALIZING]"
     cd webserver/scripts
-    ./change_hardware_layer.sh rpi
+    ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
     cp ./start_openplc.sh ../../
 
