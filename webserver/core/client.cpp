@@ -35,12 +35,20 @@
 
 #include "ladder.h"
 
-int connect_to_tcp_server(uint8_t *ip_address, uint16_t port)
+#define METHOD_UDP 1
+#define METHOD_TCP 0
+
+int connect_to_tcp_server(uint8_t *ip_address, uint16_t port, int method)
 {
     int sockfd, connfd;
     unsigned char log_msg[1000];
     struct sockaddr_in servaddr, cli;
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    
+    if (method == METHOD_TCP)
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    else if (method == METHOD_UDP)
+        sockfd = socket(AF_INET, SOCK_DGRAM, 0)
+    
     if (sockfd == -1)
     {
         sprintf(log_msg, "TCP Client: error creating TCP socket => %s\n", strerror(errno));
