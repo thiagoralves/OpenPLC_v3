@@ -47,7 +47,7 @@ int connect_to_tcp_server(uint8_t *ip_address, uint16_t port, int method)
     if (method == METHOD_TCP)
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
     else if (method == METHOD_UDP)
-        sockfd = socket(AF_INET, SOCK_DGRAM, 0)
+        sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     
     if (sockfd == -1)
     {
