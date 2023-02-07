@@ -254,7 +254,12 @@ if [ "$1" == "win" ]; then
         fi
     fi
     cd ../..
-
+    
+    echo ""
+    echo "[OPC UA]"
+    sudo apt-get install -y python-pip python-dev
+    pip install opcua
+    
     echo ""
     echo "[LIBMODBUS]"
     cd utils/libmodbus_src
