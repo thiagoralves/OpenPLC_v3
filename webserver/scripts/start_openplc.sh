@@ -1,4 +1,8 @@
 #!/bin/bash
+if [[ ! -d "/persistent" ]]
+then
+    mkdir /persistent
+fi
 if [[ ! -f "/persistent/dnp3.cfg" ]]
 then
     cp /workdir/webserver/dnp3_default.cfg /persistent/dnp3.cfg 
