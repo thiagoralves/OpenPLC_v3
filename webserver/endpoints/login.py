@@ -10,7 +10,7 @@ blueprint = Blueprint("loginApi", __name__)
 @blueprint.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect('/dashboard', 302)
+        return redirect("/dashboard", 302)
     return send_file("static/html/login.html")
 
 

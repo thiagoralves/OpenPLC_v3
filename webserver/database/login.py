@@ -11,7 +11,6 @@ loginManager = LoginManager()
 
 
 def validateLogin(username, password):
-
     try:
         userInfo = getUserInfo(username)
     except:

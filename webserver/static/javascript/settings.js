@@ -1,6 +1,58 @@
-window.onload = function () {
-  setupCheckboxes();
+var checkboxes = {
+  modbus_port: "modbus_server",
+  dnp3_port: "dnp3_server",
+  enip_port: "enip_server",
+  pstorage_polling: "pstorage_thread",
+  start_run_mode: "auto_run",
 };
+
+function populateFields() {
+  fetch("/settings?data=true")
+    .then((response) => {
+      return response.json();
+    })
+    .then((jsondata) => {
+      for (let key in jsondata) {
+        var e = document.getElementsByName(key)[0];
+        var c = document.getElementById(checkboxes[key]);
+        if (key === "start_run_mode") {
+          c.checked = jsondata[key] === "true";
+          continue;
+        }
+        if (jsondata[key] === "disabled") {
+          if (c) c.checked = false;
+        } else {
+          if (c) c.checked = true;
+          e.value = jsondata[key];
+        }
+      }
+      setupCheckboxes();
+    });
+}
+
+function onLoad() {
+  populateFields();
+  setupCheckboxes();
+  document.getElementById("modbus_server").onchange = function () {
+    setupCheckboxes();
+  };
+
+  document.getElementById("dnp3_server").onchange = function () {
+    setupCheckboxes();
+  };
+
+  document.getElementById("enip_server").onchange = function () {
+    setupCheckboxes();
+  };
+
+  document.getElementById("pstorage_thread").onchange = function () {
+    setupCheckboxes();
+  };
+
+  document.getElementById("auto_run").onchange = function () {
+    setupCheckboxes();
+  };
+}
 
 function setupCheckboxes() {
   var modbus_checkbox = document.getElementById("modbus_server");
@@ -45,26 +97,6 @@ function setupCheckboxes() {
   }
 }
 
-document.getElementById("modbus_server").onchange = function () {
-  setupCheckboxes();
-};
-
-document.getElementById("dnp3_server").onchange = function () {
-  setupCheckboxes();
-};
-
-document.getElementById("enip_server").onchange = function () {
-  setupCheckboxes();
-};
-
-document.getElementById("pstorage_thread").onchange = function () {
-  setupCheckboxes();
-};
-
-document.getElementById("auto_run").onchange = function () {
-  setupCheckboxes();
-};
-
 function validateForm() {
   var modbus_checkbox = document.forms["uploadForm"]["modbus_server"].checked;
   var modbus_port = document.forms["uploadForm"]["modbus_server_port"].value;
@@ -96,5 +128,6 @@ function validateForm() {
     alert("Persistent Storage polling rate must be bigger than zero");
     return false;
   }
+
   return true;
 }

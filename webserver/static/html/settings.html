@@ -9,7 +9,7 @@
     <script src="static/javascript/settings.js"></script>
     <script src="static/javascript/main.js"></script>
   </head>
-  <body>
+  <body onload="onLoad()">
     <div class="top">
       <img
         src="static/assets/openplc_logo.gif"
@@ -101,7 +101,7 @@
         <a href="/startPlc" class="button start"><b>Start PLC</b></a>
       </div>
       <div class="mainContainer">
-        <div class="w3-container">
+        <div id="settingsContainer" class="w3-container">
           <br />
           <h2>Settings</h2>
           <form
@@ -122,7 +122,7 @@
             <input
               type="text"
               id="modbus_server_port"
-              name="modbus_server_port"
+              name="modbus_port"
               value="502"
             />
             <br />
@@ -139,7 +139,7 @@
             <input
               type="text"
               id="dnp3_server_port"
-              name="dnp3_server_port"
+              name="dnp3_port"
               value="20000"
             />
             <br />
@@ -156,7 +156,7 @@
             <input
               type="text"
               id="enip_server_port"
-              name="enip_server_port"
+              name="enip_port"
               value="44818"
             />
             <br />
@@ -173,7 +173,7 @@
             <input
               type="text"
               id="pstorage_thread_poll"
-              name="pstorage_thread_poll"
+              name="pstorage_polling"
               value="10"
               disabled=""
             />
@@ -189,7 +189,7 @@
               type="hidden"
               value="false"
               id="auto_run_text"
-              name="auto_run_text"
+              name="start_run_mode"
             />
             <br />
             <h2>Slave Devices</h2>
@@ -199,7 +199,7 @@
             <input
               type="text"
               id="slave_polling_period"
-              name="slave_polling_period"
+              name="slave_polling"
               value="100"
             />
             <br />

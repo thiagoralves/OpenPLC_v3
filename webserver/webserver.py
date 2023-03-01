@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, jsonify, redirect, request
+from flask import Flask, redirect
 from database.login import loginManager
 from endpoints import blueprint as runtimeApp
 from os import urandom
-import json
 
 app = Flask(__name__)
 app.secret_key = urandom(12).hex()
