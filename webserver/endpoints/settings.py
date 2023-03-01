@@ -9,7 +9,6 @@ blueprint = Blueprint("settingsApi", __name__)
 @blueprint.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-
     if request.method == "GET" and request.args.get("data"):
         return json.dumps(getSettings())
 

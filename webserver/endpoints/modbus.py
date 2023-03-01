@@ -24,10 +24,12 @@ def addDevice():
 def editDevice():
     return send_file("static/html/modbus/editDevice/editModbusDevice.html")
 
+
 @blueprint.route("/modbus/deviceTypes", methods=["GET", "POST"])
 @login_required
 def deviceTypes():
     return send_file("static/json/deviceTypes.json")
+
 
 @blueprint.route("/modbus/comPorts", methods=["GET", "POST"])
 @login_required
@@ -36,10 +38,9 @@ def comPorts():
     portNames = []
     for port in ports:
         portNames.append(port)
-    if (platform.system().startswith("CYGWIN")):
-        portNames = list(map(lambda x: "COM" + str(int(x.split("/dev/ttyS")[1]) + 1), portNames))
+    if platform.system().startswith("CYGWIN"):
+        portNames = list(
+            map(lambda x: "COM" + str(int(x.split("/dev/ttyS")[1]) + 1), portNames)
+        )
 
     return json.dumps(portNames)
-
-
-    

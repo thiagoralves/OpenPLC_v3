@@ -8,7 +8,6 @@ from base64 import b64encode as enc64
 
 
 class User:
-
     __isAuth = True
     __isActive = True
     __isAnon = False

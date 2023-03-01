@@ -26,11 +26,12 @@ def getMainUserScript():
 
     return insert("User", user)
 
+
 def getDefaultSettingsScript():
     staticFolder = dirname(dirname(__file__)) + "/static"
     settingsFile = staticFolder + "/json/defaultSettings.json"
     scripts = []
-    with open(settingsFile, 'r') as file:
+    with open(settingsFile, "r") as file:
         settings = json.loads(file.read())
         for k, v in settings.items():
             item = {"key": k, "value": v}
