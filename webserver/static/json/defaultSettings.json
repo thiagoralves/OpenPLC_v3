@@ -1,9 +1,9 @@
 {
-    "modbus_port": "502",
-    "dnp3_port": "20000",
-    "start_run_mode": "false",
-    "slave_polling": "100",
-    "slave_timeout": "1000",
-    "enip_port": "44818",
-    "pstorage_polling": "disabled"
+  "modbus_port": "502",
+  "dnp3_port": "20000",
+  "start_run_mode": "false",
+  "slave_polling": "100",
+  "slave_timeout": "1000",
+  "enip_port": "44818",
+  "pstorage_polling": "disabled"
 }

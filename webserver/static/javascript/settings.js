@@ -3,8 +3,8 @@ var checkboxes = {
   dnp3_port: "dnp3_server",
   enip_port: "enip_server",
   pstorage_polling: "pstorage_thread",
-  start_run_mode: "auto_run"
-}
+  start_run_mode: "auto_run",
+};
 
 function populateFields() {
   fetch("/settings?data=true")
@@ -16,8 +16,8 @@ function populateFields() {
         var e = document.getElementsByName(key)[0];
         var c = document.getElementById(checkboxes[key]);
         if (key === "start_run_mode") {
-          c.checked = jsondata[key] === "true"
-          continue
+          c.checked = jsondata[key] === "true";
+          continue;
         }
         if (jsondata[key] === "disabled") {
           if (c) c.checked = false;
@@ -26,7 +26,7 @@ function populateFields() {
           e.value = jsondata[key];
         }
       }
-      setupCheckboxes()
+      setupCheckboxes();
     });
 }
 
@@ -52,7 +52,7 @@ function onLoad() {
   document.getElementById("auto_run").onchange = function () {
     setupCheckboxes();
   };
-};
+}
 
 function setupCheckboxes() {
   var modbus_checkbox = document.getElementById("modbus_server");

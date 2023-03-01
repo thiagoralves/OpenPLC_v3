@@ -6,39 +6,39 @@ function populateDropdown() {
       return response.json();
     })
     .then((jsondata) => {
-      var selectedType = "rtu"
-      jsondata.forEach(e => {
-        if(e.isSelected) {
-          selectedType = e.type
+      var selectedType = "rtu";
+      jsondata.forEach((e) => {
+        if (e.isSelected) {
+          selectedType = e.type;
         }
-      })
-      switch(selectedType) {
+      });
+      switch (selectedType) {
         case "rtu":
-          populateCOM()
-          tcp_stuff.style.display = "none"
-          rtu_stuff.style.display = "block"
-          break
+          populateCOM();
+          tcp_stuff.style.display = "none";
+          rtu_stuff.style.display = "block";
+          break;
         case "tcp":
-          tcp_stuff.style.display = "block"
-          rtu_stuff.style.display = "none"
-          break
+          tcp_stuff.style.display = "block";
+          rtu_stuff.style.display = "none";
+          break;
         default:
-          break
+          break;
       }
       var e = document.getElementById("dev_protocol");
-      var tcp = document.createElement("optgroup")
-      tcp.label = "TCP"
-      var rtu = document.createElement("optgroup")
-      rtu.label = "RTU"
+      var tcp = document.createElement("optgroup");
+      tcp.label = "TCP";
+      var rtu = document.createElement("optgroup");
+      rtu.label = "RTU";
       for (let hardware of jsondata) {
         var option = document.createElement("option");
         option.value = hardware.value;
         option.selected = hardware.isSelected;
         option.innerHTML = hardware.label;
         if (hardware.type === "tcp") {
-          tcp.appendChild(option)
+          tcp.appendChild(option);
         } else {
-          rtu.appendChild(option)
+          rtu.appendChild(option);
         }
       }
       e.appendChild(rtu);
@@ -53,28 +53,28 @@ function populateCOM() {
     })
     .then((jsondata) => {
       var e = document.getElementById("dev_cport");
-      e.innerHTML = ''
+      e.innerHTML = "";
       for (let port of jsondata) {
         var option = document.createElement("option");
         option.value = port.toLowerCase();
         option.innerHTML = port;
-        e.appendChild(option)
+        e.appendChild(option);
       }
     });
 }
 
 function refreshSelector() {
   var drop_down = document.getElementById("dev_protocol");
-  var selected = [...drop_down.options].find(o => o.selected)
+  var selected = [...drop_down.options].find((o) => o.selected);
   var tcp_stuff = document.getElementById("tcp-stuff");
   var rtu_stuff = document.getElementById("rtu-stuff");
   if (selected.parentElement.label === "TCP") {
-    tcp_stuff.style.display = "block"
-    rtu_stuff.style.display = "none"
+    tcp_stuff.style.display = "block";
+    rtu_stuff.style.display = "none";
   } else {
-    populateCOM()
-    rtu_stuff.style.display = "block"
-    tcp_stuff.style.display = "none"
+    populateCOM();
+    rtu_stuff.style.display = "block";
+    tcp_stuff.style.display = "none";
   }
 }
 
