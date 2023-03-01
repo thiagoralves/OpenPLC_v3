@@ -1,0 +1,44 @@
+[
+    {
+        "id": 1,
+        "value": "arduino_uno",
+        "label": "Arduino Uno",
+        "type": "rtu",
+        "isSelected": false
+    },
+    {
+        "id": 2,
+        "value": "arduino_mega",
+        "label": "Arduino Mega",
+        "type": "rtu",
+        "isSelected": false
+    },
+    {
+        "id": 3,
+        "value": "esp32",
+        "label": "ESP32",
+        "type": "tcp",
+        "isSelected": false
+    },
+    {
+        "id": 4,
+        "value": "esp8266",
+        "label": "ESP8266",
+        "type": "tcp",
+        "isSelected": false
+    },
+    {
+        "id": 5,
+        "value": "generic_tcp",
+        "label": "Generic Modbus TCP Device",
+        "type": "tcp",
+        "isSelected": false
+    },
+    {
+        "id": 6,
+        "value": "generic_rtu",
+        "label": "Generic Modbus RTU Device",
+        "type": "rtu",
+        "isSelected": false
+    }
+]

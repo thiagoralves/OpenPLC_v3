@@ -120,14 +120,11 @@
                 placeholder="My Device"
               />
               <label for="dev_protocol"><b>Device Type</b></label>
-              <select id="dev_protocol" name="device_protocol">
-                <option selected="selected" value="Uno">Arduino Uno</option>
-                <option value="Mega">Arduino Mega</option>
-                <option value="ESP32">ESP32</option>
-                <option value="ESP8266">ESP8266</option>
-                <option value="TCP">Generic Modbus TCP Device</option>
-                <option value="RTU">Generic Modbus RTU Device</option>
-              </select>
+              <select
+                id="dev_protocol"
+                name="device_protocol"
+                onchange="refreshSelector()"
+              ></select>
               <label for="dev_id"><b>Slave ID</b></label>
               <input
                 type="text"
@@ -155,7 +152,7 @@
               </div>
               <div id="rtu-stuff">
                 <label for="dev_cport"><b>COM Port</b></label>
-                <select id="dev_cport" name="device_cport"></select>
+                <select id="dev_cport" name="device_cport" onclick="populateCOM()"></select>
                 <label for="dev_baud"><b>Baud Rate</b></label>
                 <input
                   type="text"

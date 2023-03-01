@@ -10,4 +10,10 @@ User += " salt VARCHAR(255),"
 User += " CONSTRAINT pk_user PRIMARY KEY (id),"
 User += " CONSTRAINT uq_user UNIQUE (username));"
 
-allTables = [User]
+# Creates Settings table
+Settings = "CREATE TABLE Settings"
+Settings += " (key VARCHAR(20) not null,"
+Settings += " value VARCHAR(20) not null,"
+Settings += " CONSTRAINT pk_settings PRIMARY KEY (key));"
+
+allTables = [User, Settings]

@@ -85,3 +85,7 @@ input[type="text"] {
   display: block;
   margin-top: 20px;
 }
+
+#settingsContainer {
+  padding: 0.01em 16px 50px 16px;
+}
