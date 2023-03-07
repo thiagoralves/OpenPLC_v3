@@ -55,6 +55,13 @@ def configure_runtime():
                     else:
                         print("Disabling DNP3")
                         openplc_runtime.stop_dnp3()
+                elif (row[0] == "Opcua_port"):
+                    if (row[1] != "disabled"):
+                        print("Enabling OPC UA on port " + str(int(row[1])))
+                        openplc_runtime.start_opcua(int(row[1]))
+                    else:
+                        print('Disabling OPC UA')
+                        openplc_runtime.stop_opcua()
                 elif (row[0] == "Enip_port"):
                     if (row[1] != "disabled"):
                         print("Enabling EtherNet/IP on port " + str(int(row[1])))
@@ -2096,6 +2103,8 @@ def settings():
                             dnp3_port = str(row[1])
                         elif (row[0] == "Enip_port"):
                             enip_port = str(row[1])
+                        elif (row[0] == "Opcua_port"):
+                            opcua_port = str(row[1])
                         elif (row[0] == "Pstorage_polling"):
                             pstorage_poll = str(row[1])
                         elif (row[0] == "Start_run_mode"):
@@ -2142,6 +2151,28 @@ def settings():
                         <label for='dnp3_server_port'><b>DNP3 Server Port</b></label>
                         <input type='text' id='dnp3_server_port' name='dnp3_server_port' value='""" + dnp3_port + "'>"
                     
+                    return_str += """
+                        <br>
+                        <br>
+                        <br>
+                        <label class="container">
+                            <b>Enable OPC UA Server</b>"""
+
+                    if (opcua_port == 'disabled'):
+                        return_str += """
+                            <input id="opcua_server" type="checkbox">
+                            <span class="checkmark"></span>
+                        </label>
+                        <label for='opcua_server_port'><b>OPC UA Server Port</b></label>
+                        <input type='text' id='opcua_server_port' name='opcua_server_port' value='4840'>"""
+                    else:
+                        return_str += """
+                            <input id="opcua_server" type="checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <label for='opcua_server_port'><b>OPC UA Server Port</b></label>
+                        <input type='text' id='opcua_server_port' name='opcua_server_port' value='""" + opcua_port + "'>"
+
                     return_str += """
                         <br>
                         <br>
@@ -2233,6 +2264,7 @@ def settings():
             dnp3_port = flask.request.form.get('dnp3_server_port')
             enip_port = flask.request.form.get('enip_server_port')
             pstorage_poll = flask.request.form.get('pstorage_thread_poll')
+            opcua_port = flask.request.form.get('opcua_server_port')
             start_run = flask.request.form.get('auto_run_text')
             slave_polling = flask.request.form.get('slave_polling_period')
             slave_timeout = flask.request.form.get('slave_timeout')
@@ -2256,6 +2288,13 @@ def settings():
                         conn.commit()
                     else:
                         cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Dnp3_port'", (str(dnp3_port),))
+                        conn.commit()
+                        
+                    if (opcua_port == None):
+                        cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Opcua_port'")
+                        conn.commit()
+                    else:
+                        cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Opcua_port'", (str(opcua_port),))
                         conn.commit()
                         
                     if (enip_port == None):

@@ -98,7 +98,7 @@ void updateTime();
 //hardware_layer.cpp
 void initializeHardware();
 void finalizeHardware();
-void updateBuffersIn();
+uint8_t updateBuffersIn();
 void updateBuffersOut();
 
 //custom_layer.h
@@ -132,6 +132,7 @@ extern bool run_modbus;
 extern bool run_dnp3;
 extern bool run_enip;
 extern bool run_pstorage;
+extern bool run_opcua;
 extern uint16_t pstorage_polling;
 extern time_t start_time;
 extern time_t end_time;
@@ -158,3 +159,7 @@ void dnp3StartServer(int port);
 //persistent_storage.cpp
 void startPstorage();
 int readPersistentStorage();
+
+//opcua.cpp
+void opcuaStartServer(int port);
+
