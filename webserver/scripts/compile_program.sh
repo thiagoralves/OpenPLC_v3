@@ -65,7 +65,7 @@ if [ "$OPENPLC_PLATFORM" = "win" ]; then
     echo "Generating glueVars..."
     ./glue_generator
     echo "Compiling main program..."
-    g++ *.cpp *.o -o openplc -I ./lib -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib -lmodbus -w
+    g++ *.cpp *.o -o openplc -I ./lib -pthread -fpermissive -I/usr/include/python2.7 -I /usr/local/include/modbus -L /usr/local/lib -lmodbus -lpython2.7 -ljsoncpp -w
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"

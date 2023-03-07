@@ -191,6 +191,7 @@ if [ "$1" == "win" ]; then
     apt-cyg install lynx
     # apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
     apt-cyg install gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3 python3
+    apt-cyg install python39-lxml python39-cryptography python39-dateutil python39-pytz python27-devel libjsoncpp-devel
     lynx -source https://bootstrap.pypa.io/pip/2.7/get-pip.py > get-pip.py
     lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
     /usr/bin/python2 get-pip.py
@@ -200,6 +201,14 @@ if [ "$1" == "win" ]; then
     /usr/bin/python2 -m pip install pyserial
     /usr/bin/python2 -m pip install pymodbus
     /usr/bin/python3 -m pip install pymodbus==2.5.3
+    
+    /usr/bin/python2 -m pip install enum34
+    /usr/bin/python2 -m pip install trollius
+    /usr/bin/python2 -m pip install futures
+
+    echo ""
+    echo "[OPC UA]"
+    pip install opcua
 
     echo ""
     echo "[MATIEC COMPILER]"

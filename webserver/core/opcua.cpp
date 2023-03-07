@@ -83,7 +83,7 @@ opcuaStartServer(int port)
 
         /* server.set_endpoint("opc.tcp://localhost:{}/freeopcua/server/".format(port)) */
         pArgs = PyTuple_New(1);
-        PyTuple_SetItem(pArgs, 0, PyString_FromFormat("opc.tcp://localhost:%d/freeopcua/server", port));
+        PyTuple_SetItem(pArgs, 0, PyString_FromFormat("opc.tcp://127.0.0.1:%d", port));
         pValue = callPythonFunc(pServer, "set_endpoint", pArgs, NULL);
         Py_DECREF(pArgs);
         if (pValue == NULL) {
