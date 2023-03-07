@@ -54,7 +54,7 @@ void finalizeHardware()
 // must be updated to reflect the actual Input state. The mutex bufferLock
 // must be used to protect access to the buffers on a threaded environment.
 //-----------------------------------------------------------------------------
-void updateBuffersIn()
+uint8_t updateBuffersIn()
 {
 	pthread_mutex_lock(&bufferLock); //lock mutex
 

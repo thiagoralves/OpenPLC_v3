@@ -309,9 +309,7 @@ int main(int argc,char **argv)
 		updateCustomIn();
         updateBuffersIn_MB(); //update input image table with data from slave devices
         handleSpecialFunctions();
-        if (shouldExecute) {
-                config_run__(__tick++); // execute plc program logic
-                };
+        config_run__(__tick++); // execute plc program logic
 		updateCustomOut();
         updateBuffersOut_MB(); //update slave devices with data from the output image table
 		pthread_mutex_unlock(&bufferLock); //unlock mutex
