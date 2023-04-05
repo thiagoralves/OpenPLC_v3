@@ -74,7 +74,7 @@ void initializeHardware()
 	//set pins as input
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
 	    {
 		    pinMode(inBufferPinMask[i], INPUT);
 		    if (i != 0 && i != 1) //pull down can't be enabled on the first two pins
@@ -87,14 +87,14 @@ void initializeHardware()
 	//set pins as output
 	for (int i = 0; i < MAX_OUTPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
 	    	pinMode(outBufferPinMask[i], OUTPUT);
 	}
 
 	//set PWM pins as output
 	for (int i = 0; i < MAX_ANALOG_OUT; i++)
 	{
-	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
+	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i]))
     		pinMode(analogOutBufferPinMask[i], PWM_OUTPUT);
 	}
 }
@@ -119,7 +119,7 @@ void updateBuffersIn()
 	//INPUT
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
     		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = digitalRead(inBufferPinMask[i]);
 	}
 
@@ -138,7 +138,7 @@ void updateBuffersOut()
 	//OUTPUT
 	for (int i = 0; i < MAX_OUTPUT; i++)
 	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
     		if (bool_output[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
 	}
 
