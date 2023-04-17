@@ -131,10 +131,14 @@ void startInteractiveServer(int port);
 extern bool run_modbus;
 extern bool run_dnp3;
 extern bool run_enip;
+extern bool run_opcua;
 extern bool run_pstorage;
 extern uint16_t pstorage_polling;
 extern time_t start_time;
 extern time_t end_time;
+
+//opcua.cpp
+void opcuaStartServer(int port);
 
 //modbus.cpp
 int processModbusMessage(unsigned char *buffer, int bufferSize);

@@ -52,6 +52,8 @@ uint16_t pstorage_polling = 10;
 unsigned char server_command[1024];
 int command_index = 0;
 bool processing_command = 0;
+bool run_opcua = 0;
+int opcua_port = 4840;
 time_t start_time;
 time_t end_time;
 
@@ -60,6 +62,7 @@ pthread_t modbus_thread;
 pthread_t dnp3_thread;
 pthread_t enip_thread;
 pthread_t pstorage_thread;
+pthread_t opcua_thread;
 
 //-----------------------------------------------------------------------------
 // Configure Ethercat
@@ -97,6 +100,14 @@ void *enipThread(void *arg)
 void *pstorageThread(void *arg)
 {
     startPstorage();
+}
+
+//-----------------------------------------------------------------------------
+// Start the OPC UA Thread
+//-----------------------------------------------------------------------------
+void *opcuaThread(void *arg)
+{
+    opcuaStartServer(opcua_port);
 }
 
 //-----------------------------------------------------------------------------
@@ -263,6 +274,13 @@ void processCommand(unsigned char *buffer, int client_fd)
             sprintf(log_msg, "DNP3 server was stopped\n");
             log(log_msg);
         }
+        if (run_opcua)
+        {
+            run_opcua = 0;
+            pthread_join(opcua_thread, NULL);
+            sprintf(log_msg, "OPC UA server was stopped\n");
+            log(log_msg);
+        }
         run_openplc = 0;
         processing_command = false;
     }
@@ -409,6 +427,41 @@ void processCommand(unsigned char *buffer, int client_fd)
         {
             run_pstorage = 0;
             sprintf(log_msg, "Persistent Storage thread was stopped\n");
+            log(log_msg);
+        }
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "start_opcua(", 12) == 0)
+    {
+        processing_command = true;
+        sprintf(log_msg, "Issued start_opcua() command to start on port: %d\n", readCommandArgument(buffer));
+        log(log_msg);
+        opcua_port = readCommandArgument(buffer);
+        if (run_opcua)
+        {
+            sprintf(log_msg, "OPC UA server already active. Restarting on port: %d\n", opcua_port);
+            log(log_msg);
+            //Stop OPC UA server
+            run_opcua = 0;
+            pthread_join(opcua_thread, NULL);
+            sprintf(log_msg, "OPC UA server was stopped\n");
+            log(log_msg);
+        }
+        //Start OPC UA server
+        run_opcua = 1;
+        pthread_create(&opcua_thread, NULL, opcuaThread, NULL);
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "stop_opcua()", 12) == 0)
+    {
+        processing_command = true;
+        sprintf(log_msg, "Issued stop_opcua() command\n");
+        log(log_msg);
+        if (run_opcua)
+        {
+            run_opcua = 0;
+            pthread_join(opcua_thread, NULL);
+            sprintf(log_msg, "OPC UA server was stopped\n");
             log(log_msg);
         }
         processing_command = false;
