@@ -192,6 +192,7 @@ if [ "$1" == "win" ]; then
     # apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
     apt-cyg install gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3 python3
     apt-cyg install python39-lxml python39-cryptography python39-dateutil python39-pytz python27-devel libjsoncpp-devel
+    apt-cyg install libcrypt-devel libjsoncpp25 libxslt 
     lynx -source https://bootstrap.pypa.io/pip/2.7/get-pip.py > get-pip.py
     lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
     /usr/bin/python2 get-pip.py
