@@ -1886,7 +1886,7 @@ __end:
 
 
 #include "communication.h"
-
+#include "sm_cards.h"
 
 
 
