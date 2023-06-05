@@ -44,6 +44,6 @@
 (* Not in the standard, but useful nonetheless. *)
 {#include "sema.txt" }
 {#include "communication_blocks.txt" }
-
+{#include "sm_cards.txt" }
 
 {enable code generation}

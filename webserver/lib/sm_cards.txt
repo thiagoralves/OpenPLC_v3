@@ -1,0 +1,275 @@
+
+(*
+ * An IEC 61131-3 compiler.
+ *
+ * Based on the
+ * FINAL DRAFT - IEC 61131-3, 2nd Ed. (2001-12-10)
+ *
+ *)
+
+
+(*
+ * This is a dummy implementation of those block since
+ * its code is actually written in C, not ST
+ *)
+
+
+(*
+ * SM_8RELAY
+ * -------------
+ *)
+FUNCTION_BLOCK SM_8RELAY
+  VAR_INPUT
+    STACK : SINT;
+    O1 : BOOL;
+    O2 : BOOL;
+    O3 : BOOL;
+    O4 : BOOL;
+    O5 : BOOL;
+    O6 : BOOL;
+    O7 : BOOL;
+    O8 : BOOL;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := STACK;
+END_FUNCTION_BLOCK
+
+(*
+ * SM_16RELAY
+ * -------------
+ *)
+FUNCTION_BLOCK SM_16RELAY
+  VAR_INPUT
+    STACK : SINT;
+    O1 : BOOL;
+    O2 : BOOL;
+    O3 : BOOL;
+    O4 : BOOL;
+    O5 : BOOL;
+    O6 : BOOL;
+    O7 : BOOL;
+    O8 : BOOL;
+    O9 : BOOL;
+    O10 : BOOL;
+    O11 : BOOL;
+    O12 : BOOL;
+    O13 : BOOL;
+    O14 : BOOL;
+    O15 : BOOL;
+    O16 : BOOL;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := STACK;
+END_FUNCTION_BLOCK
+
+(*
+ * SM_8DIN
+ * -------------
+ *)
+FUNCTION_BLOCK SM_8DIN
+  VAR_INPUT
+    stack : SINT;
+  END_VAR
+  VAR_OUTPUT
+    I1 : BOOL;
+    I2 : BOOL;
+    I3 : BOOL;
+    I4 : BOOL;
+    I5 : BOOL;
+    I6 : BOOL;
+    I7 : BOOL;
+    I8 : BOOL;
+  END_VAR
+  I1 := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * SM_16DIN
+ * -------------
+ *)
+FUNCTION_BLOCK SM_16DIN
+  VAR_INPUT
+    stack : SINT;
+  END_VAR
+  VAR_OUTPUT
+    I1 : BOOL;
+    I2 : BOOL;
+    I3 : BOOL;
+    I4 : BOOL;
+    I5 : BOOL;
+    I6 : BOOL;
+    I7 : BOOL;
+    I8 : BOOL;
+    I9 : BOOL;
+    I10 : BOOL;
+    I11 : BOOL;
+    I12 : BOOL;
+    I13 : BOOL;
+    I14 : BOOL;
+    I15 : BOOL;
+    I16 : BOOL;
+  END_VAR
+  I1 := 0;
+END_FUNCTION_BLOCK
+
+
+(*
+ * SM_4REL4IN
+ * -------------
+ *)
+FUNCTION_BLOCK SM_4REL4IN
+  VAR_INPUT
+    STACK : SINT;
+    RELAY1 : BOOL;
+    RELAY2 : BOOL;
+    RELAY3 : BOOL;
+    RELAY4 : BOOL;
+  END_VAR
+  VAR_OUTPUT
+    OPTO1 : BOOL;
+    OPTO2 : BOOL;
+    OPTO3 : BOOL;
+    OPTO4 : BOOL;
+    AC_OPTO1 : BOOL;
+    AC_OPTO2 : BOOL;
+    AC_OPTO3 : BOOL;
+    AC_OPTO4 : BOOL;
+    PWM1 : REAL;
+    PWM2 : REAL;
+    PWM3 : REAL;
+    PWM4 : REAL;
+    FREQ1 : UINT;
+    FREQ2 : UINT;
+    FREQ3 : UINT;
+    FREQ4 : UINT;
+    BUTTON : BOOL;
+  END_VAR
+  OPTO1 := 0;
+END_FUNCTION_BLOCK
+
+
+(*
+ * SM_RTD
+ * -------------
+ *)
+FUNCTION_BLOCK SM_RTD
+  VAR_INPUT
+    STACK : SINT;
+  END_VAR
+  VAR_OUTPUT
+    TEMP1 : REAL;
+    TEMP2 : REAL;
+    TEMP3 : REAL;
+    TEMP4 : REAL;
+    TEMP5 : REAL;
+    TEMP6 : REAL;
+    TEMP7 : REAL;
+    TEMP8 : REAL;
+  END_VAR
+  TEMP1 := 0.0;
+END_FUNCTION_BLOCK
+
+
+(*
+ * SM_INDUSTRIAL
+ * -------------
+ *)
+FUNCTION_BLOCK SM_INDUSTRIAL
+  VAR_INPUT
+    STACK : SINT;
+    LED1 : BOOL;
+    LED2 : BOOL;
+    LED3 : BOOL;
+    LED4 : BOOL;
+    Q0_10V1 : REAL;
+    Q0_10V2 : REAL;
+    Q0_10V3 : REAL;
+    Q0_10V4 : REAL;
+    Q4_20MA1 : REAL;
+    Q4_20MA2 : REAL;
+    Q4_20MA3 : REAL;
+    Q4_20MA4 : REAL;
+    QOD1 : REAL;
+    QOD2 : REAL;
+    QOD3 : REAL;
+    QOD4 : REAL;
+  END_VAR
+  VAR_OUTPUT
+    OPTO1 : BOOL;
+    OPTO2 : BOOL;
+    OPTO3 : BOOL;
+    OPTO4 : BOOL;
+    I0_10V1 : REAL;
+    I0_10V2 : REAL;
+    I0_10V3 : REAL;
+    I0_10V4 : REAL;
+    I4_20MA1 : REAL;
+    I4_20MA2 : REAL;
+    I4_20MA3 : REAL;
+    I4_20MA4 : REAL;
+    OWB_T1 : REAL;
+    OWB_T2 : REAL;
+    OWB_T3 : REAL;
+    OWB_T4 : REAL; 
+  END_VAR
+  OPTO1 := 0;
+END_FUNCTION_BLOCK
+
+
+
+(*
+ * SM_BUILDING
+ * -------------
+ *)
+FUNCTION_BLOCK SM_BAS
+  VAR_INPUT
+    STACK : SINT;
+	TRIAC1 : BOOL;
+	TRIAC2 : BOOL;
+	TRIAC3 : BOOL;
+	TRIAC4 : BOOL;
+    LED1 : BOOL;
+    LED2 : BOOL;
+    LED3 : BOOL;
+    LED4 : BOOL;
+	IN1_T : UINT;
+	IN2_T : UINT;
+	IN3_T : UINT;
+	IN4_T : UINT;
+	IN5_T : UINT;
+	IN6_T : UINT;
+	IN7_T : UINT;
+	IN8_T : UINT;
+    Q0_10V1 : REAL;
+    Q0_10V2 : REAL;
+    Q0_10V3 : REAL;
+    Q0_10V4 : REAL;
+  END_VAR
+  VAR_OUTPUT
+    UNIV1 : REAL;
+    UNIV2 : REAL;
+    UNIV3 : REAL;
+    UNIV4 : REAL;
+	UNIV5 : REAL;
+    UNIV6 : REAL;
+    UNIV7 : REAL;
+    UNIV8 : REAL;
+    DRY_C1 : BOOL;
+    DRY_C2 : BOOL;
+    DRY_C3 : BOOL;
+    DRY_C4 : BOOL;
+	DRY_C5 : BOOL;
+    DRY_C6 : BOOL;
+    DRY_C7 : BOOL;
+    DRY_C8 : BOOL;
+	OWB_T1 : REAL;
+    OWB_T2 : REAL;
+    OWB_T3 : REAL;
+    OWB_T4 : REAL; 
+  END_VAR
+  DRY_C1 := 0;
+END_FUNCTION_BLOCK
