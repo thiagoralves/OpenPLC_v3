@@ -1886,7 +1886,9 @@ __end:
 
 
 #include "communication.h"
-#include "sm_cards.h"
+#if defined(__linux__) && defined(__arm__)
+    #include "sm_cards.h"
+#endif
 
 
 
