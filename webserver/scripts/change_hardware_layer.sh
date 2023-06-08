@@ -107,6 +107,13 @@ elif [ "$1" == "psm_win" ]; then
     echo "Setting Platform"
     echo win > ../scripts/openplc_platform
     echo psm_win > ../scripts/openplc_driver
+    
+elif [ "$1" == "sequent" ]; then
+    echo "Activating Sequent Microsystems HAT's driver"
+    cp ./hardware_layers/sequent.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo rpi > ../scripts/openplc_platform
+    echo sequent > ../scripts/openplc_driver
 
 else
     echo "Error: Invalid hardware layer"
