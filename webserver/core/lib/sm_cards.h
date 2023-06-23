@@ -245,6 +245,74 @@ typedef struct {
   __DECLARE_VAR(REAL,OWB_T4)
 } SM_BAS;
 
+
+// SM_HOME 
+// Data part
+typedef struct {
+  // FB Interface - IN, OUT, IN_OUT variables
+  __DECLARE_VAR(BOOL,EN)
+  __DECLARE_VAR(BOOL,ENO)
+  __DECLARE_VAR(SINT,STACK)
+  __DECLARE_VAR(BOOL,RELAY1)
+  __DECLARE_VAR(BOOL,RELAY2)
+  __DECLARE_VAR(BOOL,RELAY3)
+  __DECLARE_VAR(BOOL,RELAY4)
+  __DECLARE_VAR(BOOL,RELAY5)
+  __DECLARE_VAR(BOOL,RELAY6)
+  __DECLARE_VAR(BOOL,RELAY7)
+  __DECLARE_VAR(BOOL,RELAY8)
+  __DECLARE_VAR(REAL,Q0_10V1)
+  __DECLARE_VAR(REAL,Q0_10V2)
+  __DECLARE_VAR(REAL,Q0_10V3)
+  __DECLARE_VAR(REAL,Q0_10V4)
+  __DECLARE_VAR(REAL,QOD1)
+  __DECLARE_VAR(REAL,QOD2)
+  __DECLARE_VAR(REAL,QOD3)
+  __DECLARE_VAR(REAL,QOD4)
+  __DECLARE_VAR(BOOL,OPTO1)
+  __DECLARE_VAR(BOOL,OPTO2)
+  __DECLARE_VAR(BOOL,OPTO3)
+  __DECLARE_VAR(BOOL,OPTO4)
+  __DECLARE_VAR(BOOL,OPTO5)
+  __DECLARE_VAR(BOOL,OPTO6)
+  __DECLARE_VAR(BOOL,OPTO7)
+  __DECLARE_VAR(BOOL,OPTO8)
+  __DECLARE_VAR(REAL,ADC1)
+  __DECLARE_VAR(REAL,ADC2)
+  __DECLARE_VAR(REAL,ADC3)
+  __DECLARE_VAR(REAL,ADC4)
+  __DECLARE_VAR(REAL,ADC5)
+  __DECLARE_VAR(REAL,ADC6)
+  __DECLARE_VAR(REAL,ADC7)
+  __DECLARE_VAR(REAL,ADC8)
+  __DECLARE_VAR(REAL,OWB_T1)
+  __DECLARE_VAR(REAL,OWB_T2)
+  __DECLARE_VAR(REAL,OWB_T3)
+  __DECLARE_VAR(REAL,OWB_T4)
+} SM_HOME;
+
+
+
+// SM_8MOSFET 
+// Data part
+typedef struct {
+  // FB Interface - IN, OUT, IN_OUT variables
+  __DECLARE_VAR(BOOL,EN)
+  __DECLARE_VAR(BOOL,ENO)
+  __DECLARE_VAR(SINT,STACK)
+  __DECLARE_VAR(BOOL,MOS1)
+  __DECLARE_VAR(BOOL,MOS2)
+  __DECLARE_VAR(BOOL,MOS3)
+  __DECLARE_VAR(BOOL,MOS4)
+  __DECLARE_VAR(BOOL,MOS5)
+  __DECLARE_VAR(BOOL,MOS6)
+  __DECLARE_VAR(BOOL,MOS7)
+  __DECLARE_VAR(BOOL,MOS8)
+  // FB private variables - TEMP, private and located variables
+  __DECLARE_VAR(SINT,DUMMY)
+} SM_8MOSFET;
+
+
 /************************************************************************
  *                      END OF SM_CARDS LIB BLOCKS                      *
 ************************************************************************/
@@ -1000,4 +1068,221 @@ __end:
   return;
 } // SM_BAS_body__()
 
+
+
+static void SM_HOME_init__(SM_HOME *data__, BOOL retain) {
+  __INIT_VAR(data__->EN,__BOOL_LITERAL(TRUE),retain)
+  __INIT_VAR(data__->ENO,__BOOL_LITERAL(TRUE),retain)
+  __INIT_VAR(data__->STACK,0,retain)
+  __INIT_VAR(data__->RELAY1,0,retain)
+  __INIT_VAR(data__->RELAY2,0,retain)
+  __INIT_VAR(data__->RELAY3,0,retain)
+  __INIT_VAR(data__->RELAY4,0,retain)
+  __INIT_VAR(data__->RELAY5,0,retain)
+  __INIT_VAR(data__->RELAY6,0,retain)
+  __INIT_VAR(data__->RELAY7,0,retain)
+  __INIT_VAR(data__->RELAY8,0,retain)
+  __INIT_VAR(data__->Q0_10V1,0,retain)
+  __INIT_VAR(data__->Q0_10V2,0,retain)
+  __INIT_VAR(data__->Q0_10V3,0,retain)
+  __INIT_VAR(data__->Q0_10V4,0,retain)
+  __INIT_VAR(data__->QOD1,0,retain)
+  __INIT_VAR(data__->QOD2,0,retain)
+  __INIT_VAR(data__->QOD3,0,retain)
+  __INIT_VAR(data__->QOD4,0,retain)
+  __INIT_VAR(data__->OPTO1,0,retain)
+  __INIT_VAR(data__->OPTO2,0,retain)
+  __INIT_VAR(data__->OPTO3,0,retain)
+  __INIT_VAR(data__->OPTO4,0,retain)
+  __INIT_VAR(data__->OPTO5,0,retain)
+  __INIT_VAR(data__->OPTO6,0,retain)
+  __INIT_VAR(data__->OPTO7,0,retain)
+  __INIT_VAR(data__->OPTO8,0,retain)
+  __INIT_VAR(data__->ADC1,0,retain)
+  __INIT_VAR(data__->ADC2,0,retain)
+  __INIT_VAR(data__->ADC3,0,retain)
+  __INIT_VAR(data__->ADC4,0,retain)
+  __INIT_VAR(data__->ADC5,0,retain)
+  __INIT_VAR(data__->ADC6,0,retain)
+  __INIT_VAR(data__->ADC7,0,retain)
+  __INIT_VAR(data__->ADC8,0,retain)
+  __INIT_VAR(data__->OWB_T1,0,retain)
+  __INIT_VAR(data__->OWB_T2,0,retain)
+  __INIT_VAR(data__->OWB_T3,0,retain)
+  __INIT_VAR(data__->OWB_T4,0,retain)
+}
+
+// Code part
+
+int homeSetRelays(uint8_t, uint8_t);
+int homeSet0_10Vout(uint8_t, uint8_t, float);
+int homeSetOD(uint8_t, uint8_t, float);
+int homeGetOpto(uint8_t, uint8_t*);
+int homeGetADC(uint8_t, uint8_t, float*);
+int homeGet1WbTemp(uint8_t, uint8_t, float*);
+
+static void SM_HOME_body__(SM_HOME *data__) {
+  // Control execution
+  if (!__GET_VAR(data__->EN)) {
+    __SET_VAR(data__->,ENO,,__BOOL_LITERAL(FALSE));
+    return;
+  }
+  else {
+    __SET_VAR(data__->,ENO,,__BOOL_LITERAL(TRUE));
+  }
+  uint8_t output_byte = __GET_VAR(data__->RELAY8) << 7 |
+						__GET_VAR(data__->RELAY7) << 6 |
+						__GET_VAR(data__->RELAY6) << 5 |
+						__GET_VAR(data__->RELAY5) << 4 |
+						__GET_VAR(data__->RELAY4) << 3 | 
+                        __GET_VAR(data__->RELAY3) << 2 | 
+                        __GET_VAR(data__->RELAY2) << 1 | 
+                        __GET_VAR(data__->RELAY1);
+  
+  homeSetRelays(__GET_VAR(data__->STACK), output_byte);
+  #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
+  uint8_t input_byte = 0;
+  if(0 == homeGetOpto(__GET_VAR(data__->STACK), &input_byte)){
+	__SET_VAR(data__->,OPTO1,,bitRead(input_byte, 0));
+	__SET_VAR(data__->,OPTO2,,bitRead(input_byte, 1));
+	__SET_VAR(data__->,OPTO3,,bitRead(input_byte, 2));
+	__SET_VAR(data__->,OPTO4,,bitRead(input_byte, 3));
+	__SET_VAR(data__->,OPTO5,,bitRead(input_byte, 4));
+	__SET_VAR(data__->,OPTO6,,bitRead(input_byte, 5));
+	__SET_VAR(data__->,OPTO7,,bitRead(input_byte, 6));
+	__SET_VAR(data__->,OPTO8,,bitRead(input_byte, 7));	
+  }
+  float val = 0;
+
+// ---------  ADC  inputs	------------------
+  if( 0 == homeGetADC(__GET_VAR(data__->STACK), 0, &val))
+  {
+	__SET_VAR(data__->,ADC1,,val);
+  }
+  if( 0 == homeGetADC(__GET_VAR(data__->STACK), 1, &val))
+  {
+	__SET_VAR(data__->,ADC2,,val);
+  }
+  if( 0 == homeGetADC(__GET_VAR(data__->STACK), 2, &val))
+  {
+	__SET_VAR(data__->,ADC3,,val);
+  }
+  if( 0 == homeGetADC(__GET_VAR(data__->STACK), 3, &val))
+  {
+	__SET_VAR(data__->,ADC4,,val);
+  }
+  if( 0 == homeGetADC(__GET_VAR(data__->STACK), 4, &val))
+  {
+	__SET_VAR(data__->,ADC5,,val);
+  }
+  if( 0 == homeGetADC(__GET_VAR(data__->STACK), 5, &val))
+  {
+	__SET_VAR(data__->,ADC6,,val);
+  }
+  if( 0 == homeGetADC(__GET_VAR(data__->STACK), 6, &val))
+  {
+	__SET_VAR(data__->,ADC7,,val);
+  }
+  if( 0 == homeGetADC(__GET_VAR(data__->STACK), 7, &val))
+  {
+	__SET_VAR(data__->,ADC8,,val);
+  }
+ 
+
+// --------------- One wire bus temperature inputs (dsb20 sensors)
+  if( 0 == homeGet1WbTemp(__GET_VAR(data__->STACK), 0, &val))
+  {
+	__SET_VAR(data__->,OWB_T1,,val);
+  }
+  if( 0 == homeGet1WbTemp(__GET_VAR(data__->STACK), 1, &val))
+  {
+	__SET_VAR(data__->,OWB_T2,,val);
+  }
+  if( 0 == homeGet1WbTemp(__GET_VAR(data__->STACK), 2, &val))
+  {
+	__SET_VAR(data__->,OWB_T3,,val);
+  }
+  if( 0 == homeGet1WbTemp(__GET_VAR(data__->STACK), 3, &val))
+  {
+	__SET_VAR(data__->,OWB_T4,,val);
+  }
+
+// ----------------- 0-10V outputs ---------------------------------------
+  homeSet0_10Vout(__GET_VAR(data__->STACK), 0, __GET_VAR(data__->Q0_10V1));
+  homeSet0_10Vout(__GET_VAR(data__->STACK), 1, __GET_VAR(data__->Q0_10V2));
+  homeSet0_10Vout(__GET_VAR(data__->STACK), 2, __GET_VAR(data__->Q0_10V3));
+  homeSet0_10Vout(__GET_VAR(data__->STACK), 3, __GET_VAR(data__->Q0_10V4));
+
+  // -------------- Open-Drain Outputs -------------------------------------
+  homeSetOD(__GET_VAR(data__->STACK), 0, __GET_VAR(data__->QOD1));
+  homeSetOD(__GET_VAR(data__->STACK), 1, __GET_VAR(data__->QOD2));
+  homeSetOD(__GET_VAR(data__->STACK), 2, __GET_VAR(data__->QOD3));
+  homeSetOD(__GET_VAR(data__->STACK), 3, __GET_VAR(data__->QOD4));
+  
+
+
+goto __end;
+
+__end:
+  return;
+} // SM_HOME_body__()
+
+
+static void SM_8MOSFET_init__(SM_8MOSFET *data__, BOOL retain) {
+  __INIT_VAR(data__->EN,__BOOL_LITERAL(TRUE),retain)
+  __INIT_VAR(data__->ENO,__BOOL_LITERAL(TRUE),retain)
+  __INIT_VAR(data__->STACK,0,retain)
+  __INIT_VAR(data__->DUMMY,0,retain)
+  __INIT_VAR(data__->MOS1,0,retain)
+  __INIT_VAR(data__->MOS2,0,retain)
+  __INIT_VAR(data__->MOS3,0,retain)
+  __INIT_VAR(data__->MOS4,0,retain)
+  __INIT_VAR(data__->MOS5,0,retain)
+  __INIT_VAR(data__->MOS6,0,retain)
+  __INIT_VAR(data__->MOS7,0,retain)
+  __INIT_VAR(data__->MOS8,0,retain)
+
+}
+
+// Code part
+
+int mosfet8Init(int);
+int mosfets8Set(uint8_t, uint8_t);
+
+static void SM_8MOSFET_body__(SM_8MOSFET *data__) {
+	static uint8_t init = 0;
+  // Control execution
+  if (!__GET_VAR(data__->EN)) {
+    __SET_VAR(data__->,ENO,,__BOOL_LITERAL(FALSE));
+    return;
+  }
+  else {
+    __SET_VAR(data__->,ENO,,__BOOL_LITERAL(TRUE));
+  }
+  // Dummy code - just for editor simulation. Real code is inside sm_cards.h file on arduino folder
+  __SET_VAR(data__->,DUMMY,,0);
+   if(init == 0)
+  {
+	  if(0 == mosfet8Init(__GET_VAR(data__->STACK)))
+	  {
+		  init = 1;
+	  }
+  }
+  else // already init
+  {
+	uint8_t output_byte = __GET_VAR(data__->MOS8) << 7 | 
+                        __GET_VAR(data__->MOS7) << 6 | 
+                        __GET_VAR(data__->MOS6) << 5 | 
+                        __GET_VAR(data__->MOS5) << 4 | 
+                        __GET_VAR(data__->MOS4) << 3 | 
+                        __GET_VAR(data__->MOS3) << 2 | 
+                        __GET_VAR(data__->MOS2) << 1 | 
+                        __GET_VAR(data__->MOS1);
+	mosfets8Set(__GET_VAR(data__->STACK), output_byte);
+  }
+  goto __end;
+
+__end:
+  return;
+} // SM_8MOSFET_body__()
 
