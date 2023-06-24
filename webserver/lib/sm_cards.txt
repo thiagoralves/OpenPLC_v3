@@ -273,3 +273,78 @@ FUNCTION_BLOCK SM_BAS
   END_VAR
   DRY_C1 := 0;
 END_FUNCTION_BLOCK
+
+
+
+(*
+ * SM_HOME
+ * -------------
+ *)
+FUNCTION_BLOCK SM_HOME
+  VAR_INPUT
+    STACK : SINT;
+    RELAY1 : BOOL;
+    RELAY2 : BOOL;
+    RELAY3 : BOOL;
+    RELAY4 : BOOL;
+	RELAY5 : BOOL;
+    RELAY6 : BOOL;
+    RELAY7 : BOOL;
+    RELAY8 : BOOL;
+    Q0_10V1 : REAL;
+    Q0_10V2 : REAL;
+    Q0_10V3 : REAL;
+    Q0_10V4 : REAL;
+    QOD1 : REAL;
+    QOD2 : REAL;
+    QOD3 : REAL;
+    QOD4 : REAL;
+  END_VAR
+  VAR_OUTPUT
+    OPTO1 : BOOL;
+    OPTO2 : BOOL;
+    OPTO3 : BOOL;
+    OPTO4 : BOOL;
+	OPTO5 : BOOL;
+    OPTO6 : BOOL;
+    OPTO7 : BOOL;
+    OPTO8 : BOOL;
+    ADC1 : REAL;
+    ADC2 : REAL;
+    ADC3 : REAL;
+    ADC4 : REAL;
+    ADC5 : REAL;
+    ADC6 : REAL;
+    ADC7 : REAL;
+    ADC8 : REAL;
+    OWB_T1 : REAL;
+    OWB_T2 : REAL;
+    OWB_T3 : REAL;
+    OWB_T4 : REAL; 
+  END_VAR
+  OPTO1 := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * SM_8MOSFET
+ * -------------
+ *)
+FUNCTION_BLOCK SM_8MOSFET
+  VAR_INPUT
+    STACK : SINT;
+    MOS1 : BOOL;
+    MOS2 : BOOL;
+    MOS3 : BOOL;
+    MOS4 : BOOL;
+    MOS5 : BOOL;
+    MOS6 : BOOL;
+    MOS7 : BOOL;
+    MOS8 : BOOL;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := STACK;
+END_FUNCTION_BLOCK
+
+

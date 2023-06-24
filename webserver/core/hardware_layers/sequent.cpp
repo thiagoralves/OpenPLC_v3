@@ -183,6 +183,7 @@ int i2cMemWrite(int dev, int add, uint8_t *buff, int size)
 //------------------------------------------------------------------------------
 
 #define RELAY8_HW_I2C_BASE_ADD 0x20
+#define RELAY8_HW_I2C_BASE_ALT_ADD 0x38
 #define RELAY8_INPORT_REG_ADD	0x00
 #define RELAY8_OUTPORT_REG_ADD	0x01
 #define RELAY8_POLINV_REG_ADD	0x02
@@ -1341,7 +1342,321 @@ int basGet1WbTemp(uint8_t stack, uint8_t channel, float *val)
 	return OK;
 }
 
+//------------------------------------------------------------------------------
+// Home Automation 8-Layer Stackable HAT for Raspberry Pi
+//------------------------------------------------------------------------------
 
+
+#define I2C_HOME_ADDRESS_BASE 0x28
+
+#define HOME_I2C_RELAY_ADD 0x00
+#define HOME_I2C_0_10V_OUT_ADD 40
+#define HOME_I2C_OD_ADD 48
+#define HOME_I2C_OPTO_ADD 3
+#define HOME_I2C_ADC_ADD 24
+#define HOME_I2C_1W_TEMP_ADD 222
+#define HOME_I2C_REVISION_MAJOR_ADD 122
+
+#define HOME_ADC_CH_NO	8
+#define HOME_DAC_CH_NO	4
+
+
+int homeCardCheck(uint8_t stack)
+{
+	uint8_t add = 0;
+
+	if ( (stack < 0) || (stack > 7))
+	{
+		return ERROR;
+	}
+	add = stack + I2C_HOME_ADDRESS_BASE;
+	return i2cSetup(add);
+}
+
+int homeInit(int stack)
+{
+	int dev = -1;
+	uint8_t add = 0;
+	uint8_t buff[2];
+	uint16_t val = 0;
+
+	dev = homeCardCheck(stack);
+	if (dev < 0)
+	{
+		return ERROR;
+	}
+
+	if (ERROR == i2cMemRead(dev, HOME_I2C_REVISION_MAJOR_ADD, buff, 2))
+	{
+		return ERROR;
+	}
+
+	return OK;
+}
+
+int homeSetRelays(uint8_t stack, uint8_t value)
+{
+	static uint8_t prevRelays[STACK_LEVELS] = {0, 0, 0, 0, 0, 0, 0, 0};
+	int dev = -1;
+	uint8_t buff[2];
+	if (stack >= STACK_LEVELS)
+	{
+		return ERROR;
+	}
+	if (prevRelays[stack] == value)
+	{
+		return OK; // prevent usless transactions on I2C bus
+	}
+	dev = homeCardCheck(stack);
+	if (dev < 0)
+	{
+		return ERROR;
+	}
+
+	buff[0] =  value ;
+	if (ERROR == i2cMemWrite(dev, HOME_I2C_RELAY_ADD, buff, 1))
+	{
+		return ERROR;
+	}
+	prevRelays[stack] = value;
+	return OK;
+}
+
+
+int homeSet0_10Vout(uint8_t stack, uint8_t channel, float val)
+{
+	uint8_t buff[2];
+	int dev = -1;
+	uint16_t aux16 = 0;
+
+	if (channel >= HOME_DAC_CH_NO || val > BAS_VOLT_MAX)
+	{
+		return ERROR;
+	}
+	aux16 = (uint16_t)(val * VOLT_TO_MILIVOLT);
+	dev = homeCardCheck(stack);
+	if (dev < 0)
+	{
+		return ERROR;
+	}
+	memcpy(buff, &aux16, 2);
+	if (OK
+		!= i2cMemWrite(dev, HOME_I2C_0_10V_OUT_ADD + 2 * channel, buff, 2))
+	{
+		return ERROR;
+	}
+
+	return OK;
+}
+
+int homeSetOD(uint8_t stack, uint8_t channel, float val)
+{
+	uint8_t buff[2];
+	int dev = -1;
+	uint16_t aux16 = 0;
+
+	if (channel >= HOME_DAC_CH_NO || val > 100 || val < 0)
+	{
+		return ERROR;
+	}
+	aux16 = (uint16_t)(val * 100);
+	dev = homeCardCheck(stack);
+	if (dev < 0)
+	{
+		return ERROR;
+	}
+	memcpy(buff, &aux16, 2);
+	if (OK
+		!= i2cMemWrite(dev, HOME_I2C_OD_ADD + 2 * channel, buff, 2))
+	{
+		return ERROR;
+	}
+	return OK;
+}
+
+int homeGetOpto(uint8_t stack, uint8_t* val)
+{
+	int dev = -1;
+
+	if (val == NULL)
+	{
+		return ERROR;
+	}
+	dev = homeCardCheck(stack);
+	if (dev < 0)
+	{
+		return ERROR;
+	}
+	return i2cMemRead(dev, HOME_I2C_OPTO_ADD, val, 1);
+}
+
+int homeGetADC(uint8_t stack, uint8_t channel, float* val)
+{
+	uint8_t buff[2];
+	int dev = -1;
+	uint16_t aux16 = 0;
+
+	if (channel >= HOME_ADC_CH_NO || NULL == val)
+	{
+		return ERROR;
+	}
+	dev = homeCardCheck(stack);
+	if (dev < 0)
+	{
+		return ERROR;
+	}
+	if (OK != i2cMemRead(dev, HOME_I2C_ADC_ADD + 2 * channel, buff, 2))
+	{
+		return ERROR;
+	}
+	memcpy(&aux16, buff, 2);
+
+	*val = (float)aux16/ VOLT_TO_MILIVOLT;
+
+	return OK;
+}
+
+int homeGet1WbTemp(uint8_t stack, uint8_t channel, float *val)
+{
+	uint8_t buff[2];
+	int dev = -1;
+	int16_t aux16 = 0;
+
+	if (channel > IND_OWB_CH_MAX || NULL == val)
+	{
+		return ERROR;
+	}
+	dev = homeCardCheck(stack);
+	if (dev < 0)
+	{
+		return ERROR;
+	}
+	if (OK != i2cMemRead(dev, HOME_I2C_1W_TEMP_ADD + 2 * channel, buff, 2))
+	{
+		return ERROR;
+	}
+	memcpy(&aux16, buff, 2);
+	*val = (float)aux16 / OWB_TEMP_SCALE;
+	return OK;
+}
+
+
+//---------------------------------------------------------------------------------------
+
+
+const uint8_t mosfet8MaskRemap[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40,
+	0x80};
+	uint8_t mosfetBaseAdd[8] = {RELAY8_HW_I2C_BASE_ADD, RELAY8_HW_I2C_BASE_ADD, RELAY8_HW_I2C_BASE_ADD, RELAY8_HW_I2C_BASE_ADD, RELAY8_HW_I2C_BASE_ADD, RELAY8_HW_I2C_BASE_ADD, RELAY8_HW_I2C_BASE_ADD, RELAY8_HW_I2C_BASE_ADD};
+
+uint8_t mosfet8ToIO(uint8_t relay)
+{
+	uint8_t i;
+	uint8_t val = 0;
+	for (i = 0; i < 8; i++)
+	{
+		if ( (relay & (1 << i)) != 0)
+			val += mosfet8MaskRemap[i];
+	}
+	return val;
+}
+
+int mosfet8CardCheck(int stack)
+{
+	uint8_t add = 0;
+	uint8_t buff[2];
+	int dev = -1;
+
+	if ( (stack < 0) || (stack > 7))
+	{
+		return ERROR;
+	}
+	add = (stack + mosfetBaseAdd[stack]) ^ 0x07;
+	dev = i2cSetup(add);
+	if(ERROR == i2cMemRead(dev, RELAY8_CFG_REG_ADD, buff, 1))
+	{
+		if(mosfetBaseAdd[stack] == RELAY8_HW_I2C_BASE_ADD)
+		{
+			mosfetBaseAdd[stack] = RELAY8_HW_I2C_BASE_ALT_ADD;
+		}
+		else
+		{
+			mosfetBaseAdd[stack] = RELAY8_HW_I2C_BASE_ADD;
+		}
+		add = (stack + mosfetBaseAdd[stack]) ^ 0x07;
+		dev = i2cSetup(add);
+	}
+	
+	return dev;
+}
+
+int mosfet8Init(int stack)
+{
+	int dev = -1;
+	uint8_t add = 0;
+	uint8_t buff[2];
+
+	dev = mosfet8CardCheck(stack);
+	if (dev <= 0)
+	{
+		return ERROR;
+	}
+
+	if (ERROR == i2cMemRead(dev, RELAY8_CFG_REG_ADD, buff, 1))
+	{
+		return ERROR;
+	}
+	if (OK == i2cMemRead(dev, RELAY8_REG_COUNT, buff, 1)) //16 bits I/O expander found
+	{
+		return ERROR;
+	}
+	if (buff[0] != 0) //non initialized I/O Expander
+	{
+		// make all I/O pins output
+		buff[0] = 0;
+		if (OK > i2cMemWrite(dev, RELAY8_CFG_REG_ADD, buff, 1))
+		{
+			return ERROR;
+		}
+		// put all pins in 0-logic state
+		buff[0] = 0;
+		if (OK > i2cMemWrite(dev, RELAY8_OUTPORT_REG_ADD, buff, 1))
+		{
+			return ERROR;
+		}
+	}
+	return OK;
+}
+
+int mosfets8Set(uint8_t stack, uint8_t val)
+{
+	uint8_t buff[2];
+	int dev = -1;
+	static uint8_t mosfetsOldVal[STACK_LEVELS] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+	if (stack >= 8)
+	{
+		return ERROR;
+	}
+
+	if (mosfetsOldVal[stack] == val)
+	{
+		return OK;
+	}
+	dev = mosfet8CardCheck(stack);
+	if (dev <= 0)
+	{
+		return ERROR;
+	}
+
+	buff[0] = mosfet8ToIO(val);
+
+	if (OK != i2cMemWrite(dev, RELAY8_OUTPORT_REG_ADD, buff, 1))
+	{
+		return ERROR;
+	}
+	mosfetsOldVal[stack] = val;
+	return OK;
+}
 
 //-----------------------------------------------------------------------------
 // This function is called by the main OpenPLC routine when it is initializing.
