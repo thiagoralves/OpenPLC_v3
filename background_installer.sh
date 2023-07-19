@@ -179,18 +179,22 @@ WantedBy=multi-user.target" >> openplc.service
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
     cp ./utils/apt-cyg/apt-cyg ./
-    if [ -f "/usr/bin/wget" ]
-    then
-        echo "found wget. Skipping install"
-    else
-        echo "wget not found. Installing from binary"
-        cp ./utils/apt-cyg/wget.exe /bin
-    fi
     install apt-cyg /bin
     apt-cyg update
     apt-cyg install lynx
+    
+    echo "Installing Python 2.7"
+    cd utils/python2
+    tar -xf python27-2.7.18-4.tar.xz
+    rsync -a ./etc/ /etc/
+    rsync -a ./usr/ /usr/
+    /etc/postinstall/python2.sh
+    ln -s /usr/bin/python2.7.exe /usr/bin/python2
+    cd ..
+    cd ..
+    
     # apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
-    apt-cyg install gcc-core gcc-g++ git pkg-config automake autoconf libtool make python2 python2-pip sqlite3 python3
+    apt-cyg install gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3 python3
     lynx -source https://bootstrap.pypa.io/pip/2.7/get-pip.py > get-pip.py
     lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
     /usr/bin/python2 get-pip.py
