@@ -47,8 +47,8 @@ function linux_install_deps {
         $1 yum -q -y install python2.7 python2-devel
      #Installing dependencies for openSUSE
     elif [ "$INSTALLER" = "zypper" ]; then
-        zypper in -y curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-pip
-        zypper in -y python python2-pip python-xml 
+        $1 zypper in -y curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-pip
+        $1 zypper in -y python python2-pip python-xml 
     #Installing dependencies for Ubuntu/Mint/Debian
     else
         $1 apt-get update
