@@ -34,6 +34,8 @@ function linux_install_deps {
         INSTALLER="yum"
     elif [ "$OS" = "Red" ]; then
         INSTALLER="yum"
+    elif [ "$OS" = "openSUSE" ]; then
+        INSTALLER="zypper"
     else
         INSTALLER="apt"
     fi
@@ -43,6 +45,10 @@ function linux_install_deps {
         yum check-update
         $1 yum -q -y install curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-pip
         $1 yum -q -y install python2.7 python2-devel
+     #Installing dependencies for openSUSE
+    elif [ "$INSTALLER" = "zypper" ]; then
+        zypper in -y curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-pip
+        zypper in -y python python2-pip python-xml 
     #Installing dependencies for Ubuntu/Mint/Debian
     else
         $1 apt-get update
@@ -306,6 +312,8 @@ elif [ "$1" == "linux" ]; then
     elif [ "$OS" = "CentOS" ]; then
         OS_TYPE="yum"
     elif [ "$OS" = "Red" ]; then
+        OS_TYPE="yum"
+    elif [ "$OS" = "openSUSE" ]; then
         OS_TYPE="yum"
     else
         OS_TYPE="apt"
