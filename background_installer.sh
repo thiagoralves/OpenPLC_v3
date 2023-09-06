@@ -184,6 +184,14 @@ function install_all_libs {
     install_systemd_service "$1"
 }
 
+function finalize_install { (
+    echo "[FINALIZING]"
+    cd "$OPENPLC_DIR/webserver/scripts"
+    ./change_hardware_layer.sh blank_linux
+    ./compile_program.sh blank_program.st
+    cp "start_openplc.sh" "$OPENPLC_DIR"
+) }
+
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
     cp ./utils/apt-cyg/apt-cyg ./
@@ -246,14 +254,7 @@ if [ "$1" == "win" ]; then
     cd "$OPENPLC_DIR"
 
     install_libmodbus
-
-    echo ""
-    echo "[FINALIZING]"
-    cd "$OPENPLC_DIR/webserver/scripts"
-    ./change_hardware_layer.sh blank
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh "$OPENPLC_DIR"
-
+    finalize_install
 
 elif [ "$1" == "linux" ]; then
 
@@ -292,12 +293,7 @@ elif [ "$1" == "linux" ]; then
         sudo cp /usr/local/lib/lib*.* /lib64/
     fi
     
-    echo ""
-    echo "[FINALIZING]"
-    cd "$OPENPLC_DIR/webserver/scripts"
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp "start_openplc.sh" "$OPENPLC_DIR"
+    finalize_install
 
 
 elif [ "$1" == "docker" ]; then
@@ -305,13 +301,7 @@ elif [ "$1" == "docker" ]; then
     linux_install_deps
     install_py_deps
     install_all_libs
-
-    echo ""
-    echo "[FINALIZING]"
-    cd "$OPENPLC_DIR/webserver/scripts"
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh "$OPENPLC_DIR"
+    finalize_install
 
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
@@ -323,15 +313,7 @@ elif [ "$1" == "rpi" ]; then
     install_py_deps "sudo -H" 
 
     install_all_libs sudo
-
-    echo ""
-    echo "[FINALIZING]"
-    cd "$OPENPLC_DIR/webserver/scripts"
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh "$OPENPLC_DIR"
-
-
+    finalize_install
 
 elif [ "$1" == "neuron" ]; then
     echo "Installing OpenPLC on UniPi Neuron PLC"
@@ -351,28 +333,12 @@ elif [ "$1" == "neuron" ]; then
     install_py_deps "sudo -H"
 
     install_all_libs sudo
-
-    echo ""
-    echo "[FINALIZING]"
-    cd "$OPENPLC_DIR/webserver/scripts"
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh "$OPENPLC_DIR"
-
-
+    finalize_install
 
 elif [ "$1" == "custom" ]; then
     echo "Installing OpenPLC on Custom Platform"
-
     install_all_libs
-
-    echo ""
-    echo "[FINALIZING]"
-    cd "$OPENPLC_DIR/webserver/scripts"
-    ./change_hardware_layer.sh blank_linux
-    ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh "$OPENPLC_DIR"
-
+    finalize_install
 
 else
     echo ""
