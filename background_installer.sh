@@ -63,8 +63,7 @@ function install_py_deps {
     $1 pip3 install pymodbus==2.5.3
 }
 
-function install_all_libs {
-    echo ""
+function install_matiec { (
     echo "[MATIEC COMPILER]"
     cd "$OPENPLC_DIR/utils/matiec_src"
     autoreconf -i
@@ -76,9 +75,9 @@ function install_all_libs {
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd "$OPENPLC_DIR"
+) }
 
-    echo ""
+function install_st_libs { (
     echo "[ST OPTIMIZER]"
     cd "$OPENPLC_DIR/utils/st_optimizer_src"
     g++ st_optimizer.cpp -o st_optimizer
@@ -88,9 +87,9 @@ function install_all_libs {
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd "$OPENPLC_DIR"
+) }
 
-    echo ""
+function install_glue_generator { (
     echo "[GLUE GENERATOR]"
     cd "$OPENPLC_DIR/utils/glue_generator_src"
     g++ -std=c++11 glue_generator.cpp -o glue_generator
@@ -100,8 +99,9 @@ function install_all_libs {
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd "$OPENPLC_DIR"
+) }
 
+function install_ethercat { (
     if [ "$ETHERCAT_INSTALL" == "install" ]; then
         echo ""
         echo "[EtherCAT]"
@@ -112,10 +112,10 @@ function install_all_libs {
             echo "OpenPLC was NOT installed!"
             exit 1
         fi
-        cd "$OPENPLC_DIR"
     fi
+) }
 
-    echo ""
+function install_opendnp3 { (
     echo "[OPEN DNP3]"
     cd "$OPENPLC_DIR/utils/dnp3_src"
     echo "creating swapfile..."
@@ -134,9 +134,9 @@ function install_all_libs {
     echo "removing swapfile..."
     $1 swapoff swapfile
     $1 rm -f ./swapfile
-    cd "$OPENPLC_DIR"
+) }
 
-    echo ""
+function install_libmodbus { (
     echo "[LIBMODBUS]"
     cd "$OPENPLC_DIR/utils/libmodbus_src"
     ./autogen.sh
@@ -148,10 +148,10 @@ function install_all_libs {
         exit 1
     fi
     $1 ldconfig
-    cd "$OPENPLC_DIR"
+) }
 
+function install_systemd_service() { (
     if [ "$1" == "sudo" ]; then
-        echo ""
         echo "[OPENPLC SERVICE]"
         WORKING_DIR=$(pwd)
         echo -e "[Unit]\n\
@@ -173,6 +173,15 @@ WantedBy=multi-user.target" | $1 tee /lib/systemd/system/openplc.service > /dev/
         $1 systemctl daemon-reload
         $1 systemctl enable openplc
     fi
+) }
+
+function install_all_libs {
+    install_matiec "$1"
+    install_st_libs "$1"
+    install_glue_generator "$1"
+    install_opendnp3 "$1"
+    install_libmodbus "$1"
+    install_systemd_service "$1"
 }
 
 if [ "$1" == "win" ]; then
@@ -212,29 +221,8 @@ if [ "$1" == "win" ]; then
         exit 1
     fi
 
-    echo ""
-    echo "[ST OPTIMIZER]"
-    cd "$OPENPLC_DIR/utils/st_optimizer_src"
-    g++ st_optimizer.cpp -o st_optimizer
-    cp ./st_optimizer.exe "$OPENPLC_DIR/webserver/"
-    if [ $? -ne 0 ]; then
-        echo "Error compiling ST Optimizer"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
-    cd "$OPENPLC_DIR"
-
-    echo ""
-    echo "[GLUE GENERATOR]"
-    cd "$OPENPLC_DIR/utils/glue_generator_src"
-    g++ glue_generator.cpp -o glue_generator
-    cp ./glue_generator.exe "$OPENPLC_DIR/webserver/core"
-    if [ $? -ne 0 ]; then
-        echo "Error compiling Glue Generator"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
-    cd "$OPENPLC_DIR"
+    install_st_libs
+    install_glue_generator
 
     echo ""
     echo "[OPEN DNP3]"
@@ -257,18 +245,7 @@ if [ "$1" == "win" ]; then
     fi
     cd "$OPENPLC_DIR"
 
-    echo ""
-    echo "[LIBMODBUS]"
-    cd "$OPENPLC_DIR/utils/libmodbus_src"
-    ./autogen.sh
-    ./configure
-    make install
-    if [ $? -ne 0 ]; then
-        echo "Error installing Libmodbus"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
-    cd "$OPENPLC_DIR"
+    install_libmodbus
 
     echo ""
     echo "[FINALIZING]"
