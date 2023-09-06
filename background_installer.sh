@@ -77,7 +77,7 @@ function install_matiec { (
     fi
 ) }
 
-function install_st_libs { (
+function install_st_optimizer { (
     echo "[ST OPTIMIZER]"
     cd "$OPENPLC_DIR/utils/st_optimizer_src"
     g++ st_optimizer.cpp -o st_optimizer
@@ -177,7 +177,7 @@ WantedBy=multi-user.target" | $1 tee /lib/systemd/system/openplc.service > /dev/
 
 function install_all_libs {
     install_matiec "$1"
-    install_st_libs "$1"
+    install_st_optimizer "$1"
     install_glue_generator "$1"
     install_opendnp3 "$1"
     install_libmodbus "$1"
@@ -221,7 +221,7 @@ if [ "$1" == "win" ]; then
         exit 1
     fi
 
-    install_st_libs
+    install_st_optimizer
     install_glue_generator
 
     echo ""
