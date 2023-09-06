@@ -181,7 +181,6 @@ function install_all_libs {
     install_glue_generator "$1"
     install_opendnp3 "$1"
     install_libmodbus "$1"
-    install_systemd_service "$1"
 }
 
 function finalize_install { (
@@ -272,7 +271,8 @@ elif [ "$1" == "linux" ]; then
     install_py_deps "sudo -H"
 
     install_all_libs sudo
-    
+    install_systemd_service sudo
+
     #Detecting OS type
     OS_TYPE=""
     OS=$(awk '/NAME=/' /etc/*-release | sed -n '1 p' | cut -d= -f2 | cut -d\" -f2 | cut -d" " -f1)
@@ -295,7 +295,6 @@ elif [ "$1" == "linux" ]; then
     
     finalize_install
 
-
 elif [ "$1" == "docker" ]; then
     echo "Installing OpenPLC on Linux inside Docker"
     linux_install_deps
@@ -313,6 +312,7 @@ elif [ "$1" == "rpi" ]; then
     install_py_deps "sudo -H" 
 
     install_all_libs sudo
+    install_systemd_service sudo
     finalize_install
 
 elif [ "$1" == "neuron" ]; then
@@ -333,11 +333,13 @@ elif [ "$1" == "neuron" ]; then
     install_py_deps "sudo -H"
 
     install_all_libs sudo
+    install_systemd_service sudo
     finalize_install
 
 elif [ "$1" == "custom" ]; then
     echo "Installing OpenPLC on Custom Platform"
     install_all_libs
+    install_systemd_service sudo
     finalize_install
 
 else
