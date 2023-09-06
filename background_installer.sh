@@ -1,4 +1,5 @@
 #!/bin/bash
+OPENPLC_DIR="$PWD"
 
 ETHERCAT_INSTALL=""
 
@@ -63,65 +64,65 @@ function install_py_deps {
 }
 
 function install_all_libs {
-        echo ""
+    echo ""
     echo "[MATIEC COMPILER]"
-    cd utils/matiec_src
+    cd "$OPENPLC_DIR/utils/matiec_src"
     autoreconf -i
     ./configure
     make
-    cp ./iec2c ../../webserver/
+    cp ./iec2c "$OPENPLC_DIR/webserver/"
     if [ $? -ne 0 ]; then
         echo "Error compiling MatIEC"
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd ../..
+    cd "$OPENPLC_DIR"
 
     echo ""
     echo "[ST OPTIMIZER]"
-    cd utils/st_optimizer_src
+    cd "$OPENPLC_DIR/utils/st_optimizer_src"
     g++ st_optimizer.cpp -o st_optimizer
-    cp ./st_optimizer ../../webserver/
+    cp ./st_optimizer "$OPENPLC_DIR/webserver/"
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd ../..
+    cd "$OPENPLC_DIR"
 
     echo ""
     echo "[GLUE GENERATOR]"
-    cd utils/glue_generator_src
+    cd "$OPENPLC_DIR/utils/glue_generator_src"
     g++ -std=c++11 glue_generator.cpp -o glue_generator
-    cp ./glue_generator ../../webserver/core
+    cp ./glue_generator "$OPENPLC_DIR/webserver/core"
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd ../..
+    cd "$OPENPLC_DIR"
 
     if [ "$ETHERCAT_INSTALL" == "install" ]; then
         echo ""
         echo "[EtherCAT]"
-        cd utils/ethercat_src
+        cd "$OPENPLC_DIR/utils/ethercat_src"
         ./install.sh
         if [ $? -ne 0 ]; then
             echo "Error compiling EtherCAT"
             echo "OpenPLC was NOT installed!"
             exit 1
         fi
-        cd ../..
+        cd "$OPENPLC_DIR"
     fi
 
     echo ""
     echo "[OPEN DNP3]"
-    cd utils/dnp3_src
+    cd "$OPENPLC_DIR/utils/dnp3_src"
     echo "creating swapfile..."
     $1 dd if=/dev/zero of=swapfile bs=1M count=1000
     $1 mkswap swapfile
     $1 swapon swapfile
-    cmake ../dnp3_src
+    cmake .
     make
     $1 make install
     if [ $? -ne 0 ]; then
@@ -133,11 +134,11 @@ function install_all_libs {
     echo "removing swapfile..."
     $1 swapoff swapfile
     $1 rm -f ./swapfile
-    cd ../..
+    cd "$OPENPLC_DIR"
 
     echo ""
     echo "[LIBMODBUS]"
-    cd utils/libmodbus_src
+    cd "$OPENPLC_DIR/utils/libmodbus_src"
     ./autogen.sh
     ./configure
     $1 make install
@@ -147,7 +148,7 @@ function install_all_libs {
         exit 1
     fi
     $1 ldconfig
-    cd ../..
+    cd "$OPENPLC_DIR"
 
     if [ "$1" == "sudo" ]; then
         echo ""
@@ -167,9 +168,7 @@ WorkingDirectory=$WORKING_DIR\n\
 ExecStart=$WORKING_DIR/start_openplc.sh\n\
 \n\
 [Install]\n\
-WantedBy=multi-user.target" >> openplc.service
-        $1 cp -rf ./openplc.service /lib/systemd/system/
-        rm -rf openplc.service
+WantedBy=multi-user.target" | $1 tee /lib/systemd/system/openplc.service > /dev/null
         echo "Enabling OpenPLC Service..."
         $1 systemctl daemon-reload
         $1 systemctl enable openplc
@@ -184,14 +183,13 @@ if [ "$1" == "win" ]; then
     apt-cyg install lynx
     
     echo "Installing Python 2.7"
-    cd utils/python2
+    cd "$OPENPLC_DIR/utils/python2"
     tar -xf python27-2.7.18-4.tar.xz
     rsync -a ./etc/ /etc/
     rsync -a ./usr/ /usr/
     /etc/postinstall/python2.sh
     ln -s /usr/bin/python2.7.exe /usr/bin/python2
-    cd ..
-    cd ..
+    cd "$OPENPLC_DIR"
     
     # apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
     apt-cyg install gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3 python3
@@ -216,31 +214,31 @@ if [ "$1" == "win" ]; then
 
     echo ""
     echo "[ST OPTIMIZER]"
-    cd utils/st_optimizer_src
+    cd "$OPENPLC_DIR/utils/st_optimizer_src"
     g++ st_optimizer.cpp -o st_optimizer
-    cp ./st_optimizer.exe ../../webserver/
+    cp ./st_optimizer.exe "$OPENPLC_DIR/webserver/"
     if [ $? -ne 0 ]; then
         echo "Error compiling ST Optimizer"
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd ../..
+    cd "$OPENPLC_DIR"
 
     echo ""
     echo "[GLUE GENERATOR]"
-    cd utils/glue_generator_src
+    cd "$OPENPLC_DIR/utils/glue_generator_src"
     g++ glue_generator.cpp -o glue_generator
-    cp ./glue_generator.exe ../../webserver/core
+    cp ./glue_generator.exe "$OPENPLC_DIR/webserver/core"
     if [ $? -ne 0 ]; then
         echo "Error compiling Glue Generator"
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd ../..
+    cd "$OPENPLC_DIR"
 
     echo ""
     echo "[OPEN DNP3]"
-    cd webserver/core
+    cd "$OPENPLC_DIR/webserver/core"
     if test -f dnp3.cpp; then
         mv dnp3.cpp dnp3.disabled
         if [ $? -ne 0 ]; then
@@ -257,11 +255,11 @@ if [ "$1" == "win" ]; then
             exit 1
         fi
     fi
-    cd ../..
+    cd "$OPENPLC_DIR"
 
     echo ""
     echo "[LIBMODBUS]"
-    cd utils/libmodbus_src
+    cd "$OPENPLC_DIR/utils/libmodbus_src"
     ./autogen.sh
     ./configure
     make install
@@ -270,14 +268,14 @@ if [ "$1" == "win" ]; then
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-    cd ../..
+    cd "$OPENPLC_DIR"
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
+    cd "$OPENPLC_DIR/webserver/scripts"
     ./change_hardware_layer.sh blank
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    cp ./start_openplc.sh "$OPENPLC_DIR"
 
 
 elif [ "$1" == "linux" ]; then
@@ -319,10 +317,10 @@ elif [ "$1" == "linux" ]; then
     
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
+    cd "$OPENPLC_DIR/webserver/scripts"
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    cp "start_openplc.sh" "$OPENPLC_DIR"
 
 
 elif [ "$1" == "docker" ]; then
@@ -333,10 +331,10 @@ elif [ "$1" == "docker" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
+    cd "$OPENPLC_DIR/webserver/scripts"
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    cp ./start_openplc.sh "$OPENPLC_DIR"
 
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
@@ -351,10 +349,10 @@ elif [ "$1" == "rpi" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
+    cd "$OPENPLC_DIR/webserver/scripts"
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    cp ./start_openplc.sh "$OPENPLC_DIR"
 
 
 
@@ -379,10 +377,10 @@ elif [ "$1" == "neuron" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
+    cd "$OPENPLC_DIR/webserver/scripts"
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    cp ./start_openplc.sh "$OPENPLC_DIR"
 
 
 
@@ -393,10 +391,10 @@ elif [ "$1" == "custom" ]; then
 
     echo ""
     echo "[FINALIZING]"
-    cd webserver/scripts
+    cd "$OPENPLC_DIR/webserver/scripts"
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp ./start_openplc.sh ../../
+    cp ./start_openplc.sh "$OPENPLC_DIR"
 
 
 else
