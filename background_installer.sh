@@ -52,6 +52,19 @@ function install_py_deps {
     $1 pip3 install pymodbus==2.5.3
 }
 
+function swap_on { (
+    echo "creating swapfile..."
+    $1 dd if=/dev/zero of=swapfile bs=1M count=1000
+    $1 mkswap swapfile
+    $1 swapon swapfile
+) }
+
+function swap_off { (
+    echo "removing swapfile..."
+    $1 swapoff swapfile
+    $1 rm -f ./swapfile
+) }
+
 function install_matiec { (
     echo "[MATIEC COMPILER]"
     cd "$OPENPLC_DIR/utils/matiec_src"
@@ -107,10 +120,7 @@ function install_ethercat { (
 function install_opendnp3 { (
     echo "[OPEN DNP3]"
     cd "$OPENPLC_DIR/utils/dnp3_src"
-    echo "creating swapfile..."
-    $1 dd if=/dev/zero of=swapfile bs=1M count=1000
-    $1 mkswap swapfile
-    $1 swapon swapfile
+    swap_on
     cmake .
     make
     $1 make install
@@ -120,9 +130,7 @@ function install_opendnp3 { (
         exit 1
     fi
     $1 ldconfig
-    echo "removing swapfile..."
-    $1 swapoff swapfile
-    $1 rm -f ./swapfile
+    swap_off
 ) }
 
 function install_libmodbus { (
