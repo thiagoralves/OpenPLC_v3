@@ -52,7 +52,7 @@ function install_py_deps {
     $1 pip3 install pymodbus==2.5.3
 }
 
-function swap_on { (
+function swap_on {
     echo "creating swapfile..."
 
     # Fallocate is instantaneous. Only use dd as fallback.
@@ -62,15 +62,15 @@ function swap_on { (
 
     $1 mkswap "$SWAP_FILE"
     $1 swapon "$SWAP_FILE"
-) }
+}
 
-function swap_off { (
+function swap_off {
     echo "removing swapfile..."
     $1 swapoff "$SWAP_FILE"
     $1 rm -f "$SWAP_FILE"
-) }
+}
 
-function install_matiec { (
+function install_matiec {
     echo "[MATIEC COMPILER]"
     cd "$OPENPLC_DIR/utils/matiec_src"
     autoreconf -i
@@ -82,9 +82,10 @@ function install_matiec { (
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-) }
+    cd "$OPENPLC_DIR"
+}
 
-function install_st_optimizer { (
+function install_st_optimizer {
     echo "[ST OPTIMIZER]"
     cd "$OPENPLC_DIR/utils/st_optimizer_src"
     g++ st_optimizer.cpp -o st_optimizer
@@ -94,9 +95,10 @@ function install_st_optimizer { (
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-) }
+    cd "$OPENPLC_DIR"
+}
 
-function install_glue_generator { (
+function install_glue_generator {
     echo "[GLUE GENERATOR]"
     cd "$OPENPLC_DIR/utils/glue_generator_src"
     g++ -std=c++11 glue_generator.cpp -o glue_generator
@@ -106,9 +108,10 @@ function install_glue_generator { (
         echo "OpenPLC was NOT installed!"
         exit 1
     fi
-) }
+    cd "$OPENPLC_DIR"
+}
 
-function install_ethercat { (
+function install_ethercat {
     if [ "$ETHERCAT_INSTALL" == "install" ]; then
         echo ""
         echo "[EtherCAT]"
@@ -120,9 +123,10 @@ function install_ethercat { (
             exit 1
         fi
     fi
-) }
+    cd "$OPENPLC_DIR"
+}
 
-function install_opendnp3 { (
+function install_opendnp3 {
     echo "[OPEN DNP3]"
     cd "$OPENPLC_DIR/utils/dnp3_src"
     swap_on
@@ -136,9 +140,10 @@ function install_opendnp3 { (
     fi
     $1 ldconfig
     swap_off
-) }
+    cd "$OPENPLC_DIR"
+}
 
-function install_libmodbus { (
+function install_libmodbus {
     echo "[LIBMODBUS]"
     cd "$OPENPLC_DIR/utils/libmodbus_src"
     ./autogen.sh
@@ -150,9 +155,10 @@ function install_libmodbus { (
         exit 1
     fi
     $1 ldconfig
-) }
+    cd "$OPENPLC_DIR"
+}
 
-function install_systemd_service() { (
+function install_systemd_service() {
     if [ "$1" == "sudo" ]; then
         echo "[OPENPLC SERVICE]"
         $1 tee /lib/systemd/system/openplc.service > /dev/null <<EOF
@@ -176,7 +182,7 @@ EOF
         $1 systemctl daemon-reload
         $1 systemctl enable openplc
     fi
-) }
+}
 
 function install_all_libs {
     install_matiec "$1"
@@ -186,13 +192,14 @@ function install_all_libs {
     install_libmodbus "$1"
 }
 
-function finalize_install { (
+function finalize_install {
     echo "[FINALIZING]"
     cd "$OPENPLC_DIR/webserver/scripts"
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
     cp "start_openplc.sh" "$OPENPLC_DIR"
-) }
+    cd "$OPENPLC_DIR"
+}
 
 if [ "$1" == "win" ]; then
     echo "Installing OpenPLC on Windows"
