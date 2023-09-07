@@ -1,7 +1,6 @@
 #!/bin/bash
 OPENPLC_DIR="$PWD"
 SWAP_FILE="$OPENPLC_DIR/swapfile"
-ETHERCAT_INSTALL=""
 
 function print_help_and_exit {
     echo ""
