@@ -37,7 +37,7 @@ function linux_install_deps {
     if [ -x /bin/yum ]; then
         yum clean expire-cache
         yum check-update
-        $1 yum -q -y install curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-venv
+        $1 yum -q -y install curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3
     #Installing dependencies for Ubuntu/Mint/Debian
     elif [ -x /usr/bin/apt-get ]; then
         $1 apt-get update
