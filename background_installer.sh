@@ -2,6 +2,7 @@
 OPENPLC_DIR="$PWD"
 SWAP_FILE="$OPENPLC_DIR/swapfile"
 WIRINGPI_VERSION="2.61-1"
+VENV_DIR="$OPENPLC_DIR/.venv"
 
 function print_help_and_exit {
     echo ""
@@ -36,19 +37,16 @@ function linux_install_deps {
     if [ -x /bin/yum ]; then
         yum clean expire-cache
         yum check-update
-        $1 yum -q -y install curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-pip
-        $1 yum -q -y install python2.7 python2-devel
+        $1 yum -q -y install curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-venv
     #Installing dependencies for Ubuntu/Mint/Debian
     elif [ -x /usr/bin/apt-get ]; then
         $1 apt-get update
         $1 apt-get install -y build-essential pkg-config bison flex autoconf \
-                              automake libtool make git python2.7 \
-                              sqlite3 cmake git curl python3 python3-pip libmodbus-dev
+                              automake libtool make git \
+                              sqlite3 cmake curl python3 python3-venv libmodbus-dev
     else
         fail "Unsupported linux distro."
     fi
-    curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-    $1 python2.7 get-pip.py
 }
 
 function install_wiringpi {
@@ -69,11 +67,8 @@ function install_wiringpi {
 }
 
 function install_py_deps {
-    $1 pip2 install flask
-    $1 pip2 install flask-login
-    $1 pip2 install pyserial
-    $1 pip2 install pymodbus
-    $1 pip3 install pymodbus==2.5.3
+    python3 -m venv "$VENV_DIR"
+    "$VENV_DIR/bin/python3" -m pip install flask flask-login pyserial pymodbus==2.5.3
 }
 
 function swap_on {
@@ -213,7 +208,17 @@ function finalize_install {
     cd "$OPENPLC_DIR/webserver/scripts"
     ./change_hardware_layer.sh blank_linux
     ./compile_program.sh blank_program.st
-    cp "start_openplc.sh" "$OPENPLC_DIR"
+    cat > "$OPENPLC_DIR/start_openplc.sh" <<EOF
+#!/bin/bash
+mkdir -p /persistent/st_files
+cp -n /workdir/webserver/dnp3_default.cfg /persistent/dnp3.cfg
+cp -n /workdir/webserver/openplc_default.db /persistent/openplc.db
+cp -n /workdir/webserver/st_files_default/* /persistent/st_files/
+cp -n /dev/null /persistent/persistent.file
+cp -n /dev/null /persistent/mbconfig.cfg
+cd "$OPENPLC_DIR/webserver"
+"$OPENPLC_DIR/.venv/bin/python3" webserver.py
+EOF
     cd "$OPENPLC_DIR"
 }
 
@@ -282,7 +287,6 @@ elif [ "$1" == "docker" ]; then
 
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
-    
     linux_install_deps sudo
     install_wiringpi
     install_py_deps
