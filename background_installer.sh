@@ -1,6 +1,7 @@
 #!/bin/bash
 OPENPLC_DIR="$PWD"
 SWAP_FILE="$OPENPLC_DIR/swapfile"
+WIRINGPI_VERSION="2.61-1"
 
 function print_help_and_exit {
     echo ""
@@ -48,6 +49,23 @@ function linux_install_deps {
     fi
     curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
     $1 python2.7 get-pip.py
+}
+
+function install_wiringpi {
+    echo "[WIRINGPI]"
+    echo "Trying distribution package..."
+    sudo apt-get install -y wiringpi && return 0
+
+    echo "Falling back to direct download..."
+    local FILE="wiringpi-$WIRINGPI_VERSION-arm64.deb"
+    local URL="https://github.com/WiringPi/WiringPi/releases/download/$WIRINGPI_VERSION/$FILE"
+    (
+        set -e
+        wget -c -O "$OPENPLC_DIR/$FILE" "$URL"
+        sudo dpkg -i "$OPENPLC_DIR/$FILE"
+        sudo apt install -f
+        rm -f "$OPENPLC_DIR/$FILE"
+    ) || fail "Failed to install wiringpi."
 }
 
 function install_py_deps {
@@ -266,11 +284,9 @@ elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
     
     linux_install_deps sudo
-    sudo apt-get install -y wiringpi
-
+    install_wiringpi
     install_py_deps
     install_py_deps "sudo -H" 
-
     install_all_libs sudo
     install_systemd_service sudo
     finalize_install
