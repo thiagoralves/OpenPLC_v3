@@ -3,7 +3,7 @@ OPENPLC_DIR="$PWD"
 SWAP_FILE="$OPENPLC_DIR/swapfile"
 ETHERCAT_INSTALL=""
 
-if [ $# -eq 0 ]; then
+function print_help_and_exit {
     echo ""
     echo "Error: You must provide a platform name as argument"
     echo ""
@@ -20,7 +20,9 @@ if [ $# -eq 0 ]; then
     echo "                all the dependency packages before."
     echo ""
     exit 1
-fi
+}
+
+[ $# -eq 0 ] && print_help_and_exit
 
 #set -x 
 # arg1: sudo or blank
@@ -341,18 +343,5 @@ elif [ "$1" == "custom" ]; then
     finalize_install
 
 else
-    echo ""
-    echo "Error: unrecognized platform"
-    echo ""
-    echo "Usage: ./install.sh [platform]   where [platform] can be"
-    echo "  win           Install OpenPLC on Windows over Cygwin"
-    echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
-    echo "  rpi           Install OpenPLC on a Raspberry Pi"
-    echo "  custom        Skip all specific package installation and tries to install"
-    echo "                OpenPLC assuming your system already has all dependencies met."
-    echo "                This option can be useful if you're trying to install OpenPLC"
-    echo "                on an unsuported Linux platform or had manually installed"
-    echo "                all the dependency packages before."
-    echo ""
-    exit 1
+    print_help_and_exit
 fi
