@@ -39,7 +39,7 @@ function linux_install_deps {
         $1 yum -q -y install curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake python3 python3-pip
         $1 yum -q -y install python2.7 python2-devel
     #Installing dependencies for Ubuntu/Mint/Debian
-    elif [ -x /bin/apt-get ]; then
+    elif [ -x /usr/bin/apt-get ]; then
         $1 apt-get update
         $1 apt-get install -y build-essential pkg-config bison flex autoconf \
                               automake libtool make git python2.7 \
