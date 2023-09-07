@@ -123,6 +123,19 @@ function install_opendnp3 {
     cd "$OPENPLC_DIR"
 }
 
+function disable_opendnp3 {
+    echo ""
+    echo "[OPEN DNP3]"
+    cd "$OPENPLC_DIR/webserver/core"
+    if test -f dnp3.cpp; then
+        mv dnp3.cpp dnp3.disabled || fail "Error disabling OpenDNP3"
+    fi
+    if test -f dnp3_dummy.disabled; then
+        mv dnp3_dummy.disabled dnp3_dummy.cpp || fail "Error disabling OpenDNP3"
+    fi
+    cd "$OPENPLC_DIR"
+}
+
 function install_libmodbus {
     [ -r /usr/include/modbus/modbus.h ] && return 0
 
@@ -223,18 +236,7 @@ if [ "$1" == "win" ]; then
 
     install_st_optimizer
     install_glue_generator
-
-    echo ""
-    echo "[OPEN DNP3]"
-    cd "$OPENPLC_DIR/webserver/core"
-    if test -f dnp3.cpp; then
-        mv dnp3.cpp dnp3.disabled || fail "Error disabling OpenDNP3"
-    fi
-    if test -f dnp3_dummy.disabled; then
-        mv dnp3_dummy.disabled dnp3_dummy.cpp || fail "Error disabling OpenDNP3"
-    fi
-    cd "$OPENPLC_DIR"
-
+    disable_opendnp3
     install_libmodbus
     finalize_install
 
