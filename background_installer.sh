@@ -160,6 +160,12 @@ function install_libmodbus {
     fi
     $1 ldconfig
     cd "$OPENPLC_DIR"
+
+    # Fix for RPM-based distros
+    if [ -x /bin/yum ]; then
+        sudo cp /usr/local/lib/pkgconfig/libmodbus.pc /usr/share/pkgconfig/
+        sudo cp /usr/local/lib/lib*.* /lib64/
+    fi
 }
 
 function install_systemd_service() {
@@ -286,13 +292,6 @@ elif [ "$1" == "linux" ]; then
 
     install_all_libs sudo
     install_systemd_service sudo
-
-    # Fix for RPM-based distros
-    if [ -x /bin/yum ]; then
-        sudo cp /usr/local/lib/pkgconfig/libmodbus.pc /usr/share/pkgconfig/
-        sudo cp /usr/local/lib/lib*.* /lib64/
-    fi
-    
     finalize_install
 
 elif [ "$1" == "docker" ]; then
