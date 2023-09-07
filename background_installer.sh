@@ -155,22 +155,23 @@ function install_libmodbus { (
 function install_systemd_service() { (
     if [ "$1" == "sudo" ]; then
         echo "[OPENPLC SERVICE]"
-        WORKING_DIR=$(pwd)
-        echo -e "[Unit]\n\
-Description=OpenPLC Service\n\
-After=network.target\n\
-\n\
-[Service]\n\
-Type=simple\n\
-Restart=always\n\
-RestartSec=1\n\
-User=root\n\
-Group=root\n\
-WorkingDirectory=$WORKING_DIR\n\
-ExecStart=$WORKING_DIR/start_openplc.sh\n\
-\n\
-[Install]\n\
-WantedBy=multi-user.target" | $1 tee /lib/systemd/system/openplc.service > /dev/null
+        $1 tee /lib/systemd/system/openplc.service > /dev/null <<EOF
+[Unit]
+Description=OpenPLC Service
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+Group=root
+WorkingDirectory=$OPENPLC_DIR
+ExecStart=$OPENPLC_DIR/start_openplc.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
         echo "Enabling OpenPLC Service..."
         $1 systemctl daemon-reload
         $1 systemctl enable openplc
