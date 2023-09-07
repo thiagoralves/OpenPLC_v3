@@ -270,10 +270,7 @@ elif [ "$1" == "linux" ]; then
 
     echo "Installing OpenPLC on Linux"
     linux_install_deps sudo
-    
     install_py_deps
-    install_py_deps "sudo -H"
-
     install_all_libs sudo
     [ "$2" == "ethercat" ] && install_ethercat
     install_systemd_service sudo
@@ -291,7 +288,6 @@ elif [ "$1" == "rpi" ]; then
     linux_install_deps sudo
     install_wiringpi
     install_py_deps
-    install_py_deps "sudo -H" 
     install_all_libs sudo
     install_systemd_service sudo
     finalize_install
@@ -309,10 +305,7 @@ elif [ "$1" == "neuron" ]; then
     sudo systemctl disable evok.service
 
     linux_install_deps sudo
-    
     install_py_deps
-    install_py_deps "sudo -H"
-
     install_all_libs sudo
     install_systemd_service sudo
     finalize_install
