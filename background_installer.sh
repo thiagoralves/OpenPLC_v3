@@ -102,13 +102,15 @@ function install_glue_generator {
 }
 
 function install_ethercat {
-    if [ "$ETHERCAT_INSTALL" == "install" ]; then
-        echo ""
-        echo "[EtherCAT]"
-        cd "$OPENPLC_DIR/utils/ethercat_src"
-        ./install.sh || fail "Error compiling EtherCAT"
-    fi
+    echo "[EtherCAT]"
+    cd "$OPENPLC_DIR/utils/ethercat_src"
+    ./install.sh || fail "Error compiling EtherCAT"
+    echo ethercat > "$OPENPLC_DIR/webserver/scripts/ethercat"
     cd "$OPENPLC_DIR"
+}
+
+function disable_ethercat {
+    echo "" > "$OPENPLC_DIR/webserver/scripts/ethercat"
 }
 
 function install_opendnp3 {
@@ -185,6 +187,7 @@ function install_all_libs {
     install_st_optimizer "$1"
     install_glue_generator "$1"
     install_opendnp3 "$1"
+    disable_ethercat "$1"
     install_libmodbus "$1"
 }
 
@@ -243,19 +246,13 @@ if [ "$1" == "win" ]; then
 elif [ "$1" == "linux" ]; then
 
     echo "Installing OpenPLC on Linux"
-    if [ "$2" == "ethercat" ]; then
-        echo "including EtherCAT"
-        ETHERCAT_INSTALL="install"
-        echo ethercat > webserver/scripts/ethercat
-    else
-        echo "" > webserver/scripts/ethercat
-    fi
     linux_install_deps sudo
     
     install_py_deps
     install_py_deps "sudo -H"
 
     install_all_libs sudo
+    [ "$2" == "ethercat" ] && install_ethercat
     install_systemd_service sudo
     finalize_install
 
