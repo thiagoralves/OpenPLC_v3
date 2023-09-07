@@ -24,6 +24,12 @@ function print_help_and_exit {
 
 [ $# -eq 0 ] && print_help_and_exit
 
+function fail {
+    echo "$*"
+    echo "OpenPLC was NOT installed!"
+    exit 1
+}
+
 #set -x 
 # arg1: sudo or blank
 function linux_install_deps {
@@ -39,8 +45,7 @@ function linux_install_deps {
                               automake libtool make git python2.7 \
                               sqlite3 cmake git curl python3 python3-pip libmodbus-dev
     else
-        echo "Unsupported linux distro."
-        exit 1
+        fail "Unsupported linux distro."
     fi
     curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
     $1 python2.7 get-pip.py
@@ -78,38 +83,21 @@ function install_matiec {
     autoreconf -i
     ./configure
     make
-    cp ./iec2c "$OPENPLC_DIR/webserver/"
-    if [ $? -ne 0 ]; then
-        echo "Error compiling MatIEC"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
+    cp ./iec2c "$OPENPLC_DIR/webserver/" || fail "Error compiling MatIEC"
     cd "$OPENPLC_DIR"
 }
 
 function install_st_optimizer {
     echo "[ST OPTIMIZER]"
     cd "$OPENPLC_DIR/utils/st_optimizer_src"
-    g++ st_optimizer.cpp -o st_optimizer
-    cp ./st_optimizer "$OPENPLC_DIR/webserver/"
-    if [ $? -ne 0 ]; then
-        echo "Error compiling ST Optimizer"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
+    g++ st_optimizer.cpp -o "$OPENPLC_DIR/webserver/st_optimizer" || fail "Error compiling ST Optimizer"
     cd "$OPENPLC_DIR"
 }
 
 function install_glue_generator {
     echo "[GLUE GENERATOR]"
     cd "$OPENPLC_DIR/utils/glue_generator_src"
-    g++ -std=c++11 glue_generator.cpp -o glue_generator
-    cp ./glue_generator "$OPENPLC_DIR/webserver/core"
-    if [ $? -ne 0 ]; then
-        echo "Error compiling Glue Generator"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
+    g++ -std=c++11 glue_generator.cpp -o "$OPENPLC_DIR/webserver/core/glue_generator" || fail "Error compiling Glue Generator"
     cd "$OPENPLC_DIR"
 }
 
@@ -118,12 +106,7 @@ function install_ethercat {
         echo ""
         echo "[EtherCAT]"
         cd "$OPENPLC_DIR/utils/ethercat_src"
-        ./install.sh
-        if [ $? -ne 0 ]; then
-            echo "Error compiling EtherCAT"
-            echo "OpenPLC was NOT installed!"
-            exit 1
-        fi
+        ./install.sh || fail "Error compiling EtherCAT"
     fi
     cd "$OPENPLC_DIR"
 }
@@ -134,12 +117,7 @@ function install_opendnp3 {
     swap_on
     cmake .
     make
-    $1 make install
-    if [ $? -ne 0 ]; then
-        echo "Error installing OpenDNP3"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
+    $1 make install || fail "Error installing OpenDNP3"
     $1 ldconfig
     swap_off
     cd "$OPENPLC_DIR"
@@ -152,12 +130,7 @@ function install_libmodbus {
     cd "$OPENPLC_DIR/utils/libmodbus_src"
     ./autogen.sh
     ./configure
-    $1 make install
-    if [ $? -ne 0 ]; then
-        echo "Error installing Libmodbus"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
+    $1 make install || fail "Error installing Libmodbus"
     $1 ldconfig
     cd "$OPENPLC_DIR"
 
@@ -255,20 +228,10 @@ if [ "$1" == "win" ]; then
     echo "[OPEN DNP3]"
     cd "$OPENPLC_DIR/webserver/core"
     if test -f dnp3.cpp; then
-        mv dnp3.cpp dnp3.disabled
-        if [ $? -ne 0 ]; then
-            echo "Error disabling OpenDNP3"
-            echo "OpenPLC was NOT installed!"
-            exit 1
-        fi
+        mv dnp3.cpp dnp3.disabled || fail "Error disabling OpenDNP3"
     fi
     if test -f dnp3_dummy.disabled; then
-        mv dnp3_dummy.disabled dnp3_dummy.cpp
-        if [ $? -ne 0 ]; then
-            echo "Error disabling OpenDNP3"
-            echo "OpenPLC was NOT installed!"
-            exit 1
-        fi
+        mv dnp3_dummy.disabled dnp3_dummy.cpp || fail "Error disabling OpenDNP3"
     fi
     cd "$OPENPLC_DIR"
 
