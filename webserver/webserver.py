@@ -2374,9 +2374,6 @@ if __name__ == '__main__':
     st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
     
-    reload(sys)
-    sys.setdefaultencoding('UTF8')
-    
     database = "openplc.db"
     conn = create_connection(database)
     if (conn != None):
