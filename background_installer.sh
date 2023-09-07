@@ -54,7 +54,12 @@ function install_py_deps {
 
 function swap_on { (
     echo "creating swapfile..."
+
+    # Fallocate is instantaneous. Only use dd as fallback.
+    $1 touch "$SWAP_FILE"
+    $1 fallocate -zl 1G "$SWAP_FILE" ||
     $1 dd if=/dev/zero of="$SWAP_FILE" bs=1M count=1000
+
     $1 mkswap "$SWAP_FILE"
     $1 swapon "$SWAP_FILE"
 ) }
