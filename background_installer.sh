@@ -1,6 +1,6 @@
 #!/bin/bash
 OPENPLC_DIR="$PWD"
-
+SWAP_FILE="$OPENPLC_DIR/swapfile"
 ETHERCAT_INSTALL=""
 
 if [ $# -eq 0 ]; then
@@ -54,15 +54,15 @@ function install_py_deps {
 
 function swap_on { (
     echo "creating swapfile..."
-    $1 dd if=/dev/zero of=swapfile bs=1M count=1000
-    $1 mkswap swapfile
-    $1 swapon swapfile
+    $1 dd if=/dev/zero of="$SWAP_FILE" bs=1M count=1000
+    $1 mkswap "$SWAP_FILE"
+    $1 swapon "$SWAP_FILE"
 ) }
 
 function swap_off { (
     echo "removing swapfile..."
-    $1 swapoff swapfile
-    $1 rm -f ./swapfile
+    $1 swapoff "$SWAP_FILE"
+    $1 rm -f "$SWAP_FILE"
 ) }
 
 function install_matiec { (
