@@ -219,6 +219,7 @@ cp -n /dev/null /persistent/mbconfig.cfg
 cd "$OPENPLC_DIR/webserver"
 "$OPENPLC_DIR/.venv/bin/python3" webserver.py
 EOF
+    chmod a+x "$OPENPLC_DIR/start_openplc.sh"
     cd "$OPENPLC_DIR"
 }
 
