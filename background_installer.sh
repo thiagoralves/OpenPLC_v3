@@ -115,12 +115,12 @@ function disable_ethercat {
 function install_opendnp3 {
     echo "[OPEN DNP3]"
     cd "$OPENPLC_DIR/utils/dnp3_src"
-    swap_on
+    swap_on "$1"
     cmake .
     make
     $1 make install || fail "Error installing OpenDNP3"
     $1 ldconfig
-    swap_off
+    swap_off "$1"
     cd "$OPENPLC_DIR"
 }
 
