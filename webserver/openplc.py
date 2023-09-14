@@ -80,8 +80,9 @@ class runtime:
             self.runtime_status = "Running"
 
     def _rpc(self, msg, timeout=1000):
+        data = ""
         if not self.runtime_status == "Running":
-            return ""
+            return data
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(('localhost', 43628))
