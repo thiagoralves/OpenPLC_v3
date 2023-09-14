@@ -5,7 +5,6 @@ import errno
 import time
 from threading import Thread
 from queue import Queue, Empty
-import io
 
 intervals = (
     ('weeks', 604800),  # 60 * 60 * 24 * 7
@@ -37,7 +36,7 @@ class NonBlockingStreamReader:
                 Usually a process' stdout or stderr.
         '''
 
-        self._s = io.TextIOWrapper(stream, encoding='utf-8')
+        self._s = stream
         self._q = Queue()
 
         def _populateQueue(stream, queue):
@@ -47,7 +46,7 @@ class NonBlockingStreamReader:
 
             #while True:
             while (self.end_of_stream == False):
-                line = stream.readline()
+                line = stream.readline().decode('utf-8')
                 if line:
                     queue.put(line)
                     if "Compilation finished with errors!" in line or "Compilation finished successfully!" in line:
