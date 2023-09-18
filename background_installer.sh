@@ -193,7 +193,11 @@ function install_all_libs {
 function finalize_install {
     echo "[FINALIZING]"
     cd "$OPENPLC_DIR/webserver/scripts"
-    ./change_hardware_layer.sh blank_linux
+    if [ "$1" == "win" ]; then
+        ./change_hardware_layer.sh blank
+    else
+        ./change_hardware_layer.sh blank_linux
+    fi
     ./compile_program.sh blank_program.st
     cp "start_openplc.sh" "$OPENPLC_DIR"
     cd "$OPENPLC_DIR"
