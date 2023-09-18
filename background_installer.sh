@@ -244,7 +244,7 @@ if [ "$1" == "win" ]; then
     install_glue_generator
     disable_opendnp3
     install_libmodbus
-    finalize_install
+    finalize_install win
 
 elif [ "$1" == "linux" ]; then
 
@@ -257,14 +257,14 @@ elif [ "$1" == "linux" ]; then
     install_all_libs sudo
     [ "$2" == "ethercat" ] && install_ethercat
     install_systemd_service sudo
-    finalize_install
+    finalize_install linux
 
 elif [ "$1" == "docker" ]; then
     echo "Installing OpenPLC on Linux inside Docker"
     linux_install_deps
     install_py_deps
     install_all_libs
-    finalize_install
+    finalize_install linux
 
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
@@ -277,7 +277,7 @@ elif [ "$1" == "rpi" ]; then
 
     install_all_libs sudo
     install_systemd_service sudo
-    finalize_install
+    finalize_install linux
 
 elif [ "$1" == "neuron" ]; then
     echo "Installing OpenPLC on UniPi Neuron PLC"
@@ -298,13 +298,13 @@ elif [ "$1" == "neuron" ]; then
 
     install_all_libs sudo
     install_systemd_service sudo
-    finalize_install
+    finalize_install linux
 
 elif [ "$1" == "custom" ]; then
     echo "Installing OpenPLC on Custom Platform"
     install_all_libs
     install_systemd_service sudo
-    finalize_install
+    finalize_install linux
 
 else
     print_help_and_exit
