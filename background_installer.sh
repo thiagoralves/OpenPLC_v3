@@ -234,26 +234,13 @@ if [ "$1" == "win" ]; then
     apt-cyg update
     apt-cyg install lynx
     
-    echo "Installing Python 2.7"
-    cd "$OPENPLC_DIR/utils/python2"
-    tar -xf python27-2.7.18-4.tar.xz
-    rsync -a ./etc/ /etc/
-    rsync -a ./usr/ /usr/
-    /etc/postinstall/python2.sh
-    ln -s /usr/bin/python2.7.exe /usr/bin/python2
-    cd "$OPENPLC_DIR"
-    
-    # apt-cyg remove gcc-core gcc-g++ pkg-config automake autoconf libtool make python2 python2-pip sqlite3
     apt-cyg install gcc-core gcc-g++ git pkg-config automake autoconf libtool make sqlite3 python3
-    lynx -source https://bootstrap.pypa.io/pip/2.7/get-pip.py > get-pip.py
     lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
-    /usr/bin/python2 get-pip.py
-    /usr/bin/python3 get-pip3.py
-    /usr/bin/python2 -m pip install flask
-    /usr/bin/python2 -m pip install flask-login
-    /usr/bin/python2 -m pip install pyserial
-    /usr/bin/python2 -m pip install pymodbus
-    /usr/bin/python3 -m pip install pymodbus==2.5.3
+
+    #Setting up venv
+    python3 -m venv "$VENV_DIR"
+    "$VENV_DIR/bin/python3" get-pip3.py
+    "$VENV_DIR/bin/python3" -m pip install flask flask-login pyserial pymodbus==2.5.3
 
     echo ""
     echo "[MATIEC COMPILER]"
