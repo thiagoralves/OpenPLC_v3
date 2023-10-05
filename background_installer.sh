@@ -68,7 +68,7 @@ function install_wiringpi {
 
 function install_py_deps {
     python3 -m venv "$VENV_DIR"
-    "$VENV_DIR/bin/python3" -m pip install flask flask-login pyserial pymodbus==2.5.3
+    "$VENV_DIR/bin/python3" -m pip install flask==2.1 werkzeug==2.1 flask-login==0.6.2 pyserial pymodbus==2.5.3
 }
 
 function swap_on {
@@ -240,7 +240,7 @@ if [ "$1" == "win" ]; then
     #Setting up venv
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" get-pip3.py
-    "$VENV_DIR/bin/python3" -m pip install flask flask-login pyserial pymodbus==2.5.3
+    "$VENV_DIR/bin/python3" -m pip install flask==2.1 werkzeug==2.1 flask-login==0.6.2 pyserial pymodbus==2.5.3
 
     echo ""
     echo "[MATIEC COMPILER]"
