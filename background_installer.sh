@@ -43,7 +43,7 @@ function linux_install_deps {
         $1 apt-get update
         $1 apt-get install -y build-essential pkg-config bison flex autoconf \
                               automake libtool make git \
-                              sqlite3 cmake curl python3 python3-venv libmodbus-dev
+                              sqlite3 cmake curl python3 python3-venv
     else
         fail "Unsupported linux distro."
     fi
@@ -151,8 +151,6 @@ function disable_opendnp3 {
 }
 
 function install_libmodbus {
-    [ -r /usr/include/modbus/modbus.h ] && return 0
-
     echo "[LIBMODBUS]"
     cd "$OPENPLC_DIR/utils/libmodbus_src"
     ./autogen.sh
