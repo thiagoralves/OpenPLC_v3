@@ -1013,17 +1013,17 @@ def modbus():
                     if (row[3] == 0):
                         di = "-"
                     else:
-                        di = "%IX" + str(100 + (counter_di/8)) + "." + str(counter_di%8) + " to "
+                        di = "%IX" + str(100 + (counter_di // 8)) + "." + str(counter_di%8) + " to "
                         counter_di += row[3];
-                        di += "%IX" + str(100 + ((counter_di-1)/8)) + "." + str((counter_di-1)%8)
+                        di += "%IX" + str(100 + ((counter_di-1) // 8)) + "." + str((counter_di-1)%8)
                         
                     #calculate do
                     if (row[4] == 0):
                         do = "-"
                     else:
-                        do = "%QX" + str(100 + (counter_do/8)) + "." + str(counter_do%8) + " to "
+                        do = "%QX" + str(100 + (counter_do // 8)) + "." + str(counter_do%8) + " to "
                         counter_do += row[4];
-                        do += "%QX" + str(100 + ((counter_do-1)/8)) + "." + str((counter_do-1)%8)
+                        do += "%QX" + str(100 + ((counter_do-1) // 8)) + "." + str((counter_do-1)%8)
                         
                     #calculate ai
                     if (row[5] + row[6] == 0):
