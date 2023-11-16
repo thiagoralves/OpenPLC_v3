@@ -115,6 +115,13 @@ elif [ "$1" == "sequent" ]; then
     echo rpi > ../scripts/openplc_platform
     echo sequent > ../scripts/openplc_driver
 
+elif [ "$1" == "sl_rp4" ]; then
+    echo "Activating SL-RP4 driver"
+    cp ./hardware_layers/SL-RP4.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo linux > ../scripts/openplc_platform
+    echo sl_rp4 > ../scripts/openplc_driver
+
 else
     echo "Error: Invalid hardware layer"
 fi
