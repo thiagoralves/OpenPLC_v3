@@ -216,6 +216,10 @@ u_int8_t *byte_input_call_back(int a){ return byte_input[a]; }
 u_int8_t *byte_output_call_back(int a){ return byte_output[a]; }
 u_int16_t *int_input_call_back(int a){ return int_input[a]; }
 u_int16_t *int_output_call_back(int a){ return int_output[a]; }
+u_int32_t *dint_input_call_back(int a){ return dint_input[a]; }
+u_int32_t *dint_output_call_back(int a){ return dint_output[a]; }
+u_int64_t *lint_input_call_back(int a){ return lint_input[a]; }
+u_int64_t *lint_output_call_back(int a){ return lint_output[a]; }
 void logger_callback(unsigned char *msg){ log(msg);}
 
 int main(int argc,char **argv)
@@ -327,6 +331,10 @@ int main(int argc,char **argv)
         int8var_call_back byte_output_callback = byte_output_call_back;
         int16var_call_back int_input_callback = int_input_call_back;
         int16var_call_back int_output_callback = int_output_call_back;
+        int32var_call_back dint_input_callback = dint_input_call_back;
+        int32var_call_back dint_output_callback = dint_output_call_back;
+        int64var_call_back lint_input_callback = lint_input_call_back;
+        int64var_call_back lint_output_callback = lint_output_call_back;
 #endif
         
 		updateBuffersIn(); //read input image
@@ -341,7 +349,11 @@ int main(int argc,char **argv)
                 byte_input_callback, 
                 byte_output_callback, 
                 int_input_callback, 
-                int_output_callback)){
+                int_output_callback, 
+                dint_input_call_back, 
+                dint_output_call_back, 
+                lint_input_call_back, 
+                lint_output_call_back)){
             printf("EtherCAT cyclic failed\n");
             break;
         }

@@ -43,12 +43,12 @@ function linux_install_deps {
         $1 apt-get update
         $1 apt-get install -y build-essential pkg-config bison flex autoconf \
                               automake libtool make git \
-                              sqlite3 cmake curl python3 python3-venv libmodbus-dev
+                              sqlite3 cmake curl python3 python3-venv
     #Installing dependencies for opensuse tumbleweed
     elif [ -x /usr/bin/zypper ]; then
         $1 zypper ref
         $1 zypper in -y curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake libmodbus-devel
-        $1 zypper in -y python python2-pip python-xml python3 python3-pip 
+        $1 zypper in -y python python-xml python3 python3-pip 
     else
         fail "Unsupported linux distro."
     fi
@@ -73,7 +73,7 @@ function install_wiringpi {
 
 function install_py_deps {
     python3 -m venv "$VENV_DIR"
-    "$VENV_DIR/bin/python3" -m pip install flask flask-login pyserial pymodbus==2.5.3
+    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
 }
 
 function swap_on {
@@ -156,8 +156,6 @@ function disable_opendnp3 {
 }
 
 function install_libmodbus {
-    [ -r /usr/include/modbus/modbus.h ] && return 0
-
     echo "[LIBMODBUS]"
     cd "$OPENPLC_DIR/utils/libmodbus_src"
     ./autogen.sh
@@ -245,7 +243,7 @@ if [ "$1" == "win" ]; then
     #Setting up venv
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" get-pip3.py
-    "$VENV_DIR/bin/python3" -m pip install flask flask-login pyserial pymodbus==2.5.3
+    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
 
     echo ""
     echo "[MATIEC COMPILER]"

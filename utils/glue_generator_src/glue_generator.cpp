@@ -59,6 +59,14 @@ IEC_BYTE *byte_output[BUFFER_SIZE];\r\n\
 IEC_UINT *int_input[BUFFER_SIZE];\r\n\
 IEC_UINT *int_output[BUFFER_SIZE];\r\n\
 \r\n\
+//32bit I/O\r\n\
+IEC_DINT *dint_input[BUFFER_SIZE];\r\n\
+IEC_DINT *dint_output[BUFFER_SIZE];\r\n\
+\r\n\
+//64bit I/O\r\n\
+IEC_LINT *lint_input[BUFFER_SIZE];\r\n\
+IEC_LINT *lint_output[BUFFER_SIZE];\r\n\
+\r\n\
 //Memory\r\n\
 IEC_UINT *int_memory[BUFFER_SIZE];\r\n\
 IEC_DINT *dint_memory[BUFFER_SIZE];\r\n\
@@ -176,6 +184,12 @@ void glueVar(ostream& glueVars, char *varName, char *varType)
 			case 'W':
 				glueVars << "\tint_input[" << pos1 << "] = " << varName << ";\r\n";
 				break;
+			case 'D':
+				glueVars << "\tdint_input[" << pos1 << "] = (IEC_DINT *)" << varName << ";\r\n";
+				break;
+			case 'L':
+				glueVars << "\tlint_input[" << pos1 << "] = (IEC_LINT *)" << varName << ";\r\n";
+				break;
 		}
 	}
 	else if (varName[2] == 'Q')
@@ -191,6 +205,12 @@ void glueVar(ostream& glueVars, char *varName, char *varType)
 				break;
 			case 'W':
 				glueVars << "\tint_output[" << pos1 << "] = " << varName << ";\r\n";
+				break;
+			case 'D':
+				glueVars << "\tdint_output[" << pos1 << "] = (IEC_DINT *)" << varName << ";\r\n";
+				break;
+			case 'L':
+				glueVars << "\tlint_input[" << pos1 << "] = (IEC_LINT *)" << varName << ";\r\n";
 				break;
 		}
 	}
