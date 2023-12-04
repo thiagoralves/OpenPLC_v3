@@ -69,6 +69,14 @@ extern IEC_BYTE *byte_output[BUFFER_SIZE];
 extern IEC_UINT *int_input[BUFFER_SIZE];
 extern IEC_UINT *int_output[BUFFER_SIZE];
 
+//32bit I/O
+extern IEC_DINT *dint_input[BUFFER_SIZE];
+extern IEC_DINT *dint_output[BUFFER_SIZE];
+
+//64bit I/O
+extern IEC_LINT *lint_input[BUFFER_SIZE];
+extern IEC_LINT *lint_output[BUFFER_SIZE];
+
 //Memory
 extern IEC_UINT *int_memory[BUFFER_SIZE];
 extern IEC_DINT *dint_memory[BUFFER_SIZE];
