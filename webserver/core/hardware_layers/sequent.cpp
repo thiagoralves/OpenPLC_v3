@@ -1262,7 +1262,7 @@ int basGetUniversalIn(uint8_t stack, uint8_t channel, uint8_t type, float *val)
 	uint8_t address = BAS_I2C_U0_10_IN_VAL1_ADD;
 	float scaleFactor = VOLT_TO_MILIVOLT;
 
-	if (channel >= IND_U_IN_CH_NR_MAX || NULL == val)
+	if (channel >= BAS_U_IN_CH_NR_MAX || NULL == val)
 	{
 		return ERROR;
 	}
