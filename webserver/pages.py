@@ -7,7 +7,7 @@ login_head = """
             position:absolute;
             left:0; right:0; top:0;
             height: 50px;
-            background-color: #1F1F1F;
+            background-color: #000000;
             position: fixed;
             overflow: hidden;
             z-index: 10
@@ -46,7 +46,7 @@ login_head = """
           font-family: 'Roboto', sans-serif;
           text-transform: uppercase;
           outline: 0;
-          background: #E02222;
+          background: #0066fc;
           width: 100%;
           border: 0;
           padding: 15px;
@@ -57,7 +57,7 @@ login_head = """
           cursor: pointer;
         }
         .form button:hover,.form button:active,.form button:focus {
-          background: #B51A1A;
+          background: #00337e;
         }
         .form .message {
           margin: 15px 0 0;
@@ -117,7 +117,7 @@ login_head = """
     </style>
     <body>
         <div class='top'>
-            <img src='/static/openplc_logo.gif' alt='OpenPLC' style='width:101px;height:40px;padding:5px 0px 0px 10px;float:left'>
+            <img src="/static/logo-openplc.png" alt="OpenPLC" style="width:63px;height:50px;padding:0px 0px 0px 10px;float:left">
             <h3 style=\"font-family:'Roboto', sans-serif; font-size:18px; color:white; padding:13px 111px 0px 0px; margin: 0px 0px 0px 0px\"><center>OpenPLC Webserver</center></h3>
         </div>
         <div class='main'>
@@ -299,7 +299,7 @@ w3_style = """
         .w3-padding-32{padding-top:32px!important;padding-bottom:32px!important}.w3-padding-48{padding-top:48px!important;padding-bottom:48px!important}
         .w3-padding-64{padding-top:64px!important;padding-bottom:64px!important}
         .w3-left{float:left!important}.w3-right{float:right!important}
-        .w3-button:hover{color:#000!important;background-color:#B51A1A}
+        .w3-button:hover{color:#000!important;background-color:#00337e}
         .w3-transparent,.w3-hover-none:hover{background-color:transparent!important}
         .w3-hover-none:hover{box-shadow:none!important}
         /* Colors */
@@ -394,7 +394,7 @@ style = """
             position:absolute;
             left:0; right:0; top:0;
             height: 50px;
-            background-color: #1F1F1F;
+            background-color: #000000;
             position: fixed;
             overflow: hidden;
             z-index: 10
@@ -416,7 +416,7 @@ style = """
         }
         
         .button {
-            background-color: #E02222;
+            background-color: #0066FC;
             border: 1px solid #1F1F1F;
             border-radius: 4px;
             color: white;
@@ -429,7 +429,7 @@ style = """
         }
         
         .button:hover {
-            background-color: #B51A1A;
+            background-color: #00337e;
         }
         
         table, h1, h2, h3, p {
@@ -476,7 +476,7 @@ dashboard_head = """
             position:absolute;
             left:0; right:0; top:0;
             height: 50px;
-            background-color: #1F1F1F;
+            background-color: #000000;
             position: fixed;
             overflow: hidden;
             z-index: 10
@@ -498,7 +498,7 @@ dashboard_head = """
         }
         
        .button {
-            background-color: #E02222;
+            background-color: #0066FC;
             border: 1px solid #1F1F1F;
             border-radius: 4px;
             color: white;
@@ -511,7 +511,7 @@ dashboard_head = """
         }
         
        .button:hover {
-            background-color: #B51A1A;
+            background-color: #00337e;
         }
         
        .copyButton {
@@ -686,7 +686,7 @@ monitoring_head = """
             position:absolute;
             left:0; right:0; top:0;
             height: 50px;
-            background-color: #1F1F1F;
+            background-color: #000000;
             position: fixed;
             overflow: hidden;
             z-index: 10
@@ -708,7 +708,7 @@ monitoring_head = """
         }
         
         .button {
-            background-color: #E02222;
+            background-color: #0066FC;
             border: 1px solid #1F1F1F;
             border-radius: 4px;
             color: white;
@@ -721,7 +721,7 @@ monitoring_head = """
         }
         
         .button:hover {
-            background-color: #B51A1A;
+            background-color: #00337e;
         }
         
         table, h1, h2, h3, p {
@@ -774,7 +774,7 @@ monitoring_head = """
         .form-inline button 
         {
             padding: 10px 20px;
-            background-color: #E02222;
+            background-color: #0066FC;
             width: 100px;
             border: 1px solid #1F1F1F;
             color: white;
@@ -785,7 +785,7 @@ monitoring_head = """
 
         .form-inline button:hover 
         {
-            background-color: #B51A1A;
+            background-color: #00337e;
         }
 
         @media (max-width: 800px) 
@@ -1022,7 +1022,7 @@ settings_style = """
             position:absolute;
             left:0; right:0; top:0;
             height: 50px;
-            background-color: #1F1F1F;
+            background-color: #000000;
             position: fixed;
             overflow: hidden;
             z-index: 10
@@ -1044,7 +1044,7 @@ settings_style = """
         }
         
         .button {
-            background-color: #E02222;
+            background-color: #0066FC;
             border: 1px solid #1F1F1F;
             border-radius: 4px;
             color: white;
@@ -1058,7 +1058,7 @@ settings_style = """
         }
         
         .button:hover {
-            background-color: #B51A1A;
+            background-color: #00337e;
         }
         
         /*Custom Checkbox */
@@ -1103,7 +1103,7 @@ settings_style = """
 
         /* When the checkbox is checked, add a blue background */
         .container input:checked ~ .checkmark {
-            background-color: #E02222;
+            background-color: #0066FC;
         }
 
         /* Create the checkmark/indicator (hidden when not checked) */
@@ -1136,7 +1136,7 @@ settings_style = """
 
 settings_head = """
         <div class='main'>
-            <div class="w3-sidebar w3-bar-block" style="width:250px; background-color:#3D3D3D">
+            <div class="w3-sidebar w3-bar-block" style="width:250px; background-color:#1F1F1F">
                 <br>
                 <br>
                 <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
@@ -1145,7 +1145,7 @@ settings_head = """
                 <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
                 <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
                 <a href="users" class="w3-bar-item w3-button"><img src="/static/users-icon-64x64.png" alt="Users" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
-                <a href="settings" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/settings-icon-64x64.png" alt="Settings" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Settings</p></a>
+                <a href="settings" class="w3-bar-item w3-button" style="background-color:#0066FC; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/settings-icon-64x64.png" alt="Settings" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Settings</p></a>
                 <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
                 <br>
                 <br>"""
@@ -1293,7 +1293,7 @@ hardware_style = """
             position:absolute;
             left:0; right:0; top:0;
             height: 50px;
-            background-color: #1F1F1F;
+            background-color: #000000;
             position: fixed;
             overflow: hidden;
             z-index: 10
@@ -1315,7 +1315,7 @@ hardware_style = """
         }
         
         .button {
-            background-color: #E02222;
+            background-color: #0066FC;
             border: 1px solid #1F1F1F;
             border-radius: 4px;
             color: white;
@@ -1328,7 +1328,7 @@ hardware_style = """
         }
         
         .button:hover {
-            background-color: #B51A1A;
+            background-color: #00337e;
         }
         
         textarea {
@@ -1364,14 +1364,14 @@ hardware_style = """
 
 hardware_head = """
         <div class='main'>
-            <div class="w3-sidebar w3-bar-block" style="width:250px; background-color:#3D3D3D">
+            <div class="w3-sidebar w3-bar-block" style="width:250px; background-color:#1F1F1F">
                 <br>
                 <br>
                 <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
                 <a href='programs' class='w3-bar-item w3-button'><img src='/static/programs-icon-64x64.png' alt='Programs' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Programs</p></a>
                 <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
                 <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-                <a href="hardware" class="w3-bar-item w3-button" style="background-color:#E02222; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/hardware-icon-980x974.png" alt="Hardware" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Hardware</p></a>
+                <a href="hardware" class="w3-bar-item w3-button" style="background-color:#0066FC; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/hardware-icon-980x974.png" alt="Hardware" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Hardware</p></a>
                 <a href="users" class="w3-bar-item w3-button"><img src="/static/users-icon-64x64.png" alt="Users" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
                 <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
                 <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
