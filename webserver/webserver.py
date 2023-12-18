@@ -1725,6 +1725,8 @@ def hardware():
             else: return_str += "<option value='psm_win'>Python on Windows (PSM)</option>"
             if (current_driver == "sequent"): return_str += "<option selected='selected' value='sequent'>Sequent HAT</option>"
             else: return_str += "<option value='sequent'>Sequent HAT's</option>"
+            if (current_driver == "sl_rp4"): return_str += "<option selected='selected' value='sl_rp4'>SL-RP4</option>"
+            else: return_str += "<option value='sl_rp4'>SL-RP4</option>"
             return_str += """
                         </select>
                         <br>
