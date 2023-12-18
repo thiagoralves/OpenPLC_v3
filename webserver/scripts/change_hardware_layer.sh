@@ -117,7 +117,7 @@ elif [ "$1" == "sequent" ]; then
 
 elif [ "$1" == "sl_rp4" ]; then
     echo "Activating SL-RP4 driver"
-    cp ./hardware_layers/SL-RP4.cpp ./hardware_layer.cpp
+    cp ./hardware_layers/sl_rp4.cpp ./hardware_layer.cpp
     echo "Setting Platform"
     echo linux > ../scripts/openplc_platform
     echo sl_rp4 > ../scripts/openplc_driver
