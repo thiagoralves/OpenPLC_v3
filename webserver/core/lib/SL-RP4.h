@@ -1,6 +1,6 @@
 int16_t initI2C();
 void closeI2C();
-int16_t getSwitchId();
+extern "C" int16_t getSwitchId();
 
 // FUNCTION_BLOCK ROTARY_SWITCH
 // Data part
