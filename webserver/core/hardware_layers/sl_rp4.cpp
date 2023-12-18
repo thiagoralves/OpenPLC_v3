@@ -35,6 +35,7 @@
 #include "ladder.h"
 #include "custom_layer.h"
 
+extern "C" int16_t getSwitchId();
 
 #define I2C_DEVICE_PATH "/dev/i2c-1"
 #define I2C_ADDRESS 0x1C
