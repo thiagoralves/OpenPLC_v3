@@ -71,6 +71,24 @@ function install_wiringpi {
     ) || fail "Failed to install wiringpi."
 }
 
+function install_pigpio {
+    echo "[PIGPIO]"
+    echo "Trying distribution package..."
+    sudo apt-get install -y pigpio && return 0
+
+    echo "Falling back to direct download..."
+    local URL="https://github.com/joan2937/pigpio/archive/master.zip"
+    (
+        set -e
+        wget -c "$URL"
+        unzip master.zip
+        cd pigpio-master
+        make
+        sudo make install
+        rm -f master.zip
+    )
+}
+
 function install_py_deps {
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" -m pip install --upgrade pip
@@ -282,7 +300,7 @@ elif [ "$1" == "docker" ]; then
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
     linux_install_deps sudo
-    install_wiringpi
+    install_pigpio
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
