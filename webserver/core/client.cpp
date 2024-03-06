@@ -41,7 +41,7 @@
 int connect_to_tcp_server(uint8_t *ip_address, uint16_t port, int method)
 {
     int sockfd, connfd;
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     struct sockaddr_in servaddr, cli;
     
     if (method == METHOD_TCP)
@@ -93,7 +93,7 @@ int connect_to_tcp_server(uint8_t *ip_address, uint16_t port, int method)
 int send_tcp_message(uint8_t *msg, size_t msg_size, int socket_id)
 {
     int bytes_sent = 0;
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     bytes_sent = write(socket_id, msg, msg_size);
     if (bytes_sent < 0)
     {
@@ -108,7 +108,7 @@ int send_tcp_message(uint8_t *msg, size_t msg_size, int socket_id)
 int receive_tcp_message(uint8_t *msg_buffer, size_t buffer_size, int socket_id)
 {
     int bytes_received = 0;
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     bytes_received = read(socket_id, msg_buffer, buffer_size);
     
     if (bytes_received < 0 && bytes_received != EAGAIN && bytes_received != EWOULDBLOCK)

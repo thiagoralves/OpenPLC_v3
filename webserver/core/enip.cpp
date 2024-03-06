@@ -513,8 +513,8 @@ int sendUnitData(struct enip_header *header, struct enip_data_Connected_0x70 *en
 int processEnipMessage(unsigned char *buffer, int buffer_size)
 {	
 	// initialize logging system
-	unsigned char log_msg[1000];
-    unsigned char *p = log_msg;
+	char log_msg[1000];
+    char *p = log_msg;
 	
 	// initailize structs
     struct enip_header header;

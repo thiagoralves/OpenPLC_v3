@@ -410,7 +410,7 @@ OutstationStackConfig parseDNP3Config() {
 
 void ConsoleLogger::Log(const openpal::LogEntry& entry)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     sprintf(log_msg, "DNP3 ID %s: %s\n", entry.loggerid, entry.message);
     log(log_msg);
 }

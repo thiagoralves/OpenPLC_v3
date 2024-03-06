@@ -149,7 +149,7 @@ unsigned char *readCommandArgumentStr(unsigned char *command)
 //-----------------------------------------------------------------------------
 int createSocket_interactive(int port)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     int socket_fd;
     struct sockaddr_in server_addr;
 
@@ -234,7 +234,7 @@ int listenToClient_interactive(int client_fd, unsigned char *buffer)
 //-----------------------------------------------------------------------------
 void processCommand(unsigned char *buffer, int client_fd)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     int count_char = 0;
     
     if (processing_command)
@@ -508,7 +508,7 @@ void *handleConnections_interactive(void *arguments)
 //-----------------------------------------------------------------------------
 void startInteractiveServer(int port)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     int socket_fd, client_fd;
     socket_fd = createSocket_interactive(port);
 
