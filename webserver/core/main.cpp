@@ -99,13 +99,13 @@ static inline void timespec_diff(struct timespec *a, struct timespec *b, struct 
 //-----------------------------------------------------------------------------
 // Helper function - Logs messages and print them on the console
 //-----------------------------------------------------------------------------
-void log(unsigned char *logmsg)
+void log(char *logmsg)
 {
     pthread_mutex_lock(&logLock); //lock mutex
     printf("%s", logmsg);
     for (int i = 0; logmsg[i] != '\0'; i++)
     {
-        log_buffer[log_index] = logmsg[i];
+        log_buffer[log_index] = (unsigned char)logmsg[i];
         log_index++;
         log_buffer[log_index] = '\0';
     }
@@ -220,7 +220,7 @@ u_int32_t *dint_input_call_back(int a){ return dint_input[a]; }
 u_int32_t *dint_output_call_back(int a){ return dint_output[a]; }
 u_int64_t *lint_input_call_back(int a){ return lint_input[a]; }
 u_int64_t *lint_output_call_back(int a){ return lint_output[a]; }
-void logger_callback(unsigned char *msg){ log(msg);}
+void logger_callback(char *msg){ log(msg);}
 
 int main(int argc,char **argv)
 {
@@ -234,8 +234,8 @@ int main(int argc,char **argv)
     latency_min = LONG_MAX;
     latency_total = 0;
 
-    unsigned char log_msg[1000];
-    sprintf((char *)log_msg, "OpenPLC Runtime starting...\n");
+    char log_msg[1000];
+    sprintf(log_msg, "OpenPLC Runtime starting...\n");
     log(log_msg);
 
     //======================================================

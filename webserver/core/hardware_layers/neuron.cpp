@@ -98,7 +98,7 @@ void searchForIO()
 {
     char path[200];
     char path_fmt[200];
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     
     sprintf(log_msg, "Neuron: Searching for I/O...\n");
     log(log_msg);

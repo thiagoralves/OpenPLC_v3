@@ -86,7 +86,7 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
 //-----------------------------------------------------------------------------
 int createSocket(uint16_t port)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     int socket_fd;
     struct sockaddr_in server_addr;
 
@@ -134,7 +134,7 @@ int createSocket(uint16_t port)
 //-----------------------------------------------------------------------------
 int waitForClient(int socket_fd, int protocol_type)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     int client_fd;
     struct sockaddr_in client_addr;
     bool *run_server;
@@ -197,7 +197,7 @@ void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int pr
 //-----------------------------------------------------------------------------
 void *handleConnections(void *arguments)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     int *args = (int *)arguments;
     int client_fd = args[0];
     int protocol_type = args[1];
@@ -251,7 +251,7 @@ void *handleConnections(void *arguments)
 //-----------------------------------------------------------------------------
 void startServer(uint16_t port, int protocol_type)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     int socket_fd, client_fd;
     bool *run_server;
     

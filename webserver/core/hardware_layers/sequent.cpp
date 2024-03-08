@@ -82,7 +82,7 @@
 
 int log_error(int line)
 {
-	unsigned char log_msg[1000];
+	char log_msg[1000];
 
 #ifdef GEN_DEBUG
 	sprintf(log_msg, "!line %d\n", line);
@@ -95,6 +95,7 @@ int i2cSetup(int addr)
 {
 	static int file = -1;
 	char filename[32];
+	char log_msg[1000];
 
 	if (file < 0)
 	{
@@ -102,14 +103,16 @@ int i2cSetup(int addr)
 
 		if ( (file = open(filename, O_RDWR)) < 0)
 		{
-			log("Failed to open the bus.\n");
+			sprintf(log_msg, "Failed to open the bus.\n");
+			log(log_msg);
 
 			return ERROR;
 		}
 	}
 	if (ioctl(file, I2C_SLAVE, addr) < 0)
 	{
-		log("Failed to acquire bus access and/or talk to slave.\n");
+		sprintf(log_msg, "Failed to acquire bus access and/or talk to slave.\n");
+		log(log_msg);
 		return ERROR;
 	}
 	return file;
@@ -154,7 +157,7 @@ int i2cMemRead(int dev, int add, uint8_t *buff, int size)
 int i2cMemWrite(int dev, int add, uint8_t *buff, int size)
 {
 	uint8_t intBuff[I2C_SMBUS_BLOCK_MAX];
-	unsigned char log_msg[1000];
+	char log_msg[1000];
 
 	if (NULL == buff)
 	{

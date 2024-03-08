@@ -40,7 +40,7 @@ void startPstorage()
     while (pstorage_read == false)
         sleepms(100);
     
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     IEC_UINT persistentBuffer[BUFFER_SIZE];
 
     //Read initial buffers into persistent struct
@@ -126,7 +126,7 @@ void startPstorage()
 //-----------------------------------------------------------------------------
 int readPersistentStorage()
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     FILE *fd = fopen("persistent.file", "r");
     if (fd == NULL)
     {

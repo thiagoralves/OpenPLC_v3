@@ -59,7 +59,7 @@ void check_error_count()
 {
     if (error_count >= ERROR_LIMIT)
     {
-        unsigned char log_msg[1000];
+        char log_msg[1000];
         sprintf(log_msg, "PSM: Too many errors!\nPSM: PSM is disabled\n");
         log(log_msg);
     }
@@ -102,7 +102,7 @@ void *start_psm()
 //-----------------------------------------------------------------------------
 int connect_to_psm(int debug)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     int sock = 0;
     struct sockaddr_in serv_addr;
 
@@ -147,7 +147,7 @@ int connect_to_psm(int debug)
 //-----------------------------------------------------------------------------
 void read_ana_inp(int psm)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     //                          tid     pid     len   uid  fc  start   count
     unsigned char request[] = {00, 01, 00, 00, 00, 06, 00, 04, 00, 00, 00, 25};
     unsigned char buffer[1024];
@@ -196,7 +196,7 @@ void read_ana_inp(int psm)
 //-----------------------------------------------------------------------------
 void write_ana_out(int psm)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     //                           tid     pid     len  uid  fc  start   count  len
     unsigned char request[] = {00, 01, 00, 00, 00, 57, 00, 16, 00, 00, 00, 25, 50, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00};
     unsigned char buffer[1024];
@@ -261,7 +261,7 @@ void write_ana_out(int psm)
 //-----------------------------------------------------------------------------
 void read_dig_inp(int psm)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     //                          tid     pid     len   uid  fc  start   count
     unsigned char request[] = {00, 01, 00, 00, 00, 06, 00, 02, 00, 00, 0x01, 0x90}; //reading 400 coils count = 0x0190
     unsigned char buffer[1024];
@@ -302,7 +302,7 @@ void read_dig_inp(int psm)
 //-----------------------------------------------------------------------------
 void write_dig_out(int psm)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     //                          tid     pid     len   uid  fc  start   count (400 coils - 50 bytes)
     unsigned char request[] = {00, 01, 00, 00, 00, 57, 00, 15, 00, 00, 0x01, 0x90, 50, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00};
     unsigned char buffer[1024];
@@ -339,7 +339,7 @@ void write_dig_out(int psm)
 //-----------------------------------------------------------------------------
 void stop_psm(int psm)
 {
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     //                          tid     pid     len   uid  fc  address value
     unsigned char request[] = {00, 01, 00, 00, 00, 06, 00, 06, 00, 50, 00, 127};
     unsigned char buffer[1024];
@@ -435,7 +435,7 @@ void initializeHardware()
     }
     sleepms(2000);
     
-    unsigned char log_msg[1000];
+    char log_msg[1000];
     psm = connect_to_psm(1);
     if (psm < 0)
     {

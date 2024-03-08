@@ -173,8 +173,7 @@ uint16_t Command_Protocol(pccc_header header, unsigned char *buffer, int buffer_
 	else
 	{
 		/*initialize logging system*/
-		unsigned char log_msg[1000];
-		unsigned char *p = log_msg;
+		char log_msg[1000];
 		sprintf(log_msg, "PCCC: Unsupportedd Command/Data Function Code!\n");
 		log(log_msg); 
 		return -1;
@@ -216,8 +215,7 @@ uint16_t Protected_Logical_Read_Reply(pccc_header header, unsigned char *buffer,
 	}
 	else
 	{
-		unsigned char log_msg[1000];
-		unsigned char *p = log_msg;
+		char log_msg[1000];
 		sprintf(log_msg, "PCCC: Error occured while processing Protected Logical Read\n");
 		log(log_msg); 
 		return -1;
