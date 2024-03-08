@@ -93,8 +93,10 @@ void initializeHardware()
 	//set PWM pins as output
 	for (int i = 0; i < MAX_ANALOG_OUT; i++)
 	{
-	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i]))
+	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i])) {
     		gpioSetMode(analogOutBufferPinMask[i], PI_ALT5);
+		gpioSetPWMrange(analogOutBufferPinMask[i], 1024);
+	    }
 	}
 }
 
