@@ -60,20 +60,20 @@ IEC_UINT *int_input[BUFFER_SIZE];\r\n\
 IEC_UINT *int_output[BUFFER_SIZE];\r\n\
 \r\n\
 //32bit I/O\r\n\
-IEC_DINT *dint_input[BUFFER_SIZE];\r\n\
-IEC_DINT *dint_output[BUFFER_SIZE];\r\n\
+IEC_UDINT *dint_input[BUFFER_SIZE];\r\n\
+IEC_UDINT *dint_output[BUFFER_SIZE];\r\n\
 \r\n\
 //64bit I/O\r\n\
-IEC_LINT *lint_input[BUFFER_SIZE];\r\n\
-IEC_LINT *lint_output[BUFFER_SIZE];\r\n\
+IEC_ULINT *lint_input[BUFFER_SIZE];\r\n\
+IEC_ULINT *lint_output[BUFFER_SIZE];\r\n\
 \r\n\
 //Memory\r\n\
 IEC_UINT *int_memory[BUFFER_SIZE];\r\n\
-IEC_DINT *dint_memory[BUFFER_SIZE];\r\n\
-IEC_LINT *lint_memory[BUFFER_SIZE];\r\n\
+IEC_UDINT *dint_memory[BUFFER_SIZE];\r\n\
+IEC_ULINT *lint_memory[BUFFER_SIZE];\r\n\
 \r\n\
 //Special Functions\r\n\
-IEC_LINT *special_functions[BUFFER_SIZE];\r\n\
+IEC_ULINT *special_functions[BUFFER_SIZE];\r\n\
 \r\n\
 \r\n\
 #define __LOCATED_VAR(type, name, ...) type __##name;\r\n\
@@ -176,19 +176,19 @@ void glueVar(ostream& glueVars, char *varName, char *varType)
 		switch (varName[3])
 		{
 			case 'X':
-				glueVars << "\tbool_input[" << pos1 << "][" << pos2 << "] = " << varName << ";\r\n";
+				glueVars << "\tbool_input[" << pos1 << "][" << pos2 << "] = (IEC_BOOL *)" << varName << ";\r\n";
 				break;
 			case 'B':
-				glueVars << "\tbyte_input[" << pos1 << "] = " << varName << ";\r\n";
+				glueVars << "\tbyte_input[" << pos1 << "] = (IEC_BYTE *)" << varName << ";\r\n";
 				break;
 			case 'W':
-				glueVars << "\tint_input[" << pos1 << "] = " << varName << ";\r\n";
+				glueVars << "\tint_input[" << pos1 << "] = (IEC_UINT *)" << varName << ";\r\n";
 				break;
 			case 'D':
-				glueVars << "\tdint_input[" << pos1 << "] = (IEC_DINT *)" << varName << ";\r\n";
+				glueVars << "\tdint_input[" << pos1 << "] = (IEC_UDINT *)" << varName << ";\r\n";
 				break;
 			case 'L':
-				glueVars << "\tlint_input[" << pos1 << "] = (IEC_LINT *)" << varName << ";\r\n";
+				glueVars << "\tlint_input[" << pos1 << "] = (IEC_ULINT *)" << varName << ";\r\n";
 				break;
 		}
 	}
@@ -198,19 +198,19 @@ void glueVar(ostream& glueVars, char *varName, char *varType)
 		switch (varName[3])
 		{
 			case 'X':
-				glueVars << "\tbool_output[" << pos1 << "][" << pos2 << "] = " << varName << ";\r\n";
+				glueVars << "\tbool_output[" << pos1 << "][" << pos2 << "] = (IEC_BOOL *)" << varName << ";\r\n";
 				break;
            	case 'B':
-				glueVars << "\tbyte_output[" << pos1 << "] = " << varName << ";\r\n";
+				glueVars << "\tbyte_output[" << pos1 << "] = (IEC_BYTE *)" << varName << ";\r\n";
 				break;
 			case 'W':
-				glueVars << "\tint_output[" << pos1 << "] = " << varName << ";\r\n";
+				glueVars << "\tint_output[" << pos1 << "] = (IEC_UINT *)" << varName << ";\r\n";
 				break;
 			case 'D':
-				glueVars << "\tdint_output[" << pos1 << "] = (IEC_DINT *)" << varName << ";\r\n";
+				glueVars << "\tdint_output[" << pos1 << "] = (IEC_UDINT *)" << varName << ";\r\n";
 				break;
 			case 'L':
-				glueVars << "\tlint_input[" << pos1 << "] = (IEC_LINT *)" << varName << ";\r\n";
+				glueVars << "\tlint_input[" << pos1 << "] = (IEC_ULINT *)" << varName << ";\r\n";
 				break;
 		}
 	}
@@ -220,16 +220,16 @@ void glueVar(ostream& glueVars, char *varName, char *varType)
 		switch (varName[3])
 		{
 			case 'W':
-				glueVars << "\tint_memory[" << pos1 << "] = " << varName << ";\r\n";
+				glueVars << "\tint_memory[" << pos1 << "] = (IEC_UINT *)" << varName << ";\r\n";
 				break;
 			case 'D':
-				glueVars << "\tdint_memory[" << pos1 << "] = (IEC_DINT *)" << varName << ";\r\n";
+				glueVars << "\tdint_memory[" << pos1 << "] = (IEC_UDINT *)" << varName << ";\r\n";
 				break;
 			case 'L':
 				if (pos1 > 1023)
-					glueVars << "\tspecial_functions[" << (pos1-1024) << "] = (IEC_LINT *)" << varName << ";\r\n";
+					glueVars << "\tspecial_functions[" << (pos1-1024) << "] = (IEC_ULINT *)" << varName << ";\r\n";
 				else
-					glueVars << "\tlint_memory[" << pos1 << "] = (IEC_LINT *)" << varName << ";\r\n";
+					glueVars << "\tlint_memory[" << pos1 << "] = (IEC_ULINT *)" << varName << ";\r\n";
 				break;
 		}
 	}

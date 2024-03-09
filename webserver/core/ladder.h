@@ -70,20 +70,20 @@ extern IEC_UINT *int_input[BUFFER_SIZE];
 extern IEC_UINT *int_output[BUFFER_SIZE];
 
 //32bit I/O
-extern IEC_DINT *dint_input[BUFFER_SIZE];
-extern IEC_DINT *dint_output[BUFFER_SIZE];
+extern IEC_UDINT *dint_input[BUFFER_SIZE];
+extern IEC_UDINT *dint_output[BUFFER_SIZE];
 
 //64bit I/O
-extern IEC_LINT *lint_input[BUFFER_SIZE];
-extern IEC_LINT *lint_output[BUFFER_SIZE];
+extern IEC_ULINT *lint_input[BUFFER_SIZE];
+extern IEC_ULINT *lint_output[BUFFER_SIZE];
 
 //Memory
 extern IEC_UINT *int_memory[BUFFER_SIZE];
-extern IEC_DINT *dint_memory[BUFFER_SIZE];
-extern IEC_LINT *lint_memory[BUFFER_SIZE];
+extern IEC_UDINT *dint_memory[BUFFER_SIZE];
+extern IEC_ULINT *lint_memory[BUFFER_SIZE];
 
 //Special Functions
-extern IEC_LINT *special_functions[BUFFER_SIZE];
+extern IEC_ULINT *special_functions[BUFFER_SIZE];
 
 //lock for the buffer
 extern pthread_mutex_t bufferLock;
@@ -165,4 +165,4 @@ void dnp3StartServer(int port);
 
 //persistent_storage.cpp
 void startPstorage();
-int readPersistentStorage();
+void readPersistentStorage();
