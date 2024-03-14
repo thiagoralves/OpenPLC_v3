@@ -237,12 +237,14 @@ function finalize_install {
     ./compile_program.sh blank_program.st
     cat > "$OPENPLC_DIR/start_openplc.sh" <<EOF
 #!/bin/bash
-mkdir -p /persistent/st_files
-cp -n /workdir/webserver/dnp3_default.cfg /persistent/dnp3.cfg
-cp -n /workdir/webserver/openplc_default.db /persistent/openplc.db
-cp -n /workdir/webserver/st_files_default/* /persistent/st_files/
-cp -n /dev/null /persistent/persistent.file
-cp -n /dev/null /persistent/mbconfig.cfg
+if [ -d "/persistent" ]; then
+    mkdir -p /persistent/st_files
+    cp -n /workdir/webserver/dnp3_default.cfg /persistent/dnp3.cfg
+    cp -n /workdir/webserver/openplc_default.db /persistent/openplc.db
+    cp -n /workdir/webserver/st_files_default/* /persistent/st_files/
+    cp -n /dev/null /persistent/persistent.file
+    cp -n /dev/null /persistent/mbconfig.cfg
+fi
 cd "$OPENPLC_DIR/webserver"
 "$OPENPLC_DIR/.venv/bin/python3" webserver.py
 EOF
