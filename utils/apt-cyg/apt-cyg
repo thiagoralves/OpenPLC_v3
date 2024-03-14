@@ -153,7 +153,7 @@ TRUSTEDKEYS=( CYGWIN );
 # ------------
 # pub   4096R/E2E56300 2020-02-27 [expires: 2024-02-27]
 # uid                  Cygwin <cygwin@cygwin.com>
-TRUSTEDKEY_CYGWIN_SUM="019b3d2efe208f1441c660a34d08151b5c9675523b85e0a4ca748137ed45d086a4eb06e0efd4d86a1479246e62641a0c284ffb8c4b0b637063681a9282beca3d"
+TRUSTEDKEY_CYGWIN_SUM="05db5174c02a4359a4caf7765d0fd894f2ec8f025b97aec5e4408aa1d17a2e27f65b6d70e9faba87ed1eca661643b0608ddc33047c066a3f50c222ccc28e306e"
 TRUSTEDKEY_CYGWIN_FPR="56405CF6FCC81574682A5D561A698DE9E2E56300"
 TRUSTEDKEY_CYGWIN_URL_LATEST="https://cygwin.com/key/pubring.asc"
 
@@ -162,7 +162,7 @@ TRUSTEDKEY_CYGWIN_URL_LATEST="https://cygwin.com/key/pubring.asc"
 read WGET < <( type -p wget 2>/dev/null )
 read TAR  < <( type -p tar  2>/dev/null )
 read GAWK < <( type -p awk  2>/dev/null )
-read GPG  < <( type -p gpg  2>/dev/null || type -p gpg2  2>/dev/null )
+read GPG  < <( type -p gpg2 2>/dev/null || type -p gpg   2>/dev/null )
 if [ -z "$WGET" -o -z "$TAR" -o -z "$GAWK" ]; then
   echo You must install wget, tar and gawk to use apt-cyg.
   exit 1
@@ -182,7 +182,7 @@ function usage()
 	  describe <patterns> ...  : to describe packages matching patterns
 	  packageof <command or file names> ... :
 	                             to locate parent packages
-	  pathof {cache|mirror|mirrordir|cache/mirrordir|setup.ini} :
+	  pathof {cache|mirror|mirros|mirrordir|cache/mirrordir|setup.ini} :
 	                             to show path
 	  key-add <files> ...      : to add keys contained in <files>
 	  key-del <keyids> ...     : to remove keys <keyids>
@@ -290,6 +290,8 @@ function usage()
 	                             disable completion autoupdate
 	  --max-jobs, -j <n>       : Run <n> jobs in parallel
 	  --mirror, -m <url>       : set mirror
+	  --mirror-index, -M <n>   : choose mirror from last-mirror list.
+	                             <n> is 0-based index in last-mirror.
 	  --cache, -c <dir>        : set cache
 	  --file, -f <file>        : read package names from <file>
 	  --noupdate, -u           : don't update setup.ini from mirror
@@ -557,15 +559,20 @@ function findworkspace()
   load_vars_from_cache /etc/setup/setup.rc || {
     eval "$(setuprc_import_sections last-cache last-mirror)"
 
-    mirror="$last_mirror"
+    mirror=( "${last_mirror[@]}" )
     cache="$(cygpath -au "$last_cache")"
     
-    cache="${cache%/}"
-    mirror="${mirror%/}"
+    cache=( "${cache[@]/%*(\/)/}" )
+    mirror=( "${mirror[@]/%*(\/)/}" )
     
-    mirrordir="$(mirror_to_mirrordir "$mirror/")"
+    readarray -t mirrordir < <(mirror_to_mirrordir "${mirror[@]/%/\/}" )
 
     save_vars_to_cache "${cachevars[@]}"
+  }
+  [ -z "$OPT_MIRROR_INDEX" ] || {
+    [[ $OPT_MIRROR_INDEX =~ ^[0-9]+$ ]] || { error "--mirror-index, -M <n> must be 0 <= n: n = $OPT_MIRROR_INDEX"; exit 1; }
+    mirror=( "${mirror[@]:OPT_MIRROR_INDEX:1}" "${mirror[@]:0:OPT_MIRROR_INDEX}" "${mirror[@]:OPT_MIRROR_INDEX+1}" )
+    readarray -t mirrordir < <(mirror_to_mirrordir "${mirror[@]/%/\/}" )
   }
 
   verbose 1 "Cache directory is $cache"
@@ -627,17 +634,17 @@ function setupini_download ()
   while true; do
     verbose 1 "Updating setup.ini"
     false \
-    || { download_and_verify "$mirror/$arch/setup.zst" && { zstd  -dfkq setup.zst && mv setup setup.ini || rm -f setup.zst; }; } \
-    || { download_and_verify "$mirror/$arch/setup.xz"  && { xz    -dfk  setup.xz  && mv setup setup.ini || rm -f setup.xz;  }; } \
-    || { download_and_verify "$mirror/$arch/setup.bz2" && { bzip2 -dfk  setup.bz2 && mv setup setup.ini || rm -f setup.bz2; }; }
-    download_and_verify "$mirror/$arch/setup.ini" || break
+    || { download_and_verify "$mirror/$arch/setup.zst" && { zstd  -dfkq setup.zst && mv setup{,.ini} && rm -f setup.ini.sig || ! rm -fv setup.zst; }; } \
+    || { download_and_verify "$mirror/$arch/setup.xz"  && { xz    -dfk  setup.xz  && mv setup{,.ini} && rm -f setup.ini.sig || ! rm -fv setup.xz;  }; } \
+    || { download_and_verify "$mirror/$arch/setup.bz2" && { bzip2 -dfk  setup.bz2 && mv setup{,.ini} && rm -f setup.ini.sig || ! rm -fv setup.bz2; }; } \
+    ||   download_and_verify "$mirror/$arch/setup.ini" || break
     
     files_backup_clean setup.{zst,xz,bz2,ini}{,.sig}
     popd > /dev/null
     verbose 1 "Updated setup.ini"
     return
   done
-  files_restore setup.ini setup.ini.sig setup.bz2 setup.bz2.sig
+  files_restore setup.{zst,xz,bz2,ini}{,.sig}
   popd > /dev/null
   error "updating setup.ini failed, reverting."
   return 1
@@ -916,11 +923,12 @@ function apt-cyg-key-finger ()
 
 function apt-cyg-pathof ()
 {
-  findworkspace >& /dev/null
+  OPT_VERBOSE_LEVEL=0 findworkspace
   while [ "$#" -gt 0 ]; do
     case "$1" in
       cache)            echo "$cache" ;;
       mirror)           echo "$mirror" ;;
+      mirrors)          printf "%s/\n" "${mirror[@]}" ;;
       mirrordir)        echo "$mirrordir" ;;
       cache/mirrordir)  echo "$cache/$mirrordir" ;;
       setup.ini)        echo "$cache/$mirrordir/$arch/setup.ini" ;;
@@ -1355,16 +1363,17 @@ function __apt-cyg ()
   
   getsubcmd=( apt-cyg --completion-get-subcommand $(echo "${COMP_LINE}" | sed -E 's/^[ \t]*[^ \t]+//g;s/[^ \t]+$//g') )
   subcmd="$( "${getsubcmd[@]}" )"
+  mirroridxopt=( $(echo ${COMP_LINE} | awk 'BEGIN { RS=" " } /^-M|--mirror-index$/ { if(getline) printf "-M %s", $1 }') )
   
   case "$subcmd" in
     install|depends|rdepends|describe|find|category)
-      COMPREPLY=( $(awk '/^@ /{print $2}' "$(apt-cyg pathof setup.ini)") )
+      COMPREPLY=( $(awk '/^@ /{print $2}' "$(apt-cyg pathof "${mirroridxopt[@]}" setup.ini)") )
       ;;
     remove)
       COMPREPLY=( $(apt-cyg --no-header show 2>/dev/null | awk '$0=$1') )
       ;;
     pathof)
-      COMPREPLY=( cache mirror mirrordir cache/mirrordir setup.ini )
+      COMPREPLY=( cache mirror mirrors mirrordir cache/mirrordir setup.ini )
       ;;
     *)
       COMPREPLY=( "${__APT_CYG_SUBCMDS[@]}" )
@@ -1382,6 +1391,9 @@ function __apt-cyg ()
       ;;
     --proxy|-p)
       COMPREPLY=( auto inherit none http:// )
+      ;;
+    --mirror-index|-M)
+      COMPREPLY=( $(seq 0 $(($(apt-cyg pathof mirrors | wc -w)-1))) )
       ;;
     *)
       COMPREPLY+=( "${__APT_CYG_OPTIONS[@]}" )
@@ -2281,6 +2293,11 @@ function parse_args ()
       
       --mirror|-m)
         OPT_MIRROR+=( "$2" )
+        shift 2 || break
+        ;;
+      
+      --mirror-index|-M)
+        OPT_MIRROR_INDEX="$2"
         shift 2 || break
         ;;
       
