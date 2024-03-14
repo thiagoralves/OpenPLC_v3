@@ -297,6 +297,11 @@ elif [ "$1" == "docker" ]; then
     linux_install_deps
     install_py_deps
     install_all_libs
+    # Create persistent folder for docker
+    if [[ ! -d "/persistent" ]]
+    then
+        mkdir /persistent
+    fi
     finalize_install linux
 
 elif [ "$1" == "rpi" ]; then
