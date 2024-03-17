@@ -648,6 +648,10 @@ void initializeMB()
                 mb_devices[i].mb_ctx = modbus_new_rtu(mb_devices[i].dev_address, mb_devices[i].rtu_baud,
                                                 mb_devices[i].rtu_parity, mb_devices[i].rtu_data_bit,
                                                 mb_devices[i].rtu_stop_bit);
+
+                modbus_enable_rpi(mb_devices[i].mb_ctx,TRUE);
+                modbus_configure_rpi_bcm_pin(mb_devices[i].mb_ctx,6);
+                modbus_rpi_pin_export_direction(mb_devices[i].mb_ctx);
             }
         }
         
