@@ -610,7 +610,7 @@ void *querySlaveDevices(void *arg)
 // This function is called by the main OpenPLC routine when it is initializing.
 // Modbus master initialization procedures are here.
 //-----------------------------------------------------------------------------
-void initializeMB()
+void initializeMB(custom_layer_options& customLayerOptions)
 {
     parseConfig();
 
@@ -649,9 +649,12 @@ void initializeMB()
                                                 mb_devices[i].rtu_parity, mb_devices[i].rtu_data_bit,
                                                 mb_devices[i].rtu_stop_bit);
 
-                modbus_enable_rpi(mb_devices[i].mb_ctx,TRUE);
-                modbus_configure_rpi_bcm_pin(mb_devices[i].mb_ctx,6);
-                modbus_rpi_pin_export_direction(mb_devices[i].mb_ctx);
+                // If hardware layer set modbus_rts_pin, enable Pi specific rts handling handling
+                if (customLayerOptions.rpi_modbus_rts_pin != 0) {
+                    modbus_enable_rpi(mb_devices[i].mb_ctx,TRUE);
+                    modbus_configure_rpi_bcm_pin(mb_devices[i].mb_ctx,customLayerOptions.rpi_modbus_rts_pin;
+                    modbus_rpi_pin_export_direction(mb_devices[i].mb_ctx);
+                }
             }
         }
         

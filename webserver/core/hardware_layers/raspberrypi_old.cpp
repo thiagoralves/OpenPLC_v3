@@ -66,7 +66,7 @@ int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 1 };
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
 //-----------------------------------------------------------------------------
-void initializeHardware()
+void initializeHardware(custom_layer_options& customLayerOptions)
 {
 	wiringPiSetup();
 	//piHiPri(99);

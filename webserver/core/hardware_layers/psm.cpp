@@ -414,7 +414,7 @@ void kill_psm()
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
 //-----------------------------------------------------------------------------
-void initializeHardware()
+void initializeHardware(custom_layer_options& customLayerOptions)
 {
     //Verify if there is any old PSM running on the background and kill it
     if ((psm = connect_to_psm(0)) >= 0)

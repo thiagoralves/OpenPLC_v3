@@ -45,7 +45,7 @@ int serialFd; //serial file descriptor
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
 //-----------------------------------------------------------------------------
-void initializeHardware()
+void initializeHardware(custom_layer_options& customLayerOptions)
 {
 	wiringPiSetup();
 	//piHiPri(99);

@@ -32,6 +32,7 @@
 
 #include "iec_types.h"
 #include "ladder.h"
+#include "custom_layer_options.h"
 #ifdef _ethercat_src
 #include "ethercat_src.h"
 #endif
@@ -264,8 +265,11 @@ int main(int argc,char **argv)
     type_logger_callback logger = logger_callback; 
     ethercat_configure("../utils/ethercat_src/build/ethercat.cfg", logger);
 #endif
-    initializeHardware();
-    initializeMB();
+    // Create layer options struct to pass settings between hardware layers and other init methods
+    custom_layer_options customLayerOptions;    
+
+    initializeHardware(customLayerOptions);
+    initializeMB(customLayerOptions);
     initCustomLayer();
     updateBuffersIn();
     updateCustomIn();

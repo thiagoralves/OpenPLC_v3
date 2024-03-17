@@ -160,7 +160,7 @@ int mcp_adcRead(int chan)
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
 //-----------------------------------------------------------------------------
-void initializeHardware()
+void initializeHardware(custom_layer_options& customLayerOptions)
 {
 	wiringPiSetup();
 	mcp_adcSetup(0x68); //ADC I2C address configuration

@@ -162,7 +162,7 @@ void *exchangeData(void *arg)
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
 //-----------------------------------------------------------------------------
-void initializeHardware()
+void initializeHardware(custom_layer_options& customLayerOptions)
 {
 	pthread_t thread;
 	pthread_create(&thread, NULL, exchangeData, NULL);
