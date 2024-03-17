@@ -122,6 +122,13 @@ elif [ "$1" == "sl_rp4" ]; then
     echo linux > ../scripts/openplc_platform
     echo sl_rp4 > ../scripts/openplc_driver
 
+elif [ "$1" == "piplc" ]; then
+    echo "Activating PiPLC driver"
+    cp ./hardware_layers/PiPLC.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo rpi > ../scripts/openplc_platform
+    echo piplc > ../scripts/openplc_driver
+
 else
     echo "Error: Invalid hardware layer"
 fi
