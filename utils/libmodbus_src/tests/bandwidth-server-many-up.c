@@ -24,10 +24,9 @@
 
 #define NB_CONNECTION    5
 
-static modbus_t *ctx = NULL;
-static modbus_mapping_t *mb_mapping;
-
-static int server_socket = -1;
+modbus_t *ctx = NULL;
+int server_socket = -1;
+modbus_mapping_t *mb_mapping;
 
 static void close_sigint(int dummy)
 {
@@ -62,11 +61,6 @@ int main(void)
     }
 
     server_socket = modbus_tcp_listen(ctx, NB_CONNECTION);
-    if (server_socket == -1) {
-        fprintf(stderr, "Unable to listen TCP connection\n");
-        modbus_free(ctx);
-        return -1;
-    }
 
     signal(SIGINT, close_sigint);
 
