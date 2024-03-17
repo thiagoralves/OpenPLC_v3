@@ -6,8 +6,6 @@
 // in here by clicking on the "Restore Original Code" button above.
 //-----------------------------------------------------------------------------
 
-#include "custom_layer_options.h"
-
 //-----------------------------------------------------------------------------
 // These are the ignored I/O vectors. If you want to override how OpenPLC
 // handles a particular input or output, you must put them in the ignored
