@@ -90,7 +90,7 @@ void initializeHardware()
 	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
 	    {
 		    pinMode(inBufferPinMask[i], INPUT);
-			pullUpDnControl(inBufferPinMask[i], PUD_UP); //pull down enabled
+			pullUpDnControl(inBufferPinMask[i], PUD_UP); //pull up enabled
 	    }
 	}
 
@@ -136,7 +136,7 @@ void updateBuffersIn()
 	for (int i = 0; i < MAX_INPUT; i++)
 	{
 	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
-    		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = digitalRead(inBufferPinMask[i]);
+    		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = !digitalRead(inBufferPinMask[i]);
 	}
 
 	pthread_mutex_unlock(&bufferLock); //unlock mutex
