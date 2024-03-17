@@ -39,9 +39,17 @@
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
 
-#define MAX_INPUT 		14
-#define MAX_OUTPUT 		11
-#define MAX_ANALOG_OUT	1
+#define MAX_INPUT 		8
+#define MAX_OUTPUT 		10
+#define MAX_ANALOG_OUT	2
+
+// Single pin definitions
+#define I2C_SDA			2
+#define I2C_SCL			3
+#define MODBUS_TX		4
+#define MODBUS_RX		5
+#define MODBUS_RTS		6
+#define ONEWIRE			23
 
 /********************I/O PINS CONFIGURATION*********************
  * A good source for RaspberryPi I/O pins information is:
@@ -52,15 +60,15 @@
 ****************************************************************/
 //inBufferPinMask: pin mask for each input, which
 //means what pin is mapped to that OpenPLC input
-int inBufferPinMask[MAX_INPUT] = { 8, 9, 7, 0, 2, 3, 12, 13, 14, 21, 22, 23, 24, 25 };
+int inBufferPinMask[MAX_INPUT] = { 0, 2, 3, 23, 13, 14, 23, 25 };
 
 //outBufferPinMask: pin mask for each output, which
 //means what pin is mapped to that OpenPLC output
-int outBufferPinMask[MAX_OUTPUT] =	{ 15, 16, 4, 5, 6, 10, 11, 26, 27, 28, 29 };
+int outBufferPinMask[MAX_OUTPUT] =	{ 4, 5, 6, 10, 11, 24, 26, 27, 28, 29 };
 
 //analogOutBufferPinMask: pin mask for the analog PWM
 //output of the RaspberryPi
-int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 1 };
+int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 1, 24 };
 
 //-----------------------------------------------------------------------------
 // This function is called by the main OpenPLC routine when it is initializing.
@@ -77,10 +85,7 @@ void initializeHardware()
 	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
 	    {
 		    pinMode(inBufferPinMask[i], INPUT);
-		    if (i != 0 && i != 1) //pull down can't be enabled on the first two pins
-		    {
-			    pullUpDnControl(inBufferPinMask[i], PUD_DOWN); //pull down enabled
-		    }
+			pullUpDnControl(inBufferPinMask[i], PUD_UP); //pull down enabled
 	    }
 	}
 
@@ -97,6 +102,12 @@ void initializeHardware()
 	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i]))
     		pinMode(analogOutBufferPinMask[i], PWM_OUTPUT);
 	}
+
+	// I²C?
+
+	// Modbus?
+
+	// 1-Wire?
 }
 
 //-----------------------------------------------------------------------------
