@@ -1,3 +1,10 @@
+# Fork modifications
+
+This fork has been modified from upstream to enable [PiPLC](https://github.com/chrismettal/piplc) compatibility. Hopefully these changes can be made upstream compatible and subsequently merged. This fork might however include hardcoded changes during testing.
+
+- Swapped out libmodbus with [RPI specialized fork](https://github.com/dhruvvyas90/libmodbus) for testing
+- Hardcoded a GPIO (currently `BCM 6`) to be the Modbus RTU enable pin 
+
 # OpenPLC Runtime version 3
 
 [![Build Status](https://travis-ci.org/thiagoralves/OpenPLC_v3.svg?branch=master)](https://travis-ci.org/thiagoralves/OpenPLC_v3)
