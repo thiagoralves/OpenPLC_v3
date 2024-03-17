@@ -652,7 +652,7 @@ void initializeMB(custom_layer_options& customLayerOptions)
                 // If hardware layer set modbus_rts_pin, enable Pi specific rts handling handling
                 if (customLayerOptions.rpi_modbus_rts_pin != 0) {
                     modbus_enable_rpi(mb_devices[i].mb_ctx,TRUE);
-                    modbus_configure_rpi_bcm_pin(mb_devices[i].mb_ctx,customLayerOptions.rpi_modbus_rts_pin;
+                    modbus_configure_rpi_bcm_pin(mb_devices[i].mb_ctx,customLayerOptions.rpi_modbus_rts_pin);
                     modbus_rpi_pin_export_direction(mb_devices[i].mb_ctx);
                 }
             }
