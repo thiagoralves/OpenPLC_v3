@@ -40,7 +40,7 @@
 #endif
 
 #define MAX_INPUT 		8
-#define MAX_OUTPUT 		10
+#define MAX_OUTPUT 		8
 #define MAX_ANALOG_OUT	2
 
 // Single pin definitions
@@ -60,11 +60,16 @@
 ****************************************************************/
 //inBufferPinMask: pin mask for each input, which
 //means what pin is mapped to that OpenPLC input
-int inBufferPinMask[MAX_INPUT] = { 0, 2, 3, 23, 13, 14, 23, 25 };
+//Order is intentional to match the GPIO mapping table of PiPLC at https://github.com/chrismettal/piplc#gpio-mapping
+//while having all inputs mapped "in order" from left to right
+int inBufferPinMask[MAX_INPUT] = { 0, 2, 3, 12, 13, 14, 23, 25 };
 
 //outBufferPinMask: pin mask for each output, which
 //means what pin is mapped to that OpenPLC output
-int outBufferPinMask[MAX_OUTPUT] =	{ 4, 5, 6, 10, 11, 24, 26, 27, 28, 29 };
+//
+//Order is intentional to match the GPIO mapping table of PiPLC at https://github.com/chrismettal/piplc#gpio-mapping
+//while having all relays mapped "in order" from left to right
+int outBufferPinMask[MAX_OUTPUT] =	{ 5, 6, 10, 11, 26, 27, 28, 29};
 
 //analogOutBufferPinMask: pin mask for the analog PWM
 //output of the RaspberryPi
