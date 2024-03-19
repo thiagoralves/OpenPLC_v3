@@ -109,9 +109,10 @@ void initializeHardware()
 	    }
 	}
 
-	// I²C?
+	// Modbus
+	rpi_modbus_rts_pin = MODBUS_RTS;
 
-	// Modbus?
+	// I²C?
 
 	// 1-Wire?
 }
