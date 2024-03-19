@@ -104,7 +104,7 @@ void glueVars();
 void updateTime();
 
 //hardware_layer.cpp
-void initializeHardware(custom_layer_options& customLayerOptions);
+void initializeHardware();
 void finalizeHardware();
 void updateBuffersIn();
 void updateBuffersOut();
@@ -155,7 +155,7 @@ int processEnipMessage(unsigned char *buffer, int buffer_size);
 uint16_t processPCCCMessage(unsigned char *buffer, int buffer_size);
 
 //modbus_master.cpp
-void initializeMB(custom_layer_options& customLayerOptions);
+void initializeMB();
 void *querySlaveDevices(void *arg);
 void updateBuffersIn_MB();
 void updateBuffersOut_MB();

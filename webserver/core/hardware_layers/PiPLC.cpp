@@ -78,7 +78,7 @@ int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 18, 19 };
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
 //-----------------------------------------------------------------------------
-void initializeHardware(custom_layer_options& customLayerOptions)
+void initializeHardware()
 {
 	gpioInitialise();
 	//piHiPri(99);
@@ -109,10 +109,9 @@ void initializeHardware(custom_layer_options& customLayerOptions)
 	    }
 	}
 
-	// Modbus
-	customLayerOptions.rpi_modbus_rts_pin = MODBUS_RTS;
-
 	// I²C?
+
+	// Modbus?
 
 	// 1-Wire?
 }

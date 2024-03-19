@@ -610,7 +610,7 @@ void *querySlaveDevices(void *arg)
 // This function is called by the main OpenPLC routine when it is initializing.
 // Modbus master initialization procedures are here.
 //-----------------------------------------------------------------------------
-void initializeMB(custom_layer_options& customLayerOptions)
+void initializeMB()
 {
     parseConfig();
 

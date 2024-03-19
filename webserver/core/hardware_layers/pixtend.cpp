@@ -813,7 +813,7 @@ void *updateLocalBuffers(void *args)
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
 //-----------------------------------------------------------------------------
-void initializeHardware(custom_layer_options& customLayerOptions)
+void initializeHardware()
 {
 	Spi_Setup(0);
 	Spi_Setup(1);

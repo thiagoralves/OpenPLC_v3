@@ -37,7 +37,7 @@
 // This function is called by the main OpenPLC routine when it is initializing.
 // Hardware initialization procedures should be here.
 //-----------------------------------------------------------------------------
-void initializeHardware(custom_layer_options& customLayerOptions)
+void initializeHardware()
 {
 }
 
