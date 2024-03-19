@@ -25,7 +25,6 @@
 
 #include <pthread.h>
 #include <stdint.h>
-#include "custom_layer_options.h"
 
 #define MODBUS_PROTOCOL     0
 #define DNP3_PROTOCOL       1

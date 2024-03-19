@@ -32,6 +32,7 @@
 
 #include "iec_types.h"
 #include "ladder.h"
+#include "custom_layer_options.h"
 #ifdef _ethercat_src
 #include "ethercat_src.h"
 #endif
