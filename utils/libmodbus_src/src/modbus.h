@@ -2,6 +2,7 @@
  * Copyright © 2001-2013 Stéphane Raimbault <stephane.raimbault@gmail.com>
  *
  * SPDX-License-Identifier: LGPL-2.1+
+ * * Raspberry pi fork of libmodbus with GPIO rx-tx functionality for RS485
  */
 
 #ifndef MODBUS_H
@@ -113,6 +114,11 @@ MODBUS_BEGIN_DECLS
 /* Random number to avoid errno conflicts */
 #define MODBUS_ENOBASE 112345678
 
+/* pi related defines*/
+
+#define DIRECTION_MAX 35
+#define BUFFER_MAX 3
+
 /* Protocol exceptions */
 enum {
     MODBUS_EXCEPTION_ILLEGAL_FUNCTION = 0x01,
@@ -156,13 +162,13 @@ typedef struct _modbus modbus_t;
 
 typedef struct {
     int nb_bits;
-    int start_bits;
+    int offset_bits;
     int nb_input_bits;
-    int start_input_bits;
+    int offset_input_bits;
     int nb_input_registers;
-    int start_input_registers;
+    int offset_input_registers;
     int nb_registers;
-    int start_registers;
+    int offset_registers;
     uint8_t *tab_bits;
     uint8_t *tab_input_bits;
     uint16_t *tab_input_registers;
@@ -213,14 +219,12 @@ MODBUS_API int modbus_write_and_read_registers(modbus_t *ctx, int write_addr, in
                                                uint16_t *dest);
 MODBUS_API int modbus_report_slave_id(modbus_t *ctx, int max_dest, uint8_t *dest);
 
-MODBUS_API modbus_mapping_t* modbus_mapping_new_start_address(
-    unsigned int start_bits, unsigned int nb_bits,
-    unsigned int start_input_bits, unsigned int nb_input_bits,
-    unsigned int start_registers, unsigned int nb_registers,
-    unsigned int start_input_registers, unsigned int nb_input_registers);
-
+MODBUS_API modbus_mapping_t* modbus_mapping_offset_new(int nb_bits, int offset_bits,
+                                            int nb_input_bits, int offset_input_bits,
+                                            int nb_registers, int offset_registers,
+                                            int nb_input_registers, int offset_input_registers);
 MODBUS_API modbus_mapping_t* modbus_mapping_new(int nb_bits, int nb_input_bits,
-                                                int nb_registers, int nb_input_registers);
+                                            int nb_registers, int nb_input_registers);
 MODBUS_API void modbus_mapping_free(modbus_mapping_t *mb_mapping);
 
 MODBUS_API int modbus_send_raw_request(modbus_t *ctx, uint8_t *raw_req, int raw_req_length);
@@ -233,6 +237,23 @@ MODBUS_API int modbus_reply(modbus_t *ctx, const uint8_t *req,
                             int req_length, modbus_mapping_t *mb_mapping);
 MODBUS_API int modbus_reply_exception(modbus_t *ctx, const uint8_t *req,
                                       unsigned int exception_code);
+
+// additional modbus API for Rpi for GPIO based rx-tx switching (RS485)
+
+MODBUS_API int modbus_enable_rpi(modbus_t *ctx, uint8_t value);
+MODBUS_API int modbus_configure_rpi_bcm_pin(modbus_t *ctx, uint8_t value);
+MODBUS_API int modbus_configure_rpi_bcm_pins(modbus_t *ctx, uint8_t de, uint8_t re);
+MODBUS_API int modbus_rpi_pin_export_direction(modbus_t *ctx);
+MODBUS_API int modbus_rpi_pin_unexport_direction(modbus_t *ctx);
+
+// additional modbus API for MM
+
+MODBUS_API modbus_t *modbus_mm_open(const char *device,
+                                    int baud, char parity, int data_bit, int stop_bit,
+                                    uint8_t de, uint8_t re,
+                                    uint32_t to_sec, uint32_t to_usec);
+MODBUS_API int modbus_mm_close(modbus_t *ctx);
+
 
 /**
  * UTILS FUNCTIONS

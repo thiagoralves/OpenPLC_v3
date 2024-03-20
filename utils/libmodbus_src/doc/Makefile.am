@@ -15,7 +15,7 @@ TXT3 = \
         modbus_get_socket.txt \
         modbus_mapping_free.txt \
         modbus_mapping_new.txt \
-        modbus_mapping_new_start_address.txt \
+        modbus_mapping_offset_new.txt \
         modbus_mask_write_register.txt \
         modbus_new_rtu.txt \
         modbus_new_tcp_pi.txt \
@@ -43,9 +43,6 @@ TXT3 = \
         modbus_set_debug.txt \
         modbus_set_error_recovery.txt \
         modbus_set_float.txt \
-        modbus_set_float_abcd.txt \
-        modbus_set_float_badc.txt \
-        modbus_set_float_cdab.txt \
         modbus_set_float_dcba.txt \
         modbus_set_response_timeout.txt \
         modbus_set_slave.txt \

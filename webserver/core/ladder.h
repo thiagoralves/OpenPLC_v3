@@ -159,6 +159,7 @@ void initializeMB();
 void *querySlaveDevices(void *arg);
 void updateBuffersIn_MB();
 void updateBuffersOut_MB();
+extern uint8_t rpi_modbus_rts_pin;     // If <> 0, expect hardware RTS to be used with this pin
 
 //dnp3.cpp
 void dnp3StartServer(int port);
