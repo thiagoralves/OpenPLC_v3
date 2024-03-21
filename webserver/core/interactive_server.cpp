@@ -234,7 +234,7 @@ int listenToClient_interactive(int client_fd, unsigned char *buffer)
 //-----------------------------------------------------------------------------
 void processCommand(unsigned char *buffer, int client_fd)
 {
-    char log_msg[1000];
+    char log_msg[1200];
     int count_char = 0;
     
     if (processing_command)

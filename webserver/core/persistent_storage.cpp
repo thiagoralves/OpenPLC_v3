@@ -63,14 +63,14 @@ void startPstorage()
     {
         sprintf(log_msg, "Persistent Storage: Error creating persistent memory file!\n");
         log(log_msg);
-        return 0;
+        return;
     }
 
     if (fwrite(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, ps) < BUFFER_SIZE)
     {
         sprintf(log_msg, "Persistent Storage: Error writing to persistent memory file!\n");
         log(log_msg);
-        return 0;
+        return;
     }
     fclose(ps);
     
@@ -102,14 +102,14 @@ void startPstorage()
             {
                 sprintf(log_msg, "Persistent Storage: Error creating persistent memory file!\n");
                 log(log_msg);
-                return 0;
+                return;
             }
 
             if (fwrite(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, fd) < BUFFER_SIZE)
             {
                 sprintf(log_msg, "Persistent Storage: Error writing to persistent memory file!\n");
                 log(log_msg);
-                return 0;
+                return;
             }
             fclose(fd);
         }
@@ -124,7 +124,7 @@ void startPstorage()
 // is disabled, the persistent.file will not be found and the function will
 // exit gracefully.
 //-----------------------------------------------------------------------------
-int readPersistentStorage()
+void readPersistentStorage()
 {
     char log_msg[1000];
     FILE *fd = fopen("persistent.file", "r");
@@ -133,7 +133,7 @@ int readPersistentStorage()
         sprintf(log_msg, "Warning: Persistent Storage file not found\n");
         log(log_msg);
         pstorage_read = true;
-        return 0;
+        return;
     }
 
     IEC_INT persistentBuffer[BUFFER_SIZE];
@@ -143,7 +143,7 @@ int readPersistentStorage()
         sprintf(log_msg, "Persistent Storage: Error while trying to read persistent.file!\n");
         log(log_msg);
         pstorage_read = true;
-        return 0;
+        return;
     }
     fclose(fd);
     
