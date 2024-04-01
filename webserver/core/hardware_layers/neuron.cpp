@@ -91,9 +91,9 @@ int requestSYSFS(char *path, char *command)
     }
 }
 
-//-----------------------------------------------------------------------------
-// Look for all available I/Os connected to Neuron. Scan from 1_01 to 10_10
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+// Look for all available I/Os connected to Neuron. Scan from 1_01 to 10_20. With specific scan for user leds 
+//------------------------------------------------------------------------------------------------------------
 void searchForIO()
 {
     char path[200];
@@ -110,7 +110,7 @@ void searchForIO()
     {
         for (int major = 1; major < 10; major++)
         {
-            for (int minor = 1; minor < 10; minor++)
+            for (int minor = 1; minor < 20; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
                 char *command = "read";
@@ -124,7 +124,7 @@ void searchForIO()
             }
         }
     }
-    
+
     /* look for digital outputs */
     strcpy(path_fmt, "/sys/devices/platform/unipi_plc/io_group%d/do_%d_%02d/do_value");
     index = 0;
@@ -132,7 +132,7 @@ void searchForIO()
     {
         for (int major = 1; major < 10; major++)
         {
-            for (int minor = 1; minor < 10; minor++)
+            for (int minor = 1; minor < 20; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
                 char *command = "read";
@@ -153,7 +153,7 @@ void searchForIO()
     {
         for (int major = 1; major < 10; major++)
         {
-            for (int minor = 1; minor < 10; minor++)
+            for (int minor = 1; minor < 20; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
                 char *command = "read";
@@ -166,8 +166,27 @@ void searchForIO()
                 }
             }
         }
+
     }
-    
+
+    /* look for digital outputs (user leds) */
+    strcpy(path_fmt, "/sys/devices/platform/unipi_plc/io_group%d/leds/unipi:green:uled-x%d/brightness");
+    for (int group = 1; group < 10; group++)
+    {
+        for (int major = 0; major < 10; major++)
+        {
+            sprintf(path, path_fmt, group, major);
+            char *command = "read";
+            if (requestSYSFS(path, command) >= 0)
+            {
+                /* valid I/O. Add to the list */
+                strcpy(digital_outputs[index], path);                
+                index++;
+                digital_outputs[index][0] = '\0';
+            }
+        }
+    }
+
     /* look for analog inputs */
     strcpy(path_fmt, "/sys/devices/platform/unipi_plc/io_group%d/ai_%d_%d/in_voltage0_raw");
     index = 0;
@@ -175,7 +194,7 @@ void searchForIO()
     {
         for (int major = 1; major < 10; major++)
         {
-            for (int minor = 1; minor < 10; minor++)
+            for (int minor = 1; minor < 20; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
                 char *command = "read";
@@ -197,7 +216,7 @@ void searchForIO()
     {
         for (int major = 1; major < 10; major++)
         {
-            for (int minor = 1; minor < 10; minor++)
+            for (int minor = 1; minor < 20; minor++)
             {
                 sprintf(path, path_fmt, group, major, minor);
                 char *command = "read";
