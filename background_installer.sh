@@ -92,7 +92,11 @@ function install_pigpio {
 function install_py_deps {
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" -m pip install --upgrade pip
-    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
+    if [ "$1" == "neuron" ]; then
+        "$VENV_DIR/bin/python3" -m pip install flask==2.2.5 werkzeug==2.2.2 flask-login==0.6.2 pyserial pymodbus==2.5.3
+    else
+        "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
+    fi
     python3 -m pip install pymodbus==2.5.3
 }
 
@@ -266,7 +270,7 @@ if [ "$1" == "win" ]; then
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" get-pip3.py
     "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
-
+    
     echo ""
     echo "[MATIEC COMPILER]"
     cp ./utils/matiec_src/bin_win32/*.* ./webserver/
@@ -326,7 +330,7 @@ elif [ "$1" == "neuron" ]; then
     sudo systemctl disable evok.service
 
     linux_install_deps sudo
-    install_py_deps
+    install_py_deps neuron
     install_all_libs sudo
     install_systemd_service sudo
     finalize_install linux
