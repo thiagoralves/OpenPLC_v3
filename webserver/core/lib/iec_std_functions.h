@@ -1038,6 +1038,8 @@ static inline BOOL fname(EN_ENO_PARAMS, UINT param_count, TYPENAME op1, ...){\
     /*     GT     */
     /**************/
 /* Comparison for numerical data types */
+__compare_num(GT_BOOL, BOOL, > )  /* The explicitly typed standard functions */
+__compare_num(GT__BOOL__BOOL, BOOL, > ) /* Overloaded function */
 #define __iec_(TYPENAME) \
 __compare_num(GT_##TYPENAME, TYPENAME, > ) /* The explicitly typed standard functions */\
 __compare_num(GT__BOOL__##TYPENAME, TYPENAME, > ) /* Overloaded function */
@@ -1061,6 +1063,8 @@ __compare_string(GT__BOOL__STRING, > ) /* Overloaded function */
     /*     GE     */
     /**************/
 /* Comparison for numerical data types */
+__compare_num(GE_BOOL, BOOL, >= )  /* The explicitly typed standard functions */
+__compare_num(GE__BOOL__BOOL, BOOL, >= ) /* Overloaded function */
 #define __iec_(TYPENAME) \
 __compare_num(GE_##TYPENAME, TYPENAME, >= ) /* The explicitly typed standard functions */\
 __compare_num(GE__BOOL__##TYPENAME, TYPENAME, >= ) /* Overloaded function */
@@ -1086,6 +1090,8 @@ __compare_string(GE__BOOL__STRING, >= ) /* Overloaded function */
     /*     EQ     */
     /**************/
 /* Comparison for numerical data types */
+__compare_num(EQ_BOOL, BOOL, == )  /* The explicitly typed standard functions */
+__compare_num(EQ__BOOL__BOOL, BOOL, == ) /* Overloaded function */
 #define __iec_(TYPENAME) \
 __compare_num(EQ_##TYPENAME, TYPENAME, == ) /* The explicitly typed standard functions */\
 __compare_num(EQ__BOOL__##TYPENAME, TYPENAME, == ) /* Overloaded function */
@@ -1110,6 +1116,8 @@ __compare_string(EQ__BOOL__STRING, == ) /* Overloaded function */
     /*     LT     */
     /**************/
 /* Comparison for numerical data types */
+__compare_num(LT_BOOL, BOOL, < )  /* The explicitly typed standard functions */
+__compare_num(LT__BOOL__BOOL, BOOL, < ) /* Overloaded function */
 #define __iec_(TYPENAME) \
 __compare_num(LT_##TYPENAME, TYPENAME, < ) /* The explicitly typed standard functions */\
 __compare_num(LT__BOOL__##TYPENAME, TYPENAME, < ) /* Overloaded function */
@@ -1134,6 +1142,8 @@ __compare_string(LT__BOOL__STRING, < ) /* Overloaded function */
     /*     LE     */
     /**************/
 /* Comparison for numerical data types */
+__compare_num(LE_BOOL, BOOL, <= )  /* The explicitly typed standard functions */
+__compare_num(LE__BOOL__BOOL, BOOL, <= ) /* Overloaded function */
 #define __iec_(TYPENAME) \
 __compare_num(LE_##TYPENAME, TYPENAME, <= ) /* The explicitly typed standard functions */\
 __compare_num(LE__BOOL__##TYPENAME, TYPENAME, <= ) /* Overloaded function */
