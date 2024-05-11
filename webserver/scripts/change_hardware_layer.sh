@@ -129,6 +129,13 @@ elif [ "$1" == "piplc" ]; then
     echo rpi > ../scripts/openplc_platform
     echo piplc > ../scripts/openplc_driver
 
+elif [ "$1" == "fc100b" ]; then
+    echo "Activating Folks FC100B driver"
+    cp ./hardware_layers/fc100b.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo linux > ../scripts/openplc_platform
+    echo fc100b > ../scripts/openplc_driver
+    
 else
     echo "Error: Invalid hardware layer"
 fi
