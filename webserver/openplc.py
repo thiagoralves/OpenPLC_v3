@@ -5,6 +5,7 @@ import errno
 import time
 from threading import Thread
 from queue import Queue, Empty
+import os.path
 
 intervals = (
     ('weeks', 604800),  # 60 * 60 * 24 * 7
@@ -127,23 +128,45 @@ class runtime:
                 program_lines.append(line)
 
         if len(c_debug_lines) == 0:
-            compilation_status_str += 'Invalid program file format. Please update your OpenPLC Editor and try again\n'
-            a = subprocess.Popen(['echo', 'Compilation finished with errors!'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            compilation_object = NonBlockingStreamReader(a.stdout)
+            # Could not find debug info on program uploaded
+            if os.path.isfile('./st_files/' + st_file + '.dbg'):
+                # Debugger info exists on file - open it
+                f = open('./st_files/' + st_file + '.dbg', "r")
+                c_debug = f.read()
+                f.close()
+
+                # Write c_debug file
+                f = open('./core/debug.cpp', "w")
+                f.write(c_debug)
+                f.close()
+
+                # Start compilation
+                a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                compilation_object = NonBlockingStreamReader(a.stdout)
+            else:
+                # No debug info... probably a program generated from the old editor
+                compilation_status_str += 'Invalid program file format. Please update your OpenPLC Editor and try again\n'
+                a = subprocess.Popen(['echo', 'Compilation finished with errors!'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                compilation_object = NonBlockingStreamReader(a.stdout)
         else:
+            # Debug info was extracted from program
             program = '\n'.join(program_lines)
             c_debug = '\n'.join(c_debug_lines)
 
             # Write c_debug file
-            f = open('./core/debug.c', "w")
+            f = open('./core/debug.cpp', "w")
             f.write(c_debug)
             f.close()
 
-            #Write program file
+            #Write program and debug files
             f = open('./st_files/' + st_file, "w")
             f.write(program)
             f.close()
+            f = open('./st_files/' + st_file + '.dbg', "w")
+            f.write(c_debug)
+            f.close()
 
+            # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             compilation_object = NonBlockingStreamReader(a.stdout)
     
