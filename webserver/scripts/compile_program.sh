@@ -61,12 +61,6 @@ if [ "$OPENPLC_PLATFORM" = "win" ]; then
         echo "Compilation finished with errors!"
         exit 1
     fi
-    g++ -I ./lib -c debug.c -w
-    if [ $? -ne 0 ]; then
-        echo "Error compiling C files"
-        echo "Compilation finished with errors!"
-        exit 1
-    fi
     echo "Generating glueVars..."
     ./glue_generator
     echo "Compiling main program..."
@@ -96,16 +90,6 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
         g++ -std=gnu++11 -I ./lib -c Res0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC -DSL_RP4
     else
         g++ -std=gnu++11 -I ./lib -c Res0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC
-    fi
-    if [ $? -ne 0 ]; then
-        echo "Error compiling C files"
-        echo "Compilation finished with errors!"
-        exit 1
-    fi
-    if [ "$OPENPLC_DRIVER" = "sl_rp4" ]; then
-        g++ -std=gnu++11 -I ./lib -c debug.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC -DSL_RP4
-    else
-        g++ -std=gnu++11 -I ./lib -c debug.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC
     fi
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
@@ -145,16 +129,6 @@ elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
         g++ -std=gnu++11 -I ./lib -c Res0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w -DSEQUENT
     else
         g++ -std=gnu++11 -I ./lib -c Res0.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
-    fi
-    if [ $? -ne 0 ]; then
-        echo "Error compiling C files"
-        echo "Compilation finished with errors!"
-        exit 1
-    fi
-    if [ "$OPENPLC_DRIVER" = "sequent" ]; then
-        g++ -std=gnu++11 -I ./lib -c debug.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w -DSEQUENT
-    else
-        g++ -std=gnu++11 -I ./lib -c debug.c -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     fi
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
