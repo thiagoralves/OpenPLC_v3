@@ -29,6 +29,7 @@
 #include <pthread.h>
 
 #include "ladder.h"
+#include <string.h>
 
 #define MAX_DISCRETE_INPUT              8192
 #define MAX_COILS                       8192
@@ -51,6 +52,11 @@
 #define MB_FC_WRITE_REGISTER            6
 #define MB_FC_WRITE_MULTIPLE_COILS      15
 #define MB_FC_WRITE_MULTIPLE_REGISTERS  16
+#define MB_FC_DEBUG_INFO                0x41 // Request debug variables count
+#define MB_FC_DEBUG_SET                 0x42 // Debug set trace (force variable)
+#define MB_FC_DEBUG_GET                 0x43 // Debug get trace (read variables)
+#define MB_FC_DEBUG_GET_LIST            0x44 // Debug get trace list (read list of variables)
+#define MB_FC_DEBUG_GET_MD5             0x45 // Debug get current program MD5
 #define MB_FC_ERROR                     255
 
 #define ERR_NONE                        0
@@ -76,7 +82,25 @@ IEC_UINT mb_holding_regs[MAX_HOLD_REGS];
 
 int MessageLength;
 
+#include "debug.h"
 
+// Debugger functions
+// extern "C" uint16_t get_var_count(void);
+// extern "C" size_t get_var_size(size_t);// {return 0;}
+// extern "C" void *get_var_addr(size_t);// {return 0;}
+// extern "C" void force_var(size_t, bool, void *);// {}
+// extern "C" void set_trace(size_t, bool, void *);// {}
+// extern "C" void trace_reset(void);// {}
+// extern "C" void set_endianness(uint8_t value);
+extern char md5[];
+extern unsigned long __tick;
+
+#define MB_DEBUG_SUCCESS                 0x7E
+#define MB_DEBUG_ERROR_OUT_OF_BOUNDS     0x81
+#define MB_DEBUG_ERROR_OUT_OF_MEMORY     0x82
+#define SAME_ENDIANNESS                  0
+#define REVERSE_ENDIANNESS               1
+#define MAX_MB_FRAME                     260
 
 //-----------------------------------------------------------------------------
 // Concatenate two bytes into an int
@@ -826,6 +850,285 @@ void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 	}
 }
 
+/**
+ * @brief Sends a Modbus response frame for the DEBUG_INFO function code.
+ *
+ * This function constructs a Modbus response frame for the DEBUG_INFO function code.
+ * The response frame includes the number of variables defined in the PLC program.
+ *
+ * Modbus Response Frame (DEBUG_INFO):
+ * +-----+-------+-------+
+ * | MB  | Count | Count |
+ * | FC  |       |       |
+ * +-----+-------+-------+
+ * |0x41 | High  | Low   |
+ * |     | Byte  | Byte  |
+ * |     |       |       |
+ * +-----+-------+-------+
+ *
+ * @return void
+ */
+void debugInfo(unsigned char *mb_frame)
+{
+    uint16_t variableCount = get_var_count();
+    MessageLength = 10;
+    mb_frame[7] = MB_FC_DEBUG_INFO;
+    mb_frame[8] = (uint8_t)(variableCount >> 8); // High byte
+    mb_frame[9] = (uint8_t)(variableCount & 0xFF); // Low byte
+}
+
+/**
+ * @brief Sends a Modbus response frame for the DEBUG_SET function code.
+ *
+ * This function constructs a Modbus response frame for the DEBUG_SET function code.
+ * The response frame indicates whether the set trace command was successful or if
+ * there was an error, such as an out-of-bounds index.
+ *
+ * Modbus Response Frame (DEBUG_SET):
+ * +-----+------+
+ * | MB  | Resp.|
+ * | FC  | Code |
+ * +-----+------+
+ * |0x42 | Code |
+ * +-----+------+
+ *
+ * @param varidx The index of the variable to set trace for.
+ * @param flag The trace flag.
+ * @param len The length of the trace data.
+ * @param value Pointer to the trace data.
+ * 
+ * @return void
+ */
+void debugSetTrace(unsigned char *mb_frame, uint16_t varidx, uint8_t flag, uint16_t len, void *value)
+{
+    uint16_t variableCount = get_var_count();
+    if (varidx >= variableCount || len > (MAX_MB_FRAME - 7))
+    {
+        // Respond with an error indicating that the index is out of range
+        MessageLength = 9;
+        mb_frame[7] = MB_FC_DEBUG_SET;
+        mb_frame[8] = MB_DEBUG_ERROR_OUT_OF_BOUNDS;
+        return;
+    }
+
+    // Execute set trace command
+    set_trace((size_t)varidx, (bool)flag, value);
+
+    // Response
+    MessageLength = 9;
+    mb_frame[7] = MB_FC_DEBUG_SET;
+    mb_frame[8] = MB_DEBUG_SUCCESS;
+}
+
+/**
+ * @brief Sends a Modbus response frame for the DEBUG_GET function code.
+ *
+ * This function constructs a Modbus response frame for the DEBUG_GET function code.
+ * The response frame includes the trace data for variables within the specified index range.
+ *
+ * Modbus Response Frame (DEBUG_GET):
+ * +-----+-------+-------+-------+-------+-------+-------+-------+-------+------+-------+
+ * | MB  | Resp. | Last  | Last  | Tick  | Tick  | Tick  | Tick  | Resp. | Resp.| Data  |
+ * | FC  | Code  | Index | Index |       |       |       |       | Size  | Size | Bytes |
+ * +-----+-------+-------+-------+-------+-------+-------+-------+-------+------+-------+
+ * |0x44 | Code  | High  | Low   | High  | Mid   | Mid   | Low   | High  | Low  | Data  |
+ * |     |       | Byte  | Byte  | Byte  | Byte  | Byte  | Byte  | Byte  | Byte | Bytes |
+ * +-----+-------+-------+-------+-------+-------+-------+-------+-------+------+-------+
+ *
+ * @param startidx The start index of the variables to get trace for.
+ * @param endidx The end index of the variables to get trace for.
+ * 
+ * @return void
+ */
+void debugGetTrace(unsigned char *mb_frame, uint16_t startidx, uint16_t endidx)
+{
+    uint16_t variableCount = get_var_count();
+    // Verify that startidx and endidx fall within the valid range of variables
+    if (startidx >= variableCount || endidx >= variableCount || startidx > endidx) 
+    {
+        // Respond with an error indicating that the indices are out of range
+        MessageLength = 9;
+        mb_frame[7] = MB_FC_DEBUG_GET;
+        mb_frame[8] = MB_DEBUG_ERROR_OUT_OF_BOUNDS;
+        return;
+    }
+
+    uint16_t lastVarIdx = startidx;
+    size_t responseSize = 0;
+    uint8_t *responsePtr = &(mb_frame[17]); // Start of response data
+    
+    for (uint16_t varidx = startidx; varidx <= endidx; varidx++) 
+    {
+        size_t varSize = get_var_size(varidx);
+        if ((responseSize + 17) + varSize <= MAX_MB_FRAME) // Make sure the response fits
+        {
+            void *varAddr = get_var_addr(varidx);
+
+            // Copy the variable value to the response buffer
+            memcpy(responsePtr, varAddr, varSize);
+
+            // Update response pointer and size
+            responsePtr += varSize;
+            responseSize += varSize;
+
+            // Update the lastVarIdx
+            lastVarIdx = varidx;
+        }
+        else 
+        {
+            // Response buffer is full, break the loop
+            break;
+        }
+    }
+
+    MessageLength = 13 + responseSize; // Update response length
+    mb_frame[7] = MB_FC_DEBUG_GET;
+    mb_frame[8] = MB_DEBUG_SUCCESS;
+    mb_frame[9] = (uint8_t)(lastVarIdx >> 8); // High byte
+    mb_frame[10] = (uint8_t)(lastVarIdx & 0xFF); // Low byte
+    mb_frame[11] = (uint8_t)((__tick >> 24) & 0xFF); // Highest byte
+    mb_frame[12] = (uint8_t)((__tick >> 16) & 0xFF); // Second highest byte
+    mb_frame[13] = (uint8_t)((__tick >> 8) & 0xFF);  // Second lowest byte
+    mb_frame[14] = (uint8_t)(__tick & 0xFF);         // Lowest byte
+    mb_frame[15] = (uint8_t)(responseSize >> 8); // High byte
+    mb_frame[16] = (uint8_t)(responseSize & 0xFF); // Low byte
+}
+
+/**
+ * @brief Sends a Modbus response frame for the DEBUG_GET_LIST function code.
+ *
+ * This function constructs a Modbus response frame for the DEBUG_GET_LIST function code.
+ * The response frame includes the trace data for variables specified in the provided index list.
+ *
+ * Modbus Response Frame (DEBUG_GET_LIST):
+ * +-----+-------+-------+-------+-------+-------+-------+-------+-------+------+-------+
+ * | MB  | Resp. | Last  | Last  | Tick  | Tick  | Tick  | Tick  | Resp. | Resp.| Data  |
+ * | FC  | Code  | Index | Index |       |       |       |       | Size  | Size | Bytes |
+ * +-----+-------+-------+-------+-------+-------+-------+-------+-------+------+-------+
+ * |0x44 | Code  | High  | Low   | High  | Mid   | Mid   | Low   | High  | Low  | Data  |
+ * |     |       | Byte  | Byte  | Byte  | Byte  | Byte  | Byte  | Byte  | Byte | Bytes |
+ * +-----+-------+-------+-------+-------+-------+-------+-------+-------+------+-------+
+ *
+ * @param numIndexes The number of indexes requested.
+ * @param indexArray Pointer to the array containing variable indexes.
+ * 
+ * @return void
+ */
+void debugGetTraceList(unsigned char *mb_frame, uint16_t numIndexes, uint8_t *indexArray)
+{
+    uint16_t response_idx = 17;  // Start of response data in the response buffer
+    uint16_t responseSize = 0;
+    uint16_t lastVarIdx = 0;
+    uint16_t variableCount = get_var_count();
+
+    #ifdef MBSERIAL
+        #define VARIDX_SIZE 20
+    #else
+        #define VARIDX_SIZE 60
+    #endif
+
+    uint16_t varidx_array[VARIDX_SIZE];
+
+    // Validate if buffer has space for all indexes
+    if (numIndexes > VARIDX_SIZE)
+    {
+        // Respond with a memory error
+        MessageLength = 9;
+        mb_frame[7] = MB_FC_DEBUG_GET_LIST;
+        mb_frame[8] = MB_DEBUG_ERROR_OUT_OF_MEMORY;
+        return;
+    }
+
+    // Copy all indexes to array
+    for (uint16_t i = 0; i < numIndexes; i++)
+    {
+        varidx_array[i] = (uint16_t)indexArray[i * 2] << 8 | indexArray[i * 2 + 1];
+    }
+
+    // Validate if all requested indexes are in range
+    for (uint16_t i = 0; i < numIndexes; i++) 
+    {
+        if (varidx_array[i] >= variableCount) 
+        {
+            // Respond with an error indicating that the index is out of range
+            MessageLength = 3;
+            mb_frame[7] = MB_FC_DEBUG_GET_LIST;
+            mb_frame[8] = MB_DEBUG_ERROR_OUT_OF_BOUNDS;
+            return;
+        }
+
+        // Add requested indexes and their traces to the response buffer
+        size_t varSize = get_var_size(varidx_array[i]);
+
+        // Make sure there is enough space in the response buffer
+        if (response_idx + varSize <= MAX_MB_FRAME) 
+        {
+            // Add variable data to the response buffer
+            void *varAddr = get_var_addr(varidx_array[i]);
+            memcpy(&mb_frame[response_idx], varAddr, varSize);
+            response_idx += varSize;
+            responseSize += varSize;
+
+            // Update the lastVarIdx
+            lastVarIdx = varidx_array[i];
+        } 
+        else 
+        {
+            // Response buffer is full, break the loop
+            break;
+        }
+    }
+
+    // Update response length, lastVarIdx, and response size
+    MessageLength = response_idx;
+    mb_frame[7] = MB_FC_DEBUG_GET_LIST;
+    mb_frame[8] = MB_DEBUG_SUCCESS;
+    mb_frame[9] = (uint8_t)(lastVarIdx >> 8); // High byte
+    mb_frame[10] = (uint8_t)(lastVarIdx & 0xFF); // Low byte
+    mb_frame[11] = (uint8_t)((__tick >> 24) & 0xFF); // Highest byte
+    mb_frame[12] = (uint8_t)((__tick >> 16) & 0xFF); // Second highest byte
+    mb_frame[13] = (uint8_t)((__tick >> 8) & 0xFF);  // Second lowest byte
+    mb_frame[14] = (uint8_t)(__tick & 0xFF);         // Lowest byte
+    mb_frame[15] = (uint8_t)(responseSize >> 8); // High byte
+    mb_frame[16] = (uint8_t)(responseSize & 0xFF); // Low byte
+}
+
+void debugGetMd5(unsigned char *mb_frame, void *endianness)
+{
+    // Check endianness
+    uint16_t endian_check = 0;
+    memcpy(&endian_check, endianness, 2);
+    if (endian_check == 0xDEAD)
+    {
+        set_endianness(SAME_ENDIANNESS);
+    }
+    else if (endian_check == 0xADDE)
+    {
+        set_endianness(REVERSE_ENDIANNESS);
+    }
+    else
+    {
+        // Respond with an error indicating that the argument is wrong
+        MessageLength = 9;
+        mb_frame[7] = MB_FC_DEBUG_GET_MD5;
+        mb_frame[8] = MB_DEBUG_ERROR_OUT_OF_BOUNDS;
+        //return;
+    }
+
+    mb_frame[7] = MB_FC_DEBUG_GET_MD5;
+    mb_frame[8] = MB_DEBUG_SUCCESS;
+
+    // Copy MD5 string byte by byte to mb_frame starting from index 3
+    int md5_len = 0;
+    for (md5_len = 0; md5[md5_len] != '\0'; md5_len++) 
+    {
+        mb_frame[md5_len + 9] = md5[md5_len];
+    }
+
+    // Calculate mb_frame_len (MD5 string length + 3)
+    MessageLength = md5_len + 9;
+}
+
 //-----------------------------------------------------------------------------
 // This function must parse and process the client request and write back the
 // response for it. The return value is the size of the response message in
@@ -834,6 +1137,12 @@ void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 int processModbusMessage(unsigned char *buffer, int bufferSize)
 {
 	MessageLength = 0;
+	uint16_t field1 = (uint16_t)buffer[8] << 8 | (uint16_t)buffer[9];
+    uint16_t field2 = (uint16_t)buffer[10] << 8 | (uint16_t)buffer[11];
+    uint8_t flag = buffer[10];
+    uint16_t len = (uint16_t)buffer[11] << 8 | (uint16_t)buffer[12];
+    void *value = &buffer[13];
+    void *endianness_check = &buffer[8];
 
 	//check if the message is long enough
 	if (bufferSize < 8)
@@ -887,6 +1196,39 @@ int processModbusMessage(unsigned char *buffer, int bufferSize)
 	else if(buffer[7] == MB_FC_WRITE_MULTIPLE_REGISTERS)
 	{
 		WriteMultipleRegisters(buffer, bufferSize);
+	}
+
+	//****************** Debug Info ******************
+	else if(buffer[7] == MB_FC_DEBUG_INFO)
+	{
+        debugInfo(buffer);
+	}
+
+	//****************** Debug Get Trace ******************
+	else if(buffer[7] == MB_FC_DEBUG_GET)
+	{
+        //field1 = startidx, field2 = endidx
+        debugGetTrace(buffer, field1, field2);
+	}
+
+	//****************** Debug Get Trace List ******************
+    else if(buffer[7] == MB_FC_DEBUG_GET_LIST)
+	{
+        //field1 = numIndexes
+    	debugGetTraceList(buffer, field1, &buffer[10]);
+	}
+    
+	//****************** Debug Set Trace ******************
+	else if(buffer[7] ==MB_FC_DEBUG_SET)
+	{
+    	//field1 = varidx
+        debugSetTrace(buffer, field1, flag, len, value);
+	}
+
+	//****************** Debug Get MD5 ******************
+    else if(buffer[7] ==MB_FC_DEBUG_GET_MD5)
+	{
+        debugGetMd5(buffer, endianness_check);
 	}
 
 	//****************** Function Code Error ******************
