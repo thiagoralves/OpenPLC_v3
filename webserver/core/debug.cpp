@@ -1,3 +1,4 @@
+char md5[] = "b1a8c0845d49d1bc43ac3b252b41788d";
 /*
  * This file is part of OpenPLC Runtime
  *
@@ -19,7 +20,8 @@
  *
  */
 
-#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #define SAME_ENDIANNESS      0
 #define REVERSE_ENDIANNESS   1
