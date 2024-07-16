@@ -74,7 +74,7 @@ void *start_psm()
     char log_msg[BUFFER_LIMIT];
     sprintf(log_msg, "PSM: Starting PSM...\n");
     log(log_msg);
-    char *cmd = "python3 -u ./core/psm/main.py 2>&1";
+    char *cmd = "../.venv/bin/python3 -u ./core/psm/main.py 2>&1";
     
     FILE *psm_proc;
     if ((psm_proc = popen(cmd, "r")) == NULL)
