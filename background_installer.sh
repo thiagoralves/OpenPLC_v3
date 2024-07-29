@@ -84,7 +84,7 @@ function install_pigpio {
         wget -c "$URL"
         unzip master.zip
         cd pigpio-master
-        make
+        make -j$(nproc)
         sudo make install
         rm -f master.zip
     )
@@ -124,7 +124,7 @@ function install_matiec {
     cd "$OPENPLC_DIR/utils/matiec_src"
     autoreconf -i
     ./configure
-    make
+    make -j$(nproc)
     cp ./iec2c "$OPENPLC_DIR/webserver/" || fail "Error compiling MatIEC"
     cd "$OPENPLC_DIR"
 }
@@ -160,7 +160,7 @@ function install_opendnp3 {
     cd "$OPENPLC_DIR/utils/dnp3_src"
     swap_on "$1"
     cmake .
-    make
+    make -j$(nproc)
     $1 make install || fail "Error installing OpenDNP3"
     $1 ldconfig
     swap_off "$1"
