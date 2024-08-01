@@ -1,5 +1,5 @@
 #!/bin/bash
-OPENPLC_DIR="$PWD"
+OPENPLC_DIR="$(dirname $(readlink -f $0))"
 SWAP_FILE="$OPENPLC_DIR/swapfile"
 WIRINGPI_VERSION="3.4"
 VENV_DIR="$OPENPLC_DIR/.venv"
@@ -222,6 +222,40 @@ EOF
     fi
 }
 
+function install_openrc_service() {
+    if [ "$1" == "sudo" ]; then
+        echo "[OPENPLC SERVICE]"
+        $1 tee /etc/init.d/openplc > /dev/null <<EOF
+#!/sbin/openrc-run
+
+name="OpenPLC"
+description="OpenPLC Service"
+command="$OPENPLC_DIR/start_openplc.sh"
+pidfile="/run/\${RC_SVCNAME}.pid"
+
+depend() {
+    need net
+}
+
+start() {
+    ebegin "Starting OpenPLC"
+    start-stop-daemon --start --exec \${command} \
+    --background --make-pidfile --pidfile \${pidfile}
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping OpenPLC"
+    start-stop-daemon --stop --pidfile \${pidfile}
+    eend $?
+}
+EOF
+        echo "Setting permissions and enabling OpenPLC Service..."
+        $1 chmod 755 /etc/init.d/openplc
+        $1 rc-update add openplc default
+    fi
+}
+
 function install_all_libs {
     install_matiec "$1"
     install_st_optimizer "$1"
@@ -294,7 +328,11 @@ elif [ "$1" == "linux" ]; then
     install_py_deps
     install_all_libs sudo
     [ "$2" == "ethercat" ] && install_ethercat
-    install_systemd_service sudo
+	if [ -x /sbin/openrc-run ]; then	# we are probably running on a system with openrc (Alpine, Gentoo, devuan)
+		install_openrc_service
+	else	# we now assume a system with systemd
+		install_systemd_service sudo
+	fi
     finalize_install linux
 
 elif [ "$1" == "docker" ]; then
