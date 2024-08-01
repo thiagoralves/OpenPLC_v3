@@ -50,6 +50,12 @@ function linux_install_deps {
         $1 zypper ref
         $1 zypper in -y curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake libmodbus-devel
         $1 zypper in -y python python-xml python3 python3-pip 
+        
+    #Installing dependencies for Alpine Linux 3.20 and later
+    elif command -v apk >/dev/null; then
+        $1 apk update
+        $1 apk add build-base pkdconfig bison flex autoconf automake libtool make git sqlite cmake curl
+        $1 apk add python3 py3-libxml2 gcc g++ linux-headers openssl-dev
     else
         fail "Unsupported linux distro."
     fi
