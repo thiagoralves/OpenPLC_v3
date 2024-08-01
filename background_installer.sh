@@ -54,8 +54,8 @@ function linux_install_deps {
     #Installing dependencies for Alpine Linux 3.20 and later
     elif command -v apk >/dev/null; then
         $1 apk update
-        $1 apk add build-base pkdconfig bison flex autoconf automake libtool make git sqlite cmake curl
-        $1 apk add python3 py3-libxml2 gcc g++ linux-headers openssl-dev
+        $1 apk add build-base pkgconfig bison flex autoconf automake libtool make git sqlite cmake curl
+        $1 apk add python3 py3-libxml2 py3-pip gcc g++ linux-headers openssl-dev util-linux-misc
     else
         fail "Unsupported linux distro."
     fi
@@ -97,7 +97,8 @@ function install_pigpio {
 }
 
 function install_py_deps {
-    python3 -m venv "$VENV_DIR"
+    python3 -m venv "$VENV_DIR" --system-site-packages
+    source "$VENV_DIR/bin/activate"
     "$VENV_DIR/bin/python3" -m pip install --upgrade pip
     if [ "$1" == "neuron" ]; then
         "$VENV_DIR/bin/python3" -m pip install flask==2.2.5 werkzeug==2.2.2 flask-login==0.6.2 pyserial pymodbus==2.5.3
@@ -105,6 +106,7 @@ function install_py_deps {
         "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
     fi
     python3 -m pip install pymodbus==2.5.3
+    deactivate
 }
 
 function swap_on {
@@ -229,9 +231,9 @@ EOF
 }
 
 function install_openrc_service() {
-    if [ "$1" == "sudo" ]; then
+    if [ "$(whoami)" == "root" ]; then
         echo "[OPENPLC SERVICE]"
-        $1 tee /etc/init.d/openplc > /dev/null <<EOF
+        tee /etc/init.d/openplc > /dev/null <<EOF
 #!/sbin/openrc-run
 
 name="OpenPLC"
@@ -257,8 +259,8 @@ stop() {
 }
 EOF
         echo "Setting permissions and enabling OpenPLC Service..."
-        $1 chmod 755 /etc/init.d/openplc
-        $1 rc-update add openplc default
+        chmod 755 /etc/init.d/openplc
+        rc-update add openplc default
     fi
 }
 
@@ -330,14 +332,16 @@ if [ "$1" == "win" ]; then
 elif [ "$1" == "linux" ]; then
 
     echo "Installing OpenPLC on Linux"
-    linux_install_deps sudo
+    sudo="sudo"
+    test -x /sbin/openrc-run && unset sudo # we are probably running on a system with openrc (Alpine, Gentoo, devuan)
+    linux_install_deps ${sudo}
     install_py_deps
-    install_all_libs sudo
+    install_all_libs ${sudo}
     [ "$2" == "ethercat" ] && install_ethercat
 	if [ -x /sbin/openrc-run ]; then	# we are probably running on a system with openrc (Alpine, Gentoo, devuan)
 		install_openrc_service
 	else	# we now assume a system with systemd
-		install_systemd_service sudo
+		install_systemd_service ${sudo}
 	fi
     finalize_install linux
 
