@@ -57,6 +57,7 @@
  * Include type defs.
  */
 #include "iec_types_all.h"
+#include <sys/time.h>
 
 extern TIME __CURRENT_TIME;
 extern BOOL __DEBUG;
