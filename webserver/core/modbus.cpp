@@ -812,17 +812,17 @@ void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] & 0x0000ffffffffffff;
 					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] | (tempValue << 48);
 				}
-				else if ((Start - MIN_64B_RANGE) % 4 == 1) //second word
+				else if ((position - MIN_64B_RANGE) % 4 == 1) //second word
 				{
 					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] & 0xffff0000ffffffff;
 					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] | (tempValue << 32);
 				}
-				else if ((Start - MIN_64B_RANGE) % 4 == 2) //third word
+				else if ((position - MIN_64B_RANGE) % 4 == 2) //third word
 				{
 					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] & 0xffffffff0000ffff;
 					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] | (tempValue << 16);
 				}
-				else if ((Start - MIN_64B_RANGE) % 4 == 3) //fourth word
+				else if ((position - MIN_64B_RANGE) % 4 == 3) //fourth word
 				{
 					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] & 0xffffffffffff0000;
 					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] | tempValue;
@@ -830,7 +830,7 @@ void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 			}
 			else
 			{
-				mb_holding_regs[Start] = word(buffer[10],buffer[11]);
+				mb_holding_regs[position] = word(buffer[10],buffer[11]);
 			}
 		}
 		else //invalid address
