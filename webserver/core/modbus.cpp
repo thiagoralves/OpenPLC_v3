@@ -564,6 +564,71 @@ void WriteCoil(unsigned char *buffer, int bufferSize)
 	}
 }
 
+/**
+ * @brief Write a word to a register at the given position. The caller must hold the `bufferLock`.
+ *
+ * @param position The position of the register.
+ * @param value The word to write to the register.
+ *
+ * @return An error code, if an error occurred.
+ */
+int writeToRegisterWithoutLocking(int position, uint16_t value)
+{
+	//analog outputs
+	if (position <= MIN_16B_RANGE)
+	{
+		if (int_output[position] != NULL) *int_output[position] = value;
+	}
+	//accessing memory
+	//16-bit registers
+	else if (position >= MIN_16B_RANGE && position <= MAX_16B_RANGE)
+	{
+		if (int_memory[position - MIN_16B_RANGE] != NULL) *int_memory[position - MIN_16B_RANGE] = value;
+	}
+	//32-bit registers
+	else if (position >= MIN_32B_RANGE && position <= MAX_32B_RANGE)
+	{
+		if (dint_memory[(position - MIN_32B_RANGE) / 2] == NULL)
+		{
+			mb_holding_regs[position] = value;
+		}
+		else
+		{
+			// Overwrite one word of the 32 bit register:
+			// Calculate the bit offset of the word in the 32 bit register.
+			int bit_offset = (1 - ((position - MIN_32B_RANGE) % 2)) * 16;
+			// Mask the word.
+			*dint_memory[(position - MIN_32B_RANGE) / 2] &= ~(((uint32_t) 0xffff) << bit_offset);
+			// Overwrite the word.
+			*dint_memory[(position - MIN_32B_RANGE) / 2] |= ((uint32_t) value) << bit_offset;
+		}
+	}
+	//64-bit registers
+	else if (position >= MIN_64B_RANGE && position <= MAX_64B_RANGE)
+	{
+		if (lint_memory[(position - MIN_64B_RANGE) / 4] == NULL)
+		{
+			mb_holding_regs[position] = value;
+		}
+		else
+		{
+			// Overwrite one word of the 64 bit register:
+			// Calculate the bit offset of the word in the 64 bit register.
+			int bit_offset = (3 - ((position - MIN_64B_RANGE) % 4)) * 16;
+			// Mask the word.
+			*lint_memory[(position - MIN_64B_RANGE) / 4] &= ~(((uint64_t) 0xffff) << bit_offset);
+			// Overwrite the word.
+			*lint_memory[(position - MIN_64B_RANGE) / 4] |= ((uint64_t) value) << bit_offset;
+		}
+	}
+	else //invalid address
+	{
+		return ERR_ILLEGAL_DATA_ADDRESS;
+	}
+	return ERR_NONE;
+}
+
+
 //-----------------------------------------------------------------------------
 // Implementation of Modbus/TCP Write Holding Register
 //-----------------------------------------------------------------------------
@@ -582,83 +647,7 @@ void WriteRegister(unsigned char *buffer, int bufferSize)
 	Start = word(buffer[8],buffer[9]);
 
 	pthread_mutex_lock(&bufferLock);
-	//analog outputs
-	if (Start <= MIN_16B_RANGE)
-	{
-		if (int_output[Start] != NULL)
-		{
-			*int_output[Start] = word(buffer[10],buffer[11]);
-		}
-	}
-	//accessing memory
-	//16-bit registers
-	else if (Start >= MIN_16B_RANGE && Start <= MAX_16B_RANGE)
-	{
-		if (int_memory[Start - MIN_16B_RANGE] != NULL)
-		{
-			*int_memory[Start - MIN_16B_RANGE] = word(buffer[10],buffer[11]);
-		}
-	}
-	//32-bit registers
-	else if (Start >= MIN_32B_RANGE && Start <= MAX_32B_RANGE)
-	{
-		if (dint_memory[(Start - MIN_32B_RANGE)/2] != NULL)
-		{
-			uint32_t tempValue = (uint32_t)word(buffer[10],buffer[11]);
-
-			if ((Start - MIN_32B_RANGE) % 2 == 0) //first word
-			{
-				*dint_memory[(Start - MIN_32B_RANGE) / 2] = *dint_memory[(Start - MIN_32B_RANGE) / 2] & 0x0000ffff;
-				*dint_memory[(Start - MIN_32B_RANGE) / 2] = *dint_memory[(Start - MIN_32B_RANGE) / 2] | (tempValue << 16);
-			}
-			else //second word
-			{
-				*dint_memory[(Start - MIN_32B_RANGE) / 2] = *dint_memory[(Start - MIN_32B_RANGE) / 2] & 0xffff0000;
-				*dint_memory[(Start - MIN_32B_RANGE) / 2] = *dint_memory[(Start - MIN_32B_RANGE) / 2] | tempValue;
-			}
-		}
-		else
-		{
-			mb_holding_regs[Start] = word(buffer[10],buffer[11]);
-		}
-	}
-	//64-bit registers
-	else if (Start >= MIN_64B_RANGE && Start <= MAX_64B_RANGE)
-	{
-		if (lint_memory[(Start - MIN_64B_RANGE)/4] != NULL)
-		{
-			uint64_t tempValue = (uint64_t)word(buffer[10],buffer[11]);
-
-			if ((Start - MIN_64B_RANGE) % 4 == 0) //first word
-			{
-				*lint_memory[(Start - MIN_64B_RANGE) / 4] = *lint_memory[(Start - MIN_64B_RANGE) / 4] & 0x0000ffffffffffff;
-				*lint_memory[(Start - MIN_64B_RANGE) / 4] = *lint_memory[(Start - MIN_64B_RANGE) / 4] | (tempValue << 48);
-			}
-			else if ((Start - MIN_64B_RANGE) % 4 == 1) //second word
-			{
-				*lint_memory[(Start - MIN_64B_RANGE) / 4] = *lint_memory[(Start - MIN_64B_RANGE) / 4] & 0xffff0000ffffffff;
-				*lint_memory[(Start - MIN_64B_RANGE) / 4] = *lint_memory[(Start - MIN_64B_RANGE) / 4] | (tempValue << 32);
-			}
-			else if ((Start - MIN_64B_RANGE) % 4 == 2) //third word
-			{
-				*lint_memory[(Start - MIN_64B_RANGE) / 4] = *lint_memory[(Start - MIN_64B_RANGE) / 4] & 0xffffffff0000ffff;
-				*lint_memory[(Start - MIN_64B_RANGE) / 4] = *lint_memory[(Start - MIN_64B_RANGE) / 4] | (tempValue << 16);
-			}
-			else if ((Start - MIN_64B_RANGE) % 4 == 3) //fourth word
-			{
-				*lint_memory[(Start - MIN_64B_RANGE) / 4] = *lint_memory[(Start - MIN_64B_RANGE) / 4] & 0xffffffffffff0000;
-				*lint_memory[(Start - MIN_64B_RANGE) / 4] = *lint_memory[(Start - MIN_64B_RANGE) / 4] | tempValue;
-			}
-		}
-		else
-		{
-			mb_holding_regs[Start] = word(buffer[10],buffer[11]);
-		}
-	}
-	else //invalid address
-	{
-		mb_error = ERR_ILLEGAL_DATA_ADDRESS;
-	}
+	mb_error = writeToRegisterWithoutLocking(Start, word(buffer[10], buffer[11]));
 	pthread_mutex_unlock(&bufferLock);
 
 	if (mb_error != ERR_NONE)
@@ -766,77 +755,7 @@ void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 	for(int i = 0; i < WordDataLength; i++)
 	{
 		int position = Start + i;
-		//analog outputs
-		if (position <= MIN_16B_RANGE)
-		{
-			if (int_output[position] != NULL) *int_output[position] =  word(buffer[13 + i * 2], buffer[14 + i * 2]);
-		}
-		//accessing memory
-		//16-bit registers
-		else if (position >= MIN_16B_RANGE && position <= MAX_16B_RANGE)
-		{
-			if (int_memory[position - MIN_16B_RANGE] != NULL) *int_memory[position - MIN_16B_RANGE] = word(buffer[13 + i * 2], buffer[14 + i * 2]);
-		}
-		//32-bit registers
-		else if (position >= MIN_32B_RANGE && position <= MAX_32B_RANGE)
-		{
-			if (dint_memory[(Start - MIN_32B_RANGE)/2] != NULL)
-			{
-				uint32_t tempValue = (uint32_t)word(buffer[13 + i * 2], buffer[14 + i * 2]);
-
-				if ((position - MIN_32B_RANGE) % 2 == 0) //first word
-				{
-					*dint_memory[(position - MIN_32B_RANGE) / 2] = *dint_memory[(position - MIN_32B_RANGE) / 2] & 0x0000ffff;
-					*dint_memory[(position - MIN_32B_RANGE) / 2] = *dint_memory[(position - MIN_32B_RANGE) / 2] | (tempValue << 16);
-				}
-				else //second word
-				{
-					*dint_memory[(position - MIN_32B_RANGE) / 2] = *dint_memory[(position - MIN_32B_RANGE) / 2] & 0xffff0000;
-					*dint_memory[(position - MIN_32B_RANGE) / 2] = *dint_memory[(position - MIN_32B_RANGE) / 2] | tempValue;
-				}
-			}
-			else
-			{
-				mb_holding_regs[position] = word(buffer[13 + i * 2], buffer[14 + i * 2]);
-			}
-		}
-		//64-bit registers
-		else if (position >= MIN_64B_RANGE && position <= MAX_64B_RANGE)
-		{
-			if (lint_memory[(position - MIN_64B_RANGE)/4] != NULL)
-			{
-				uint64_t tempValue = (uint64_t)word(buffer[13 + i * 2], buffer[14 + i * 2]);
-
-				if ((position - MIN_64B_RANGE) % 4 == 0) //first word
-				{
-					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] & 0x0000ffffffffffff;
-					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] | (tempValue << 48);
-				}
-				else if ((position - MIN_64B_RANGE) % 4 == 1) //second word
-				{
-					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] & 0xffff0000ffffffff;
-					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] | (tempValue << 32);
-				}
-				else if ((position - MIN_64B_RANGE) % 4 == 2) //third word
-				{
-					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] & 0xffffffff0000ffff;
-					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] | (tempValue << 16);
-				}
-				else if ((position - MIN_64B_RANGE) % 4 == 3) //fourth word
-				{
-					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] & 0xffffffffffff0000;
-					*lint_memory[(position - MIN_64B_RANGE) / 4] = *lint_memory[(position - MIN_64B_RANGE) / 4] | tempValue;
-				}
-			}
-			else
-			{
-				mb_holding_regs[position] = word(buffer[10],buffer[11]);
-			}
-		}
-		else //invalid address
-		{
-			mb_error = ERR_ILLEGAL_DATA_ADDRESS;
-		}
+		mb_error = writeToRegisterWithoutLocking(position, word(buffer[13 + i * 2], buffer[14 + i * 2]));
 	}
 	pthread_mutex_unlock(&bufferLock);
 
