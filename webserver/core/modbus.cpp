@@ -755,7 +755,11 @@ void WriteMultipleRegisters(unsigned char *buffer, int bufferSize)
 	for(int i = 0; i < WordDataLength; i++)
 	{
 		int position = Start + i;
-		mb_error = writeToRegisterWithoutLocking(position, word(buffer[13 + i * 2], buffer[14 + i * 2]));
+		int error = writeToRegisterWithoutLocking(position, word(buffer[13 + i * 2], buffer[14 + i * 2]));
+		if (error != ERR_NONE)
+		{
+			mb_error = error;
+		}
 	}
 	pthread_mutex_unlock(&bufferLock);
 
