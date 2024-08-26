@@ -287,6 +287,35 @@ if [ "$1" == "win" ]; then
     install_libmodbus
     finalize_install win
 
+elif [ "$1" == "win_msys2" ]; then
+    echo "Installing OpenPLC on Windows"
+
+    pacman -Suy --noconfirm
+    pacman -S gcc git pkg-config automake autoconf libtool make sqlite3 python3 lynx
+    
+    lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
+
+    #Setting up venv
+    python3 -m venv "$VENV_DIR"
+    "$VENV_DIR/bin/python3" get-pip3.py
+    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
+    
+    echo ""
+    echo "[MATIEC COMPILER]"
+    cp ./utils/matiec_src/bin_win32/*.* ./webserver/
+    if [ $? -ne 0 ]; then
+        echo "Error compiling MatIEC"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+
+    install_st_optimizer
+    install_glue_generator
+    disable_opendnp3
+    install_libmodbus
+    cp /usr/include/modbus/*.h /usr/include/
+    finalize_install win
+
 elif [ "$1" == "linux" ]; then
 
     echo "Installing OpenPLC on Linux"
