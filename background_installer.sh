@@ -291,7 +291,7 @@ elif [ "$1" == "win_msys2" ]; then
     echo "Installing OpenPLC on Windows"
 
     pacman -Suy --noconfirm
-    pacman -S gcc git pkg-config automake autoconf libtool make sqlite3 python3 lynx
+    pacman -S gcc git pkg-config automake autoconf libtool make sqlite3 python3 lynx --noconfirm
     
     lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
 
