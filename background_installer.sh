@@ -1,7 +1,7 @@
 #!/bin/bash
 OPENPLC_DIR="$PWD"
 SWAP_FILE="$OPENPLC_DIR/swapfile"
-WIRINGPI_VERSION="2.61-1"
+WIRINGPI_VERSION="3.4"
 VENV_DIR="$OPENPLC_DIR/.venv"
 
 function print_help_and_exit {
@@ -14,6 +14,7 @@ function print_help_and_exit {
     echo "  docker        Install OpenPLC in a Docker container"
     echo "  rpi           Install OpenPLC on a Raspberry Pi"
     echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
+    echo "  unipi         Install OpenPLC on a Raspberry Pi with UniPi v1.1 PLC"
     echo "  custom        Skip all specific package installation and tries to install"
     echo "                OpenPLC assuming your system already has all dependencies met."
     echo "                This option can be useful if you're trying to install OpenPLC"
@@ -60,7 +61,7 @@ function install_wiringpi {
     sudo apt-get install -y wiringpi && return 0
 
     echo "Falling back to direct download..."
-    local FILE="wiringpi-$WIRINGPI_VERSION-arm64.deb"
+    local FILE="wiringpi_${WIRINGPI_VERSION}_arm64.deb"
     local URL="https://github.com/WiringPi/WiringPi/releases/download/$WIRINGPI_VERSION/$FILE"
     (
         set -e
@@ -286,6 +287,35 @@ if [ "$1" == "win" ]; then
     install_libmodbus
     finalize_install win
 
+elif [ "$1" == "win_msys2" ]; then
+    echo "Installing OpenPLC on Windows"
+
+    pacman -Suy --noconfirm
+    pacman -S gcc git pkg-config automake autoconf libtool make sqlite3 python3 lynx --noconfirm
+    
+    lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
+
+    #Setting up venv
+    python3 -m venv "$VENV_DIR"
+    "$VENV_DIR/bin/python3" get-pip3.py
+    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
+    
+    echo ""
+    echo "[MATIEC COMPILER]"
+    cp ./utils/matiec_src/bin_win32/*.* ./webserver/
+    if [ $? -ne 0 ]; then
+        echo "Error compiling MatIEC"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+
+    install_st_optimizer
+    install_glue_generator
+    disable_opendnp3
+    install_libmodbus
+    cp /usr/include/modbus/*.h /usr/include/
+    finalize_install win
+
 elif [ "$1" == "linux" ]; then
 
     echo "Installing OpenPLC on Linux"
@@ -328,9 +358,21 @@ elif [ "$1" == "neuron" ]; then
     sudo systemctl disable neurontcp.service
     sudo systemctl stop evok.service
     sudo systemctl disable evok.service
+    sudo systemctl stop unipitcp.service
+    sudo systemctl disable unipitcp.service
+    
 
     linux_install_deps sudo
     install_py_deps neuron
+    install_all_libs sudo
+    install_systemd_service sudo
+    finalize_install linux
+
+elif [ "$1" == "unipi" ]; then
+    echo "Installing OpenPLC on Raspberry Pi with UniPi v1.1 PLC"
+    linux_install_deps sudo
+    install_wiringpi
+    install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
     finalize_install linux

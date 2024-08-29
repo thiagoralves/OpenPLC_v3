@@ -42,11 +42,11 @@
 
 #define DOUT_PINBASE		100
 #define ADC_PINBASE			65
-#define MAX_INPUT			13 //IO0 and IO1 are the same. The board doesn't have IO0
+#define MAX_INPUT			15 //IO0 and IO1 are the same. The board doesn't have IO0
 #define MAX_OUTPUT			8
 #define ANALOG_OUT_PIN		1
 
-const int inputPinMask[MAX_INPUT] = { 7, 7, 0, 2, 4, 3, 5, 14, 11, 10, 13, 6, 12 };
+const int inputPinMask[MAX_INPUT] = { 7, 7, 0, 2, 4, 3, 5, 14, 11, 10, 13, 6, 12, 21, 22 };
 int adc_fd;
 unsigned int adcBuffer[2];
 
