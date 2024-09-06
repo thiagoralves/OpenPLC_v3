@@ -208,11 +208,11 @@ struct fc100bNodeStruct *fc100bPiNodes = NULL ;
 ****************************************************************/
 //inBufferPinMask: pin mask for each input, which
 //means what pin is mapped to that OpenPLC input
-int inBufferPinMask[MAX_INPUT] = { 18, 15, 16, 22 };
+int inBufferPinMask[MAX_INPUT] = { 10, 8, 9, 13 };
 
 //outBufferPinMask: pin mask for each output, which
 //means what pin is mapped to that OpenPLC output
-int outBufferPinMask[MAX_OUTPUT] =	{ 40, 38, 37, 31 };
+int outBufferPinMask[MAX_OUTPUT] =	{ 27, 26, 25, 20 };
 
 static unsigned int usingGpioMem    = FALSE ;
 static          int boardSetuped = FALSE ;
