@@ -25,7 +25,7 @@
 
 // Environment Variables
 
-#define	ENV_DEBUG	"FOLKS_DEBUG"
+// #define	ENV_DEBUG	"FOLKS_DEBUG"
 #define	ENV_CODES	"FOLKS_CODES"
 #define	ENV_GPIOMEM	"FOLKS_GPIOMEM"
 
