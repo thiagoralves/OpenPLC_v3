@@ -13,6 +13,7 @@ function print_help_and_exit {
     echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
     echo "  docker        Install OpenPLC in a Docker container"
     echo "  rpi           Install OpenPLC on a Raspberry Pi"
+    echo "  opi           Install OpenPLC on a Orange Pi"
     echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
     echo "  unipi         Install OpenPLC on a Raspberry Pi with UniPi v1.1 PLC"
     echo "  custom        Skip all specific package installation and tries to install"
@@ -87,6 +88,21 @@ function install_pigpio {
         make
         sudo make install
         rm -f master.zip
+    )
+}
+
+function install_wiringop {
+    echo "[WIRINGOP]"
+    local URL="https://github.com/orangepi-xunlong/wiringOP/archive/master.zip"
+    (
+        set -e
+        rm -f master.zip
+        wget -c "$URL"
+        unzip -o master.zip
+        cd wiringOP-master
+        sudo ./build clean
+        sudo ./build
+        rm -f ../master.zip
     )
 }
 
@@ -342,6 +358,15 @@ elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
     linux_install_deps sudo
     install_pigpio
+    install_py_deps
+    install_all_libs sudo
+    install_systemd_service sudo
+    finalize_install linux
+
+elif [ "$1" == "opi" ]; then
+    echo "Installing OpenPLC on Orange Pi"
+    linux_install_deps sudo
+    install_wiringop
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
