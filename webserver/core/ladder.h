@@ -166,4 +166,4 @@ void dnp3StartServer(int port);
 
 //persistent_storage.cpp
 void startPstorage();
-void readPersistentStorage();
+int readPersistentStorage();

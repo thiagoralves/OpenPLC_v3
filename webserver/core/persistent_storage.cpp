@@ -18,6 +18,9 @@
 //
 // This file is responsible for the persistent storage on the OpenPLC
 // Thiago Alves, Jun 2019
+//
+// Added modifications from gexod to include %MD and %ML into the persistent file
+// See https://openplc.discussion.community/post/variable-retain-function-9914880?highlight=retain&trail=30
 //-----------------------------------------------------------------------------
 
 #include <stdio.h>
@@ -41,13 +44,23 @@ void startPstorage()
         sleepms(100);
     
     char log_msg[1000];
-    IEC_UINT persistentBuffer[BUFFER_SIZE];
+    	
+	struct persistentBufferCell
+	{
+		IEC_INT int_cell;
+		IEC_DINT dint_cell;
+		IEC_LINT lint_cell;
+	};
+
+	persistentBufferCell persistentBuffer[BUFFER_SIZE];
 
     //Read initial buffers into persistent struct
     pthread_mutex_lock(&bufferLock); //lock mutex
     for (int i = 0; i < BUFFER_SIZE; i++)
     {
-        if (int_memory[i] != NULL) persistentBuffer[i] = *int_memory[i];
+        if (int_memory[i] != NULL) persistentBuffer[i].int_cell = *int_memory[i];
+		if (dint_memory[i] != NULL) persistentBuffer[i].dint_cell = *dint_memory[i];
+		if (lint_memory[i] != NULL) persistentBuffer[i].lint_cell = *lint_memory[i];
     }
     pthread_mutex_unlock(&bufferLock); //unlock mutex
     
@@ -66,7 +79,7 @@ void startPstorage()
         return;
     }
 
-    if (fwrite(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, ps) < BUFFER_SIZE)
+    if (fwrite(persistentBuffer, sizeof(persistentBufferCell), BUFFER_SIZE, ps) < BUFFER_SIZE)
     {
         sprintf(log_msg, "Persistent Storage: Error writing to persistent memory file!\n");
         log(log_msg);
@@ -85,12 +98,28 @@ void startPstorage()
         {
             if (int_memory[i] != NULL)
             {
-                if (persistentBuffer[i] != *int_memory[i])
+                if (persistentBuffer[i].int_cell != *int_memory[i])
                 {
-                    persistentBuffer[i] = *int_memory[i];
+                    persistentBuffer[i].int_cell = *int_memory[i];
                     bufferOutdated = true;
                 }
             }
+            if (dint_memory[i] != NULL)
+            {
+                if ( persistentBuffer[i].dint_cell != *dint_memory[i])
+                {
+                    persistentBuffer[i].dint_cell = *dint_memory[i];
+                    bufferOutdated = true;
+                }
+            }			
+            if (lint_memory[i] != NULL)
+            {
+                if ( persistentBuffer[i].lint_cell != *lint_memory[i])
+                {
+                    persistentBuffer[i].lint_cell = *lint_memory[i];
+                    bufferOutdated = true;
+                }
+            }			
         }
         pthread_mutex_unlock(&bufferLock); //unlock mutex
 
@@ -105,7 +134,7 @@ void startPstorage()
                 return;
             }
 
-            if (fwrite(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, fd) < BUFFER_SIZE)
+            if (fwrite(persistentBuffer, sizeof(persistentBufferCell), BUFFER_SIZE, fd) < BUFFER_SIZE)
             {
                 sprintf(log_msg, "Persistent Storage: Error writing to persistent memory file!\n");
                 log(log_msg);
@@ -124,7 +153,7 @@ void startPstorage()
 // is disabled, the persistent.file will not be found and the function will
 // exit gracefully.
 //-----------------------------------------------------------------------------
-void readPersistentStorage()
+int readPersistentStorage()
 {
     char log_msg[1000];
     FILE *fd = fopen("persistent.file", "r");
@@ -133,17 +162,24 @@ void readPersistentStorage()
         sprintf(log_msg, "Warning: Persistent Storage file not found\n");
         log(log_msg);
         pstorage_read = true;
-        return;
+        return 0;
     }
 
-    IEC_INT persistentBuffer[BUFFER_SIZE];
+	struct persistentBufferCell
+	{
+		IEC_INT int_cell;
+		IEC_DINT dint_cell;
+		IEC_LINT lint_cell;
+	};
 
-    if (fread(persistentBuffer, sizeof(IEC_INT), BUFFER_SIZE, fd) < BUFFER_SIZE)
+	persistentBufferCell persistentBuffer[BUFFER_SIZE];
+
+    if (fread(persistentBuffer, sizeof(persistentBufferCell), BUFFER_SIZE, fd) < BUFFER_SIZE)
     {
         sprintf(log_msg, "Persistent Storage: Error while trying to read persistent.file!\n");
         log(log_msg);
         pstorage_read = true;
-        return;
+        return 0;
     }
     fclose(fd);
     
@@ -153,7 +189,9 @@ void readPersistentStorage()
     pthread_mutex_lock(&bufferLock); //lock mutex
     for (int i = 0; i < BUFFER_SIZE; i++)
     {
-        if (int_memory[i] != NULL) *int_memory[i] = persistentBuffer[i];
+        if (int_memory[i] != NULL) *int_memory[i] = persistentBuffer[i].int_cell;
+		if (dint_memory[i] != NULL) *dint_memory[i] = persistentBuffer[i].dint_cell;
+		if (lint_memory[i] != NULL) *lint_memory[i] = persistentBuffer[i].lint_cell;
     }
     pthread_mutex_unlock(&bufferLock); //unlock mutex
     
