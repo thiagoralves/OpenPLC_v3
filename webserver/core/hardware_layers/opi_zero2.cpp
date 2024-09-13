@@ -40,7 +40,7 @@
 
 #define MAX_INPUT 		4
 #define MAX_OUTPUT 		5
-#define MAX_ANALOG_OUT	2
+// #define MAX_ANALOG_OUT	2
 
 /********************I/O PINS CONFIGURATION*********************
  * A good source for Orange Pi I/O pins information is:
@@ -58,7 +58,7 @@ int inBufferPinMask[MAX_INPUT] = { 2, 5, 7, 8 };
 int outBufferPinMask[MAX_OUTPUT] = { 6, 9, 10, 13, 16 };
 
 //analogOutBufferPinMask: pin mask for the analog PWM
-//output of the RaspberryPi
+//output of the Orange Pi
 int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 3, 4 };
 
 //-----------------------------------------------------------------------------
@@ -85,15 +85,15 @@ void initializeHardware()
 	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
 	    	pinMode(outBufferPinMask[i], OUTPUT);
 	}
-	pwmSetRange(1024);
-	pwmSetClock(1);
-	//set PWM pins as output
-	for (int i = 0; i < MAX_ANALOG_OUT; i++)
-	{
-		if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i])) {
-	    	pinMode(analogOutBufferPinMask[i], PWM_OUTPUT);
-		}
-	}
+	// pwmSetRange(1024);
+	// pwmSetClock(1);
+	// //set PWM pins as output
+	// for (int i = 0; i < MAX_ANALOG_OUT; i++)
+	// {
+	// 	if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i])) {
+	//     	pinMode(analogOutBufferPinMask[i], PWM_OUTPUT);
+	// 	}
+	// }
 
 }
 
@@ -140,11 +140,11 @@ void updateBuffersOut()
     		if (bool_output[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
 	}
 	//ANALOG OUT (PWM)
-	for (int i = 0; i < MAX_ANALOG_OUT; i++)
-	{
-	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-    		if (int_output[i] != NULL) pwmWrite(analogOutBufferPinMask[i], (*int_output[i] / 64));
-	}
+	// for (int i = 0; i < MAX_ANALOG_OUT; i++)
+	// {
+	//     if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
+    // 		if (int_output[i] != NULL) pwmWrite(analogOutBufferPinMask[i], (*int_output[i] / 64));
+	// }
 
 	pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
