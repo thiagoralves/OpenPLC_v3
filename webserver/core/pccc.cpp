@@ -222,9 +222,9 @@ uint16_t Protected_Logical_Read_Reply(pccc_header header, unsigned char *buffer,
 	}//return length as -1 to signify that the CMD Code/Function Code was not recognize
 	
 	/*Creating the reply packet and memcpy the data into the buffer*/
-	memmove(&buffer[0], (unsigned int)header.RP_CMD_Code, 1); //0x4f Response Code
-    memmove(&buffer[1], (unsigned int)header.HD_Status, 1); //Same from COMMAND REQUEST
-    memmove(&buffer[2], (unsigned int)header.HD_TransactionNum, 2);//Same from COMMAND REQUEST
+	memmove(&buffer[0], header.RP_CMD_Code, 1); //0x4f Response Code
+    memmove(&buffer[1], header.HD_Status, 1); //Same from COMMAND REQUEST
+    memmove(&buffer[2], header.HD_TransactionNum, 2);//Same from COMMAND REQUEST
 	
 	return len_resp; //Return the Resonse Packet Length for PCCC	
 }
@@ -239,9 +239,9 @@ uint16_t Protected_Logical_Write_Reply(pccc_header header,unsigned char *buffer,
 	uint16_t len_resp = header.HD_length - 1;
 	
 	/*Creating the reply packet and memcpy the data into the buffer*/
-	memmove(&buffer[0], (unsigned int)header.RP_CMD_Code, 1);
-    memmove(&buffer[1], (unsigned int)header.HD_Status, 1);
-    memmove(&buffer[2], (unsigned int)header.HD_TransactionNum, 2);
+	memmove(&buffer[0], header.RP_CMD_Code, 1);
+    memmove(&buffer[1], header.HD_Status, 1);
+    memmove(&buffer[2], header.HD_TransactionNum, 2);
 	
 	/*check if the message is long enough- Left in for future error handling setup*/
 	/*if (buffer_size < 8)

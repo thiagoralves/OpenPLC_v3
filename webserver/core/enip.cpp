@@ -337,7 +337,7 @@ int sendRRData(int enipType, struct enip_header *header, struct enip_data_Unknow
 		//send pccc Data to pccc.cpp to be parsed and craft response
 		// returns the new PCCC data size
 		uint16_t newPcccSize = processPCCCMessage(pcccData, currentItem2Size - 13); // get length of new pccc size
-		if (newPcccSize == -1)
+		if (newPcccSize == (uint16_t) -1)
 			return -1;	//error in PCCC.cpp
 		
 		//item2_length is the length of the PCCC Data + 11 (11 for number of bytes after item2_length excluding PCCC Data)
@@ -480,7 +480,7 @@ int sendUnitData(struct enip_header *header, struct enip_data_Connected_0x70 *en
 	//send pccc Data to pccc.cpp to be parsed and craft response
 	// returns the new PCCC data size
 	uint16_t newPcccSize = processPCCCMessage(pcccData, currentPcccSize);
-	if (newPcccSize == -1)
+	if (newPcccSize == (uint16_t) -1)
 		return -1;	//error in PCCC.cpp
 		
 	//calculate Data Sizes
@@ -513,7 +513,8 @@ int sendUnitData(struct enip_header *header, struct enip_data_Connected_0x70 *en
 int processEnipMessage(unsigned char *buffer, int buffer_size)
 {	
 	// initialize logging system
-	char log_msg[1000];
+	const int log_msg_max_size = 1000;
+	char log_msg[log_msg_max_size];
     char *p = log_msg;
 	
 	// initailize structs
@@ -583,16 +584,27 @@ int processEnipMessage(unsigned char *buffer, int buffer_size)
 		uint16_t size = sendUnitData(&header, &enipDataConnected_0x70);
 		return size; //sendUnitData()
 	}*/
-    else
-    {
-        p += sprintf(p, "Unknown EtherNet/IP request: ");
-        for (int i = 0; i < buffer_size; i++)
-        {
-            p += sprintf(p, "%02x ", (unsigned char)buffer[i]);
+	else
+	{
+		p = sprintf(p, "Unknown EtherNet/IP request: ");
+        int msg_size;
+		if (buffer_size < log_msg_max_size)
+		{
+			msg_size = buffer_size;
         }
-        p += sprintf(p, "\n");
-        log(log_msg);
-        
-        return -1;
-    }
+		else
+		{
+			// when the message buffer is larger than the log buffer, only print a subset
+			msg_size = 0x20;
+		}
+
+		for (int i = 0; i < msg_size; i++)
+		{
+			p += sprintf(p, "%02x ", (unsigned char)buffer[i]);
+		}
+		p += sprintf(p, "\n");
+		log(log_msg);
+
+		return -1;
+	}
 }
