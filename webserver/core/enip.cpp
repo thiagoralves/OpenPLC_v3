@@ -587,11 +587,11 @@ int processEnipMessage(unsigned char *buffer, int buffer_size)
 	else
 	{
 		p = sprintf(p, "Unknown EtherNet/IP request: ");
-        int msg_size;
-		if (buffer_size < log_msg_max_size)
+		int msg_size;
+		if (((buffer_size * 3) + 40) < log_msg_max_size) // Each byte on buffer takes 3 bytes to be printed using "%02x ". Add 40 extra bytes for "preamble"
 		{
 			msg_size = buffer_size;
-        }
+		}
 		else
 		{
 			// when the message buffer is larger than the log buffer, only print a subset
