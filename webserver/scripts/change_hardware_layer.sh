@@ -73,6 +73,13 @@ elif [ "$1" == "rpi_old" ]; then
     echo rpi > ../scripts/openplc_platform
     echo rpi_old > ../scripts/openplc_driver
 
+elif [[ $1 == opi* ]]; then
+    echo "Activating Orange Pi driver"
+    cp ./hardware_layers/$1.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo opi > ../scripts/openplc_platform
+    echo "$1" > ../scripts/openplc_driver
+
 elif [ "$1" == "simulink" ]; then
     echo "Activating Simulink driver"
     cp ./hardware_layers/simulink.cpp ./hardware_layer.cpp
