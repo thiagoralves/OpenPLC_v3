@@ -187,33 +187,33 @@ int Spi_AutoModeDAC(struct pixtOutDAC *OutputDataDAC) {
 
 int Spi_Set_Aout(int channel, uint16_t value)
 {
-	unsigned char spi_output[2];
-	int spi_device = 1;
-	int len = 2;
-	uint16_t tmp;
+    unsigned char spi_output[2];
+    int spi_device = 1;
+    int len = 2;
+    uint16_t tmp;
 
-	spi_output[0] = 0b00010000;
+    spi_output[0] = 0b00010000;
 
-	if(channel)
-	{
-		spi_output[0] = spi_output[0] | 0b10000000;
-	}
-	if(value > 1023)
-	{
-		value=1023;
-	}
+    if(channel)
+    {
+        spi_output[0] = spi_output[0] | 0b10000000;
+    }
+    if(value > 1023)
+    {
+        value=1023;
+    }
 
-	tmp = value & 0b1111000000;
-	tmp = tmp >> 6;
-	spi_output[0]=spi_output[0] | tmp;
+    tmp = value & 0b1111000000;
+    tmp = tmp >> 6;
+    spi_output[0]=spi_output[0] | tmp;
 
-	tmp = value & 0b0000111111;
-	tmp = tmp << 2;
-	spi_output[1]=tmp;
+    tmp = value & 0b0000111111;
+    tmp = tmp << 2;
+    spi_output[1]=tmp;
 
-	wiringPiSPIDataRW(spi_device, spi_output, len);
+    wiringPiSPIDataRW(spi_device, spi_output, len);
 
-	return 0;
+    return 0;
 }
 
 int Spi_AutoModeV2S(struct pixtOutV2S *OutputData, struct pixtInV2S *InputData)
@@ -557,9 +557,9 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	//lock mutexes
-	pthread_mutex_lock(&bufferLock);
-	pthread_mutex_lock(&localBufferLock);
+    //lock mutexes
+    pthread_mutex_lock(&bufferLock);
+    pthread_mutex_lock(&localBufferLock);
     
     //DIGITAL INPUT
     for (int i = 0; i < MAX_DIG_IN; i++)
@@ -641,9 +641,9 @@ void updateBuffersIn()
             
     }
    
-	//unlock mutexes
-	pthread_mutex_unlock(&localBufferLock);
-	pthread_mutex_unlock(&bufferLock);
+    //unlock mutexes
+    pthread_mutex_unlock(&localBufferLock);
+    pthread_mutex_unlock(&bufferLock);
 }
 
 //-----------------------------------------------------------------------------
@@ -653,9 +653,9 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	//lock mutexes
-	pthread_mutex_lock(&bufferLock);
-	pthread_mutex_lock(&localBufferLock);   
+    //lock mutexes
+    pthread_mutex_lock(&bufferLock);
+    pthread_mutex_lock(&localBufferLock);   
     
     //DIGITAL OUTPUT
     for (int i = 0; i < MAX_DIG_OUT; i++)
@@ -726,7 +726,7 @@ void updateBuffersOut()
     // PWM1BL - PWM1BH     
     if (byte_output[7] != NULL) OutputData.byPWM1B = *byte_output[7];
     
-	//unlock mutexes
-	pthread_mutex_unlock(&localBufferLock);
-	pthread_mutex_unlock(&bufferLock);
+    //unlock mutexes
+    pthread_mutex_unlock(&localBufferLock);
+    pthread_mutex_unlock(&bufferLock);
 }

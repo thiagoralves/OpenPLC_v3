@@ -44,23 +44,23 @@ void startPstorage()
         sleepms(100);
     
     char log_msg[1000];
-    	
-	struct persistentBufferCell
-	{
-		IEC_INT int_cell;
-		IEC_DINT dint_cell;
-		IEC_LINT lint_cell;
-	};
+        
+    struct persistentBufferCell
+    {
+        IEC_INT int_cell;
+        IEC_DINT dint_cell;
+        IEC_LINT lint_cell;
+    };
 
-	persistentBufferCell persistentBuffer[BUFFER_SIZE];
+    persistentBufferCell persistentBuffer[BUFFER_SIZE];
 
     //Read initial buffers into persistent struct
     pthread_mutex_lock(&bufferLock); //lock mutex
     for (int i = 0; i < BUFFER_SIZE; i++)
     {
         if (int_memory[i] != NULL) persistentBuffer[i].int_cell = *int_memory[i];
-		if (dint_memory[i] != NULL) persistentBuffer[i].dint_cell = *dint_memory[i];
-		if (lint_memory[i] != NULL) persistentBuffer[i].lint_cell = *lint_memory[i];
+        if (dint_memory[i] != NULL) persistentBuffer[i].dint_cell = *dint_memory[i];
+        if (lint_memory[i] != NULL) persistentBuffer[i].lint_cell = *lint_memory[i];
     }
     pthread_mutex_unlock(&bufferLock); //unlock mutex
     
@@ -165,14 +165,14 @@ int readPersistentStorage()
         return 0;
     }
 
-	struct persistentBufferCell
-	{
-		IEC_INT int_cell;
-		IEC_DINT dint_cell;
-		IEC_LINT lint_cell;
-	};
+    struct persistentBufferCell
+    {
+        IEC_INT int_cell;
+        IEC_DINT dint_cell;
+        IEC_LINT lint_cell;
+    };
 
-	persistentBufferCell persistentBuffer[BUFFER_SIZE];
+    persistentBufferCell persistentBuffer[BUFFER_SIZE];
 
     if (fread(persistentBuffer, sizeof(persistentBufferCell), BUFFER_SIZE, fd) < BUFFER_SIZE)
     {
@@ -190,8 +190,8 @@ int readPersistentStorage()
     for (int i = 0; i < BUFFER_SIZE; i++)
     {
         if (int_memory[i] != NULL) *int_memory[i] = persistentBuffer[i].int_cell;
-		if (dint_memory[i] != NULL) *dint_memory[i] = persistentBuffer[i].dint_cell;
-		if (lint_memory[i] != NULL) *lint_memory[i] = persistentBuffer[i].lint_cell;
+        if (dint_memory[i] != NULL) *dint_memory[i] = persistentBuffer[i].dint_cell;
+        if (lint_memory[i] != NULL) *lint_memory[i] = persistentBuffer[i].lint_cell;
     }
     pthread_mutex_unlock(&bufferLock); //unlock mutex
     

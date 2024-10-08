@@ -303,7 +303,7 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
     
     /* read digital inputs */
     int i = 0;
@@ -330,7 +330,7 @@ void updateBuffersIn()
         i++;
     }
 
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -340,7 +340,7 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
     
     /* write digital outputs */
     int i = 0;
@@ -377,6 +377,6 @@ void updateBuffersOut()
         i++;
     }
     
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
     
 }

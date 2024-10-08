@@ -205,151 +205,151 @@ int Spi_AutoModeDAC(struct pixtOutDAC *OutputDataDAC) {
 
 int Spi_Set_Aout(int channel, uint16_t value)
 {
-	unsigned char spi_output[2];
-	int spi_device = 1;
-	int len = 2;
-	uint16_t tmp;
+    unsigned char spi_output[2];
+    int spi_device = 1;
+    int len = 2;
+    uint16_t tmp;
 
-	spi_output[0] = 0b00010000;
+    spi_output[0] = 0b00010000;
 
-	if(channel)
-	{
-		spi_output[0] = spi_output[0] | 0b10000000;
-	}
-	if(value > 1023)
-	{
-		value=1023;
-	}
+    if(channel)
+    {
+        spi_output[0] = spi_output[0] | 0b10000000;
+    }
+    if(value > 1023)
+    {
+        value=1023;
+    }
 
-	tmp = value & 0b1111000000;
-	tmp = tmp >> 6;
-	spi_output[0]=spi_output[0] | tmp;
+    tmp = value & 0b1111000000;
+    tmp = tmp >> 6;
+    spi_output[0]=spi_output[0] | tmp;
 
-	tmp = value & 0b0000111111;
-	tmp = tmp << 2;
-	spi_output[1]=tmp;
+    tmp = value & 0b0000111111;
+    tmp = tmp << 2;
+    spi_output[1]=tmp;
 
-	wiringPiSPIDataRW(spi_device, spi_output, len);
+    wiringPiSPIDataRW(spi_device, spi_output, len);
 
-	return 0;
+    return 0;
 }
 
 int Spi_AutoModeV2L(struct pixtOutV2L *OutputData, struct pixtInV2L *InputData)
 {
-	uint16_t crcSumHeader;
-	uint16_t crcSumData;
-	uint16_t crcSumHeaderRx;
-	uint16_t crcSumHeaderRxCalc;
-	uint16_t crcSumDataRx;
-	uint16_t crcSumDataRxCalc;
+    uint16_t crcSumHeader;
+    uint16_t crcSumData;
+    uint16_t crcSumHeaderRx;
+    uint16_t crcSumHeaderRxCalc;
+    uint16_t crcSumDataRx;
+    uint16_t crcSumDataRxCalc;
     uint16_t wTempValue;
-	int i;
-	unsigned char spi_output[111];
-	int spi_device = 0;
-	int len = 111;
-	
-	spi_output[0] = OutputData->byModelOut;                                
-	spi_output[1] = OutputData->byUCMode;
-	spi_output[2] = OutputData->byUCCtrl0;
-	spi_output[3] = OutputData->byUCCtrl1;
+    int i;
+    unsigned char spi_output[111];
+    int spi_device = 0;
+    int len = 111;
+    
+    spi_output[0] = OutputData->byModelOut;                                
+    spi_output[1] = OutputData->byUCMode;
+    spi_output[2] = OutputData->byUCCtrl0;
+    spi_output[3] = OutputData->byUCCtrl1;
     spi_output[4] = 0; 	//Reserved
     spi_output[5] = 0; 	//Reserved
     spi_output[6] = 0; 	//Reserved
-	spi_output[7] = 0; // Reserved for Header CRC value
-	spi_output[8] = 0; // Reserver for Header CRC value
-	spi_output[9] = OutputData->byDigitalInDebounce01;
-	spi_output[10] = OutputData->byDigitalInDebounce23;
-	spi_output[11] = OutputData->byDigitalInDebounce45;
-	spi_output[12] = OutputData->byDigitalInDebounce67;
- 	spi_output[13] = OutputData->byDigitalInDebounce89;
-	spi_output[14] = OutputData->byDigitalInDebounce1011;
-	spi_output[15] = OutputData->byDigitalInDebounce1213;
-	spi_output[16] = OutputData->byDigitalInDebounce1415;    
-	spi_output[17] = OutputData->byDigitalOut0;
+    spi_output[7] = 0; // Reserved for Header CRC value
+    spi_output[8] = 0; // Reserver for Header CRC value
+    spi_output[9] = OutputData->byDigitalInDebounce01;
+    spi_output[10] = OutputData->byDigitalInDebounce23;
+    spi_output[11] = OutputData->byDigitalInDebounce45;
+    spi_output[12] = OutputData->byDigitalInDebounce67;
+     spi_output[13] = OutputData->byDigitalInDebounce89;
+    spi_output[14] = OutputData->byDigitalInDebounce1011;
+    spi_output[15] = OutputData->byDigitalInDebounce1213;
+    spi_output[16] = OutputData->byDigitalInDebounce1415;    
+    spi_output[17] = OutputData->byDigitalOut0;
     spi_output[18] = OutputData->byDigitalOut1;
-	spi_output[19] = OutputData->byRelayOut;
-	spi_output[20] = OutputData->byGPIOCtrl;
-	spi_output[21] = OutputData->byGPIOOut;
-	spi_output[22] = OutputData->byGPIODebounce01;
-	spi_output[23] = OutputData->byGPIODebounce23;
-	spi_output[24] = OutputData->byPWM0Ctrl0;
-	spi_output[25] = (uint8_t)(OutputData->wPWM0Ctrl1 & 0xFF);
-	spi_output[26] = (uint8_t)((OutputData->wPWM0Ctrl1>>8) & 0xFF);
-	spi_output[27] = (uint8_t)(OutputData->wPWM0A & 0xFF);
-	spi_output[28] = (uint8_t)((OutputData->wPWM0A>>8) & 0xFF);
-	spi_output[29] = (uint8_t)(OutputData->wPWM0B & 0xFF);
-	spi_output[30] = (uint8_t)((OutputData->wPWM0B>>8) & 0xFF);
+    spi_output[19] = OutputData->byRelayOut;
+    spi_output[20] = OutputData->byGPIOCtrl;
+    spi_output[21] = OutputData->byGPIOOut;
+    spi_output[22] = OutputData->byGPIODebounce01;
+    spi_output[23] = OutputData->byGPIODebounce23;
+    spi_output[24] = OutputData->byPWM0Ctrl0;
+    spi_output[25] = (uint8_t)(OutputData->wPWM0Ctrl1 & 0xFF);
+    spi_output[26] = (uint8_t)((OutputData->wPWM0Ctrl1>>8) & 0xFF);
+    spi_output[27] = (uint8_t)(OutputData->wPWM0A & 0xFF);
+    spi_output[28] = (uint8_t)((OutputData->wPWM0A>>8) & 0xFF);
+    spi_output[29] = (uint8_t)(OutputData->wPWM0B & 0xFF);
+    spi_output[30] = (uint8_t)((OutputData->wPWM0B>>8) & 0xFF);
     spi_output[31] = OutputData->byPWM1Ctrl0;
- 	spi_output[32] = (uint8_t)(OutputData->wPWM1Ctrl1 & 0xFF);
-	spi_output[33] = (uint8_t)((OutputData->wPWM1Ctrl1>>8) & 0xFF);
-	spi_output[34] = (uint8_t)(OutputData->wPWM1A & 0xFF);
-	spi_output[35] = (uint8_t)((OutputData->wPWM1A>>8) & 0xFF);
-	spi_output[36] = (uint8_t)(OutputData->wPWM1B & 0xFF);
-	spi_output[37] = (uint8_t)((OutputData->wPWM1B>>8) & 0xFF);   
+     spi_output[32] = (uint8_t)(OutputData->wPWM1Ctrl1 & 0xFF);
+    spi_output[33] = (uint8_t)((OutputData->wPWM1Ctrl1>>8) & 0xFF);
+    spi_output[34] = (uint8_t)(OutputData->wPWM1A & 0xFF);
+    spi_output[35] = (uint8_t)((OutputData->wPWM1A>>8) & 0xFF);
+    spi_output[36] = (uint8_t)(OutputData->wPWM1B & 0xFF);
+    spi_output[37] = (uint8_t)((OutputData->wPWM1B>>8) & 0xFF);   
     spi_output[38] = OutputData->byPWM2Ctrl0;
- 	spi_output[39] = (uint8_t)(OutputData->wPWM2Ctrl1 & 0xFF);
-	spi_output[40] = (uint8_t)((OutputData->wPWM2Ctrl1>>8) & 0xFF);
-	spi_output[41] = (uint8_t)(OutputData->wPWM2A & 0xFF);
-	spi_output[42] = (uint8_t)((OutputData->wPWM2A>>8) & 0xFF);
-	spi_output[43] = (uint8_t)(OutputData->wPWM2B & 0xFF);
-	spi_output[44] = (uint8_t)((OutputData->wPWM2B>>8) & 0xFF);
+     spi_output[39] = (uint8_t)(OutputData->wPWM2Ctrl1 & 0xFF);
+    spi_output[40] = (uint8_t)((OutputData->wPWM2Ctrl1>>8) & 0xFF);
+    spi_output[41] = (uint8_t)(OutputData->wPWM2A & 0xFF);
+    spi_output[42] = (uint8_t)((OutputData->wPWM2A>>8) & 0xFF);
+    spi_output[43] = (uint8_t)(OutputData->wPWM2B & 0xFF);
+    spi_output[44] = (uint8_t)((OutputData->wPWM2B>>8) & 0xFF);
 
-	//Add Retain data to SPI output          
-	for (i=0; i <= 63; i++) 
-	{
-		spi_output[45+i] = OutputData->abyRetainDataOut[i];
-	}
+    //Add Retain data to SPI output          
+    for (i=0; i <= 63; i++) 
+    {
+        spi_output[45+i] = OutputData->abyRetainDataOut[i];
+    }
 
-	spi_output[109] = 0; //Reserved for data CRC
-	spi_output[110] = 0; //Reserved for data CRC            
+    spi_output[109] = 0; //Reserved for data CRC
+    spi_output[110] = 0; //Reserved for data CRC            
     //Save physical jumper setting given by user for this call          
-	byJumper10V = OutputData->byJumper10V;
+    byJumper10V = OutputData->byJumper10V;
 
-	//Calculate CRC16 Header Transmit Checksum
-	crcSumHeader = 0xFFFF;
-	for (i=0; i < 7; i++) 
-	{
-		crcSumHeader = crc16_calc(crcSumHeader, spi_output[i]);
-	}
-	spi_output[7]=crcSumHeader & 0xFF;	//CRC Low Byte
-	spi_output[8]=crcSumHeader >> 8;	//CRC High Byte
+    //Calculate CRC16 Header Transmit Checksum
+    crcSumHeader = 0xFFFF;
+    for (i=0; i < 7; i++) 
+    {
+        crcSumHeader = crc16_calc(crcSumHeader, spi_output[i]);
+    }
+    spi_output[7]=crcSumHeader & 0xFF;	//CRC Low Byte
+    spi_output[8]=crcSumHeader >> 8;	//CRC High Byte
 
-	//Calculate CRC16 Data Transmit Checksum
-	crcSumData = 0xFFFF;
-	for (i=9; i <= 108; i++) 
-	{
-		crcSumData = crc16_calc(crcSumData, spi_output[i]);
-	}
-	spi_output[109]=crcSumData & 0xFF; //CRC Low Byte
-	spi_output[110]=crcSumData >> 8;	  //CRC High Byte
-	
-	//-------------------------------------------------------------------------
-	//Initialise SPI Data Transfer with OutputData
-	wiringPiSPIDataRW(spi_device, spi_output, len);
-	//-------------------------------------------------------------------------
+    //Calculate CRC16 Data Transmit Checksum
+    crcSumData = 0xFFFF;
+    for (i=9; i <= 108; i++) 
+    {
+        crcSumData = crc16_calc(crcSumData, spi_output[i]);
+    }
+    spi_output[109]=crcSumData & 0xFF; //CRC Low Byte
+    spi_output[110]=crcSumData >> 8;	  //CRC High Byte
+    
+    //-------------------------------------------------------------------------
+    //Initialise SPI Data Transfer with OutputData
+    wiringPiSPIDataRW(spi_device, spi_output, len);
+    //-------------------------------------------------------------------------
    
-	//Calculate Header CRC16 Receive Checksum
-	crcSumHeaderRxCalc = 0xFFFF;
-	for (i=0; i <= 6; i++) 
-	{
-		crcSumHeaderRxCalc = crc16_calc(crcSumHeaderRxCalc, spi_output[i]);
-	}
-	
-	crcSumHeaderRx = (spi_output[8]<<8) + spi_output[7];
-	
-	//Check that CRC sums match
+    //Calculate Header CRC16 Receive Checksum
+    crcSumHeaderRxCalc = 0xFFFF;
+    for (i=0; i <= 6; i++) 
+    {
+        crcSumHeaderRxCalc = crc16_calc(crcSumHeaderRxCalc, spi_output[i]);
+    }
+    
+    crcSumHeaderRx = (spi_output[8]<<8) + spi_output[7];
+    
+    //Check that CRC sums match
     if (crcSumHeaderRx != crcSumHeaderRxCalc)
-		return -1;
+        return -1;
 
-	//-------------------------------------------------------------------------
-	// Data received is OK, CRC and model matched
-	//-------------------------------------------------------------------------
-	//spi_output now contains all returned data, assign values to InputData
+    //-------------------------------------------------------------------------
+    // Data received is OK, CRC and model matched
+    //-------------------------------------------------------------------------
+    //spi_output now contains all returned data, assign values to InputData
 
-	InputData->byFirmware = spi_output[0];
-	InputData->byHardware = spi_output[1];
-	InputData->byModelIn = spi_output[2];
-	InputData->byUCState = spi_output[3];
+    InputData->byFirmware = spi_output[0];
+    InputData->byHardware = spi_output[1];
+    InputData->byModelIn = spi_output[2];
+    InputData->byUCState = spi_output[3];
     InputData->byUCWarnings = spi_output[4];
     //spi_output[5]; //Reserved
     //spi_output[6]; //Reserved
@@ -358,29 +358,29 @@ int Spi_AutoModeV2L(struct pixtOutV2L *OutputData, struct pixtInV2L *InputData)
     
     //Check model
     if (spi_output[2] != 76)
-		return -2;
+        return -2;
     
-	//Calculate Data CRC16 Receive Checksum
-	crcSumDataRxCalc = 0xFFFF;
-	for (i=9; i <= 108; i++) 
-	{
-		crcSumDataRxCalc = crc16_calc(crcSumDataRxCalc, spi_output[i]);
-	}
-	
-	crcSumDataRx = (spi_output[110]<<8) + spi_output[109];
-	
+    //Calculate Data CRC16 Receive Checksum
+    crcSumDataRxCalc = 0xFFFF;
+    for (i=9; i <= 108; i++) 
+    {
+        crcSumDataRxCalc = crc16_calc(crcSumDataRxCalc, spi_output[i]);
+    }
+    
+    crcSumDataRx = (spi_output[110]<<8) + spi_output[109];
+    
     if (crcSumDataRxCalc != crcSumDataRx)
-		return -3;    
+        return -3;    
     
-	InputData->byDigitalIn0 = spi_output[9];
+    InputData->byDigitalIn0 = spi_output[9];
     InputData->byDigitalIn1 = spi_output[10];
-	InputData->wAnalogIn0 = (uint16_t)(spi_output[12]<<8)|(spi_output[11]);
-	InputData->wAnalogIn1 = (uint16_t)(spi_output[14]<<8)|(spi_output[13]);
+    InputData->wAnalogIn0 = (uint16_t)(spi_output[12]<<8)|(spi_output[11]);
+    InputData->wAnalogIn1 = (uint16_t)(spi_output[14]<<8)|(spi_output[13]);
     InputData->wAnalogIn2 = (uint16_t)(spi_output[16]<<8)|(spi_output[15]);
     InputData->wAnalogIn3 = (uint16_t)(spi_output[18]<<8)|(spi_output[17]);
     InputData->wAnalogIn4 = (uint16_t)(spi_output[20]<<8)|(spi_output[19]);
     InputData->wAnalogIn5 = (uint16_t)(spi_output[22]<<8)|(spi_output[21]);
-	InputData->byGPIOIn = spi_output[23];
+    InputData->byGPIOIn = spi_output[23];
     
     //----------------------------------------------------------------------------------------------------
     //Check Temp0 and Humid0 for value 255, meaning read error
@@ -424,47 +424,47 @@ int Spi_AutoModeV2L(struct pixtOutV2L *OutputData, struct pixtInV2L *InputData)
     }
     //----------------------------------------------------------------------------------------------------
 
-	if (byJumper10V & (0b00000001)) {
-		InputData->rAnalogIn0 = (float)(InputData->wAnalogIn0) * (10.0 / 1024);
-	} 
-	else {
-		InputData->rAnalogIn0 = (float)(InputData->wAnalogIn0) * (5.0 / 1024);
-	}
-	if (byJumper10V & (0b00000010)) {
-		InputData->rAnalogIn1 = (float)(InputData->wAnalogIn1) * (10.0 / 1024);
-	} 
-	else {
-		InputData->rAnalogIn1 = (float)(InputData->wAnalogIn1) * (5.0 / 1024);
-	}
-	if (byJumper10V & (0b00000100)) {
-		InputData->rAnalogIn2 = (float)(InputData->wAnalogIn2) * (10.0 / 1024);
-	} 
-	else {
-		InputData->rAnalogIn2 = (float)(InputData->wAnalogIn2) * (5.0 / 1024);
-	}
-	if (byJumper10V & (0b00001000)) {
-		InputData->rAnalogIn3 = (float)(InputData->wAnalogIn3) * (10.0 / 1024);
-	} 
-	else {
-		InputData->rAnalogIn3 = (float)(InputData->wAnalogIn3) * (5.0 / 1024);
-	}
+    if (byJumper10V & (0b00000001)) {
+        InputData->rAnalogIn0 = (float)(InputData->wAnalogIn0) * (10.0 / 1024);
+    } 
+    else {
+        InputData->rAnalogIn0 = (float)(InputData->wAnalogIn0) * (5.0 / 1024);
+    }
+    if (byJumper10V & (0b00000010)) {
+        InputData->rAnalogIn1 = (float)(InputData->wAnalogIn1) * (10.0 / 1024);
+    } 
+    else {
+        InputData->rAnalogIn1 = (float)(InputData->wAnalogIn1) * (5.0 / 1024);
+    }
+    if (byJumper10V & (0b00000100)) {
+        InputData->rAnalogIn2 = (float)(InputData->wAnalogIn2) * (10.0 / 1024);
+    } 
+    else {
+        InputData->rAnalogIn2 = (float)(InputData->wAnalogIn2) * (5.0 / 1024);
+    }
+    if (byJumper10V & (0b00001000)) {
+        InputData->rAnalogIn3 = (float)(InputData->wAnalogIn3) * (10.0 / 1024);
+    } 
+    else {
+        InputData->rAnalogIn3 = (float)(InputData->wAnalogIn3) * (5.0 / 1024);
+    }
     
-	InputData->rAnalogIn4 = (float)(InputData->wAnalogIn4) * 0.020158400229358;
-	InputData->rAnalogIn5 = (float)(InputData->wAnalogIn5) * 0.020158400229358;    
+    InputData->rAnalogIn4 = (float)(InputData->wAnalogIn4) * 0.020158400229358;
+    InputData->rAnalogIn5 = (float)(InputData->wAnalogIn5) * 0.020158400229358;    
     
-	// if (byJumper10V & (0b00010000)) {
-		// InputData->rAnalogIn4 = (float)(InputData->wAnalogIn4) * (10.0 / 1024);
-	// } 
-	// else {
-		// InputData->rAnalogIn4 = (float)(InputData->wAnalogIn4) * (5.0 / 1024);
-	// }
-	// if (byJumper10V & (0b00100000)) {
-		// InputData->rAnalogIn5 = (float)(InputData->wAnalogIn5) * (10.0 / 1024);
-	// } 
-	// else {
-		// InputData->rAnalogIn5 = (float)(InputData->wAnalogIn5) * (5.0 / 1024);
-	// }      
-	
+    // if (byJumper10V & (0b00010000)) {
+        // InputData->rAnalogIn4 = (float)(InputData->wAnalogIn4) * (10.0 / 1024);
+    // } 
+    // else {
+        // InputData->rAnalogIn4 = (float)(InputData->wAnalogIn4) * (5.0 / 1024);
+    // }
+    // if (byJumper10V & (0b00100000)) {
+        // InputData->rAnalogIn5 = (float)(InputData->wAnalogIn5) * (10.0 / 1024);
+    // } 
+    // else {
+        // InputData->rAnalogIn5 = (float)(InputData->wAnalogIn5) * (5.0 / 1024);
+    // }      
+    
     //Check if user chose DHT11 or DHT22 sensor at GPIO0, 1 = DHT11 and 0 = DHT22
     if (OutputData->byGPIO0Dht11 == 1){
         InputData->rTemp0 = (float)(InputData->wTemp0 / 256);
@@ -533,13 +533,13 @@ int Spi_AutoModeV2L(struct pixtOutV2L *OutputData, struct pixtInV2L *InputData)
         }
         InputData->rHumid3 = (float)(InputData->wHumid3) / 10.0;
     }
-	//Get Retain data from SPI input          
-	for (i=0; i <= 63; i++) 
-	{
-		InputData->abyRetainDataIn[i] = spi_output[45+i];
-	}
+    //Get Retain data from SPI input          
+    for (i=0; i <= 63; i++) 
+    {
+        InputData->abyRetainDataIn[i] = spi_output[45+i];
+    }
 
-	return 0;
+    return 0;
 }
 
 int Spi_SetupV2(int spi_device)
@@ -620,9 +620,9 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	//lock mutexes
-	pthread_mutex_lock(&bufferLock);
-	pthread_mutex_lock(&localBufferLock);
+    //lock mutexes
+    pthread_mutex_lock(&bufferLock);
+    pthread_mutex_lock(&localBufferLock);
     
     //DIGITAL INPUT
     for (int i = 0; i < MAX_DIG_IN; i++)
@@ -713,9 +713,9 @@ void updateBuffersIn()
         }
     }
    
-	//unlock mutexes
-	pthread_mutex_unlock(&localBufferLock);
-	pthread_mutex_unlock(&bufferLock);
+    //unlock mutexes
+    pthread_mutex_unlock(&localBufferLock);
+    pthread_mutex_unlock(&bufferLock);
 }
 
 //-----------------------------------------------------------------------------
@@ -727,9 +727,9 @@ void updateBuffersOut()
 {
     int inum = 0;
 
-	//lock mutexes
-	pthread_mutex_lock(&bufferLock);
-	pthread_mutex_lock(&localBufferLock);   
+    //lock mutexes
+    pthread_mutex_lock(&bufferLock);
+    pthread_mutex_lock(&localBufferLock);   
     
     //DIGITAL OUTPUT
     for (int i = 0; i < MAX_DIG_OUT; i++)
@@ -820,7 +820,7 @@ void updateBuffersOut()
     // PWM2 - PWM2Ctrl0 - 5
     if (byte_output[inum] != NULL) OutputData.byPWM2Ctrl0 = *byte_output[inum];
     
-	//unlock mutexes
-	pthread_mutex_unlock(&localBufferLock);
-	pthread_mutex_unlock(&bufferLock);
+    //unlock mutexes
+    pthread_mutex_unlock(&localBufferLock);
+    pthread_mutex_unlock(&bufferLock);
 }

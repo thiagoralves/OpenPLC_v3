@@ -74,10 +74,10 @@ void sleep_until(struct timespec *ts, long long delay)
 //-----------------------------------------------------------------------------
 void sleepms(int milliseconds)
 {
-	struct timespec ts;
-	ts.tv_sec = milliseconds / 1000;
-	ts.tv_nsec = (milliseconds % 1000) * 1000000;
-	nanosleep(&ts, NULL);
+    struct timespec ts;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000000;
+    nanosleep(&ts, NULL);
 }
 
 /**
@@ -304,25 +304,25 @@ int main(int argc,char **argv)
     }
 #endif
 
-	// Define the start, end, cycle time and latency time variables
-	struct timespec cycle_start, cycle_end, cycle_time;
-	struct timespec timer_start, timer_end, sleep_latency;
+    // Define the start, end, cycle time and latency time variables
+    struct timespec cycle_start, cycle_end, cycle_time;
+    struct timespec timer_start, timer_end, sleep_latency;
 
-	//gets the starting point for the clock
-	printf("Getting current time\n");
-	clock_gettime(CLOCK_MONOTONIC, &timer_start);
+    //gets the starting point for the clock
+    printf("Getting current time\n");
+    clock_gettime(CLOCK_MONOTONIC, &timer_start);
 
-	//======================================================
-	//                    MAIN LOOP
-	//======================================================
-	while(run_openplc)
-	{
-		// Get the start time for the running cycle
-		clock_gettime(CLOCK_MONOTONIC, &cycle_start);
+    //======================================================
+    //                    MAIN LOOP
+    //======================================================
+    while(run_openplc)
+    {
+        // Get the start time for the running cycle
+        clock_gettime(CLOCK_MONOTONIC, &cycle_start);
 
-		//make sure the buffer pointers are correct and
-		//attached to the user variables
-		glueVars();
+        //make sure the buffer pointers are correct and
+        //attached to the user variables
+        glueVars();
         
 #ifdef _ethercat_src
         boolvar_call_back bool_input_callback = bool_input_call_back;
@@ -337,9 +337,9 @@ int main(int argc,char **argv)
         int64var_call_back lint_output_callback = lint_output_call_back;
 #endif
         
-		updateBuffersIn(); //read input image
+        updateBuffersIn(); //read input image
 
-		pthread_mutex_lock(&bufferLock); //lock mutex
+        pthread_mutex_lock(&bufferLock); //lock mutex
 
 
 #ifdef _ethercat_src
@@ -358,55 +358,55 @@ int main(int argc,char **argv)
             break;
         }
 #endif
-		updateCustomIn();
+        updateCustomIn();
         updateBuffersIn_MB(); //update input image table with data from slave devices
         handleSpecialFunctions();
-		config_run__(__tick++); // execute plc program logic
-		updateCustomOut();
+        config_run__(__tick++); // execute plc program logic
+        updateCustomOut();
         updateBuffersOut_MB(); //update slave devices with data from the output image table
-		pthread_mutex_unlock(&bufferLock); //unlock mutex
+        pthread_mutex_unlock(&bufferLock); //unlock mutex
 
-		updateBuffersOut(); //write output image
+        updateBuffersOut(); //write output image
         
-		updateTime();
+        updateTime();
 
-		// Get the end time for the running cycle
-		clock_gettime(CLOCK_MONOTONIC, &cycle_end);
-		// Compute the time usage in one cycle and do max/min/total comparison/recording
-		timespec_diff(&cycle_end, &cycle_start, &cycle_time);
-		if (cycle_time.tv_nsec > cycle_max)
-			cycle_max = cycle_time.tv_nsec;
-		if (cycle_time.tv_nsec < cycle_min)
-			cycle_min = cycle_time.tv_nsec;
-		cycle_total = cycle_total + cycle_time.tv_nsec;
+        // Get the end time for the running cycle
+        clock_gettime(CLOCK_MONOTONIC, &cycle_end);
+        // Compute the time usage in one cycle and do max/min/total comparison/recording
+        timespec_diff(&cycle_end, &cycle_start, &cycle_time);
+        if (cycle_time.tv_nsec > cycle_max)
+            cycle_max = cycle_time.tv_nsec;
+        if (cycle_time.tv_nsec < cycle_min)
+            cycle_min = cycle_time.tv_nsec;
+        cycle_total = cycle_total + cycle_time.tv_nsec;
 
-		sleep_until(&timer_start, common_ticktime__);
+        sleep_until(&timer_start, common_ticktime__);
 
-		// Get the sleep end point which is also the start time/point of the next cycle
-		clock_gettime(CLOCK_MONOTONIC, &timer_end);
-		// Compute the time latency of the next cycle(caused by sleep) and do max/min/total comparison/recording
-		timespec_diff(&timer_end, &timer_start, &sleep_latency);
-		if (sleep_latency.tv_nsec > latency_max)
-			latency_max = sleep_latency.tv_nsec;
-		if (sleep_latency.tv_nsec < latency_min)
-			latency_min = sleep_latency.tv_nsec;
-		latency_total = latency_total + sleep_latency.tv_nsec;
+        // Get the sleep end point which is also the start time/point of the next cycle
+        clock_gettime(CLOCK_MONOTONIC, &timer_end);
+        // Compute the time latency of the next cycle(caused by sleep) and do max/min/total comparison/recording
+        timespec_diff(&timer_end, &timer_start, &sleep_latency);
+        if (sleep_latency.tv_nsec > latency_max)
+            latency_max = sleep_latency.tv_nsec;
+        if (sleep_latency.tv_nsec < latency_min)
+            latency_min = sleep_latency.tv_nsec;
+        latency_total = latency_total + sleep_latency.tv_nsec;
 
-		// Store the cycle_time/sleep_latency in microsecond, so it can be displayed in the webpage
-		RecordCycletimeLatency((long)cycle_time.tv_nsec / 1000, (long)sleep_latency.tv_nsec / 1000);
-	}
+        // Store the cycle_time/sleep_latency in microsecond, so it can be displayed in the webpage
+        RecordCycletimeLatency((long)cycle_time.tv_nsec / 1000, (long)sleep_latency.tv_nsec / 1000);
+    }
 
-	// Compute/print the max/min/avg cycle time and latency
-	cycle_avg = (long)cycle_total / __tick;
-	latency_avg = (long)latency_total / __tick;
-	printf("###Summary: The maximum/minimum/average cycle time in microsecond is %ld/%ld/%ld\n",
-	cycle_max / 1000, cycle_min / 1000, cycle_avg / 1000);
-	printf("###Summary: The maximum/minimum/average latency in microsecond is %ld/%ld/%ld\n",
-	latency_max / 1000,   latency_min / 1000, latency_avg / 1000);
+    // Compute/print the max/min/avg cycle time and latency
+    cycle_avg = (long)cycle_total / __tick;
+    latency_avg = (long)latency_total / __tick;
+    printf("###Summary: The maximum/minimum/average cycle time in microsecond is %ld/%ld/%ld\n",
+    cycle_max / 1000, cycle_min / 1000, cycle_avg / 1000);
+    printf("###Summary: The maximum/minimum/average latency in microsecond is %ld/%ld/%ld\n",
+    latency_max / 1000,   latency_min / 1000, latency_avg / 1000);
     
     //======================================================
-	//             SHUTTING DOWN OPENPLC RUNTIME
-	//======================================================
+    //             SHUTTING DOWN OPENPLC RUNTIME
+    //======================================================
     pthread_join(interactive_thread, NULL);
 #ifdef _ethercat_src
     ethercat_terminate_src();
@@ -415,7 +415,7 @@ int main(int argc,char **argv)
     disableOutputs();
     updateCustomOut();
     updateBuffersOut();
-	finalizeHardware();
+    finalizeHardware();
     printf("Shutting down OpenPLC Runtime...\n");
     exit(0);
 }

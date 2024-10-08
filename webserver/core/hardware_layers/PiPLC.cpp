@@ -80,41 +80,41 @@ int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 18, 19 };
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
-	gpioInitialise();
-	//piHiPri(99);
+    gpioInitialise();
+    //piHiPri(99);
 
-	//set pins as input
-	for (int i = 0; i < MAX_INPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
-	    {
-		    gpioSetMode(inBufferPinMask[i], PI_INPUT);
-			gpioSetPullUpDown(inBufferPinMask[i], PI_PUD_UP); //pull up enabled
-	    }
-	}
+    //set pins as input
+    for (int i = 0; i < MAX_INPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
+        {
+            gpioSetMode(inBufferPinMask[i], PI_INPUT);
+            gpioSetPullUpDown(inBufferPinMask[i], PI_PUD_UP); //pull up enabled
+        }
+    }
 
-	//set pins as output
-	for (int i = 0; i < MAX_OUTPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
-	    	gpioSetMode(outBufferPinMask[i], PI_OUTPUT);
-	}
+    //set pins as output
+    for (int i = 0; i < MAX_OUTPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
+            gpioSetMode(outBufferPinMask[i], PI_OUTPUT);
+    }
 
-	//set PWM pins as output
-	for (int i = 0; i < MAX_ANALOG_OUT; i++)
-	{
-	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i])){
-    		gpioSetMode(analogOutBufferPinMask[i], PI_ALT5);
-			gpioSetPWMrange(analogOutBufferPinMask[i], 1024);
-	    }
-	}
+    //set PWM pins as output
+    for (int i = 0; i < MAX_ANALOG_OUT; i++)
+    {
+        if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i])){
+            gpioSetMode(analogOutBufferPinMask[i], PI_ALT5);
+            gpioSetPWMrange(analogOutBufferPinMask[i], 1024);
+        }
+    }
 
-	// Modbus
-	rpi_modbus_rts_pin = MODBUS_RTS;
+    // Modbus
+    rpi_modbus_rts_pin = MODBUS_RTS;
 
-	// I²C?
+    // I²C?
 
-	// 1-Wire?
+    // 1-Wire?
 }
 
 //-----------------------------------------------------------------------------
@@ -123,7 +123,7 @@ void initializeHardware()
 //-----------------------------------------------------------------------------
 void finalizeHardware()
 {
-	gpioTerminate();
+    gpioTerminate();
 }
 
 //-----------------------------------------------------------------------------
@@ -133,16 +133,16 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
 
-	//INPUT
-	for (int i = 0; i < MAX_INPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
-    		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = !gpioRead(inBufferPinMask[i]);
-	}
+    //INPUT
+    for (int i = 0; i < MAX_INPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), inBufferPinMask[i]))
+            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = !gpioRead(inBufferPinMask[i]);
+    }
 
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -152,21 +152,21 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
 
-	//OUTPUT
-	for (int i = 0; i < MAX_OUTPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
-    		if (bool_output[i/8][i%8] != NULL) gpioWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
-	}
+    //OUTPUT
+    for (int i = 0; i < MAX_OUTPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), outBufferPinMask[i]))
+            if (bool_output[i/8][i%8] != NULL) gpioWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
+    }
 
-	//ANALOG OUT (PWM)
-	for (int i = 0; i < MAX_ANALOG_OUT; i++)
-	{
-	    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-    		if (int_output[i] != NULL) gpioPWM(analogOutBufferPinMask[i], (*int_output[i] / 64));
-	}
+    //ANALOG OUT (PWM)
+    for (int i = 0; i < MAX_ANALOG_OUT; i++)
+    {
+        if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
+            if (int_output[i] != NULL) gpioPWM(analogOutBufferPinMask[i], (*int_output[i] / 64));
+    }
 
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }

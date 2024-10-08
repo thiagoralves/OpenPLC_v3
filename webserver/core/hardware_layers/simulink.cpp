@@ -50,10 +50,10 @@
 
 struct plcData
 {
-	uint16_t analogIn[ANALOG_BUF_SIZE];
-	uint16_t analogOut[ANALOG_BUF_SIZE];
-	bool digitalIn[DIGITAL_BUF_SIZE];
-	bool digitalOut[DIGITAL_BUF_SIZE];
+    uint16_t analogIn[ANALOG_BUF_SIZE];
+    uint16_t analogOut[ANALOG_BUF_SIZE];
+    bool digitalIn[DIGITAL_BUF_SIZE];
+    bool digitalOut[DIGITAL_BUF_SIZE];
 };
 
 //-----------------------------------------------------------------------------
@@ -62,10 +62,10 @@ struct plcData
 //-----------------------------------------------------------------------------
 void sleep_ms(int milliseconds)
 {
-	struct timespec ts;
-	ts.tv_sec = milliseconds / 1000;
-	ts.tv_nsec = (milliseconds % 1000) * 1000000;
-	nanosleep(&ts, NULL);
+    struct timespec ts;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000000;
+    nanosleep(&ts, NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -74,34 +74,34 @@ void sleep_ms(int milliseconds)
 //-----------------------------------------------------------------------------
 int createUDPSocket(int port)
 {
-	int socket_fd;
-	struct sockaddr_in server_addr;
-	struct hostent *server;
+    int socket_fd;
+    struct sockaddr_in server_addr;
+    struct hostent *server;
 
-	//Create TCP Socket
-	socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (socket_fd<0)
-	{
-		perror("Server: error creating stream socket");
-		exit(1);
-	}
+    //Create TCP Socket
+    socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (socket_fd<0)
+    {
+        perror("Server: error creating stream socket");
+        exit(1);
+    }
 
-	//Initialize Server Struct
-	bzero((char *) &server_addr, sizeof(server_addr));
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(port);
-	server_addr.sin_addr.s_addr = INADDR_ANY;
+    //Initialize Server Struct
+    bzero((char *) &server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
 
-	//Bind socket
-	if (bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
-	{
-		perror("Server: error binding socket");
-		exit(1);
-	}
+    //Bind socket
+    if (bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    {
+        perror("Server: error binding socket");
+        exit(1);
+    }
 
-	printf("Socket %d binded successfully on port %d!\n", socket_fd, port);
+    printf("Socket %d binded successfully on port %d!\n", socket_fd, port);
 
-	return socket_fd;
+    return socket_fd;
 }
 
 
@@ -110,52 +110,52 @@ int createUDPSocket(int port)
 //-----------------------------------------------------------------------------
 void *exchangeData(void *arg)
 {
-	int socket_fd = createUDPSocket(PORT);
-	int net_len;
-	socklen_t cli_len;
-	struct sockaddr_in client;
-	struct plcData *plc_data = (struct plcData *)malloc(sizeof(struct plcData));
+    int socket_fd = createUDPSocket(PORT);
+    int net_len;
+    socklen_t cli_len;
+    struct sockaddr_in client;
+    struct plcData *plc_data = (struct plcData *)malloc(sizeof(struct plcData));
 
-	cli_len = sizeof(client);
+    cli_len = sizeof(client);
 
-	while(1)
-	{
-		//printf("waiting for data...\n");
-		net_len = recvfrom(socket_fd, plc_data, sizeof(*plc_data), 0, (struct sockaddr *) &client, &cli_len);
-		//printf("data received!\n");
-		if (net_len < 0)
-		{
-			printf("Error receiving data on socket %d\n", socket_fd);
-		}
-		else
-		{
-			pthread_mutex_lock(&bufferLock); //lock mutex
-			for (int i = 0; i < ANALOG_BUF_SIZE; i++)
-			{
+    while(1)
+    {
+        //printf("waiting for data...\n");
+        net_len = recvfrom(socket_fd, plc_data, sizeof(*plc_data), 0, (struct sockaddr *) &client, &cli_len);
+        //printf("data received!\n");
+        if (net_len < 0)
+        {
+            printf("Error receiving data on socket %d\n", socket_fd);
+        }
+        else
+        {
+            pthread_mutex_lock(&bufferLock); //lock mutex
+            for (int i = 0; i < ANALOG_BUF_SIZE; i++)
+            {
                 if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-				    if (int_input[i] != NULL) *int_input[i] = plc_data->analogIn[i];
+                    if (int_input[i] != NULL) *int_input[i] = plc_data->analogIn[i];
 
                 if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-    				if (int_output[i] != NULL) plc_data->analogOut[i] = *int_output[i];
-			}
-			for (int i = 0; i < DIGITAL_BUF_SIZE; i++)
-			{
-			    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-    				if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = plc_data->digitalIn[i];
-				
-				if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-    				if (bool_output[i/8][i%8] != NULL) plc_data->digitalOut[i] = *bool_output[i/8][i%8];
-			}
-			pthread_mutex_unlock(&bufferLock); //unlock mutex
+                    if (int_output[i] != NULL) plc_data->analogOut[i] = *int_output[i];
+            }
+            for (int i = 0; i < DIGITAL_BUF_SIZE; i++)
+            {
+                if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+                    if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = plc_data->digitalIn[i];
+                
+                if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+                    if (bool_output[i/8][i%8] != NULL) plc_data->digitalOut[i] = *bool_output[i/8][i%8];
+            }
+            pthread_mutex_unlock(&bufferLock); //unlock mutex
 
-			//printf("sending data...\n");
-			net_len = sendto(socket_fd, plc_data, sizeof(*plc_data), 0, (struct sockaddr *) &client, cli_len);
-			if (net_len < 0)
-			{
-				printf("Error sending data on socket %d\n", socket_fd);
-			}
-		}
-	}
+            //printf("sending data...\n");
+            net_len = sendto(socket_fd, plc_data, sizeof(*plc_data), 0, (struct sockaddr *) &client, cli_len);
+            if (net_len < 0)
+            {
+                printf("Error sending data on socket %d\n", socket_fd);
+            }
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -164,8 +164,8 @@ void *exchangeData(void *arg)
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
-	pthread_t thread;
-	pthread_create(&thread, NULL, exchangeData, NULL);
+    pthread_t thread;
+    pthread_create(&thread, NULL, exchangeData, NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -183,9 +183,9 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	// This function here is blank because the thread that connects to the
-	// Interface program is already filling the OpenPLC buffers with the
-	// data that is being received.
+    // This function here is blank because the thread that connects to the
+    // Interface program is already filling the OpenPLC buffers with the
+    // data that is being received.
 }
 
 //-----------------------------------------------------------------------------
@@ -195,7 +195,7 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	// This function here is blank because the thread that connects to the
-	// Interface program is already filling the OpenPLC buffers with the
-	// data that is being received.
+    // This function here is blank because the thread that connects to the
+    // Interface program is already filling the OpenPLC buffers with the
+    // data that is being received.
 }

@@ -58,102 +58,102 @@ pthread_mutex_t adcBufferLock; //mutex for the internal ADC buffer
 //-----------------------------------------------------------------------------
 void sleep_ms(int milliseconds)
 {
-	struct timespec ts;
-	ts.tv_sec = milliseconds / 1000;
-	ts.tv_nsec = (milliseconds % 1000) * 1000000;
-	nanosleep(&ts, NULL);
+    struct timespec ts;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000000;
+    nanosleep(&ts, NULL);
 }
 
 void *readAdcThread(void *args)
 {
-	while(1)
-	{
-		unsigned char config;
-		unsigned char i2c_data[4];
-		unsigned int value = 0;
+    while(1)
+    {
+        unsigned char config;
+        unsigned char i2c_data[4];
+        unsigned int value = 0;
         double conversion;
-		bool conversionInProgress;
+        bool conversionInProgress;
 
-		/*
-		//DEBUG
-		bool RDY, continuous;
-		unsigned char channel, sample_rate, gain;
+        /*
+        //DEBUG
+        bool RDY, continuous;
+        unsigned char channel, sample_rate, gain;
 
-		read(adc_fd, i2c_data, 3);
-		RDY = (i2c_data[2] >> 7);
-		channel = (i2c_data[2] >> 5) & 0x03;
-		continuous = (i2c_data[2] >> 4) & 0x01;
-		sample_rate = (i2c_data[2] >> 2) & 0x03;
-		gain = i2c_data[2] & 0x03;
-		printf("RDY: %d\nchannel: %d\ncontinuous: %d\nsample_rate: %d\ngain: %d\n", RDY, channel, continuous, sample_rate, gain);
-		*/
+        read(adc_fd, i2c_data, 3);
+        RDY = (i2c_data[2] >> 7);
+        channel = (i2c_data[2] >> 5) & 0x03;
+        continuous = (i2c_data[2] >> 4) & 0x01;
+        sample_rate = (i2c_data[2] >> 2) & 0x03;
+        gain = i2c_data[2] & 0x03;
+        printf("RDY: %d\nchannel: %d\ncontinuous: %d\nsample_rate: %d\ngain: %d\n", RDY, channel, continuous, sample_rate, gain);
+        */
 
-		config = 0x88; //read channel 0
-		wiringPiI2CWrite(adc_fd, config);
-		i2c_data[2] = 0;
-		conversionInProgress = 1;
+        config = 0x88; //read channel 0
+        wiringPiI2CWrite(adc_fd, config);
+        i2c_data[2] = 0;
+        conversionInProgress = 1;
 
-		while (conversionInProgress)
-		{
-			read(adc_fd, i2c_data, 3);
-			conversionInProgress = (i2c_data[2] >> 7);
-			if (conversionInProgress)
-				sleep_ms(1);
-		}
-		value = (i2c_data [0] << 8) | i2c_data [1];
+        while (conversionInProgress)
+        {
+            read(adc_fd, i2c_data, 3);
+            conversionInProgress = (i2c_data[2] >> 7);
+            if (conversionInProgress)
+                sleep_ms(1);
+        }
+        value = (i2c_data [0] << 8) | i2c_data [1];
         conversion = value*2.28;
         if (conversion > 65535.0) {conversion=65535.0;}
         value = (unsigned int)conversion;
-		pthread_mutex_lock(&adcBufferLock);
-		adcBuffer[0] = value;
-		pthread_mutex_unlock(&adcBufferLock);
+        pthread_mutex_lock(&adcBufferLock);
+        adcBuffer[0] = value;
+        pthread_mutex_unlock(&adcBufferLock);
 
-		config = 0xA8; //read channel 1
-		wiringPiI2CWrite(adc_fd, config);
-		i2c_data[2] = 0;
-		conversionInProgress = 1;
+        config = 0xA8; //read channel 1
+        wiringPiI2CWrite(adc_fd, config);
+        i2c_data[2] = 0;
+        conversionInProgress = 1;
 
-		while (conversionInProgress)
-		{
-			read(adc_fd, i2c_data, 3);
-			conversionInProgress = (i2c_data[2] >> 7);
-			if (conversionInProgress)
-				sleep_ms(1);
-		}
-		value = (i2c_data [0] << 8) | i2c_data [1];
+        while (conversionInProgress)
+        {
+            read(adc_fd, i2c_data, 3);
+            conversionInProgress = (i2c_data[2] >> 7);
+            if (conversionInProgress)
+                sleep_ms(1);
+        }
+        value = (i2c_data [0] << 8) | i2c_data [1];
         conversion = value*2.28;
         if (conversion > 65535.0) {conversion=65535.0;}
         value = (unsigned int)conversion;
-		pthread_mutex_lock(&adcBufferLock);
-		adcBuffer[1] = value;
-		pthread_mutex_unlock(&adcBufferLock);
-	}
+        pthread_mutex_lock(&adcBufferLock);
+        adcBuffer[1] = value;
+        pthread_mutex_unlock(&adcBufferLock);
+    }
 }
 
 int mcp_adcSetup (int i2cAddress)
 {
-	if ((adc_fd = wiringPiI2CSetup(i2cAddress)) < 0)
-	{
-		printf("error on adc setup!\n");
-		return adc_fd;
-	}
+    if ((adc_fd = wiringPiI2CSetup(i2cAddress)) < 0)
+    {
+        printf("error on adc setup!\n");
+        return adc_fd;
+    }
 
-	return 0 ;
+    return 0 ;
 }
 
 int mcp_adcRead(int chan)
 {
-	int returnValue;
-	if (chan < 2)
-	{
-		pthread_mutex_lock(&adcBufferLock);
-		returnValue = adcBuffer[chan];
-		pthread_mutex_unlock(&adcBufferLock);
+    int returnValue;
+    if (chan < 2)
+    {
+        pthread_mutex_lock(&adcBufferLock);
+        returnValue = adcBuffer[chan];
+        pthread_mutex_unlock(&adcBufferLock);
 
-		return returnValue;
-	}
+        return returnValue;
+    }
 
-	return 0;
+    return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -162,34 +162,34 @@ int mcp_adcRead(int chan)
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
-	wiringPiSetup();
-	mcp_adcSetup(0x68); //ADC I2C address configuration
-	mcp23008Setup(DOUT_PINBASE, 0x20); //Digital out I2C configuration
+    wiringPiSetup();
+    mcp_adcSetup(0x68); //ADC I2C address configuration
+    mcp23008Setup(DOUT_PINBASE, 0x20); //Digital out I2C configuration
     
     pwmSetMode(PWM_MODE_MS);
     pwmSetClock(47);
     pwmSetRange(1024);
 
-	for (int i = 0; i < MAX_OUTPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-		    pinMode(DOUT_PINBASE + i, OUTPUT);
-	}
+    for (int i = 0; i < MAX_OUTPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+            pinMode(DOUT_PINBASE + i, OUTPUT);
+    }
 
-	for (int i = 0; i < MAX_INPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-	    {
-		    pinMode(inputPinMask[i], INPUT);
-		    pullUpDnControl(inputPinMask[i], PUD_UP);
-	    }
-	}
+    for (int i = 0; i < MAX_INPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+        {
+            pinMode(inputPinMask[i], INPUT);
+            pullUpDnControl(inputPinMask[i], PUD_UP);
+        }
+    }
 
     if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), ANALOG_OUT_PIN))
-	    pinMode(ANALOG_OUT_PIN, PWM_OUTPUT);
+        pinMode(ANALOG_OUT_PIN, PWM_OUTPUT);
 
-	pthread_t ADCthread;
-	pthread_create(&ADCthread, NULL, readAdcThread, NULL);
+    pthread_t ADCthread;
+    pthread_create(&ADCthread, NULL, readAdcThread, NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -207,23 +207,23 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	//printf("Digital Inputs:\n");
-	pthread_mutex_lock(&bufferLock); //lock mutex
-	for (int i = 0; i < MAX_INPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-    		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = !digitalRead(inputPinMask[i]); //printf("[IO%d]: %d | ", i, !digitalRead(inputPinMask[i]));
-	}
+    //printf("Digital Inputs:\n");
+    pthread_mutex_lock(&bufferLock); //lock mutex
+    for (int i = 0; i < MAX_INPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = !digitalRead(inputPinMask[i]); //printf("[IO%d]: %d | ", i, !digitalRead(inputPinMask[i]));
+    }
 
-	//printf("\nAnalog Inputs:");
-	for (int i = 0; i < 2; i++)
-	{
-	    if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-    		if (int_input[i] != NULL) *int_input[i] = mcp_adcRead(i); //printf("[AI%d]: %d | ", i, mcp_adcRead(i));
-	}
-	//printf("\n");
+    //printf("\nAnalog Inputs:");
+    for (int i = 0; i < 2; i++)
+    {
+        if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
+            if (int_input[i] != NULL) *int_input[i] = mcp_adcRead(i); //printf("[AI%d]: %d | ", i, mcp_adcRead(i));
+    }
+    //printf("\n");
 
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -233,17 +233,17 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
 
-	//printf("\nDigital Outputs:\n");
-	for (int i = 0; i < MAX_OUTPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-    		if (bool_output[i/8][i%8] != NULL) digitalWrite(DOUT_PINBASE + i, *bool_output[i/8][i%8]); //printf("[IO%d]: %d | ", i, digitalRead(DOUT_PINBASE + i));
-	}
-	
-	if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), 0))
-	    if(int_output[0] != NULL) pwmWrite(ANALOG_OUT_PIN, (*int_output[0] / 64));
-	
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    //printf("\nDigital Outputs:\n");
+    for (int i = 0; i < MAX_OUTPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+            if (bool_output[i/8][i%8] != NULL) digitalWrite(DOUT_PINBASE + i, *bool_output[i/8][i%8]); //printf("[IO%d]: %d | ", i, digitalRead(DOUT_PINBASE + i));
+    }
+    
+    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), 0))
+        if(int_output[0] != NULL) pwmWrite(ANALOG_OUT_PIN, (*int_output[0] / 64));
+    
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }

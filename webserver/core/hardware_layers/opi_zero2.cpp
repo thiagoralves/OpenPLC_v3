@@ -67,33 +67,33 @@ int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 3, 4 };
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
-	// Init
-	wiringPiSetup();
+    // Init
+    wiringPiSetup();
 
-	//set pins as input
-	for (int i = 0; i < MAX_INPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-	    {
-		    pinMode(inBufferPinMask[i], INPUT);
-	    }
-	}
+    //set pins as input
+    for (int i = 0; i < MAX_INPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+        {
+            pinMode(inBufferPinMask[i], INPUT);
+        }
+    }
 
-	//set pins as output
-	for (int i = 0; i < MAX_OUTPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-	    	pinMode(outBufferPinMask[i], OUTPUT);
-	}
-	// pwmSetRange(1024);
-	// pwmSetClock(1);
-	// //set PWM pins as output
-	// for (int i = 0; i < MAX_ANALOG_OUT; i++)
-	// {
-	// 	if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i])) {
-	//     	pinMode(analogOutBufferPinMask[i], PWM_OUTPUT);
-	// 	}
-	// }
+    //set pins as output
+    for (int i = 0; i < MAX_OUTPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+            pinMode(outBufferPinMask[i], OUTPUT);
+    }
+    // pwmSetRange(1024);
+    // pwmSetClock(1);
+    // //set PWM pins as output
+    // for (int i = 0; i < MAX_ANALOG_OUT; i++)
+    // {
+    // 	if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), analogOutBufferPinMask[i])) {
+    //     	pinMode(analogOutBufferPinMask[i], PWM_OUTPUT);
+    // 	}
+    // }
 
 }
 
@@ -112,16 +112,16 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
 
-	//INPUT
-	for (int i = 0; i < MAX_INPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-    		if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = digitalRead(inBufferPinMask[i]);
-	}
+    //INPUT
+    for (int i = 0; i < MAX_INPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
+            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = digitalRead(inBufferPinMask[i]);
+    }
 
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -131,21 +131,21 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
 
-	//OUTPUT
-	for (int i = 0; i < MAX_OUTPUT; i++)
-	{
-	    if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-    		if (bool_output[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
-	}
-	//ANALOG OUT (PWM)
-	// for (int i = 0; i < MAX_ANALOG_OUT; i++)
-	// {
-	//     if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
+    //OUTPUT
+    for (int i = 0; i < MAX_OUTPUT; i++)
+    {
+        if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+            if (bool_output[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
+    }
+    //ANALOG OUT (PWM)
+    // for (int i = 0; i < MAX_ANALOG_OUT; i++)
+    // {
+    //     if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
     // 		if (int_output[i] != NULL) pwmWrite(analogOutBufferPinMask[i], (*int_output[i] / 64));
-	// }
+    // }
 
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
