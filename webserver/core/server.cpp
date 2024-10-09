@@ -29,6 +29,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <modbus.h>
 
 #include "ladder.h"
 
@@ -180,15 +181,27 @@ int listenToClient(int client_fd, unsigned char *buffer)
 //-----------------------------------------------------------------------------
 void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int protocol_type)
 {
+    int messageSize = 0;
     if (protocol_type == MODBUS_PROTOCOL)
     {
-        int messageSize = processModbusMessage(buffer, bufferSize);
-        write(client_fd, buffer, messageSize);
+        messageSize = processModbusMessage(buffer, bufferSize);
     }
     else if (protocol_type == ENIP_PROTOCOL)
     {
-        int messageSize = processEnipMessage(buffer, bufferSize);
-        write(client_fd, buffer, messageSize);
+        messageSize = processEnipMessage(buffer, bufferSize);
+    }
+    while (messageSize > 0)
+    {
+        ssize_t bytesWritten = write(client_fd, buffer, messageSize);
+        if (bytesWritten < 0)
+        {
+            char log_msg[1000];
+            sprintf(log_msg, "Server: Error writing response: %zd\n", bytesWritten);
+            log(log_msg);
+            break;
+        }
+        buffer += bytesWritten;
+        messageSize -= bytesWritten;
     }
 }
 
@@ -201,24 +214,34 @@ void *handleConnections(void *arguments)
     int *args = (int *)arguments;
     int client_fd = args[0];
     int protocol_type = args[1];
+    static_assert(NET_BUFFER_SIZE >= MODBUS_TCP_MAX_ADU_LENGTH);
     unsigned char buffer[NET_BUFFER_SIZE];
     int messageSize;
     bool *run_server;
-    
+    modbus_t *ctx = NULL;
+
     if (protocol_type == MODBUS_PROTOCOL)
+    {
         run_server = &run_modbus;
+        ctx = modbus_new_tcp(NULL, 502); // The IP and port don't matter
+        modbus_set_socket(ctx, client_fd);
+    }
     else if (protocol_type == ENIP_PROTOCOL)
         run_server = &run_enip;
 
     sprintf(log_msg, "Server: Thread created for client ID: %d\n", client_fd);
     log(log_msg);
 
-    while(*run_server)
+    while (*run_server)
     {
-        //unsigned char buffer[NET_BUFFER_SIZE];
-        //int messageSize;
-
-        messageSize = listenToClient(client_fd, buffer);
+        if (protocol_type == MODBUS_PROTOCOL)
+        {
+            messageSize = modbus_receive(ctx, buffer);
+        }
+        else
+        {
+            messageSize = listenToClient(client_fd, buffer);
+        }
         if (messageSize <= 0 || messageSize > NET_BUFFER_SIZE)
         {
             // something has  gone wrong or the client has closed connection
@@ -237,10 +260,15 @@ void *handleConnections(void *arguments)
 
         processMessage(buffer, messageSize, client_fd, protocol_type);
     }
-    //printf("Debug: Closing client socket and calling pthread_exit in server.cpp\n");
+    // printf("Debug: Closing client socket and calling pthread_exit in server.cpp\n");
     close(client_fd);
     sprintf(log_msg, "Terminating Modbus connections thread\r\n");
     log(log_msg);
+    if (ctx != NULL)
+    {
+        modbus_close(ctx);
+        modbus_free(ctx);
+    }
     pthread_exit(NULL);
 }
 
