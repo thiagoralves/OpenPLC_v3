@@ -33,7 +33,6 @@
 #include <linux/i2c-dev.h>
 
 #include "ladder.h"
-#include "custom_layer.h"
 
 extern "C" int16_t getSwitchId();
 

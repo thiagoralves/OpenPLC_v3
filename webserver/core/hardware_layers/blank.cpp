@@ -31,7 +31,6 @@
 #include <pthread.h>
 
 #include "ladder.h"
-#include "custom_layer.h"
 
 //-----------------------------------------------------------------------------
 // This function is called by the main OpenPLC routine when it is initializing.

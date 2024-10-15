@@ -42,7 +42,6 @@
 #include <string.h>
 
 #include "ladder.h"
-#include "custom_layer.h"
 
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
