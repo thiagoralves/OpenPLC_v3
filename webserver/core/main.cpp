@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 // Copyright 2018 Thiago Alves
-// This file is part of the OpenPLC Software Stack.
+// This file is part of the OpenPLC Runtime.
 //
 // OpenPLC is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -39,175 +39,11 @@
 #define OPLC_CYCLE          50000000
 
 extern int opterr;
-//extern int common_ticktime__;
 IEC_BOOL __DEBUG;
-
-IEC_LINT cycle_counter = 0;
 
 unsigned long __tick = 0;
 pthread_mutex_t bufferLock; //mutex for the internal buffers
-pthread_mutex_t logLock; //mutex for the internal log
 uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
-unsigned char log_buffer[1000000]; //A very large buffer to store all logs
-int log_index = 0;
-int log_counter = 0;
-
-//-----------------------------------------------------------------------------
-// Helper function - Makes the running thread sleep for the ammount of time
-// in milliseconds
-//-----------------------------------------------------------------------------
-void sleep_until(struct timespec *ts, long long delay)
-{
-    ts->tv_sec  += delay / (1000*1000*1000);
-    ts->tv_nsec += delay % (1000*1000*1000);
-    if(ts->tv_nsec >= 1000*1000*1000)
-    {
-        ts->tv_nsec -= 1000*1000*1000;
-        ts->tv_sec++;
-    }
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ts,  NULL);
-}
-
-//-----------------------------------------------------------------------------
-// Helper function - Makes the running thread sleep for the ammount of time
-// in milliseconds
-//-----------------------------------------------------------------------------
-void sleepms(int milliseconds)
-{
-    struct timespec ts;
-    ts.tv_sec = milliseconds / 1000;
-    ts.tv_nsec = (milliseconds % 1000) * 1000000;
-    nanosleep(&ts, NULL);
-}
-
-/**
- * @fn timespec_diff(struct timespec *, struct timespec *, struct timespec *)
- * @brief Compute the diff of two timespecs, that is a - b = result.
- * @param a the minuend
- * @param b the subtrahend
- * @param result a - b
- */
-static inline void timespec_diff(struct timespec *a, struct timespec *b, struct timespec *result) {
-    result->tv_sec  = a->tv_sec  - b->tv_sec;
-    result->tv_nsec = a->tv_nsec - b->tv_nsec;
-    if (result->tv_nsec < 0) {
-        --result->tv_sec;
-        result->tv_nsec += 1000000000L;
-    }
-}
-
-//-----------------------------------------------------------------------------
-// Helper function - Logs messages and print them on the console
-//-----------------------------------------------------------------------------
-void log(char *logmsg)
-{
-    pthread_mutex_lock(&logLock); //lock mutex
-    printf("%s", logmsg);
-    for (int i = 0; logmsg[i] != '\0'; i++)
-    {
-        log_buffer[log_index] = (unsigned char)logmsg[i];
-        log_index++;
-        log_buffer[log_index] = '\0';
-    }
-    
-    log_counter++;
-    if (log_counter >= 1000)
-    {
-        /*Store current log on a file*/
-        log_counter = 0;
-        log_index = 0;
-    }
-    pthread_mutex_unlock(&logLock); //unlock mutex
-}
-
-//-----------------------------------------------------------------------------
-// Interactive Server Thread. Creates the server to listen to commands on
-// localhost
-//-----------------------------------------------------------------------------
-void *interactiveServerThread(void *arg)
-{
-    startInteractiveServer(43628);
-}
-
-//-----------------------------------------------------------------------------
-// Verify if pin is present in one of the ignored vectors
-//-----------------------------------------------------------------------------
-bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
-{
-    for (int i = 0; i < vector_size; i++)
-    {
-        if (ignored_vector[i] == pinNumber)
-            return false;
-    }
-    
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-// Disable all outputs
-//-----------------------------------------------------------------------------
-void disableOutputs()
-{
-    //Disable digital outputs
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
-            if (bool_output[i][j] != NULL) *bool_output[i][j] = 0;
-        }
-    }
-    
-    //Disable byte outputs
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
-        if (byte_output[i] != NULL) *byte_output[i] = 0;
-    }
-    
-    //Disable analog outputs
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
-        if (int_output[i] != NULL) *int_output[i] = 0;
-    }
-}
-
-//-----------------------------------------------------------------------------
-// Special Functions
-//-----------------------------------------------------------------------------
-void handleSpecialFunctions()
-{
-    //current time [%ML1024]
-    struct tm *current_time;
-    time_t rawtime;
-    
-    time(&rawtime);
-    // store the UTC clock in [%ML1027]
-    if (special_functions[3] != NULL) *special_functions[3] = rawtime;
-
-    current_time = localtime(&rawtime);
-    
-    rawtime = rawtime - timezone;
-    if (current_time->tm_isdst > 0) rawtime = rawtime + 3600;
-        
-    if (special_functions[0] != NULL) *special_functions[0] = rawtime;
-    
-    //number of cycles [%ML1025]
-    cycle_counter++;
-    if (special_functions[1] != NULL) *special_functions[1] = cycle_counter;
-    
-    //comm error counter [%ML1026]
-    /* Implemented in modbus_master.cpp */
-
-    //insert other special functions below
-}
-
-//-----------------------------------------------------------------------------
-// Using special_functions to store REAL-TIME variables
-//-----------------------------------------------------------------------------
-void RecordCycletimeLatency(long cycle_time, long sleep_latency)
-{
-    if (special_functions[4] != NULL) *special_functions[4] = cycle_time;
-    if (special_functions[5] != NULL) *special_functions[5] = sleep_latency;
-}
 
 // pointers to IO *array[const][const] from cpp to c and back again don't work as expected, so instead callbacks
 u_int8_t *bool_input_call_back(int a, int b){ return bool_input[a][b]; }
@@ -266,11 +102,8 @@ int main(int argc,char **argv)
 #endif
     initializeHardware();
     initializeMB();
-    initCustomLayer();
     updateBuffersIn();
-    updateCustomIn();
     updateBuffersOut();
-    updateCustomOut();
 
     //======================================================
     //          PERSISTENT STORAGE INITIALIZATION
@@ -358,11 +191,9 @@ int main(int argc,char **argv)
             break;
         }
 #endif
-        updateCustomIn();
         updateBuffersIn_MB(); //update input image table with data from slave devices
         handleSpecialFunctions();
         config_run__(__tick++); // execute plc program logic
-        updateCustomOut();
         updateBuffersOut_MB(); //update slave devices with data from the output image table
         pthread_mutex_unlock(&bufferLock); //unlock mutex
 
@@ -413,7 +244,6 @@ int main(int argc,char **argv)
 #endif
     printf("Disabling outputs\n");
     disableOutputs();
-    updateCustomOut();
     updateBuffersOut();
     finalizeHardware();
     printf("Shutting down OpenPLC Runtime...\n");

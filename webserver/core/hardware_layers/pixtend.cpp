@@ -844,8 +844,7 @@ void updateBuffersIn()
     //DIGITAL INPUT
     for (int i = 0; i < MAX_DIG_IN; i++)
     {
-        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byDigIn, i);
+        if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byDigIn, i);
     }
 
     //ANALOG IN
@@ -853,8 +852,7 @@ void updateBuffersIn()
     analogInputs = &InputData.wAi0;
     for (int i = 0; i < MAX_ANALOG_IN; i++)
     {
-        if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-            if (int_input[i] != NULL) *int_input[i] = analogInputs[i];
+        if (int_input[i] != NULL) *int_input[i] = analogInputs[i];
     }
 
     //unlock mutexes
@@ -878,13 +876,11 @@ void updateBuffersOut()
     {
         if (i < 6)
         {
-            if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-                if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byDigOut, i, *bool_output[i/8][i%8]);
+            if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byDigOut, i, *bool_output[i/8][i%8]);
         }
         else
         {
-            if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-                if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byRelayOut, i-6, *bool_output[i/8][i%8]);
+            if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byRelayOut, i-6, *bool_output[i/8][i%8]);
         }
     }
 
@@ -897,13 +893,11 @@ void updateBuffersOut()
     {
         if (i < 2)
         {
-            if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-                if (int_output[i] != NULL) analogOutputs[i] = (*int_output[i] / 64);
+            if (int_output[i] != NULL) analogOutputs[i] = (*int_output[i] / 64);
         }
         else
         {
-            if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-                if (int_output[i] != NULL) pwmOutputs[i-2] = *int_output[i];
+            if (int_output[i] != NULL) pwmOutputs[i-2] = *int_output[i];
         }
     }
 

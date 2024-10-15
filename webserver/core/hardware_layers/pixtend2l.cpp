@@ -630,22 +630,19 @@ void updateBuffersIn()
         //Read input pins 0-7
         if (i < 7)
         {
-            if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-                if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byDigitalIn0, i);
+            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byDigitalIn0, i);
         }
         else
         {
             //Read input pins 8-15
-            if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-                if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byDigitalIn1, i-(MAX_DIG_IN/2));           
+            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byDigitalIn1, i-(MAX_DIG_IN/2));           
         }
     }
     
     //GPIO INPUT
     for (int i = MAX_DIG_IN; i < MAX_DIG_IN+MAX_GPIO_IN; i++)
     {
-        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byGPIOIn, i-MAX_DIG_IN);
+        if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byGPIOIn, i-MAX_DIG_IN);
     }
     
     // uint8_t byFirmware;
@@ -666,49 +663,44 @@ void updateBuffersIn()
     {
         if (i < MAX_ANALOG_IN)
         {
-            if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                if (int_input[i] != NULL) *int_input[i] = analogInputs[i];
+            if (int_input[i] != NULL) *int_input[i] = analogInputs[i];
         }
         if ((i >= MAX_ANALOG_IN) && ( i < MAX_ANALOG_IN+MAX_TEMP_IN)) 
         {
-            if (i == MAX_ANALOG_IN){
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wTemp0;
+            if (i == MAX_ANALOG_IN)
+            {
+                if (int_input[i] != NULL) *int_input[i] = InputData.wTemp0;
             }
-            if (i == (MAX_ANALOG_IN+1)){
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wTemp1;
+            if (i == (MAX_ANALOG_IN+1))
+            {
+                if (int_input[i] != NULL) *int_input[i] = InputData.wTemp1;
             }
-            if (i == (MAX_ANALOG_IN+2)){
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wTemp2;
+            if (i == (MAX_ANALOG_IN+2))
+            {
+                if (int_input[i] != NULL) *int_input[i] = InputData.wTemp2;
             }
-            if (i == (MAX_ANALOG_IN+3)){
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wTemp3;
+            if (i == (MAX_ANALOG_IN+3))
+            {
+                if (int_input[i] != NULL) *int_input[i] = InputData.wTemp3;
             }
         }
         if ((i >= (MAX_ANALOG_IN+MAX_TEMP_IN)) && ( i < (MAX_ANALOG_IN+MAX_TEMP_IN+MAX_HUMID_IN))) 
         {
             if (i == (MAX_ANALOG_IN+MAX_TEMP_IN))
             {
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wHumid0;
+                if (int_input[i] != NULL) *int_input[i] = InputData.wHumid0;
             }
             if (i == ((MAX_ANALOG_IN+MAX_TEMP_IN)+1))
             {
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wHumid1;
+                if (int_input[i] != NULL) *int_input[i] = InputData.wHumid1;
             }
             if (i == ((MAX_ANALOG_IN+MAX_TEMP_IN)+2))
             {
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wHumid2;
+                if (int_input[i] != NULL) *int_input[i] = InputData.wHumid2;
             }
             if (i == ((MAX_ANALOG_IN+MAX_TEMP_IN)+3))
             {
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wHumid3;
+                if (int_input[i] != NULL) *int_input[i] = InputData.wHumid3;
             }
         }
     }
@@ -738,13 +730,11 @@ void updateBuffersOut()
         {
             if (i < MAX_DIG_OUT-4)
             {            
-                if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-                    if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byDigitalOut0, i, *bool_output[i/8][i%8]);
+                if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byDigitalOut0, i, *bool_output[i/8][i%8]);
             }
             else
             {
-                if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-                    if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byDigitalOut1, i - (MAX_DIG_OUT-4), *bool_output[i/8][i%8]);
+                if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byDigitalOut1, i - (MAX_DIG_OUT-4), *bool_output[i/8][i%8]);
             }
         }  
     }
@@ -754,8 +744,7 @@ void updateBuffersOut()
     {
         if ((i >= MAX_DIG_OUT) && (i < (MAX_DIG_OUT+MAX_REL_OUT)))
         {
-            if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-                if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byRelayOut, i-MAX_DIG_OUT, *bool_output[i/8][i%8]);
+            if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byRelayOut, i-MAX_DIG_OUT, *bool_output[i/8][i%8]);
         }
     }
     
@@ -764,8 +753,7 @@ void updateBuffersOut()
     {
         if ((i >= MAX_DIG_OUT+MAX_REL_OUT) && (i < (MAX_DIG_OUT+MAX_REL_OUT+MAX_GPIO_OUT)))
         {
-            if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-                if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byGPIOOut, i-(MAX_DIG_OUT+MAX_REL_OUT), *bool_output[i/8][i%8]);
+            if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byGPIOOut, i-(MAX_DIG_OUT+MAX_REL_OUT), *bool_output[i/8][i%8]);
         }
     }
 
@@ -779,28 +767,23 @@ void updateBuffersOut()
         if (i < 2)
         {
             //int_output[0] and int_output[1]
-            if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-                if (int_output[i] != NULL) analogOutputs[i] = (*int_output[i] / 64);
+            if (int_output[i] != NULL) analogOutputs[i] = (*int_output[i] / 64);
         }
         else
         {
             //int_output[2], 3, 4, 5, 6, 7
-            if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-                if (int_output[i] != NULL) pwmOutputs[i-2] = *int_output[i];
+            if (int_output[i] != NULL) pwmOutputs[i-2] = *int_output[i];
         }
     }
     inum = MAX_ANALOG_OUT;
     // PWM0Ctrl1L - PWM0Ctrl1H - 8
-    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), inum))
-        if (int_output[inum] != NULL) OutputData.wPWM0Ctrl1 = *int_output[inum];
+    if (int_output[inum] != NULL) OutputData.wPWM0Ctrl1 = *int_output[inum];
     inum++;
     // PWM1Ctrl1L - PWM1Ctrl1H - 9
-    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), inum))
-        if (int_output[inum] != NULL) OutputData.wPWM1Ctrl1 = *int_output[inum];
+    if (int_output[inum] != NULL) OutputData.wPWM1Ctrl1 = *int_output[inum];
     inum++;
     // PWM2Ctrl1L - PWM2Ctrl1H - 10
-    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), inum))
-        if (int_output[inum] != NULL) OutputData.wPWM2Ctrl1 = *int_output[inum];
+    if (int_output[inum] != NULL) OutputData.wPWM2Ctrl1 = *int_output[inum];
     inum = 0;
     // UCCtrl0 - 0
     if (byte_output[inum] != NULL) OutputData.byUCCtrl0 = *byte_output[inum];
