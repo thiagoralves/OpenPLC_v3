@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pigpio.h>
+#include <wiringPi.h>
 #include <pthread.h>
 
 #include "ladder.h"
@@ -37,28 +37,28 @@
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
 
-#define MAX_INPUT 		14
-#define MAX_OUTPUT 		11
-#define MAX_ANALOG_OUT	1
+#define MAX_INPUT 		4
+#define MAX_OUTPUT 		5
+// #define MAX_ANALOG_OUT	2
 
 /********************I/O PINS CONFIGURATION*********************
- * A good source for RaspberryPi I/O pins information is:
- * http://pinout.xyz
+ * A good source for Orange Pi I/O pins information is:
+ * https://github.com/orangepi-xunlong/wiringOP
  *
  * The buffers below works as an internal mask, so that the
  * OpenPLC can access each pin sequentially
 ****************************************************************/
 //inBufferPinMask: pin mask for each input, which
 //means what pin is mapped to that OpenPLC input
-int inBufferPinMask[MAX_INPUT] = { 2, 3, 4, 17, 27, 22, 10, 9, 11, 5, 6, 13, 19, 26 };
+int inBufferPinMask[MAX_INPUT] = { 2, 5, 7, 8 };
 
 //outBufferPinMask: pin mask for each output, which
 //means what pin is mapped to that OpenPLC output
-int outBufferPinMask[MAX_OUTPUT] =	{ 14, 15, 23, 24, 25, 8, 7, 12, 16, 20, 21 };
+int outBufferPinMask[MAX_OUTPUT] = { 6, 9, 10, 13, 16 };
 
 //analogOutBufferPinMask: pin mask for the analog PWM
-//output of the RaspberryPi
-int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 18 };
+//output of the Orange Pi
+int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 3, 4 };
 
 //-----------------------------------------------------------------------------
 // This function is called by the main OpenPLC routine when it is initializing.
@@ -66,31 +66,29 @@ int analogOutBufferPinMask[MAX_ANALOG_OUT] = { 18 };
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
-    gpioInitialise();
-    //piHiPri(99);
+    // Init
+    wiringPiSetup();
 
     //set pins as input
     for (int i = 0; i < MAX_INPUT; i++)
     {
-        gpioSetMode(inBufferPinMask[i], PI_INPUT);
-        if (i != 0 && i != 1) //pull down can't be enabled on the first two pins
-        {
-            gpioSetPullUpDown(inBufferPinMask[i], PI_PUD_DOWN); //pull down enabled
-        }
+        pinMode(inBufferPinMask[i], INPUT);
     }
 
     //set pins as output
     for (int i = 0; i < MAX_OUTPUT; i++)
     {
-        gpioSetMode(outBufferPinMask[i], PI_OUTPUT);
+        pinMode(outBufferPinMask[i], OUTPUT);
     }
+    // pwmSetRange(1024);
+    // pwmSetClock(1);
+    // //set PWM pins as output
+    // for (int i = 0; i < MAX_ANALOG_OUT; i++)
+    // {
+    //      pinMode(analogOutBufferPinMask[i], PWM_OUTPUT);
+    // 	}
+    // }
 
-    //set PWM pins as output
-    for (int i = 0; i < MAX_ANALOG_OUT; i++)
-    {
-        gpioSetMode(analogOutBufferPinMask[i], PI_ALT5);
-        gpioSetPWMrange(analogOutBufferPinMask[i], 1024);
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -99,12 +97,11 @@ void initializeHardware()
 //-----------------------------------------------------------------------------
 void finalizeHardware()
 {
-    gpioTerminate();
 }
 
 //-----------------------------------------------------------------------------
 // This function is called by the OpenPLC in a loop. Here the internal buffers
-// must be updated to reflect the actual state of the input pins. The mutex buffer_lock
+// must be updated to reflect the actual Input state. The mutex bufferLock
 // must be used to protect access to the buffers on a threaded environment.
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
@@ -114,7 +111,7 @@ void updateBuffersIn()
     //INPUT
     for (int i = 0; i < MAX_INPUT; i++)
     {
-        if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = gpioRead(inBufferPinMask[i]);
+        if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = digitalRead(inBufferPinMask[i]);
     }
 
     pthread_mutex_unlock(&bufferLock); //unlock mutex
@@ -122,7 +119,7 @@ void updateBuffersIn()
 
 //-----------------------------------------------------------------------------
 // This function is called by the OpenPLC in a loop. Here the internal buffers
-// must be updated to reflect the actual state of the output pins. The mutex buffer_lock
+// must be updated to reflect the actual Output state. The mutex bufferLock
 // must be used to protect access to the buffers on a threaded environment.
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
@@ -132,14 +129,14 @@ void updateBuffersOut()
     //OUTPUT
     for (int i = 0; i < MAX_OUTPUT; i++)
     {
-        if (bool_output[i/8][i%8] != NULL) gpioWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
+        if (bool_output[i/8][i%8] != NULL) digitalWrite(outBufferPinMask[i], *bool_output[i/8][i%8]);
     }
-
     //ANALOG OUT (PWM)
-    for (int i = 0; i < MAX_ANALOG_OUT; i++)
-    {
-        if (int_output[i] != NULL) gpioPWM(analogOutBufferPinMask[i], (*int_output[i] / 64));
-    }
+    // for (int i = 0; i < MAX_ANALOG_OUT; i++)
+    // {
+    //     if (int_output[i] != NULL) pwmWrite(analogOutBufferPinMask[i], (*int_output[i] / 64));
+    // }
 
     pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
+

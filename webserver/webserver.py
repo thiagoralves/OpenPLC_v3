@@ -1414,7 +1414,7 @@ def monitoring():
                     <h2>Monitoring</h2>
                     <form class="form-inline">
                         <label for="refresh_rate">Refresh Rate (ms):</label>
-                        <input type="text" id="refresh_rate" value="100" name="refresh_rate">
+                        <input type="text" id="refresh_rate" value="500" name="refresh_rate">
                         <button type="button" onclick="updateRefreshRate()">Update</button>
                     </form>
                     <br>
@@ -1422,7 +1422,7 @@ def monitoring():
                         <table>
                             <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
                             <tr style='background-color: white'>
-                                <th>Point Name</th><th>Type</th><th>Location</th><th>Forced</th><th>Value</th>
+                                <th>Point Name</th><th>Type</th><th>Location</th><th>Write</th><th>Value</th>
                             </tr>"""
         
         if (openplc_runtime.status() == "Running"):
@@ -1457,8 +1457,12 @@ def monitoring():
                 monitor.start_monitor(modbus_port_cfg)
                 data_index = 0
                 for debug_data in monitor.debug_vars:
-                    return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
-                    return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
+                    return_str += '<tr style="height:60px">' # onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
+                    return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>'
+                    if (debug_data.location.find('QX') != -1):
+                        return_str += '<button class="write-button true" onclick="fetch(\'/point-write?value=1&address=' + str(debug_data.location) + '\')">true</button>'
+                        return_str += '<button class="write-button false" onclick="fetch(\'/point-write?value=0&address=' + str(debug_data.location) + '\')">false</button>'
+                    return_str += '</td><td valign="middle">'
                     if (debug_data.type == 'BOOL'):
                         if (debug_data.value == 0):
                             return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
@@ -1520,7 +1524,7 @@ def monitor_update():
                         <table>
                             <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
                             <tr style='background-color: white'>
-                                <th>Point Name</th><th>Type</th><th>Location</th><th>Forced</th><th>Value</th>
+                                <th>Point Name</th><th>Type</th><th>Location</th><th>Write</th><th>Value</th>
                             </tr>"""
         
         #if (openplc_runtime.status() == "Running"):
@@ -1529,8 +1533,12 @@ def monitor_update():
             monitor.start_monitor(int(mb_port_cfg))
             data_index = 0
             for debug_data in monitor.debug_vars:
-                return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
-                return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
+                return_str += '<tr style="height:60px">' # onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
+                return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>'
+                if (debug_data.location.find('QX') != -1):
+                    return_str += '<button class="write-button true" onclick="fetch(\'/point-write?value=1&address=' + str(debug_data.location) + '\')">true</button>'
+                    return_str += '<button class="write-button false" onclick="fetch(\'/point-write?value=0&address=' + str(debug_data.location) + '\')">false</button>'
+                return_str += '</td><td valign="middle">'
                 if (debug_data.type == 'BOOL'):
                     if (debug_data.value == 0):
                         return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
@@ -1555,6 +1563,15 @@ def monitor_update():
         
         return return_str
 
+@app.route('/point-write', methods=['GET', 'POST'])
+def point_write():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        point_value = flask.request.args.get('value')
+        point_address = flask.request.args.get('address')
+        monitor.write_value(point_address, int(point_value))
+        return ''
 
 @app.route('/point-info', methods=['GET', 'POST'])
 def point_info():
@@ -1713,6 +1730,8 @@ def hardware():
             else: return_str += "<option value='rpi'>Raspberry Pi</option>"
             if (current_driver == "rpi_old"): return_str += "<option selected='selected' value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
             else: return_str += "<option value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
+            if (current_driver == "opi_zero2"): return_str += "<option selected='selected' value='opi_zero2'>Orange Pi Zero2/Zero2 LTS/Zero2 B</option>"
+            else: return_str += "<option value='opi_zero2'>Orange Pi Zero2/Zero2 LTS/Zero2 B</option>"
             if (current_driver == "simulink"): return_str += "<option selected='selected' value='simulink'>Simulink</option>"
             else: return_str += "<option value='simulink'>Simulink</option>"
             if (current_driver == "simulink_linux"): return_str += "<option selected='selected' value='simulink_linux'>Simulink with DNP3 (Linux only)</option>"

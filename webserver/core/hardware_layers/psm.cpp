@@ -46,7 +46,6 @@
 #define BUFFER_LIMIT   1024 
 
 #include "ladder.h"
-#include "custom_layer.h"
 
 int psm = 0;
 int error_count = 0;

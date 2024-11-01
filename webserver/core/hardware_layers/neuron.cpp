@@ -33,7 +33,6 @@
 #include <poll.h>
 
 #include "ladder.h"
-#include "custom_layer.h"
 
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
@@ -303,15 +302,13 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
     
     /* read digital inputs */
     int i = 0;
     while (digital_inputs[i][0] != '\0')
     {   
-        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = requestSYSFS(digital_inputs[i], "read");
-        
+        if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = requestSYSFS(digital_inputs[i], "read");
         i++;
     }
     
@@ -319,18 +316,17 @@ void updateBuffersIn()
     i = 0;
     while (analog_inputs[i][0] != '\0')
     {
-        if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-            if (int_input[i] != NULL)
-            {
-                uint32_t value = (uint32_t)((float)requestSYSFS(analog_inputs[i], "read") * 6.5535);
-                if (value > 65535) value = 65535;
-                *int_input[i] = (uint16_t)value;
-            }
+        if (int_input[i] != NULL)
+        {
+            uint32_t value = (uint32_t)((float)requestSYSFS(analog_inputs[i], "read") * 6.5535);
+            if (value > 65535) value = 65535;
+            *int_input[i] = (uint16_t)value;
+        }
         
         i++;
     }
 
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -340,21 +336,18 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
     
     /* write digital outputs */
     int i = 0;
     while (digital_outputs[i][0] != '\0')
     {
-        if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
+        if (bool_output[i/8][i%8] != NULL) 
         {
-            if (bool_output[i/8][i%8] != NULL) 
-            {
-                if (*bool_output[i/8][i%8])
-                    requestSYSFS(digital_outputs[i], "write=1");
-                else
-                    requestSYSFS(digital_outputs[i], "write=0");
-            }
+            if (*bool_output[i/8][i%8])
+                requestSYSFS(digital_outputs[i], "write=1");
+            else
+                requestSYSFS(digital_outputs[i], "write=0");
         }
         i++;
     }
@@ -363,20 +356,17 @@ void updateBuffersOut()
     i = 0;
     while (analog_outputs[i][0] != '\0')
     {
-        if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
+        if (int_output[i] != NULL) 
         {
-            if (int_output[i] != NULL) 
-            {
-                char value_fmt[100];
-                char value[100];
-                strcpy(value_fmt, "write=%f");
-                sprintf(value, value_fmt, ((float)*int_output[i]/6.5535));
-                requestSYSFS(analog_outputs[i], value);
-            }
+            char value_fmt[100];
+            char value[100];
+            strcpy(value_fmt, "write=%f");
+            sprintf(value, value_fmt, ((float)*int_output[i]/6.5535));
+            requestSYSFS(analog_outputs[i], value);
         }
         i++;
     }
     
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
     
 }

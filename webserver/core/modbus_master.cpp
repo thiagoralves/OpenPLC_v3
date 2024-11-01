@@ -49,7 +49,7 @@ uint8_t bool_input_buf[MAX_MB_IO];
 uint8_t bool_output_buf[MAX_MB_IO];
 uint16_t int_input_buf[MAX_MB_IO];
 uint16_t int_output_buf[MAX_MB_IO];
-uint8_t rpi_modbus_rts_pin;     // If <> 0, expect hardware RTS to be used with this pin
+extern uint8_t rpi_modbus_rts_pin;     // If <> 0, expect hardware RTS to be used with this pin
 
 pthread_mutex_t ioLock;
 
@@ -650,8 +650,9 @@ void initializeMB()
                                                 mb_devices[i].rtu_parity, mb_devices[i].rtu_data_bit,
                                                 mb_devices[i].rtu_stop_bit);
 
-                // If hardware layer set modbus_rts_pin, enable Pi specific rts handling handling
-                if (rpi_modbus_rts_pin != 0) {
+                // If hardware layer set modbus_rts_pin, enable Pi specific rts handling
+                if (rpi_modbus_rts_pin != 0) 
+                {
                     modbus_enable_rpi(mb_devices[i].mb_ctx,TRUE);
                     modbus_configure_rpi_bcm_pin(mb_devices[i].mb_ctx,rpi_modbus_rts_pin);
                     modbus_rpi_pin_export_direction(mb_devices[i].mb_ctx);
