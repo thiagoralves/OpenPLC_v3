@@ -24,13 +24,54 @@
 //-----------------------------------------------------------------------------
 
 #include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
 #include <pthread.h>
 
 #include "ladder.h"
 
+#define FILE_PATH "persistent.file"
+
 uint8_t pstorage_read = false;
+
+uint32_t combined_checksum = 0; // Stored checksum for detecting changes
+
+// Function to calculate a simple XOR-based checksum for all three arrays together
+uint32_t calculate_combined_checksum() 
+{
+    uint32_t checksum = 0;
+
+    // Calculate checksum for int_memory
+    for (size_t i = 0; i < BUFFER_SIZE; i++) 
+    {
+        if (int_memory[i] != NULL)
+        {
+            checksum ^= *int_memory[i];
+        }
+    }
+
+    // Calculate checksum for dint_memory
+    for (size_t i = 0; i < BUFFER_SIZE; i++) 
+    {
+        if (dint_memory[i] != NULL)
+        {
+            checksum ^= *dint_memory[i];
+        }
+    }
+
+    // Calculate checksum for lint_memory
+    for (size_t i = 0; i < BUFFER_SIZE; i++) 
+    {
+        if (lint_memory[i] != NULL)
+        {
+            checksum ^= (uint32_t)(*lint_memory[i] ^ (*lint_memory[i] >> 32));
+        }
+    }
+
+    return checksum;
+}
 
 //-----------------------------------------------------------------------------
 // Main function for the thread. Should create a buffer for the persistent
@@ -44,107 +85,77 @@ void startPstorage()
         sleepms(100);
     
     char log_msg[1000];
-        
-    struct persistentBufferCell
-    {
-        IEC_INT int_cell;
-        IEC_DINT dint_cell;
-        IEC_LINT lint_cell;
-    };
+    sprintf(log_msg, "Starting Persistent Storage thread\n");
+    log(log_msg);
 
-    persistentBufferCell persistentBuffer[BUFFER_SIZE];
-
-    //Read initial buffers into persistent struct
-    pthread_mutex_lock(&bufferLock); //lock mutex
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
-        if (int_memory[i] != NULL) persistentBuffer[i].int_cell = *int_memory[i];
-        if (dint_memory[i] != NULL) persistentBuffer[i].dint_cell = *dint_memory[i];
-        if (lint_memory[i] != NULL) persistentBuffer[i].lint_cell = *lint_memory[i];
-    }
-    pthread_mutex_unlock(&bufferLock); //unlock mutex
-    
-    //Perform the first write
-    if (access("persistent.file", F_OK) == -1) 
-    {
-        sprintf(log_msg, "Creating Persistent Storage file\n");
-        log(log_msg);
-    }
-    
-    FILE *ps = fopen("persistent.file", "w"); //if file already exists, it will be overwritten
-    if (ps == NULL)
-    {
-        sprintf(log_msg, "Persistent Storage: Error creating persistent memory file!\n");
-        log(log_msg);
-        return;
-    }
-
-    if (fwrite(persistentBuffer, sizeof(persistentBufferCell), BUFFER_SIZE, ps) < BUFFER_SIZE)
-    {
-        sprintf(log_msg, "Persistent Storage: Error writing to persistent memory file!\n");
-        log(log_msg);
-        return;
-    }
-    fclose(ps);
-    
     //Run the main thread
     while (run_pstorage)
     {
-        
-        //Verify if persistent buffer is outdated
-        bool bufferOutdated = false;
-        pthread_mutex_lock(&bufferLock); //lock mutex
-        for (int i = 0; i < BUFFER_SIZE; i++)
+        // Calculate the combined checksum
+        uint32_t new_checksum = calculate_combined_checksum();
+        if (new_checksum == combined_checksum) 
         {
-            if (int_memory[i] != NULL)
-            {
-                if (persistentBuffer[i].int_cell != *int_memory[i])
-                {
-                    persistentBuffer[i].int_cell = *int_memory[i];
-                    bufferOutdated = true;
-                }
-            }
-            if (dint_memory[i] != NULL)
-            {
-                if ( persistentBuffer[i].dint_cell != *dint_memory[i])
-                {
-                    persistentBuffer[i].dint_cell = *dint_memory[i];
-                    bufferOutdated = true;
-                }
-            }			
-            if (lint_memory[i] != NULL)
-            {
-                if ( persistentBuffer[i].lint_cell != *lint_memory[i])
-                {
-                    persistentBuffer[i].lint_cell = *lint_memory[i];
-                    bufferOutdated = true;
-                }
-            }			
+            // No changes detected, skip saving
+            sleepms(pstorage_polling*1000);
+            continue;
         }
-        pthread_mutex_unlock(&bufferLock); //unlock mutex
 
-        //If buffer is outdated, write the changes back to the file
-        if (bufferOutdated)
+        // Open persisten.file for writing
+        FILE *file = fopen(FILE_PATH, "wb");
+        if (file == NULL) 
         {
-            FILE *fd = fopen("persistent.file", "w"); //if file already exists, it will be overwritten
-            if (fd == NULL)
-            {
-                sprintf(log_msg, "Persistent Storage: Error creating persistent memory file!\n");
-                log(log_msg);
-                return;
-            }
-
-            if (fwrite(persistentBuffer, sizeof(persistentBufferCell), BUFFER_SIZE, fd) < BUFFER_SIZE)
-            {
-                sprintf(log_msg, "Persistent Storage: Error writing to persistent memory file!\n");
-                log(log_msg);
-                return;
-            }
-            fclose(fd);
+            sprintf(log_msg, "Persistent Storage: Error creating persistent memory file!\n");
+            log(log_msg);
+            return;
         }
+        // Update the stored checksum
+        combined_checksum = new_checksum;
+
+        // Write the contents of int_memory
+        for (size_t i = 0; i < BUFFER_SIZE; i++) 
+        {
+            uint16_t value = (int_memory[i] != NULL) ? *int_memory[i] : 0;
+            if (fwrite(&value, sizeof(uint16_t), 1, file) != 1)
+            {
+                sprintf(log_msg, "Persistent Storage: Error writing int_memory to file\n");
+                log(log_msg);
+            }
+        }
+        // Write the contents of dint_memory
+        for (size_t i = 0; i < BUFFER_SIZE; i++) 
+        {
+            uint32_t value = (dint_memory[i] != NULL) ? *dint_memory[i] : 0;
+            if (fwrite(&value, sizeof(uint32_t), 1, file) != 1) 
+            {
+                sprintf(log_msg, "Persistent Storage: Error writing dint_memory to file\n");
+                log(log_msg);
+            }
+        }
+
+        // Write the contents of lint_memory
+        for (size_t i = 0; i < BUFFER_SIZE; i++) 
+        {
+            uint64_t value = (lint_memory[i] != NULL) ? *lint_memory[i] : 0;
+            if (fwrite(&value, sizeof(uint64_t), 1, file) != 1) 
+            {
+                sprintf(log_msg, "Persistent Storage: Error writing lint_memory to file\n");
+                log(log_msg);
+            }
+        }
+
+        // Flush and sync to ensure data is written to disk
+        /*
+        fflush(file);
+        int fd = fileno(file);
+        fsync(fd);  // Ensure data reaches the disk
+        */
+
+        fclose(file);
 
         sleepms(pstorage_polling*1000);
     }
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -156,44 +167,123 @@ void startPstorage()
 int readPersistentStorage()
 {
     char log_msg[1000];
-    FILE *fd = fopen("persistent.file", "r");
-    if (fd == NULL)
+    FILE *file = fopen(FILE_PATH, "rb");
+    if (file == NULL) 
     {
-        sprintf(log_msg, "Warning: Persistent Storage file not found\n");
+        sprintf(log_msg, "Persistent Storage is empty\n");
         log(log_msg);
         pstorage_read = true;
         return 0;
     }
-
-    struct persistentBufferCell
-    {
-        IEC_INT int_cell;
-        IEC_DINT dint_cell;
-        IEC_LINT lint_cell;
-    };
-
-    persistentBufferCell persistentBuffer[BUFFER_SIZE];
-
-    if (fread(persistentBuffer, sizeof(persistentBufferCell), BUFFER_SIZE, fd) < BUFFER_SIZE)
-    {
-        sprintf(log_msg, "Persistent Storage: Error while trying to read persistent.file!\n");
-        log(log_msg);
-        pstorage_read = true;
-        return 0;
-    }
-    fclose(fd);
-    
-    sprintf(log_msg, "Persistent Storage: Reading persistent.file into local buffers\n");
-    log(log_msg);
     
     pthread_mutex_lock(&bufferLock); //lock mutex
-    for (int i = 0; i < BUFFER_SIZE; i++)
+    // Read the contents into int_memory
+    for (size_t i = 0; i < BUFFER_SIZE; i++) 
     {
-        if (int_memory[i] != NULL) *int_memory[i] = persistentBuffer[i].int_cell;
-        if (dint_memory[i] != NULL) *dint_memory[i] = persistentBuffer[i].dint_cell;
-        if (lint_memory[i] != NULL) *lint_memory[i] = persistentBuffer[i].lint_cell;
+        uint16_t value;
+        // Read each value individually
+        if (fread(&value, sizeof(uint16_t), 1, file) != 1) 
+        {
+            if (feof(file)) break; // Stop on end of file
+            sprintf(log_msg, "Error reading int_memory from file");
+            log(log_msg);
+            pthread_mutex_unlock(&bufferLock); //unlock mutex
+            fclose(file);
+            pstorage_read = true;
+            return;
+        }
+        
+        // Only assign if value is non-zero
+        if (value != 0)
+        {
+            // Allocate memory if the pointer is NULL
+            if (int_memory[i] == NULL) 
+            {
+                int_memory[i] = malloc(sizeof(uint16_t));
+                if (int_memory[i] == NULL) 
+                {
+                    sprintf(log_msg, "Error allocating memory for int_memory[%d]", i);
+                    log(log_msg);
+                    continue;
+                }
+            }
+            *int_memory[i] = value; // Store the value
+        }
+    }
+
+    // Read the contents into dint_memory
+    for (size_t i = 0; i < BUFFER_SIZE; i++) 
+    {
+        uint32_t value;
+        // Read each value individually
+        if (fread(&value, sizeof(uint32_t), 1, file) != 1) 
+        {
+            if (feof(file)) break; // Stop on end of file
+            sprintf(log_msg, "Error reading dint_memory from file");
+            log(log_msg);
+            pthread_mutex_unlock(&bufferLock); //unlock mutex
+            fclose(file);
+            pstorage_read = true;
+            return;
+        }
+        
+        // Only assign if value is non-zero
+        if (value != 0)
+        {
+            // Allocate memory if the pointer is NULL
+            if (dint_memory[i] == NULL) 
+            {
+                dint_memory[i] = malloc(sizeof(uint32_t));
+                if (dint_memory[i] == NULL) 
+                {
+                    sprintf(log_msg, "Error allocating memory for dint_memory[%d]", i);
+                    log(log_msg);
+                    continue;
+                }
+            }
+            *dint_memory[i] = value; // Store the value
+        }
+    }
+
+    // Read the contents into lint_memory
+    for (size_t i = 0; i < BUFFER_SIZE; i++) 
+    {
+        uint64_t value;
+        // Read each value individually
+        if (fread(&value, sizeof(uint64_t), 1, file) != 1) 
+        {
+            if (feof(file)) break; // Stop on end of file
+            sprintf(log_msg, "Error reading lint_memory from file");
+            log(log_msg);
+            pthread_mutex_unlock(&bufferLock); //unlock mutex
+            fclose(file);
+            pstorage_read = true;
+            return;
+        }
+        
+        // Only assign if value is non-zero
+        if (value != 0)
+        {
+            // Allocate memory if the pointer is NULL
+            if (lint_memory[i] == NULL) 
+            {
+                lint_memory[i] = malloc(sizeof(uint64_t));
+                if (lint_memory[i] == NULL) 
+                {
+                    sprintf(log_msg, "Error allocating memory for lint_memory[%d]", i);
+                    log(log_msg);
+                    continue;
+                }
+            }
+            *lint_memory[i] = value; // Store the value
+        }
     }
     pthread_mutex_unlock(&bufferLock); //unlock mutex
-    
+
+    fclose(file);
+
+    sprintf(log_msg, "Persistent Storage: Finished reading persistent memory\n");
+    log(log_msg);
     pstorage_read = true;
+    return 0;
 }
