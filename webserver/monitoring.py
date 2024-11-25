@@ -122,6 +122,17 @@ def modbus_monitor():
     
     if (monitor_active == True):
         threading.Timer(0.5, modbus_monitor).start()
+
+def write_value(point_address, point_value):
+    global mb_client
+
+    # COILS
+    if (point_address.find('QX')) > 0:
+        mb_address = point_address.split('%QX')[1].split('.')
+        if (len(mb_address) < 2):
+            result = mb_client.write_coil(int(mb_address[0])*8, int(point_value))
+        else:
+            result = mb_client.write_coil(int(mb_address[0])*8 + int(mb_address[1]), int(point_value))
     
 def start_monitor(modbus_port_cfg):
     global monitor_active

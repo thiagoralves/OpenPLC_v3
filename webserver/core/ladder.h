@@ -109,24 +109,22 @@ void finalizeHardware();
 void updateBuffersIn();
 void updateBuffersOut();
 
-//custom_layer.h
-void initCustomLayer();
-void updateCustomIn();
-void updateCustomOut();
-extern int ignored_bool_inputs[];
-extern int ignored_bool_outputs[];
-extern int ignored_int_inputs[];
-extern int ignored_int_outputs[];
-
-//main.cpp
+//utils.cpp
 void sleep_until(struct timespec *ts, long long delay);
 void sleepms(int milliseconds);
 void log(char *logmsg);
-bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber);
-extern uint8_t run_openplc;
+void handleSpecialFunctions();
+void timespec_diff(struct timespec *a, struct timespec *b, struct timespec *result);
+void *interactiveServerThread(void *arg);
+void disableOutputs();
+void RecordCycletimeLatency(long cycle_time, long sleep_latency);
+
+void setModbusRtsPin(uint8_t pin);
 extern unsigned char log_buffer[1000000];
 extern int log_index;
-void handleSpecialFunctions();
+
+//main.cpp
+extern uint8_t run_openplc;
 
 //server.cpp
 void startServer(uint16_t port, int protocol_type);

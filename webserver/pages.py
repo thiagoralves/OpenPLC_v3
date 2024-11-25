@@ -134,6 +134,7 @@ login_body = """
                     <button>login</button>
                 </form>
               </div>
+              <h3 style="font-family:'roboto', sans-serif; font-size:14px; color:#ffffff;">Release: 2024-11-04</h3>
             </div>
         </div>
     </body>
@@ -740,10 +741,6 @@ monitoring_head = """
             background-color: #eeeeee;
         }
         
-        tr:hover {
-            cursor: hand;background-color: slategray;
-        }
-        
         label {
             font-family: arial, sans-serif;
         }
@@ -801,6 +798,32 @@ monitoring_head = """
                 align-items: stretch;
             }
         }
+
+        .write-button 
+        {
+            display: inline-block;
+            width: 50px;
+            height: 30px;
+            margin-right: 5px;
+            padding: 0;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid #000000;
+        }
+        .write-button:last-child 
+        {
+            margin-right: 0;
+        }
+        .write-button.true 
+        {
+            background-color: #2366fc;
+            color: #ffffff;
+        }
+        .write-button.false 
+        {
+            background-color: #ffffff;
+            color: #000000;
+        }
         </style>
         <body onload='loadData()'>"""
 
@@ -813,7 +836,7 @@ monitoring_tail = """
     
     <script>
         var req;
-        var refresh_rate = 100;
+        var refresh_rate = 500;
         
         function loadData()
         {

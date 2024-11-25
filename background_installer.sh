@@ -13,6 +13,7 @@ function print_help_and_exit {
     echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
     echo "  docker        Install OpenPLC in a Docker container"
     echo "  rpi           Install OpenPLC on a Raspberry Pi"
+    echo "  opi           Install OpenPLC on a Orange Pi"
     echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
     echo "  unipi         Install OpenPLC on a Raspberry Pi with UniPi v1.1 PLC"
     echo "  custom        Skip all specific package installation and tries to install"
@@ -93,6 +94,21 @@ function install_pigpio {
         make
         sudo make install
         rm -f master.zip
+    )
+}
+
+function install_wiringop {
+    echo "[WIRINGOP]"
+    local URL="https://github.com/orangepi-xunlong/wiringOP/archive/master.zip"
+    (
+        set -e
+        rm -f master.zip
+        wget -c "$URL"
+        unzip -o master.zip
+        cd wiringOP-master
+        sudo ./build clean
+        sudo ./build
+        rm -f ../master.zip
     )
 }
 
@@ -329,6 +345,35 @@ if [ "$1" == "win" ]; then
     install_libmodbus
     finalize_install win
 
+elif [ "$1" == "win_msys2" ]; then
+    echo "Installing OpenPLC on Windows"
+
+    pacman -Suy --noconfirm
+    pacman -S gcc git pkg-config automake autoconf libtool make sqlite3 python3 lynx --noconfirm
+    
+    lynx -source https://bootstrap.pypa.io/pip/get-pip.py > get-pip3.py
+
+    #Setting up venv
+    python3 -m venv "$VENV_DIR"
+    "$VENV_DIR/bin/python3" get-pip3.py
+    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
+    
+    echo ""
+    echo "[MATIEC COMPILER]"
+    cp ./utils/matiec_src/bin_win32/*.* ./webserver/
+    if [ $? -ne 0 ]; then
+        echo "Error compiling MatIEC"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    fi
+
+    install_st_optimizer
+    install_glue_generator
+    disable_opendnp3
+    install_libmodbus
+    cp /usr/include/modbus/*.h /usr/include/
+    finalize_install win
+
 elif [ "$1" == "linux" ]; then
 
     echo "Installing OpenPLC on Linux"
@@ -361,6 +406,15 @@ elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
     linux_install_deps sudo
     install_pigpio
+    install_py_deps
+    install_all_libs sudo
+    install_systemd_service sudo
+    finalize_install linux
+
+elif [ "$1" == "opi" ]; then
+    echo "Installing OpenPLC on Orange Pi"
+    linux_install_deps sudo
+    install_wiringop
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
