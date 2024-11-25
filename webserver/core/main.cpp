@@ -28,6 +28,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/mman.h>
 
 #include "iec_types.h"
@@ -46,16 +47,16 @@ pthread_mutex_t bufferLock; //mutex for the internal buffers
 uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
 
 // pointers to IO *array[const][const] from cpp to c and back again don't work as expected, so instead callbacks
-u_int8_t *bool_input_call_back(int a, int b){ return bool_input[a][b]; }
-u_int8_t *bool_output_call_back(int a, int b){ return bool_output[a][b]; }
-u_int8_t *byte_input_call_back(int a){ return byte_input[a]; }
-u_int8_t *byte_output_call_back(int a){ return byte_output[a]; }
-u_int16_t *int_input_call_back(int a){ return int_input[a]; }
-u_int16_t *int_output_call_back(int a){ return int_output[a]; }
-u_int32_t *dint_input_call_back(int a){ return dint_input[a]; }
-u_int32_t *dint_output_call_back(int a){ return dint_output[a]; }
-u_int64_t *lint_input_call_back(int a){ return lint_input[a]; }
-u_int64_t *lint_output_call_back(int a){ return lint_output[a]; }
+uint8_t *bool_input_call_back(int a, int b){ return bool_input[a][b]; }
+uint8_t *bool_output_call_back(int a, int b){ return bool_output[a][b]; }
+uint8_t *byte_input_call_back(int a){ return byte_input[a]; }
+uint8_t *byte_output_call_back(int a){ return byte_output[a]; }
+uint16_t *int_input_call_back(int a){ return int_input[a]; }
+uint16_t *int_output_call_back(int a){ return int_output[a]; }
+uint32_t *dint_input_call_back(int a){ return dint_input[a]; }
+uint32_t *dint_output_call_back(int a){ return dint_output[a]; }
+uint64_t *lint_input_call_back(int a){ return lint_input[a]; }
+uint64_t *lint_output_call_back(int a){ return lint_output[a]; }
 void logger_callback(char *msg){ log(msg);}
 
 int main(int argc,char **argv)

@@ -1,5 +1,5 @@
 #!/bin/bash
-OPENPLC_DIR="$PWD"
+OPENPLC_DIR="$(dirname $(readlink -f $0))"
 SWAP_FILE="$OPENPLC_DIR/swapfile"
 WIRINGPI_VERSION="3.4"
 VENV_DIR="$OPENPLC_DIR/.venv"
@@ -51,6 +51,12 @@ function linux_install_deps {
         $1 zypper ref
         $1 zypper in -y curl make automake gcc gcc-c++ kernel-devel pkg-config bison flex autoconf libtool openssl-devel cmake libmodbus-devel
         $1 zypper in -y python python-xml python3 python3-pip 
+        
+    #Installing dependencies for Alpine Linux 3.20 and later
+    elif command -v apk >/dev/null; then
+        $1 apk update
+        $1 apk add build-base pkgconfig bison flex autoconf automake libtool make git sqlite cmake curl
+        $1 apk add python3 py3-libxml2 py3-pip gcc g++ linux-headers openssl-dev util-linux-misc
     else
         fail "Unsupported linux distro."
     fi
@@ -107,7 +113,8 @@ function install_wiringop {
 }
 
 function install_py_deps {
-    python3 -m venv "$VENV_DIR"
+    python3 -m venv "$VENV_DIR" --system-site-packages
+    source "$VENV_DIR/bin/activate"
     "$VENV_DIR/bin/python3" -m pip install --upgrade pip
     if [ "$1" == "neuron" ]; then
         "$VENV_DIR/bin/python3" -m pip install flask==2.2.5 werkzeug==2.2.2 flask-login==0.6.2 pyserial pymodbus==2.5.3
@@ -115,6 +122,7 @@ function install_py_deps {
         "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
     fi
     python3 -m pip install pymodbus==2.5.3
+    deactivate
 }
 
 function swap_on {
@@ -238,6 +246,40 @@ EOF
     fi
 }
 
+function install_openrc_service() {
+    if [ "$(whoami)" == "root" ]; then
+        echo "[OPENPLC SERVICE]"
+        tee /etc/init.d/openplc > /dev/null <<EOF
+#!/sbin/openrc-run
+
+name="OpenPLC"
+description="OpenPLC Service"
+command="$OPENPLC_DIR/start_openplc.sh"
+pidfile="/run/\${RC_SVCNAME}.pid"
+
+depend() {
+    need net
+}
+
+start() {
+    ebegin "Starting OpenPLC"
+    start-stop-daemon --start --exec \${command} \
+    --background --make-pidfile --pidfile \${pidfile}
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping OpenPLC"
+    start-stop-daemon --stop --pidfile \${pidfile}
+    eend $?
+}
+EOF
+        echo "Setting permissions and enabling OpenPLC Service..."
+        chmod 755 /etc/init.d/openplc
+        rc-update add openplc default
+    fi
+}
+
 function install_all_libs {
     install_matiec "$1"
     install_st_optimizer "$1"
@@ -335,11 +377,17 @@ elif [ "$1" == "win_msys2" ]; then
 elif [ "$1" == "linux" ]; then
 
     echo "Installing OpenPLC on Linux"
-    linux_install_deps sudo
+    sudo="sudo"
+    test -x /sbin/openrc-run && unset sudo # we are probably running on a system with openrc (Alpine, Gentoo, devuan)
+    linux_install_deps ${sudo}
     install_py_deps
-    install_all_libs sudo
+    install_all_libs ${sudo}
     [ "$2" == "ethercat" ] && install_ethercat
-    install_systemd_service sudo
+	if [ -x /sbin/openrc-run ]; then	# we are probably running on a system with openrc (Alpine, Gentoo, devuan)
+		install_openrc_service
+	else	# we now assume a system with systemd
+		install_systemd_service ${sudo}
+	fi
     finalize_install linux
 
 elif [ "$1" == "docker" ]; then
