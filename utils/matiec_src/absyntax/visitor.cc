@@ -168,7 +168,7 @@ iterator_visitor_c::~iterator_visitor_c(void) {return;}
 
 void *iterator_visitor_c::visit_list(list_c *list) {
   for(int i = 0; i < list->n; i++) {
-    list->elements[i]->accept(*this);
+    list->get_element(i)->accept(*this);
   }
   return NULL;
 }
@@ -310,7 +310,7 @@ search_visitor_c::~search_visitor_c(void) {return;}
 
 void *search_visitor_c::visit_list(list_c *list) {
   for(int i = 0; i < list->n; i++) {
-    void *res = list->elements[i]->accept(*this);
+    void *res = list->get_element(i)->accept(*this);
     if (res != NULL)
       return res;
   }

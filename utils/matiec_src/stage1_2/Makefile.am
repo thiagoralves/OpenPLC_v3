@@ -1,7 +1,9 @@
 include ../common.mk
 
+## Flags for yacc syntax parser generator (bison)
 AM_YFLAGS = -d
-AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
+## Flags for lex lexer generator (flex)
+AM_LFLAGS = --warn -o$(LEX_OUTPUT_ROOT).c
 
 # Make sure this header file is generated first (by bison), as it is included
 # by other C++ code that will also be compiled.

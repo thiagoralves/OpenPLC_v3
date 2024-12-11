@@ -201,13 +201,13 @@ class generate_c_base_c: public iterator_visitor_c {
       if (list->n > 0) {
 //std::cout << "generate_c_base_c::print_list(n = " << list->n << ")   000\n";
         s4o.print(pre_elem_str);
-        list->elements[0]->accept(*visitor);
+        list->get_element(0)->accept(*visitor);
       }
 
       for(int i = 1; i < list->n; i++) {
 //std::cout << "generate_c_base_c::print_list   " << i << "\n";
         s4o.print(inter_elem_str);
-        list->elements[i]->accept(*visitor);
+        list->get_element(i)->accept(*visitor);
       }
 
       if (list->n > 0)
@@ -657,6 +657,8 @@ void *visit(date_and_time_c *symbol) {
     void *visit(safedword_type_name_c *symbol)   {s4o.print("DWORD");   return NULL;}
     void *visit(safestring_type_name_c *symbol)  {s4o.print("STRING");  return NULL;}
     void *visit(safewstring_type_name_c *symbol) {s4o.print("WSTRING"); return NULL;}
+
+    void *visit(void_type_name_c *symbol)        {s4o.print("void");    return NULL;}
 
 /********************************/
 /* B.1.3.2 - Generic data types */

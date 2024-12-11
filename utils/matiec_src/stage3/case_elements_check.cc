@@ -242,7 +242,7 @@ void *case_elements_check_c::visit(case_statement_c *symbol) {
 // SYM_LIST(case_list_c)
 void *case_elements_check_c::visit(case_list_c *symbol) {
   for (int i = 0; i < symbol->n; i++)
-    case_elements_list.push_back(symbol->elements[i]);
+    case_elements_list.push_back(symbol->get_element(i));
   return NULL;
 }
 

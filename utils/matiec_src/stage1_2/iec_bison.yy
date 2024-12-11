@@ -119,7 +119,7 @@ void yyerror (const char *error_msg);
 #define FOR_EACH_ELEMENT(elem, list, code) {		\
   symbol_c *elem;					\
   for(int i = 0; i < list->n; i++) {			\
-    elem = list->elements[i];				\
+    elem = list->get_element(i);			\
     code;						\
   }							\
 }
@@ -373,6 +373,32 @@ typedef struct YYLTYPE {
 %type  <leaf>	prev_declared_derived_function_block_name
 %type  <leaf>	prev_declared_program_type_name
 
+/* Tokens used to help resolve a reduce/reduce conflict */
+/* The mentioned conflict only arises due to a non-standard feature added to matiec.
+ * Namely, the permission to call functions returning VOID as an ST statement.
+ *   e.g.:   FUNCTION foo: VOID
+ *             VAR_INPUT i: INT; END_VAR;
+ *             ...
+ *           END_FUNCTION
+ *
+ *           FUNCTION BAR: BOOL
+ *             VAR b: bool; END_VAR
+ *             foo(i:=42);   <--- Calling foo outside an expression. Function invocation is considered an ST statement!!
+ *           END_FUNCTION
+ *
+ *  The above function invocation may also be reduced to a formal IL function invocation, so we get a 
+ *  reduce/reduce conflict to st_statement_list/instruction_list  (or something equivalent).
+ *
+ *  We solve this by having flex determine if it is ST or IL invocation (ST ends with a ';' !!).
+ *  At the start of a function/FB/program body, flex will tell bison whether to expect ST or IL code!
+ *  This is why we need the following two tokens!
+ *
+ *  NOTE: flex was already determing whther it was parsing ST or IL code as it can only send 
+ *        EOL tokens when parsing IL. However, did this silently without telling bison about this.
+ *        Now, it does
+ */
+%token          start_ST_body_token
+%token          start_IL_body_token
 
 
 
@@ -649,6 +675,9 @@ typedef struct YYLTYPE {
 %token DT
 %token TIME_OF_DAY
 %token TOD
+
+/* A non-standard extension! */
+%token VOID
 
 /******************************************************/
 /* Symbols defined in                                 */
@@ -1425,6 +1454,7 @@ typedef struct YYLTYPE {
 %type <leaf>	while_statement
 %type <leaf>	repeat_statement
 %type <leaf>	exit_statement
+%type <leaf>	continue_statement
 /* Integrated directly into for_statement */
 // %type <leaf>	for_list
 
@@ -1444,6 +1474,7 @@ typedef struct YYLTYPE {
 %token END_REPEAT
 
 %token EXIT
+%token CONTINUE
 
 
 %%
@@ -3184,15 +3215,15 @@ structure_element_declaration_list:
 
 structure_element_declaration:
   structure_element_name ':' simple_spec_init
-	{$$ = new structure_element_declaration_c($1, $3, locloc(@$));}
+	{$$ = new structure_element_declaration_c($1, $3, locloc(@$)); $$->token = $1->token;}
 | structure_element_name ':' subrange_spec_init
-	{$$ = new structure_element_declaration_c($1, $3, locloc(@$));}
+	{$$ = new structure_element_declaration_c($1, $3, locloc(@$)); $$->token = $1->token;}
 | structure_element_name ':' enumerated_spec_init
-	{$$ = new structure_element_declaration_c($1, $3, locloc(@$));}
+	{$$ = new structure_element_declaration_c($1, $3, locloc(@$)); $$->token = $1->token;}
 | structure_element_name ':' array_spec_init
-	{$$ = new structure_element_declaration_c($1, $3, locloc(@$));}
+	{$$ = new structure_element_declaration_c($1, $3, locloc(@$)); $$->token = $1->token;}
 | structure_element_name ':' initialized_structure
-	{$$ = new structure_element_declaration_c($1, $3, locloc(@$));}
+	{$$ = new structure_element_declaration_c($1, $3, locloc(@$)); $$->token = $1->token;}
 | structure_element_name ':' ref_spec_init                              /* non standard extension: Allow use of struct elements storing REF_TO datatypes (either using REF_TO or a previosuly declared ref type) */
 	{ $$ = new structure_element_declaration_c($1, $3, locloc(@$));
 	  if (!allow_ref_to_in_derived_datatypes) {
@@ -3506,7 +3537,7 @@ variable:
   symbolic_variable
 | prev_declared_direct_variable
 | eno_identifier
-	{$$ = new symbolic_variable_c($1, locloc(@$));}
+	{$$ = new symbolic_variable_c($1, locloc(@$)); $$->token = $1->token;}
 ;
 
 
@@ -3515,15 +3546,15 @@ symbolic_variable:
  *         prev_declared_variable_name | prev_declared_fb_name | prev_declared_global_var_name
  */
   prev_declared_fb_name
-	{$$ = new symbolic_variable_c($1, locloc(@$));}
+	{$$ = new symbolic_variable_c($1, locloc(@$)); $$->token = $1->token;}
 | prev_declared_global_var_name
-	{$$ = new symbolic_variable_c($1, locloc(@$));}
+	{$$ = new symbolic_variable_c($1, locloc(@$)); $$->token = $1->token;}
 | prev_declared_variable_name
-	{$$ = new symbolic_variable_c($1, locloc(@$));}
+	{$$ = new symbolic_variable_c($1, locloc(@$)); $$->token = $1->token;}
 | multi_element_variable
 /*
 | identifier
-	{$$ = new symbolic_variable_c($1, locloc(@$));}
+	{$$ = new symbolic_variable_c($1, locloc(@$)); $$->token = $1->token;}
 */
 | symbolic_variable '^'     
 	/* Dereferencing operator defined in IEC 61131-3 v3. However, implemented here differently then how it is defined in the standard! See following note for explanation! */
@@ -3565,7 +3596,7 @@ symbolic_variable:
 any_symbolic_variable:
 // variable_name -> replaced by any_identifier
   any_identifier
-	{$$ = new symbolic_variable_c($1, locloc(@$));}
+	{$$ = new symbolic_variable_c($1, locloc(@$)); $$->token = $1->token;}
 | any_multi_element_variable
 ;
 
@@ -5008,6 +5039,14 @@ function_declaration:
 	 direct_variable_symtable.pop();
 	 library_element_symtable.insert($1, prev_declared_derived_function_name_token);
 	}
+/* | FUNCTION derived_function_name ':' VOID io_OR_function_var_declarations_list function_body END_FUNCTION */
+| function_name_declaration ':' VOID io_OR_function_var_declarations_list function_body END_FUNCTION
+	{$$ = new function_declaration_c($1, new void_type_name_c(locloc(@3)), $4, $5, locloc(@$));
+	 if (!runtime_options.disable_implicit_en_eno) add_en_eno_param_decl_c::add_to($$); /* add EN and ENO declarations, if not already there */
+	 variable_name_symtable.pop();
+	 direct_variable_symtable.pop();
+	 library_element_symtable.insert($1, prev_declared_derived_function_name_token);
+	}
 /* ERROR_CHECK_BEGIN */
 | function_name_declaration elementary_type_name io_OR_function_var_declarations_list function_body END_FUNCTION
 	{$$ = NULL; print_err_msg(locl(@1), locf(@2), "':' missing after function name in function declaration."); yynerrs++;}
@@ -5172,8 +5211,8 @@ var2_init_decl_list:
 
 
 function_body:
-  statement_list	{$$ = $1;} /* if we leave it for the default action we get a type clash! */
-| instruction_list	{$$ = $1;} /* if we leave it for the default action we get a type clash! */
+  start_ST_body_token statement_list	{$$ = $2;}
+| start_IL_body_token instruction_list	{$$ = $2;}
 /*
 | ladder_diagram
 | function_block_diagram
@@ -5246,7 +5285,7 @@ function_block_declaration:
 	{$$ = NULL; print_err_msg(locl(@2), locf(@3), "no variable(s) declared and body defined in function block declaration."); yynerrs++;}
 */
 | FUNCTION_BLOCK derived_function_block_name io_OR_other_var_declarations_list function_block_body END_OF_INPUT
-	{$$ = NULL; print_err_msg(locf(@1), locl(@2), "no variable(s) declared and body defined in function block declaration."); yynerrs++;}	
+	{$$ = NULL; print_err_msg(locf(@1), locl(@2), "expecting END_FUNCTION_BLOCK before end of file."); yynerrs++;}	
 | FUNCTION_BLOCK error END_FUNCTION_BLOCK
 	{$$ = NULL; print_err_msg(locf(@2), locl(@2), "unknown error in function block declaration."); yyerrok;}
 /* ERROR_CHECK_END */
@@ -5355,9 +5394,21 @@ non_retentive_var_decls:
 
 
 function_block_body:
-  statement_list	{$$ = $1;}
-| instruction_list	{$$ = $1;}
-| sequential_function_chart	{$$ = $1;}
+  /* NOTE: start_ST_body_token is a dummy token generated by flex when it determines it is starting to parse a POU body in ST
+   *       start_IL_body_token is a dummy token generated by flex when it determines it is starting to parse a POU body in IL
+   *     These tokens help remove a reduce/reduce conflict in bison, between a formal function invocation in IL, and a
+   *     function invocation used as a statement (a non-standard extension added to matiec) 
+   *       e.g: FUNCTION_BLOCK foo
+   *            VAR ... END_VAR
+   *              func_returning_void(in1 := 3        
+   *                                 );               --> only the presence or absence of ';' will determine whether this is a IL or ST 
+   *                                                      function invocation. (In standard ST this would be ilegal, in matiec we allow it 
+   *                                                      when activated by a command line option)
+   *            END_FUNCTION
+   */
+  start_ST_body_token statement_list	{$$ = $2;}  
+| start_IL_body_token instruction_list	{$$ = $2;}
+| sequential_function_chart		{$$ = $1;}
 /*
 | ladder_diagram
 | function_block_diagram
@@ -5797,17 +5848,17 @@ transition_priority:
 
 
 transition_condition:
-  ':' eol_list simple_instr_list
-	{$$ = new transition_condition_c($3, NULL, locloc(@$));}
+ start_IL_body_token ':' eol_list simple_instr_list
+	{$$ = new transition_condition_c($4, NULL, locloc(@$));}
 | ASSIGN expression ';'
 	{$$ = new transition_condition_c(NULL, $2, locloc(@$));}
 /* ERROR_CHECK_BEGIN */
-| eol_list simple_instr_list
-	{$$ = NULL; print_err_msg(locl(@1), locf(@2), "':' missing before IL condition in transition declaration."); yynerrs++;}
-| ':' eol_list error
+| start_IL_body_token eol_list simple_instr_list
+	{$$ = NULL; print_err_msg(locl(@2), locf(@3), "':' missing before IL condition in transition declaration."); yynerrs++;}
+| start_IL_body_token ':' eol_list error
 	{$$ = NULL;
-	 if (is_current_syntax_token()) {print_err_msg(locl(@2), locf(@3), "no instructions defined in IL condition of transition declaration.");}
-	 else {print_err_msg(locf(@3), locl(@3), "invalid instructions in IL condition of transition declaration."); yyclearin;}
+	 if (is_current_syntax_token()) {print_err_msg(locl(@3), locf(@4), "no instructions defined in IL condition of transition declaration.");}
+	 else {print_err_msg(locf(@4), locl(@4), "invalid instructions in IL condition of transition declaration."); yyclearin;}
 	 yyerrok;
 	}
 | ASSIGN ';'
@@ -7856,6 +7907,15 @@ statement:
 | subprogram_control_statement
 | selection_statement
 | iteration_statement
+| function_invocation 
+	{ /* This is a non-standard extension (calling a function outside an ST expression!) */
+	  /* Only allow this if command line option has been selected...                     */
+	  $$ = $1; 
+	  if (!runtime_options.allow_void_datatype) {
+	    print_err_msg(locf(@1), locl(@1), "Function invocation in ST code is not allowed outside an expression. To allow this non-standard syntax, activate the apropriate command line option."); 
+	    yynerrs++;
+	  }
+	}  
 ;
 
 
@@ -8248,6 +8308,7 @@ iteration_statement:
 | while_statement
 | repeat_statement
 | exit_statement
+| continue_statement
 ;
 
 
@@ -8330,7 +8391,7 @@ for_statement:
 */
 control_variable: 
   prev_declared_variable_name 
-	{$$ = new symbolic_variable_c($1,locloc(@$));};
+	{$$ = new symbolic_variable_c($1,locloc(@$)); $$->token = $1->token;};
 // control_variable: identifier {$$ = $1;};
 
 /* Integrated directly into for_statement */
@@ -8391,7 +8452,9 @@ exit_statement:
   EXIT	{$$ = new exit_statement_c(locloc(@$));}
 ;
 
-
+continue_statement:
+  CONTINUE	{$$ = new continue_statement_c(locloc(@$));}
+;
 
 
 

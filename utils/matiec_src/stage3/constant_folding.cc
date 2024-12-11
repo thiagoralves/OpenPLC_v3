@@ -1038,7 +1038,7 @@ void *constant_folding_c::visit(il_expression_c *symbol) {
    */
   if ((NULL != symbol->il_operand) && ((NULL == symbol->simple_instr_list) || (0 == ((list_c *)symbol->simple_instr_list)->n))) ERROR; // stage2 is not behaving as we expect it to!
   if  (NULL != symbol->il_operand)
-    symbol->il_operand->const_value = ((list_c *)symbol->simple_instr_list)->elements[0]->const_value;
+    symbol->il_operand->const_value = ((list_c *)symbol->simple_instr_list)->get_element(0)->const_value;
 
   return NULL;
 }
@@ -1089,10 +1089,10 @@ void *constant_folding_c::visit(simple_instr_list_c *symbol) {
     return NULL;  /* List is empty! Nothing to do. */
     
   for(int i = 0; i < symbol->n; i++)
-    symbol->elements[i]->accept(*this);
+    symbol->get_element(i)->accept(*this);
 
   /* This object has (inherits) the same cvalues as the il_jump_operator */
-  symbol->const_value = symbol->elements[symbol->n-1]->const_value;
+  symbol->const_value = symbol->get_element(symbol->n-1)->const_value;
   return NULL;
 }
 
@@ -1367,8 +1367,8 @@ void *constant_propagation_c::visit(library_c *symbol) {
   
   for (i = 0; i < symbol->n; i++) {
     // first analyse the configurations
-    if (NULL != dynamic_cast<configuration_declaration_c *>(symbol->elements[i]))
-      symbol->elements[i]->accept(*this);
+    if (NULL != dynamic_cast<configuration_declaration_c *>(symbol->get_element(i)))
+      symbol->get_element(i)->accept(*this);
   }
 
   for (i = 0; i < symbol->n; i++) {
@@ -1377,8 +1377,8 @@ void *constant_propagation_c::visit(library_c *symbol) {
      *       loop. However, this is OK as the only difference would be how the VAR_EXTERN are handled,
      *       and that is taken care of in the visit(external_declaration_c) visitor!
      */
-    if (NULL == dynamic_cast<configuration_declaration_c *>(symbol->elements[i]))
-      symbol->elements[i]->accept(*this);
+    if (NULL == dynamic_cast<configuration_declaration_c *>(symbol->get_element(i)))
+      symbol->get_element(i)->accept(*this);
   }
   
   return NULL;
@@ -1465,14 +1465,14 @@ void *constant_propagation_c::handle_var_list_decl(symbol_c *var_list, symbol_c 
   list_c *list = dynamic_cast<list_c *>(var_list);
   if (NULL == list) ERROR;
   for (int i = 0; i < list->n; i++) {
-    token_c *var_name = dynamic_cast<token_c *>(list->elements[i]);
+    token_c *var_name = dynamic_cast<token_c *>(list->get_element(i));
     if (NULL == var_name) {
-      if (NULL != dynamic_cast<extensible_input_parameter_c *>(list->elements[i]))
+      if (NULL != dynamic_cast<extensible_input_parameter_c *>(list->get_element(i)))
         continue; // this is an extensible standard function. Ignore this variable, and continue!
-      // debug_c::print(list->elements[i]);
+      // debug_c::print(list->get_element(i));
       ERROR;
     }
-    list->elements[i]->const_value = init_value->const_value;
+    list->get_element(i)->const_value = init_value->const_value;
     if (fixed_init_value_) {
       (*values)[var_name->value] = init_value->const_value;
       if (is_global_var)

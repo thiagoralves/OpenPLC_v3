@@ -141,6 +141,7 @@ class search_base_type_c: public null_visitor_c {
     void *visit(lword_type_name_c *symbol);
     void *visit(string_type_name_c *symbol);
     void *visit(wstring_type_name_c *symbol);
+    void *visit(void_type_name_c *symbol); /* A non standard datatype! */
 
     /******************************************************/
     /* Extensions to the base standard as defined in      */

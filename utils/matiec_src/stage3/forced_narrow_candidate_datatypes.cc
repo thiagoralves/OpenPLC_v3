@@ -120,6 +120,30 @@ forced_narrow_candidate_datatypes_c::~forced_narrow_candidate_datatypes_c(void) 
 
 
 
+void forced_narrow_candidate_datatypes_c::set_datatype_in_prev_il_instructions(symbol_c *datatype, il_instruction_c *symbol) {
+	if (NULL == symbol) ERROR;
+	/* In the forced_narrow_candidate_datatypes algorithm, we do NOT set any datatypes to invalid_type_name_c
+	 * Any IL instructions that really are of an invalid_type_name_c (because the IL code is buggy?) have already
+	 * been set by the standard narrow_candidate_datatypes algorithm.
+	 * 
+	 * Remember too that valid IL code may also have some IL instructions correctly set to invalid_type_name_c, especially
+	 * in cases where the data in the accumulator will not be used in the current IL instruction
+	 * For example:
+	 *        LD   bool_var
+	 *        JMPC label1
+	 *        LD 34
+	 *        ST int_var
+	 * lable1:            <----  This IL instruction_c (with NULL symbol->il_instruction) has invalid_type_name_c datatype!!
+	 *        LD T#3s              And yet, the code is legal!!!
+	 *        ST time_var
+	 */ 
+	if (!get_datatype_info_c::is_type_valid(datatype)) return;
+	// Call the 'original' version of the set_datatype_in_prev_il_instructions() function, from narrow_candidate_datatypes_c
+	return narrow_candidate_datatypes_c::set_datatype_in_prev_il_instructions(datatype, symbol);
+}
+
+
+
 void forced_narrow_candidate_datatypes_c::forced_narrow_il_instruction(symbol_c *symbol, std::vector <symbol_c *> &next_il_instruction) {
   if (NULL == symbol->datatype) {
     if (symbol->candidate_datatypes.empty()) {
@@ -161,7 +185,7 @@ void forced_narrow_candidate_datatypes_c::forced_narrow_il_instruction(symbol_c 
 void *forced_narrow_candidate_datatypes_c::visit(instruction_list_c *symbol) {
   for(int j = 0; j < 2; j++) {
     for(int i = symbol->n-1; i >= 0; i--) {
-      symbol->elements[i]->accept(*this);
+      symbol->get_element(i)->accept(*this);
     }
   }
 
@@ -171,7 +195,7 @@ void *forced_narrow_candidate_datatypes_c::visit(instruction_list_c *symbol) {
    */
   /*
   for(int i = symbol->n-1; i >= 0; i--) {
-    if (NULL == symbol->elements[i]->datatype)
+    if (NULL == symbol->get_element(i)->datatype)
       ERROR;
   }
   */

@@ -165,6 +165,8 @@ class get_datatype_info_c {
     static bool is_ANY_SAFESTRING                  (symbol_c *type_symbol);
     static bool is_ANY_STRING_compatible           (symbol_c *type_symbol);
 
+    // A non-standard extension --> data type 'VOID' (used for functions that do not return any data)
+    static bool is_VOID                            (symbol_c *type_symbol);
     
     
     
@@ -172,6 +174,9 @@ class get_datatype_info_c {
     /* object used to identify an entry in the abstract syntax tree with an invalid data type */
     /* This is only used from stage3 onwards. Stages 1 and 2 will never create any instances of invalid_type_name_c */
     static invalid_type_name_c     invalid_type_name;
+
+    /* object used to identify ANY datya type */
+    static generic_type_any_c      any_type_name;
 
     /**********************/
     /* B.1.3 - Data types */

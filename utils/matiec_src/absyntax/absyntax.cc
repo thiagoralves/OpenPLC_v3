@@ -58,6 +58,7 @@ symbol_c::symbol_c(
   this->last_column  = last_column;
   this->last_order   = last_order;
   this->parent       = NULL;
+  this->token        = NULL;
   this->datatype     = NULL;
   this->scope        = NULL;
 }
@@ -69,6 +70,7 @@ token_c::token_c(const char *value,
                  int ll, int lc, const char *lfile, long int lorder)
   :symbol_c(fl, fc, ffile, forder, ll, lc, lfile, lorder) {
   this->value = value;
+  this->token = this; // every token is its own reference token.
 //  printf("New token: %s\n", value);
 }
 
@@ -83,7 +85,7 @@ list_c::list_c(
                int ll, int lc, const char *lfile, long int lorder)
   :symbol_c(fl, fc, ffile, forder, ll, lc, lfile, lorder),c(LIST_CAP_INIT) {
   n = 0;
-  elements = (symbol_c**)malloc(LIST_CAP_INIT*sizeof(symbol_c*));
+  elements = (element_entry_t*)malloc(LIST_CAP_INIT*sizeof(element_entry_t));
   if (NULL == elements) ERROR_MSG("out of memory");
 }
 
@@ -93,20 +95,59 @@ list_c::list_c(symbol_c *elem,
                int ll, int lc, const char *lfile, long int lorder)
   :symbol_c(fl, fc, ffile, forder, ll, lc, lfile, lorder),c(LIST_CAP_INIT) { 
   n = 0;
-  elements = (symbol_c**)malloc(LIST_CAP_INIT*sizeof(symbol_c*));
+  elements = (element_entry_t*)malloc(LIST_CAP_INIT*sizeof(element_entry_t));
   if (NULL == elements) ERROR_MSG("out of memory");
   add_element(elem); 
 }
 
 
+/*******************************************/    
+/* get element in position pos of the list */
+/*******************************************/    
+symbol_c *list_c::get_element(int pos) {return elements[pos].symbol;}
+
+
+
+/******************************************/    
+/* find element associated to token value */
+/******************************************/    
+symbol_c *list_c::find_element(symbol_c *token) {
+  token_c *t = dynamic_cast<token_c *>(token);
+  if (t == NULL) ERROR;
+  return find_element((const char *)t->value);  
+}
+
+symbol_c *list_c::find_element(const char *token_value) {
+  // We could use strcasecmp(), but it's best to always use the same 
+  // method of string comparison throughout matiec
+  nocasecmp_c ncc; 
+  for (int i = 0; i < n; i++) 
+    if (!ncc(elements[i].token_value, token_value))
+      return elements[i].symbol;
+
+  return NULL; // not found
+}
+
+    
+/***********************************************/    
 /* append a new element to the end of the list */
-void list_c::add_element(symbol_c *elem) {
-  // printf("list_c::add_element()\n");
+/***********************************************/    
+void list_c::add_element(symbol_c *elem) {add_element(elem, elem);}
+
+void list_c::add_element(symbol_c *elem, symbol_c *token) {
+  token_c *t =  (token == NULL)? NULL : token->token;
+  add_element(elem, (t == NULL)? NULL : t->value);
+}
+
+void list_c::add_element(symbol_c *elem, const char *token_value) {
   if (c <= n)
-    if (!(elements=(symbol_c**)realloc(elements,(c+=LIST_CAP_INCR)*sizeof(symbol_c *))))
+    if (!(elements=(element_entry_t*)realloc(elements,(c+=LIST_CAP_INCR)*sizeof(element_entry_t))))
       ERROR_MSG("out of memory");
-  elements[n++] = elem;
- 
+  //elements[n++] = {token_value, elem};  // only available from C++11 onwards, best not use it for now.
+  elements[n].symbol      = elem;
+  elements[n].token_value = token_value;
+  n++;
+  
   if (NULL == elem) return;
   /* Sometimes add_element() is called in stage3 or stage4 to temporarily add an AST symbol to the list.
    * Since this symbol already belongs in some other place in the aST, it will have the 'parent' pointer set, 
@@ -143,10 +184,21 @@ void list_c::add_element(symbol_c *elem) {
   }
 }
 
+
+/*********************************************/    
 /* insert a new element before position pos. */
+/*********************************************/    
 /* To insert into the begining of list, call with pos=0  */
 /* To insert into the end of list, call with pos=list->n */
-void list_c::insert_element(symbol_c *elem, int pos) {
+
+void list_c::insert_element(symbol_c *elem, int pos) {insert_element(elem, elem, pos);}
+
+void list_c::insert_element(symbol_c *elem, symbol_c *token, int pos) {
+  token_c *t    =  (token == NULL)? NULL : token->token;
+  insert_element(elem, (t == NULL)? NULL : t->value, pos);
+}
+
+void list_c::insert_element(symbol_c *elem, const char *token_value, int pos) {
   if((pos<0) || (n<pos)) ERROR;
   
   /* add new element to end of list. Basically alocate required memory... */
@@ -155,12 +207,15 @@ void list_c::insert_element(symbol_c *elem, int pos) {
   /* if not inserting into end position, shift all elements up one position, to open up a slot in pos for new element */
   if(pos < (n-1)){ 
     for(int i=n-2 ; i>=pos ; --i) elements[i+1] = elements[i];
-    elements[pos] = elem;
+    elements[pos].symbol      = elem;
+    elements[pos].token_value = token_value;
   }
 }
 
 
+/***********************************/    
 /* remove element at position pos. */
+/***********************************/    
 void list_c::remove_element(int pos) {
   if((pos<0) || (n<=pos)) ERROR;
   
@@ -168,12 +223,14 @@ void list_c::remove_element(int pos) {
   for (int i = pos; i < n-1; i++) elements[i] = elements[i+1];
   /* corrent the new size */
   n--;
-  /* elements = (symbol_c **)realloc(elements, n * sizeof(symbol_c *)); */
+  /* elements = (symbol_c **)realloc(elements, n * sizeof(element_entry_t)); */
   /* TODO: adjust the location parameters, taking into account the removed element. */
 }
 
 
-/* remove element at position pos. */
+/**********************************/    
+/* Remove all elements from list. */
+/**********************************/    
 void list_c::clear(void) {
   n = 0;
   /* TODO: adjust the location parameters, taking into account the removed element. */

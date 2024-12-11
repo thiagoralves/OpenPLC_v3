@@ -40,6 +40,7 @@
 
 typedef struct {
    /* options specific to stage1_2 */
+	bool allow_void_datatype;      /* Allow declaration of functions returning VOID  */
 	bool allow_missing_var_in;     /* Allow definition and invocation of POUs with no input, output and in_out parameters! */
 	bool disable_implicit_en_eno;  /* Disable the generation of implicit EN and ENO parameters on functions and Function Blocks */
 	bool pre_parsing;              /* Support forward references (Run a pre-parsing phase before the defintive parsing phase that builds the AST) */

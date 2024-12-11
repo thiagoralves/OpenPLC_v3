@@ -119,7 +119,7 @@ void *create_enumtype_conversion_functions_c::visit(enumerated_value_list_c *sym
     currentTokenList.clear();
     list = (list_c *)symbol;
     for (int i = 0; i < list->n; i++) {
-        list->elements[i]->accept(*this);
+        list->get_element(i)->accept(*this);
         currentTokenList.push_back(currentToken);
     }
 

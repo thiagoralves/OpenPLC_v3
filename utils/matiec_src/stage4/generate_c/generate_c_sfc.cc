@@ -443,7 +443,7 @@ class generate_c_sfc_elements_c: public generate_c_base_and_typeid_c {
           for(int i = 0; i < symbol->n; i++) {
             s4o.print(GET_VAR);
             s4o.print("(");
-            print_step_argument(symbol->elements[i], "X");
+            print_step_argument(symbol->get_element(i), "X");
             s4o.print(")");
             if (i < symbol->n - 1) {
               s4o.print(" && ");
@@ -452,12 +452,12 @@ class generate_c_sfc_elements_c: public generate_c_base_and_typeid_c {
           break;
         case stepset_sg:
           for(int i = 0; i < symbol->n; i++) {
-            print_set_step(symbol->elements[i]);
+            print_set_step(symbol->get_element(i));
           }
           break;
         case stepreset_sg:
           for(int i = 0; i < symbol->n; i++) {
-            print_reset_step(symbol->elements[i]);
+            print_reset_step(symbol->get_element(i));
           }
           break;
         default:
@@ -577,7 +577,7 @@ class generate_c_sfc_elements_c: public generate_c_base_and_typeid_c {
               s4o.print(s4o.indent_spaces + "if (active && __time_cmp(");
               print_step_argument(current_step, "T.value");
               s4o.print(", ");
-              symbol->action_time->accept(*this);
+              symbol->action_time->accept(*generate_c_st);
               if (strcmp(qualifier, "L") == 0)
                 s4o.print(") < 0) ");
               else
@@ -618,7 +618,7 @@ class generate_c_sfc_elements_c: public generate_c_base_and_typeid_c {
               s4o.print(" = 1;\n" + s4o.indent_spaces);
               print_action_argument(current_action, "reset_remaining_time");
               s4o.print(" = ");
-              symbol->action_time->accept(*this);
+              symbol->action_time->accept(*generate_c_st);
               s4o.print(";\n");
               s4o.indent_left();
               s4o.print(s4o.indent_spaces + "}\n");
@@ -632,7 +632,7 @@ class generate_c_sfc_elements_c: public generate_c_base_and_typeid_c {
               s4o.print("\n" + s4o.indent_spaces);
               print_action_argument(current_action, "set_remaining_time");
               s4o.print(" = ");
-              symbol->action_time->accept(*this);
+              symbol->action_time->accept(*generate_c_st);
               s4o.print(";\n");
               s4o.indent_left();
               s4o.print(s4o.indent_spaces + "}\n");
@@ -710,8 +710,8 @@ class generate_c_sfc_c: public generate_c_base_and_typeid_c {
       
       generate_c_sfc_elements->reset_transition_number();
       for(i = 0; i < symbol->n; i++) {
-        symbol->elements[i]->accept(*this);
-        generate_c_sfc_elements->generate(symbol->elements[i], generate_c_sfc_elements_c::transitionlist_sg);
+        symbol->get_element(i)->accept(*this);
+        generate_c_sfc_elements->generate(symbol->get_element(i), generate_c_sfc_elements_c::transitionlist_sg);
       }
       
       s4o.print(s4o.indent_spaces +"INT i;\n");
@@ -853,7 +853,7 @@ class generate_c_sfc_c: public generate_c_base_and_typeid_c {
       s4o.print(s4o.indent_spaces + "// Transitions reset steps\n");
       generate_c_sfc_elements->reset_transition_number();
       for(i = 0; i < symbol->n; i++) {
-        generate_c_sfc_elements->generate(symbol->elements[i], generate_c_sfc_elements_c::stepreset_sg);
+        generate_c_sfc_elements->generate(symbol->get_element(i), generate_c_sfc_elements_c::stepreset_sg);
       }
       s4o.print("\n");
       
@@ -861,14 +861,14 @@ class generate_c_sfc_c: public generate_c_base_and_typeid_c {
       s4o.print(s4o.indent_spaces + "// Transitions set steps\n");
       generate_c_sfc_elements->reset_transition_number();
       for(i = 0; i < symbol->n; i++) {
-        generate_c_sfc_elements->generate(symbol->elements[i], generate_c_sfc_elements_c::stepset_sg);
+        generate_c_sfc_elements->generate(symbol->get_element(i), generate_c_sfc_elements_c::stepset_sg);
       }
       s4o.print("\n");
       
       /* generate step association */
       s4o.print(s4o.indent_spaces + "// Steps association\n");
       for(i = 0; i < symbol->n; i++) {
-        generate_c_sfc_elements->generate(symbol->elements[i], generate_c_sfc_elements_c::actionassociation_sg);
+        generate_c_sfc_elements->generate(symbol->get_element(i), generate_c_sfc_elements_c::actionassociation_sg);
       }
       s4o.print("\n");
       
@@ -967,7 +967,7 @@ class generate_c_sfc_c: public generate_c_base_and_typeid_c {
         }
       }
       for(i = 0; i < symbol->n; i++) {
-        generate_c_sfc_elements->generate(symbol->elements[i], generate_c_sfc_elements_c::actionbody_sg);
+        generate_c_sfc_elements->generate(symbol->get_element(i), generate_c_sfc_elements_c::actionbody_sg);
       }
       s4o.print("\n");
       

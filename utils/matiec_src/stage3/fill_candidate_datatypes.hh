@@ -211,8 +211,8 @@ class fill_candidate_datatypes_c: public iterator_visitor_c {
     void *visit(initialized_structure_c *symbol);
 //  void *visit(structure_element_declaration_list_c *symbol);
 //  void *visit(structure_element_declaration_c *symbol);
-//  void *visit(structure_element_initialization_list_c *symbol);
-//  void *visit(structure_element_initialization_c *symbol);
+    void *visit(structure_element_initialization_list_c *symbol);
+    void *visit(structure_element_initialization_c *symbol);
 //  void *visit(string_type_declaration_c *symbol);
     void *visit(fb_spec_init_c *symbol);
       

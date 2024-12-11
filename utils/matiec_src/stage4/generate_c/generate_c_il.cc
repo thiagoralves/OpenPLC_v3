@@ -661,7 +661,7 @@ void *visit(subscript_list_c *symbol) {
     if (dimension == NULL) ERROR;
 
     s4o.print("[(");
-    symbol->elements[i]->accept(*this);
+    symbol->get_element(i)->accept(*this);
     s4o.print(") - (");
     dimension->accept(*this);
     s4o.print(")]");
@@ -711,9 +711,9 @@ void *visit(instruction_list_c *symbol) {
   declare_implicit_variable_back();
   
   for(int i = 0; i < symbol->n; i++) {
-    print_line_directive(symbol->elements[i]);
+    print_line_directive(symbol->get_element(i));
     s4o.print(s4o.indent_spaces);
-    symbol->elements[i]->accept(*this);
+    symbol->get_element(i)->accept(*this);
     s4o.print(";\n");
   }
   return NULL;
@@ -884,8 +884,11 @@ void *visit(il_function_call_c *symbol) {
   int fdecl_mutiplicity =  function_symtable.count(symbol->function_name);
   if (fdecl_mutiplicity == 0) ERROR;
 
-  this->implicit_variable_result.accept(*this);
-  s4o.print(" = ");
+  /* when function returns a void, we do not store the value in the default variable! */
+  if (!get_datatype_info_c::is_VOID(symbol->datatype)) {
+    this->implicit_variable_result.accept(*this);
+    s4o.print(" = ");
+  }
     
   if (function_type_prefix != NULL) {
     s4o.print("(");
@@ -1288,8 +1291,11 @@ void *visit(il_formal_funct_call_c *symbol) {
     /* function being called is NOT overloaded! */
     f_decl = NULL; 
 
-  this->implicit_variable_result.accept(*this);
-  s4o.print(" = ");
+  /* when function returns a void, we do not store the value in the default variable! */
+  if (!get_datatype_info_c::is_VOID(symbol->datatype)) {
+    this->implicit_variable_result.accept(*this);
+    s4o.print(" = ");
+  }
   
   if (function_type_prefix != NULL) {
     s4o.print("(");

@@ -184,6 +184,8 @@ void *search_base_type_c::visit(lword_type_name_c *symbol)        {return (void 
 void *search_base_type_c::visit(string_type_name_c *symbol)       {return (void *)symbol;}
 void *search_base_type_c::visit(wstring_type_name_c *symbol)      {return (void *)symbol;}
 
+/* A non standard datatype! */
+void *search_base_type_c::visit(void_type_name_c *symbol)         {return (void *)symbol;}
 
 /******************************************************/
 /* Extensions to the base standard as defined in      */
@@ -253,7 +255,7 @@ void *search_base_type_c::visit(subrange_specification_c *symbol) {
 }
 
 /*  signed_integer DOTDOT signed_integer */
-void *search_base_type_c::visit(subrange_c *symbol)                                     {ERROR; return NULL;} /* should never get called... */
+void *search_base_type_c::visit(subrange_c *symbol)                           {ERROR; return NULL;} /* should never get called... */
 
 /*  enumerated_type_name ':' enumerated_spec_init */
 void *search_base_type_c::visit(enumerated_type_declaration_c *symbol) {
@@ -291,7 +293,7 @@ void *search_base_type_c::visit(enumerated_value_list_c *symbol) {
 
 /* enumerated_type_name '#' identifier */
 // SYM_REF2(enumerated_value_c, type, value)
-void *search_base_type_c::visit(enumerated_value_c *symbol)                             {ERROR; return NULL;} /* should never get called... */
+void *search_base_type_c::visit(enumerated_value_c *symbol)                   {ERROR; return NULL;} /* should never get called... */
 
 /*  identifier ':' array_spec_init */
 void *search_base_type_c::visit(array_type_declaration_c *symbol) {
@@ -310,20 +312,20 @@ void *search_base_type_c::visit(array_spec_init_c *symbol) {
 }
 
 /* ARRAY '[' array_subrange_list ']' OF non_generic_type_name */
-void *search_base_type_c::visit(array_specification_c *symbol)                          {return (void *)symbol;}
+void *search_base_type_c::visit(array_specification_c *symbol)                {return (void *)symbol;}
 
 /* helper symbol for array_specification */
 /* array_subrange_list ',' subrange */
-void *search_base_type_c::visit(array_subrange_list_c *symbol)                          {ERROR; return NULL;} /* should never get called... */
+void *search_base_type_c::visit(array_subrange_list_c *symbol)                {ERROR; return NULL;} /* should never get called... */
 
 /* array_initialization:  '[' array_initial_elements_list ']' */
 /* helper symbol for array_initialization */
 /* array_initial_elements_list ',' array_initial_elements */
-void *search_base_type_c::visit(array_initial_elements_list_c *symbol)                  {ERROR; return NULL;} /* should never get called... */
+void *search_base_type_c::visit(array_initial_elements_list_c *symbol)        {ERROR; return NULL;} /* should never get called... */
 
 /* integer '(' [array_initial_element] ')' */
 /* array_initial_element may be NULL ! */
-void *search_base_type_c::visit(array_initial_elements_c *symbol)                       {ERROR; return NULL;} /* should never get called... */
+void *search_base_type_c::visit(array_initial_elements_c *symbol)             {ERROR; return NULL;} /* should never get called... */
 
 /*  structure_type_name ':' structure_specification */
 /* NOTE: structure_specification will point to either a
@@ -337,31 +339,27 @@ void *search_base_type_c::visit(structure_type_declaration_c *symbol)  {
 }
 
 /*  var1_list ':' structure_type_name */
-void *search_base_type_c::visit(structured_var_declaration_c *symbol) {
-	return symbol;
-}
+void *search_base_type_c::visit(structured_var_declaration_c *symbol)         {return symbol;}
 
 /* structure_type_name ASSIGN structure_initialization */
 /* structure_initialization may be NULL ! */
-void *search_base_type_c::visit(initialized_structure_c *symbol)	{
-  return symbol->structure_type_name->accept(*this);
-}
+void *search_base_type_c::visit(initialized_structure_c *symbol)              {return symbol->structure_type_name->accept(*this);}
 
 /* helper symbol for structure_declaration */
 /* structure_declaration:  STRUCT structure_element_declaration_list END_STRUCT */
 /* structure_element_declaration_list structure_element_declaration ';' */
-void *search_base_type_c::visit(structure_element_declaration_list_c *symbol)           {return (void *)symbol;}
+void *search_base_type_c::visit(structure_element_declaration_list_c *symbol) {return (void *)symbol;}
 
 /*  structure_element_name ':' *_spec_init */
-void *search_base_type_c::visit(structure_element_declaration_c *symbol)                {ERROR; return NULL;} /* should never get called... */
+void *search_base_type_c::visit(structure_element_declaration_c *symbol)      {return symbol->spec_init->accept(*this);}
 
 /* helper symbol for structure_initialization */
 /* structure_initialization: '(' structure_element_initialization_list ')' */
 /* structure_element_initialization_list ',' structure_element_initialization */
-void *search_base_type_c::visit(structure_element_initialization_list_c *symbol)        {ERROR; return NULL;} /* should never get called... */
+void *search_base_type_c::visit(structure_element_initialization_list_c *symbol) {ERROR; return NULL;} /* should never get called... */
 
 /*  structure_element_name ASSIGN value */
-void *search_base_type_c::visit(structure_element_initialization_c *symbol)             {ERROR; return NULL;} /* should never get called... */
+void *search_base_type_c::visit(structure_element_initialization_c *symbol)   {ERROR; return NULL;} /* should never get called... */
 
 /*  string_type_name ':' elementary_string_type_name string_type_declaration_size string_type_declaration_init */
 /*
@@ -370,7 +368,7 @@ SYM_REF4(string_type_declaration_c,	string_type_name,
 					string_type_declaration_size,
 					string_type_declaration_init) // may be == NULL!
 */
-void *search_base_type_c::visit(string_type_declaration_c *symbol)                      {return (void *)symbol;}
+void *search_base_type_c::visit(string_type_declaration_c *symbol)            {return (void *)symbol;}
 
 
 /*  function_block_type_name ASSIGN structure_initialization */
@@ -384,15 +382,13 @@ void *search_base_type_c::visit(fb_spec_init_c *symbol)	{
 
 /* ref_spec:  REF_TO (non_generic_type_name | function_block_type_name) */
 // SYM_REF1(ref_spec_c, type_name)
-void *search_base_type_c::visit(ref_spec_c *symbol)                                     {return (void *)symbol;}
+void *search_base_type_c::visit(ref_spec_c *symbol)                           {return (void *)symbol;}
 
 /* For the moment, we do not support initialising reference data types */
 /* ref_spec_init: ref_spec [ ASSIGN ref_initialization ]; */ 
 /* NOTE: ref_initialization may be NULL!! */
 // SYM_REF2(ref_spec_init_c, ref_spec, ref_initialization)
-void *search_base_type_c::visit(ref_spec_init_c *symbol) {
-  return symbol->ref_spec->accept(*this);
-}
+void *search_base_type_c::visit(ref_spec_init_c *symbol)                      {return symbol->ref_spec->accept(*this);}
 
 /* ref_type_decl: identifier ':' ref_spec_init */
 // SYM_REF2(ref_type_decl_c, ref_type_name, ref_spec_init)
@@ -408,9 +404,7 @@ void *search_base_type_c::visit(ref_type_decl_c *symbol)  {
 /*****************************/
 /*  FUNCTION_BLOCK derived_function_block_name io_OR_other_var_declarations function_block_body END_FUNCTION_BLOCK */
 // SYM_REF3(function_block_declaration_c, fblock_name, var_declarations, fblock_body)
-void *search_base_type_c::visit(function_block_declaration_c *symbol)                   {
-	return (void *)symbol;
-}
+void *search_base_type_c::visit(function_block_declaration_c *symbol)         {return (void *)symbol;}
 
 
 

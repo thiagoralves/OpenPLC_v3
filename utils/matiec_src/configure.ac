@@ -28,8 +28,7 @@ AC_PROG_RANLIB
 AC_PROG_AWK
 
 # Check bison version, we need a version great or equal than 2.4 to build matiec.
-version_bison="$(bison --version | sed q | cut -d' ' -f4)"
-version_bison=${version_bison:0:3}
+version_bison="$(bison --version | sed q | cut -d' ' -f4 | cut -d'.' -f1,2 )"
 
 AS_IF([awk -v ver="$version_bison" 'BEGIN { if (ver < 2.4) exit 1; }'],
 	[have_bison_correct=yes], [have_bison_correct=no])
@@ -40,6 +39,10 @@ if test "x${have_bison_correct}" = xno; then
   echo " Wrong bison version: $version_bison < 2.4 "
   echo "------------------------------------------"
   (exit 1); exit 1;
+fi
+
+if test "x$LEX" == "x:"; then
+   AC_MSG_ERROR("flex/lex is missing")
 fi
 
 # Checks for header files.

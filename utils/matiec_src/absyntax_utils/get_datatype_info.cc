@@ -127,6 +127,8 @@ class get_datatype_id_c: null_visitor_c {
     void *visit(safestring_type_name_c  *symbol) {return (void *)symbol;};
     void *visit(safewstring_type_name_c *symbol) {return (void *)symbol;};
 
+    void *visit(void_type_name_c        *symbol) {return (void *)symbol;};
+
     /********************************/
     /* B 1.3.3 - Derived data types */
     /********************************/
@@ -260,6 +262,8 @@ class get_datatype_id_str_c: public null_visitor_c {
     void *visit(safestring_type_name_c  *symbol) {return (void *)"SAFESTRING";  };
     void *visit(safewstring_type_name_c *symbol) {return (void *)"SAFEWSTRING"; };
 
+    void *visit(void_type_name_c        *symbol) {return (void *)"VOID"; };
+
     /********************************/
     /* B.1.3.2 - Generic data types */
     /********************************/
@@ -358,7 +362,7 @@ class get_struct_info_c : null_visitor_c {
     void *visit(structure_element_declaration_list_c *symbol) {
       /* now search the structure declaration */
       for(int i = 0; i < symbol->n; i++) {
-        void *tmp = symbol->elements[i]->accept(*this);
+        void *tmp = symbol->get_element(i)->accept(*this);
         if (NULL != tmp) return tmp;
       }
       return NULL; // not found!!
@@ -709,8 +713,8 @@ bool get_datatype_info_c::is_arraytype_equal_relaxed(symbol_c *first_type, symbo
   
   // comparison of each subrange start and end elements
   for (int i = 0; i < subrange_list_1->n; i++) {
-    subrange_c *subrange_1 = dynamic_cast<subrange_c *>(subrange_list_1->elements[i]);
-    subrange_c *subrange_2 = dynamic_cast<subrange_c *>(subrange_list_2->elements[i]);
+    subrange_c *subrange_1 = dynamic_cast<subrange_c *>(subrange_list_1->get_element(i));
+    subrange_c *subrange_2 = dynamic_cast<subrange_c *>(subrange_list_2->get_element(i));
     if ((NULL == subrange_1) || (NULL == subrange_2)) ERROR;
     
     /* check whether the subranges have the same values, using the result of the constant folding agorithm.
@@ -1352,6 +1356,21 @@ bool get_datatype_info_c::is_ANY_STRING_compatible(symbol_c *type_symbol) {
 
 
 
+
+bool get_datatype_info_c::is_VOID(symbol_c *type_symbol) {
+  if (type_symbol == NULL)                                     {return false;}
+  if (typeid(*type_symbol) == typeid(void_type_name_c))        {return true;}
+  return false;
+}
+
+
+
+
+
+
+
+
+
 /* Can't we do away with this?? */
 bool get_datatype_info_c::is_ANY_REAL_literal(symbol_c *type_symbol) {
   if (type_symbol == NULL)                              {return true;} /* Please make sure things will work correctly before changing this to false!! */
@@ -1381,6 +1400,7 @@ bool get_datatype_info_c::is_ANY_INT_literal(symbol_c *type_symbol) {
 
 
 invalid_type_name_c      get_datatype_info_c::invalid_type_name;
+generic_type_any_c      get_datatype_info_c::any_type_name;
 
 /**********************/
 /* B.1.3 - Data types */

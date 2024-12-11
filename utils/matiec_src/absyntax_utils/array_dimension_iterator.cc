@@ -64,7 +64,7 @@
 void* array_dimension_iterator_c::iterate_list(list_c *list) {
   void *res;
   for (int i = 0; i < list->n; i++) {
-    res = list->elements[i]->accept(*this);
+    res = list->get_element(i)->accept(*this);
     if (res != NULL)
         return res;
   }

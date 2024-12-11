@@ -167,7 +167,7 @@ void* function_param_iterator_c::handle_param_list(list_c *list) {
   switch (current_operation) {
     case iterate_op:
       if (next_param <= param_count + list->n)
-        return list->elements[next_param - param_count - 1];
+        return list->get_element(next_param - param_count - 1);
 
       /* the desired param is not on this list... */
       param_count += list->n;
@@ -175,7 +175,7 @@ void* function_param_iterator_c::handle_param_list(list_c *list) {
 
     case search_op:
       for(int i = 0; i < list->n; i++) {
-        symbol_c *sym = list->elements[i];
+        symbol_c *sym = list->get_element(i);
         extensible_input_parameter_c *extensible_parameter = dynamic_cast<extensible_input_parameter_c *>(sym);
         if (extensible_parameter != NULL) {
           sym = extensible_parameter->var_name;
@@ -243,7 +243,7 @@ void* function_param_iterator_c::handle_single_param(symbol_c *var_name) {
 void* function_param_iterator_c::iterate_list(list_c *list) {
   void *res;
   for (int i = 0; i < list->n; i++) {
-    res = list->elements[i]->accept(*this);
+    res = list->get_element(i)->accept(*this);
     if (res != NULL)
         return res;
   }
