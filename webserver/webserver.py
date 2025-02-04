@@ -13,6 +13,8 @@ import monitoring as monitor
 import sys
 import ctypes
 import socket
+from PIL import Image
+import mimetypes
 
 import flask 
 import flask_login
@@ -26,6 +28,22 @@ openplc_runtime = openplc.runtime()
 
 class User(flask_login.UserMixin):
     pass
+
+# Allowed file types (MIME types for images)
+ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif']
+
+# Function to check MIME type and magic number
+def is_allowed_file(file):
+    mime_type, _ = mimetypes.guess_type(file.filename)
+    if mime_type not in ALLOWED_MIME_TYPES:
+        return False
+
+    try:
+        image = Image.open(file)
+        image.verify()  # Verifies the image integrity and format
+        return True
+    except (IOError, SyntaxError):
+        return False
 
 
 def configure_runtime():
@@ -1898,6 +1916,10 @@ def add_user():
                     if (form_has_picture):
                         pict_file = flask.request.files['file']
                         if (pict_file.filename != ''):
+                            # Ensure the file is allowed
+                            if not is_allowed_file(pict_file):
+                                return 'Invalid file format. Only JPEG, PNG, and GIF images are allowed.', 400
+
                             file_extension = pict_file.filename.split('.')
                             filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
                             pict_file.save(os.path.join('static', filename))
@@ -2032,6 +2054,10 @@ def edit_user():
                     if (form_has_picture):
                         pict_file = flask.request.files['file']
                         if (pict_file.filename != ''):
+                            # Ensure the file is allowed
+                            if not is_allowed_file(pict_file):
+                                return 'Invalid file format. Only JPEG, PNG, and GIF images are allowed.', 400
+                            
                             file_extension = pict_file.filename.split('.')
                             filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
                             pict_file.save(os.path.join('static', filename))
