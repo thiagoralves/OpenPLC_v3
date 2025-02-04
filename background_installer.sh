@@ -110,9 +110,9 @@ function install_py_deps {
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" -m pip install --upgrade pip
     if [ "$1" == "neuron" ]; then
-        "$VENV_DIR/bin/python3" -m pip install flask==2.2.5 werkzeug==2.2.2 flask-login==0.6.2 pyserial pymodbus==2.5.3
+        "$VENV_DIR/bin/python3" -m pip install flask==2.2.5 werkzeug==2.2.2 flask-login==0.6.2 pyserial pymodbus==2.5.3 pillow
     else
-        "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
+        "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3 pillow
     fi
     python3 -m pip install pymodbus==2.5.3
 }
