@@ -315,7 +315,7 @@ elif [ "$1" == "win_msys2" ]; then
     #Setting up venv
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" get-pip3.py
-    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
+    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3 pillow
     
     echo ""
     echo "[MATIEC COMPILER]"
