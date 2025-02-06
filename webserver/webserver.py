@@ -13,7 +13,6 @@ import monitoring as monitor
 import sys
 import ctypes
 import socket
-from PIL import Image
 import mimetypes
 
 import flask 
@@ -29,22 +28,35 @@ openplc_runtime = openplc.runtime()
 class User(flask_login.UserMixin):
     pass
 
-# Allowed file types (MIME types for images)
-ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif']
+# Allowed MIME types and magic numbers (file signatures)
+IMAGE_MAGIC_NUMBERS = {
+    b'\xFF\xD8\xFF': 'image/jpeg',  # JPEG
+    b'\x89PNG\r\n\x1A\n': 'image/png',  # PNG
+    b'GIF87a': 'image/gif',  # GIF87a
+    b'GIF89a': 'image/gif',  # GIF89a
+}
 
-# Function to check MIME type and magic number
+# Function to check MIME type and file signature
 def is_allowed_file(file):
+    # First, check the MIME type based on the file extension
     mime_type, _ = mimetypes.guess_type(file.filename)
-    if mime_type not in ALLOWED_MIME_TYPES:
+    if mime_type not in IMAGE_MAGIC_NUMBERS.values():
         return False
 
     try:
-        image = Image.open(file)
-        image.verify()  # Verifies the image integrity and format
-        return True
-    except (IOError, SyntaxError):
-        return False
+        # Read the first 8 bytes of the file to determine its magic number
+        file.seek(0)  # Ensure we're at the start of the file
+        file_header = file.read(8)
+        file.seek(0)  # Reset file pointer after reading
 
+        # Check if the file header matches a known image format
+        for magic, expected_mime in IMAGE_MAGIC_NUMBERS.items():
+            if file_header.startswith(magic):
+                return True
+
+        return False
+    except Exception:
+        return False
 
 def configure_runtime():
     global openplc_runtime
