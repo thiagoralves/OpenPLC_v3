@@ -1,9 +1,10 @@
 import sqlite3
 from sqlite3 import Error
 import os
+import glob
 import subprocess
 import platform
-import serial.tools.list_ports
+import serial
 import random
 import datetime
 import time
@@ -35,6 +36,31 @@ IMAGE_MAGIC_NUMBERS = {
     b'GIF87a': 'image/gif',  # GIF87a
     b'GIF89a': 'image/gif',  # GIF89a
 }
+
+def get_serial_ports() -> list:
+    """
+    :return: List of available serial ports
+    """
+    platform = sys.platform
+
+    if platform.startswith('win'):
+        ports = [f'COM{n + 1}' for n in range(256)]
+    elif platform.startswith('linux') or platform.startswith('cygwin'):
+        ports = glob.glob('/dev/tty[A-Za-z]*')
+    elif platform.startswith('darwin'):
+        ports = glob.glob('/dev/tty.*')
+
+    result = []
+
+    for port in ports:
+        try:
+            s = serial.Serial(port)
+            s.close()
+            result.append(port)
+        except (OSError, serial.SerialException):
+            pass
+
+    return result
 
 # Function to check MIME type and file signature
 def is_allowed_file(file):
@@ -1154,7 +1180,7 @@ def add_modbus_device():
                             <label for='dev_cport'><b>COM Port</b></label>
                             <select id='dev_cport' name='device_cport'>"""
                             
-            ports = [comport.device for comport in serial.tools.list_ports.comports()]
+            ports = get_serial_ports()
             for port in ports:
                 if (platform.system().startswith("CYGWIN")):
                     port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
@@ -1292,7 +1318,7 @@ def modbus_edit_device():
                     return_str += "<div id=\"tcp-stuff\" style=\"display: none\"><label for='dev_ip'><b>IP Address</b></label><input type='text' id='dev_ip' name='device_ip' placeholder='192.168.0.1' value='" + str(row[9]) + "'>"
                     return_str += "<label for='dev_port'><b>IP Port</b></label><input type='text' id='dev_port' name='device_port' placeholder='502' value='" + str(row[10]) + "'></div>"
                     return_str += "<div id=\"rtu-stuff\"><label for='dev_cport'><b>COM Port</b></label><select id='dev_cport' name='device_cport'>"
-                    ports = [comport.device for comport in serial.tools.list_ports.comports()]
+                    ports = get_serial_ports()
                     for port in ports:
                         if (platform.system().startswith("CYGWIN")):
                             port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
