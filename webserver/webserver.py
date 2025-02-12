@@ -1294,7 +1294,7 @@ def modbus_edit_device():
                     return_str += "<div id=\"rtu-stuff\"><label for='dev_cport'><b>COM Port</b></label><select id='dev_cport' name='device_cport'>"
                     ports = [comport.device for comport in serial.tools.list_ports.comports()]
                     for port in ports:
-                        if (platform.system().startswith("CYGWIN")):
+                        if (platform.system().startswith("CYGWIN")) or (platform.system().startswith("MSYS_NT")):
                             port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
                         else:
                             port_name = port
