@@ -36,7 +36,7 @@ SOFTWARE.
 #include <pthread.h>
 
 #include "ladder.h"
-#include "custom_layer.h"
+//#include "custom_layer.h"
 
 #define NUMBER_OF_MODULES	15 
 #define slaveSelectPin 		27
