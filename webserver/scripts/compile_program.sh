@@ -35,9 +35,9 @@ if [ "$S7_OPT" = "s7protocol" ]; then
     S7_LIB="-lsnap7"
     S7_DEF="-D _snap7"
     S7_WLIB="snap7.lib"
-    cp ../utils/snap7_src/wrapper/oplc_snap7.* ./core
+    cp -f ../utils/snap7_src/wrapper/oplc_snap7.* ./core
     if [ "$OPENPLC_PLATFORM" = "win" ]; then
-        cp ../utils/snap7_src/build/bin/win64/snap7.* ./core
+        cp -f ../utils/snap7_src/build/bin/win64/snap7.* ./core
     fi
     echo "Including Siemens S7 Protocol via snap7"
 else
