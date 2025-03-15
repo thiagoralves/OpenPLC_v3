@@ -339,7 +339,7 @@ void ReadHoldingRegisters(unsigned char *buffer, int bufferSize)
     for(int i = 0; i < WordDataLength; i++)
     {
         int position = Start + i;
-        if (position < MIN_16B_RANGE) 
+        if (position < MIN_16B_RANGE)  
         {
             if (int_output[position] != NULL)
             {
