@@ -212,6 +212,13 @@ function install_libmodbus {
     fi
 }
 
+function install_libsnap7 {
+    echo "[LIBSNAP7]"
+    cd "$OPENPLC_DIR/utils/snap7_src/build/linux"
+    $1 make install || fail "Error installing Libsnap7"
+    cd "$OPENPLC_DIR"
+}
+
 function install_systemd_service() {
     if [ "$1" == "sudo" ]; then
         echo "[OPENPLC SERVICE]"
@@ -245,6 +252,7 @@ function install_all_libs {
     install_opendnp3 "$1"
     disable_ethercat "$1"
     install_libmodbus "$1"
+    install_libsnap7 "$1"
 }
 
 function finalize_install {
