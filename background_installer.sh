@@ -215,6 +215,7 @@ function install_libmodbus {
 function install_libsnap7 {
     echo "[LIBSNAP7]"
     cd "$OPENPLC_DIR/utils/snap7_src/build/linux"
+    $1 make clean
     $1 make install || fail "Error installing Libsnap7"
     cd "$OPENPLC_DIR"
 }
