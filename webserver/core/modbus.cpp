@@ -138,7 +138,7 @@ void mapUnusedIO()
 
     for (int i = 0; i <= MAX_16B_RANGE; i++)
     {
-        if (i < MIN_16B_RANGE)
+        if (i < MIN_16B_RANGE)  
         {
             if (int_output[i] == NULL)
             {
@@ -339,7 +339,7 @@ void ReadHoldingRegisters(unsigned char *buffer, int bufferSize)
     for(int i = 0; i < WordDataLength; i++)
     {
         int position = Start + i;
-        if (position <= MIN_16B_RANGE)
+        if (position < MIN_16B_RANGE)  
         {
             if (int_output[position] != NULL)
             {
@@ -575,7 +575,7 @@ void WriteCoil(unsigned char *buffer, int bufferSize)
 int writeToRegisterWithoutLocking(int position, uint16_t value)
 {
     //analog outputs
-    if (position <= MIN_16B_RANGE)
+    if (position < MIN_16B_RANGE) 
     {
         if (int_output[position] != NULL) *int_output[position] = value;
     }
