@@ -119,6 +119,7 @@ def checkTableSettings(conn):
     checkSettingExists(conn, 'Modbus_port', '502')
     checkSettingExists(conn, 'Dnp3_port', '20000')
     checkSettingExists(conn, 'Start_run_mode', 'false')
+    checkSettingExists(conn, 'snap7', 'false')
     checkSettingExists(conn, 'Slave_polling', '100')
     checkSettingExists(conn, 'Slave_timeout', '1000')
     checkSettingExists(conn, 'Enip_port', '44818')
