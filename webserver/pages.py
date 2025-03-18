@@ -134,7 +134,7 @@ login_body = """
                     <button>login</button>
                 </form>
               </div>
-              <h3 style="font-family:'roboto', sans-serif; font-size:14px; color:#ffffff;">Release: 2025-02-06</h3>
+              <h3 style="font-family:'roboto', sans-serif; font-size:14px; color:#ffffff;">Release: 2025-03-17</h3>
             </div>
         </div>
     </body>
@@ -1202,6 +1202,8 @@ settings_tail = """
             var pstorage_text = document.getElementById('pstorage_thread_poll');
             var auto_run_checkbox = document.getElementById('auto_run');
             var auto_run_text = document.getElementById('auto_run_text');
+            var snap7_run_checkbox = document.getElementById('snap7_run');
+            var snap7_run_text = document.getElementById('snap7_run_text');
             
             if (modbus_checkbox.checked == true)
             {
@@ -1247,6 +1249,14 @@ settings_tail = """
             {
                 auto_run_text.value = 'false';
             }
+            if (snap7_run_checkbox.checked == true)
+            {
+                snap7_run_text.value = 'true';
+            }
+            else
+            {
+                snap7_run_text.value = 'false';
+            }
         }
 
         document.getElementById('modbus_server').onchange = function()
@@ -1270,6 +1280,11 @@ settings_tail = """
         }
         
         document.getElementById('auto_run').onchange = function()
+        {
+            setupCheckboxes();
+        }
+        
+        document.getElementById('snap7_run').onchange = function()
         {
             setupCheckboxes();
         }
