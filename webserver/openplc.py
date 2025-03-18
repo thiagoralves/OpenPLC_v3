@@ -196,6 +196,12 @@ class runtime:
     def stop_modbus(self):
         return self._rpc(f'stop_modbus()')
 
+    def start_snap7(self):
+        return self._rpc(f'start_snap7()')
+
+    def stop_snap7(self):
+        return self._rpc(f'stop_snap7()')
+
     def start_dnp3(self, port_num):
         return self._rpc(f'start_dnp3({port_num})')
         
