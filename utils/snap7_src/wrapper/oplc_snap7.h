@@ -943,8 +943,8 @@ typedef TS7Partner *PS7Partner;
 
 void initializeSnap7();
 void finalizeSnap7();
-
-
+void startSnap7();
+void stopSnap7();
 
 #endif // __cplusplus
 #endif // snap7_h

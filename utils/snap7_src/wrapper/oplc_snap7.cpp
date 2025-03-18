@@ -749,6 +749,7 @@ bool TS7Partner::Linked()
 //******************************************************************************
 
 TS7Server *Server = NULL;
+bool s7Inited = false;
 #define MAX_S7IO BUFFER_SIZE*8
 #define MK_SIZE 16   
 
@@ -1248,32 +1249,56 @@ int S7API RWAreaCallBack(void* usrPtr, int Sender, int Operation, PS7Tag PTag, v
 //------------------------------------------------------------------------------
 void initializeSnap7()
 {
-    s7mapUnusedVars();
+    if (!s7Inited)
+    {
+        s7mapUnusedVars();
 
-    Server = new TS7Server;
-    // With the next function we can limit the events to start/stop/client added etc.
-    // For a deep debug comment the line
-    Server->SetEventsMask(0x3ff);
-    // Set the Server events callback
-    Server->SetEventsCallback(EventCallBack, NULL);
+        Server = new TS7Server;
+        // With the next function we can limit the events to start/stop/client added etc.
+        // For a deep debug comment the line
+        Server->SetEventsMask(0x3ff);
+        // Set the Server events callback
+        Server->SetEventsCallback(EventCallBack, NULL);
 
-    // Shared resources:
-    // We cannot directly share OpenPLC internal buffers, because:
-    // 1 - They are array of pointers to vars
-    // 2 - The access would be not synchronized (i.e. not consistent)
-    // So, we will use a callback and, inside it, we will perform a synchronized data transfer.
-    Server->SetRWAreaCallback(RWAreaCallBack, NULL);
-    // Listen on S7 Port (102)
-    Server->StartTo("0.0.0.0"); // Success or fail will be logged into EventCallBack   
+        // Shared resources:
+        // We cannot directly share OpenPLC internal buffers, because:
+        // 1 - They are array of pointers to vars
+        // 2 - The access would be not synchronized (i.e. not consistent)
+        // So, we will use a callback and, inside it, we will perform a synchronized data transfer.
+        Server->SetRWAreaCallback(RWAreaCallBack, NULL);
+        s7Inited = true;
+    }
  }
+
+//------------------------------------------------------------------------------
+// Snap7 Server start
+//------------------------------------------------------------------------------
+void startSnap7()
+{
+    // Listen on S7 Port 102. 
+    // If Server is already running the command will be ignored.
+    if (s7Inited)
+        Server->StartTo("0.0.0.0"); // Success or fail will be logged into EventCallBack   
+}
+
+//------------------------------------------------------------------------------
+// Snap7 Server stop
+//------------------------------------------------------------------------------
+void stopSnap7()
+{
+    // If Server is already stopped the command will be ignored.
+    if (s7Inited)
+        Server->Stop();
+}
 
 //------------------------------------------------------------------------------
 // Snap7 Server destruction
 //------------------------------------------------------------------------------
 void finalizeSnap7()
 {
-    if (Server != NULL)
+    if (s7Inited)
     {
+        s7Inited = false;
         Server->Stop();
         delete Server;
         Server = NULL;
