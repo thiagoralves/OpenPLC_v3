@@ -37,9 +37,7 @@
 #include "ethercat_src.h"
 #endif
 
-#ifdef _snap7
 #include "oplc_snap7.h"
-#endif
 
 #define OPLC_CYCLE          50000000
 
@@ -119,10 +117,11 @@ int main(int argc,char **argv)
     readPersistentStorage();
     //pthread_t persistentThread;
     //pthread_create(&persistentThread, NULL, persistentStorage, NULL);
-  
-#ifdef _snap7
+
+    //======================================================
+    //            S7 PROTOCOL INITIALIZATION
+    //======================================================
     initializeSnap7();
-#endif
 
 
 
@@ -253,10 +252,7 @@ int main(int argc,char **argv)
     ethercat_terminate_src();
 #endif
 
-#ifdef _snap7
     finalizeSnap7();
-#endif
-
     printf("Disabling outputs\n");
     disableOutputs();
     updateBuffersOut();

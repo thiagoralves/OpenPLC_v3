@@ -1202,6 +1202,8 @@ settings_tail = """
             var pstorage_text = document.getElementById('pstorage_thread_poll');
             var auto_run_checkbox = document.getElementById('auto_run');
             var auto_run_text = document.getElementById('auto_run_text');
+            var snap7_run_checkbox = document.getElementById('snap7_run');
+            var snap7_run_text = document.getElementById('snap7_run_text');
             
             if (modbus_checkbox.checked == true)
             {
@@ -1247,6 +1249,14 @@ settings_tail = """
             {
                 auto_run_text.value = 'false';
             }
+            if (snap7_run_checkbox.checked == true)
+            {
+                snap7_run_text.value = 'true';
+            }
+            else
+            {
+                snap7_run_text.value = 'false';
+            }
         }
 
         document.getElementById('modbus_server').onchange = function()
@@ -1270,6 +1280,11 @@ settings_tail = """
         }
         
         document.getElementById('auto_run').onchange = function()
+        {
+            setupCheckboxes();
+        }
+        
+        document.getElementById('snap7_run').onchange = function()
         {
             setupCheckboxes();
         }

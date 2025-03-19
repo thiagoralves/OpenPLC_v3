@@ -335,6 +335,8 @@ elif [ "$1" == "win_msys2" ]; then
         exit 1
     fi
 
+    cp -f ./utils/snap7_src/build/bin/win64/snap7.* ./webserver/core/
+
     install_st_optimizer
     install_glue_generator
     disable_opendnp3

@@ -93,6 +93,13 @@ def configure_runtime():
                     else:
                         print("Disabling EtherNet/IP")
                         openplc_runtime.stop_enip()
+                elif (row[0] == "snap7"):
+                    if (row[1] != "false"):
+                        print("Enabling S7 Protocol")
+                        openplc_runtime.start_snap7()
+                    else:
+                        print("Disabling S7 Protocol")
+                        openplc_runtime.stop_snap7()
                 elif (row[0] == "Pstorage_polling"):
                     if (row[1] != "disabled"):
                         print("Enabling Persistent Storage with polling rate of " + str(int(row[1])) + " seconds")
@@ -2188,6 +2195,9 @@ def settings():
                             slave_polling = str(row[1])
                         elif (row[0] == "Slave_timeout"):
                             slave_timeout = str(row[1])
+                        elif (row[0] == "snap7"):
+                            start_snap7 = str(row[1])
+                            
                     
                     if (modbus_port == 'disabled'):
                         return_str += """
@@ -2206,6 +2216,25 @@ def settings():
                         
                     return_str += """
                         <br>
+                        <br>
+                        <br>
+                        <label class="container">
+                            <b>Enable S7 Protocol</b>"""
+                            
+                    if (start_snap7 == 'false'):
+                        return_str += """
+                            <input id="snap7_run" type="checkbox">
+                            <span class="checkmark"></span>
+                        </label>
+                        <input type='hidden' value='false' id='snap7_run_text' name='snap7_run_text'/>"""
+                    else:
+                        return_str += """
+                            <input id="snap7_run" type="checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <input type='hidden' value='true' id='snap7_run_text' name='snap7_run_text'/>"""
+
+                    return_str += """
                         <br>
                         <br>
                         <label class="container">
@@ -2288,8 +2317,8 @@ def settings():
                             <input id="auto_run" type="checkbox" checked>
                             <span class="checkmark"></span>
                         </label>
-                        <input type='hidden' value='true' id='auto_run_text' name='auto_run_text'/>"""
-                    
+                        <input type='hidden' value='true' id='auto_run_text' name='auto_run_text'/>"""                   
+
                     return_str += """
                         <br>
                         <h2>Slave Devices</h2>
@@ -2318,11 +2347,12 @@ def settings():
             enip_port = flask.request.form.get('enip_server_port')
             pstorage_poll = flask.request.form.get('pstorage_thread_poll')
             start_run = flask.request.form.get('auto_run_text')
+            start_snap7 = flask.request.form.get('snap7_run_text')
             slave_polling = flask.request.form.get('slave_polling_period')
             slave_timeout = flask.request.form.get('slave_timeout')
             device_hostname = flask.request.form.get('device_hostname')
 
-            (modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, slave_polling, slave_timeout, device_hostname) = sanitize_input(modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, slave_polling, slave_timeout, device_hostname)
+            (modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, start_snap7, slave_polling, slave_timeout, device_hostname) = sanitize_input(modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, start_snap7, slave_polling, slave_timeout, device_hostname)
 
             # Change hostname if needed
             current_hostname = socket.gethostname()
@@ -2369,6 +2399,13 @@ def settings():
                         cur.execute("UPDATE Settings SET Value = 'false' WHERE Key = 'Start_run_mode'")
                         conn.commit()
                         
+                    if (start_snap7 == 'true'):
+                        cur.execute("UPDATE Settings SET Value = 'true' WHERE Key = 'snap7'")
+                        conn.commit()
+                    else:
+                        cur.execute("UPDATE Settings SET Value = 'false' WHERE Key = 'snap7'")
+                        conn.commit()
+
                     cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Slave_polling'", (str(slave_polling),))
                     conn.commit()
                     

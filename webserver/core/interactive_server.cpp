@@ -36,6 +36,8 @@
 #include <time.h>
 
 #include "ladder.h"
+#include "oplc_snap7.h"
+
 #define BUFFER_SIZE 1024
 
 //Global Variables
@@ -43,6 +45,7 @@ bool ethercat_configured = 0;
 char ethercat_conf_file[BUFFER_SIZE];
 bool run_modbus = 0;
 uint16_t modbus_port = 502;
+bool run_snap7 = 0;
 bool run_dnp3 = 0;
 uint16_t dnp3_port = 20000;
 bool run_enip = 0;
@@ -263,6 +266,13 @@ void processCommand(unsigned char *buffer, int client_fd)
             sprintf(log_msg, "DNP3 server was stopped\n");
             log(log_msg);
         }
+        if (run_snap7)
+        {
+            run_snap7 = 0;
+            stopSnap7();
+            sprintf(log_msg, "Snap7 server was stopped\n");
+            log(log_msg);
+        }
         run_openplc = 0;
         processing_command = false;
     }
@@ -310,6 +320,40 @@ void processCommand(unsigned char *buffer, int client_fd)
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
             sprintf(log_msg, "Modbus server was stopped\n");
+            log(log_msg);
+        }
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "start_snap7()", 13) == 0)
+    {
+        processing_command = true;
+        sprintf(log_msg, "Issued start_snap7() command\n");
+        log(log_msg);
+        if (run_snap7)
+        {
+            sprintf(log_msg, "Snap7 server already active. Restarting it\n");
+            log(log_msg);
+            //Stop Modbus server
+            run_snap7 = 0;
+            stopSnap7();
+            sprintf(log_msg, "Snap7 server was stopped\n");
+            log(log_msg);
+        }
+        //Start Modbus server
+        run_snap7 = 1;
+        startSnap7();
+        processing_command = false;
+    }
+    else if (strncmp(buffer, "stop_snap7()", 12) == 0)
+    {
+        processing_command = true;
+        sprintf(log_msg, "Issued stop_snap7() command\n");
+        log(log_msg);
+        if (run_snap7)
+        {
+            run_snap7 = 0;
+            stopSnap7();
+            sprintf(log_msg, "Snap7 server was stopped\n");
             log(log_msg);
         }
         processing_command = false;
