@@ -1,4 +1,4 @@
-FROM debian:bullseye-20240722
+FROM debian:stable
 
 COPY . /workdir
 
@@ -7,6 +7,23 @@ WORKDIR /workdir
 RUN mkdir /docker_persistent
 
 VOLUME /docker_persistent
+
+# get git, wget, dpkg-dev and gettext
+RUN apt update && apt install -y \
+ git \
+ wget \
+ dpkg-dev \
+ gettext
+
+# clone WiringPi
+RUN git clone https://github.com/WiringPi/WiringPi.git /api
+
+# change the directory
+WORKDIR /api
+
+# build wiringPi and install it
+RUN ./build debian \
+    && apt install -y ./debian-template/wiringpi_3.14_arm64.deb
 
 RUN ./install.sh docker \
     && touch /docker_persistent/mbconfig.cfg \
