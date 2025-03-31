@@ -1,7 +1,7 @@
 #!/bin/bash
 OPENPLC_DIR="$PWD"
 SWAP_FILE="$OPENPLC_DIR/swapfile"
-WIRINGPI_VERSION="3.4"
+WIRINGPI_VERSION="3.14"  # Support RPi 1..5, CM5, CM5(L), Pi500, GCLK (Generic Clock) for RPi5 is not supported.
 VENV_DIR="$OPENPLC_DIR/.venv"
 
 function print_help_and_exit {
@@ -71,24 +71,6 @@ function install_wiringpi {
         sudo apt install -f
         rm -f "$OPENPLC_DIR/$FILE"
     ) || fail "Failed to install wiringpi."
-}
-
-function install_pigpio {
-    echo "[PIGPIO]"
-    echo "Trying distribution package..."
-    sudo apt-get install -y pigpio && return 0
-
-    echo "Falling back to direct download..."
-    local URL="https://github.com/joan2937/pigpio/archive/master.zip"
-    (
-        set -e
-        wget -c "$URL"
-        unzip master.zip
-        cd pigpio-master
-        make
-        sudo make install
-        rm -f master.zip
-    )
 }
 
 function install_wiringop {
@@ -369,7 +351,7 @@ elif [ "$1" == "docker" ]; then
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
     linux_install_deps sudo
-    install_pigpio
+    install_wiringpi
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo

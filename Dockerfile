@@ -8,6 +8,7 @@ RUN mkdir /docker_persistent
 
 VOLUME /docker_persistent
 
+# setup docker
 RUN ./install.sh docker \
     && touch /docker_persistent/mbconfig.cfg \
     && touch /docker_persistent/persistent.file \
