@@ -37,6 +37,13 @@
 #define MAX_MODBUS 100
 #define NET_BUFFER_SIZE 10000
 
+#define THREAD_ARGS_MAGIC 0xADE0BEDD
+
+typedef struct {
+    int magic;
+    int client_fd;
+    int protocol_type;
+} thread_args_t;;
 
 //-----------------------------------------------------------------------------
 // Verify if all errors were cleared on a socket
@@ -198,9 +205,19 @@ void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int pr
 void *handleConnections(void *arguments)
 {
     char log_msg[1000];
-    int *args = (int *)arguments;
-    int client_fd = args[0];
-    int protocol_type = args[1];
+    int client_fd = 0;
+    int protocol_type = 0;
+    thread_args_t *args = (thread_args_t *)calloc(1, sizeof(thread_args_t));
+            args->magic = THREAD_ARGS_MAGIC;
+            if (args->magic != THREAD_ARGS_MAGIC) {
+                sprintf(log_msg, "Server: Invalid arguments structure in handleConnections! Magic value: 0x%X\n",args->magic);
+                log(log_msg);
+            }
+            else {
+                client_fd = args->client_fd;
+                protocol_type = args->protocol_type;
+            }
+    free(args);
     unsigned char buffer[NET_BUFFER_SIZE];
     int messageSize;
     bool *run_server;
@@ -268,7 +285,7 @@ void startServer(uint16_t port, int protocol_type)
     while(*run_server)
     {
         client_fd = waitForClient(socket_fd, protocol_type); //block until a client connects
-        if (client_fd < 0)
+        if (client_fd < 0 )
         {
             sprintf(log_msg, "Server: Error accepting client!\n");
             log(log_msg);
@@ -281,12 +298,20 @@ void startServer(uint16_t port, int protocol_type)
             int ret = -1;
             sprintf(log_msg, "Server: Client accepted! Creating thread for the new client ID: %d...\n", client_fd);
             log(log_msg);
-            arguments[0] = client_fd;
-            arguments[1] = protocol_type;
-            ret = pthread_create(&thread, NULL, handleConnections, (void*)arguments);
-            if (ret==0) 
-            {
-                pthread_detach(thread);
+            thread_args_t *args = (thread_args_t *)calloc(1, sizeof(thread_args_t));
+            args->magic = THREAD_ARGS_MAGIC;
+            if (args->magic != THREAD_ARGS_MAGIC) {
+                sprintf(log_msg, "Server: Invalid arguments structure! Magic value: 0x%X\n",args->magic);
+                log(log_msg);
+            }
+            else {
+                args->client_fd = client_fd;
+                args->protocol_type = protocol_type;
+                ret = pthread_create(&thread, NULL, handleConnections, (void *)args);
+                if (ret==0) 
+                {
+                    pthread_detach(thread);
+                }
             }
         }
     }
