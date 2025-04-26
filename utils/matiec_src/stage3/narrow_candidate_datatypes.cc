@@ -107,8 +107,8 @@ static void set_datatype(symbol_c *datatype, symbol_c *symbol) {
 
 
 /* Only set the symbol's desired datatype to 'datatype' if that datatype is in the candidate_datatype list */
-// static void set_datatype_in_prev_il_instructions(symbol_c *datatype, std::vector <symbol_c *> prev_il_instructions) {
-static void set_datatype_in_prev_il_instructions(symbol_c *datatype, il_instruction_c *symbol) {
+// NOTE: This function is virtual! The forced_narrow_candidate_datatypes_c has a slightly different version of this fuinction!!
+void narrow_candidate_datatypes_c::set_datatype_in_prev_il_instructions(symbol_c *datatype, il_instruction_c *symbol) {
 	if (NULL == symbol) ERROR;
 	for (unsigned int i = 0; i < symbol->prev_il_instruction.size(); i++)
 		set_datatype(datatype, symbol->prev_il_instruction[i]);
@@ -609,8 +609,8 @@ void *narrow_candidate_datatypes_c::visit(enumerated_spec_init_c *symbol) {retur
 // SYM_LIST(enumerated_value_list_c)
 void *narrow_candidate_datatypes_c::visit(enumerated_value_list_c *symbol) {
 //if (NULL == symbol->datatype) ERROR;  // Comented out-> Reserve this check for the print_datatypes_error_c ???  
-  for(int i = 0; i < symbol->n; i++) set_datatype(symbol->datatype, symbol->elements[i]);
-//for(int i = 0; i < symbol->n; i++) if (NULL == symbol->elements[i]->datatype) ERROR; // Comented out-> Reserve this check for the print_datatypes_error_c ???  
+  for(int i = 0; i < symbol->n; i++) set_datatype(symbol->datatype, symbol->get_element(i));
+//for(int i = 0; i < symbol->n; i++) if (NULL == symbol->get_element(i)->datatype) ERROR; // Comented out-> Reserve this check for the print_datatypes_error_c ???  
   return NULL;  
 }
 
@@ -672,11 +672,45 @@ void *narrow_candidate_datatypes_c::visit(initialized_structure_c *symbol) {retu
 /* structure_initialization: '(' structure_element_initialization_list ')' */
 /* structure_element_initialization_list ',' structure_element_initialization */
 // SYM_LIST(structure_element_initialization_list_c)
-// Not needed ???
+void *narrow_candidate_datatypes_c::visit(structure_element_initialization_list_c *symbol) {
+	symbol_c *type = NULL;
+
+	 // first try to narrow with the correct type, if valid.
+	if (!get_datatype_info_c::is_type_valid(type)) type = symbol->datatype;
+	 // to reduce number of error messages, we try to narrow with parent's spec_init->datatype
+	if (!get_datatype_info_c::is_type_valid(type)) type = symbol->parent->datatype;
+
+	if (get_datatype_info_c::is_type_valid(type)) {
+		// We need to iterate and determine the required datatype of each structure element
+		// assume type is a FB type
+		search_varfb_instance_type_c search_varfb_instance_type(type);
+		// assume type is a STRUCT type
+		structure_element_declaration_list_c *struct_decl = dynamic_cast<structure_element_declaration_list_c *>(type);
+		for (int k = 0; k < symbol->n; k++) {
+			structure_element_initialization_c *struct_elem = (structure_element_initialization_c *)symbol->get_element(k);
+			symbol_c *type = NULL;
+			if (struct_decl == NULL) {
+				// type is not a struct. Must be a FB.
+				type = search_varfb_instance_type.get_basetype_decl(struct_elem->structure_element_name);
+			} else {
+				// type is a struct.
+				type = search_base_type_c::get_basetype_decl(struct_decl->find_element(struct_elem->structure_element_name));
+			}
+			set_datatype(type, struct_elem);
+			struct_elem->accept(*this);
+			/* We do best effort narrowing, even in the presence of errors, to reduce number of error messages
+			 * so the following two assertions are not always met.
+			 */
+			// if (!get_datatype_info_c::is_type_valid(type)) ERROR;  
+			// if (struct_elem->datatype == NULL) ERROR; // should never occur. Already checked in fill_candidate_datatypes_c
+		}
+	}
+	return NULL;
+}
 
 /*  structure_element_name ASSIGN value */
 // SYM_REF2(structure_element_initialization_c, structure_element_name, value)
-// Not needed ???
+void *narrow_candidate_datatypes_c::visit(structure_element_initialization_c *symbol) {set_datatype(symbol->datatype, symbol->value); symbol->value->accept(*this); return NULL;}
 
 /*  string_type_name ':' elementary_string_type_name string_type_declaration_size string_type_declaration_init */
 // SYM_REF4(string_type_declaration_c, string_type_name, elementary_string_type_name, string_type_declaration_size, string_type_declaration_init/* may be == NULL! */) 
@@ -754,11 +788,11 @@ void *narrow_candidate_datatypes_c::visit(array_variable_c *symbol) {
 // SYM_LIST(subscript_list_c)
 void *narrow_candidate_datatypes_c::visit(subscript_list_c *symbol) {
 	for (int i = 0; i < symbol->n; i++) {
-		for (unsigned int k = 0; k < symbol->elements[i]->candidate_datatypes.size(); k++) {
-			if (get_datatype_info_c::is_ANY_INT(symbol->elements[i]->candidate_datatypes[k]))
-				symbol->elements[i]->datatype = symbol->elements[i]->candidate_datatypes[k];
+		for (unsigned int k = 0; k < symbol->get_element(i)->candidate_datatypes.size(); k++) {
+			if (get_datatype_info_c::is_ANY_INT(symbol->get_element(i)->candidate_datatypes[k]))
+				symbol->get_element(i)->datatype = symbol->get_element(i)->candidate_datatypes[k];
 		}
-		symbol->elements[i]->accept(*this);
+		symbol->get_element(i)->accept(*this);
 	}
 	return NULL;  
 }
@@ -828,8 +862,8 @@ void *narrow_candidate_datatypes_c::visit(incompl_located_var_decl_c   *symbol) 
 void *narrow_candidate_datatypes_c::visit(var1_list_c *symbol) {
 #if 0   /* We don't really need to set the datatype of each variable. We just check the declaration itself! */
   for(int i = 0; i < symbol->n; i++) {
-    if (symbol->elements[i]->candidate_datatypes.size() == 1)
-      symbol->elements[i]->datatype = symbol->elements[i]->candidate_datatypes[0];
+    if (symbol->get_element(i)->candidate_datatypes.size() == 1)
+      symbol->get_element(i)->datatype = symbol->get_element(i)->candidate_datatypes[0];
   }
 #endif
   return NULL;
@@ -930,6 +964,20 @@ void *narrow_candidate_datatypes_c::visit(transition_condition_c *symbol) {
 	return NULL;
 }
 
+
+void *narrow_candidate_datatypes_c::visit(action_qualifier_c *symbol) {
+	if (symbol->action_time) {
+		for(unsigned int i = 0; i < symbol->action_time->candidate_datatypes.size(); i++) {
+			if (get_datatype_info_c::is_TIME_compatible(symbol->action_time->candidate_datatypes[i]))
+				symbol->action_time->datatype = symbol->action_time->candidate_datatypes[i];
+		}
+		symbol->action_time->accept(*this);
+	}
+	symbol->action_qualifier->accept(*this); // Not really necessary for now...
+	return NULL;
+}
+    
+
 /********************************/
 /* B 1.7 Configuration elements */
 /********************************/
@@ -994,7 +1042,7 @@ void *narrow_candidate_datatypes_c::visit(instruction_list_c *symbol) {
 	 */
 	for(int j = 0; j < 2; j++) {
 		for(int i = symbol->n-1; i >= 0; i--) {
-			symbol->elements[i]->accept(*this);
+			symbol->get_element(i)->accept(*this);
 		}
 	}
 	return NULL;
@@ -1109,7 +1157,7 @@ void *narrow_candidate_datatypes_c::visit(il_expression_c *symbol) {
    */
   if ((NULL != symbol->il_operand) && ((NULL == symbol->simple_instr_list) || (0 == ((list_c *)symbol->simple_instr_list)->n))) ERROR; // stage2 is not behaving as we expect it to!
   if  (NULL != symbol->il_operand)
-    symbol->il_operand->datatype = ((list_c *)symbol->simple_instr_list)->elements[0]->datatype;
+    symbol->il_operand->datatype = ((list_c *)symbol->simple_instr_list)->get_element(0)->datatype;
   
   return NULL;
 }
@@ -1181,10 +1229,10 @@ void *narrow_candidate_datatypes_c::visit(il_formal_funct_call_c *symbol) {
 /* This object is referenced by il_expression_c objects */
 void *narrow_candidate_datatypes_c::visit(simple_instr_list_c *symbol) {
 	if (symbol->n > 0)
-		symbol->elements[symbol->n - 1]->datatype = symbol->datatype;
+		symbol->get_element(symbol->n - 1)->datatype = symbol->datatype;
 
 	for(int i = symbol->n-1; i >= 0; i--) {
-		symbol->elements[i]->accept(*this);
+		symbol->get_element(i)->accept(*this);
 	}
 	return NULL;
 }
@@ -1233,6 +1281,7 @@ void *narrow_candidate_datatypes_c::visit(il_simple_instruction_c *symbol)	{
  *       So, if yoy wish to set the prev_il_instruction->datatype = symbol->datatype;
  *       do it __before__ calling set_il_operand_datatype() (which in turn calls il_operand->accept(*this)) !!
  */
+int  count = 0;
 void *narrow_candidate_datatypes_c::set_il_operand_datatype(symbol_c *il_operand, symbol_c *datatype) {
 	if (NULL == il_operand) return NULL; /* if no IL operand => error in the source code!! */
 
@@ -1716,8 +1765,8 @@ void *narrow_candidate_datatypes_c::visit(case_statement_c *symbol) {
 // SYM_LIST(case_element_list_c)
 void *narrow_candidate_datatypes_c::visit(case_element_list_c *symbol) {
 	for (int i = 0; i < symbol->n; i++) {
-		symbol->elements[i]->datatype = symbol->datatype;
-		symbol->elements[i]->accept(*this);
+		symbol->get_element(i)->datatype = symbol->datatype;
+		symbol->get_element(i)->accept(*this);
 	}
 	return NULL;
 }
@@ -1734,12 +1783,12 @@ void *narrow_candidate_datatypes_c::visit(case_element_c *symbol) {
 // SYM_LIST(case_list_c)
 void *narrow_candidate_datatypes_c::visit(case_list_c *symbol) {
 	for (int i = 0; i < symbol->n; i++) {
-		for (unsigned int k = 0; k < symbol->elements[i]->candidate_datatypes.size(); k++) {
-			if (get_datatype_info_c::is_type_equal(symbol->datatype, symbol->elements[i]->candidate_datatypes[k]))
-				symbol->elements[i]->datatype = symbol->elements[i]->candidate_datatypes[k];
+		for (unsigned int k = 0; k < symbol->get_element(i)->candidate_datatypes.size(); k++) {
+			if (get_datatype_info_c::is_type_equal(symbol->datatype, symbol->get_element(i)->candidate_datatypes[k]))
+				symbol->get_element(i)->datatype = symbol->get_element(i)->candidate_datatypes[k];
 		}
 		/* NOTE: this may be an integer, a subrange_c, or a enumerated value! */
-		symbol->elements[i]->accept(*this);
+		symbol->get_element(i)->accept(*this);
 	}
 	return NULL;
 }

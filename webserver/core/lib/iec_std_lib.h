@@ -57,6 +57,8 @@
  * Include type defs.
  */
 #include "iec_types_all.h"
+// Reverted to exclude this. Including <sys/time.h> broke all the other platforms. Might need to check for an alternative for Alpine
+//#include <sys/time.h>
 
 extern TIME __CURRENT_TIME;
 extern BOOL __DEBUG;

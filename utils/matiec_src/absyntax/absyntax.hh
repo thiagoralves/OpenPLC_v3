@@ -154,7 +154,8 @@ class const_value_c {
       {return (_int64.is_valid() || _uint64.is_valid() || _real64.is_valid() || _bool.is_valid());}   
 };
 
-
+// A forward declaration
+class token_c;
 
 /* The base class of all symbols */
 class symbol_c {
@@ -167,7 +168,18 @@ class symbol_c {
      * Annotations produced during stage 1_2
      */    
     /* Points to the parent symbol in the AST, i.e. the symbol in the AST that will contain the current symbol */
-    symbol_c *parent; 
+    symbol_c *parent;
+    /* Some symbols may not be tokens, but may be clearly identified by a token.
+     * For e.g., a FUNCTION declaration is not itself a token, but may be clearly identified by the
+     * token_c object that contains it's name. Another example is an element in a STRUCT declaration,
+     * where the structure_element_declaration_c is not itself a token, but can be clearly identified
+     * by the structure_element_name
+     * To make it easier to find these tokens from the top level object, we will have the stage1_2 populate this
+     * token_c *token wherever it makes sense.
+     * NOTE: This was a late addition to the AST. Not all objects may be currently so populated.
+     *       If you need this please make sure the bison code is populating it correctly for your use case.
+     */
+    token_c  *token;
     
     /* Line number for the purposes of error checking.  */
     int first_line;
@@ -260,7 +272,14 @@ class list_c: public symbol_c {
     virtual const char *absyntax_cname(void) {return "list_c";};
 
     int c,n; /* c: current capacity of list (malloc'd memory);  n: current number of elements in list */
-    symbol_c **elements;
+  private:
+//     symbol_c **elements;
+    typedef struct {
+      const char *token_value;
+      symbol_c   *symbol;
+    } element_entry_t;
+    element_entry_t *elements;
+    
 
   public:
     list_c(int fl = 0, int fc = 0, const char *ffile = NULL /* filename */, long int forder=0, /* order in which it is read by lexcial analyser */
@@ -271,12 +290,22 @@ class list_c: public symbol_c {
            int fl = 0, int fc = 0, const char *ffile = NULL /* filename */, long int forder=0, /* order in which it is read by lexcial analyser */
            int ll = 0, int lc = 0, const char *lfile = NULL /* filename */, long int lorder=0  /* order in which it is read by lexcial analyser */
           );
+     /* get element in position pos of the list */
+    virtual symbol_c *get_element(int pos);
+     /* find element associated to token value */
+    virtual symbol_c *find_element(symbol_c   *token);
+    virtual symbol_c *find_element(const char *token_value);
      /* append a new element to the end of the list */
     virtual void add_element(symbol_c *elem);
+    virtual void add_element(symbol_c *elem, symbol_c   *token);
+    virtual void add_element(symbol_c *elem, const char *token_value);
      /* insert a new element before position pos. */
      /* To insert into the begining of list, call with pos=0  */
      /* To insert into the end of list, call with pos=list->n */
-    virtual void insert_element(symbol_c *elem, int pos = 0);
+    virtual void insert_element(symbol_c *elem, const char *token_value, int pos = 0);
+    virtual void insert_element(symbol_c *elem, symbol_c   *token,       int pos = 0);
+    virtual void insert_element(symbol_c *elem,                          int pos = 0);
+    //virtual void insert_element(symbol_c *elem, int pos, std::string map_ref);
      /* remove element at position pos. */
     virtual void remove_element(int pos = 0);
      /* remove all elements from list. Does not delete the elements in the list! */ 
@@ -342,7 +371,7 @@ class class_name_c: public symbol_c {											\
     symbol_c *ref1;													\
     __VA_ARGS__														\
   public:														\
-    class_name_c(symbol_c *ref1,											\
+    class_name_c(symbol_c *ref1 = NULL,											\
                  int fl = 0, int fc = 0, const char *ffile = NULL /* filename */, long int forder=0,			\
                  int ll = 0, int lc = 0, const char *lfile = NULL /* filename */, long int lorder=0);			\
     virtual void *accept(visitor_c &visitor);										\
@@ -358,7 +387,7 @@ class class_name_c: public symbol_c {											\
     symbol_c *ref2;													\
     __VA_ARGS__														\
   public:														\
-    class_name_c(symbol_c *ref1,											\
+    class_name_c(symbol_c *ref1 = NULL,											\
 		 symbol_c *ref2 = NULL,											\
                  int fl = 0, int fc = 0, const char *ffile = NULL /* filename */, long int forder=0,			\
                  int ll = 0, int lc = 0, const char *lfile = NULL /* filename */, long int lorder=0);			\
@@ -376,9 +405,9 @@ class class_name_c: public symbol_c {											\
     symbol_c *ref3;													\
     __VA_ARGS__														\
   public:														\
-    class_name_c(symbol_c *ref1,											\
-		 symbol_c *ref2,											\
-		 symbol_c *ref3,											\
+    class_name_c(symbol_c *ref1 = NULL,											\
+		 symbol_c *ref2 = NULL,											\
+		 symbol_c *ref3 = NULL,											\
                  int fl = 0, int fc = 0, const char *ffile = NULL /* filename */, long int forder=0,			\
                  int ll = 0, int lc = 0, const char *lfile = NULL /* filename */, long int lorder=0);			\
     virtual void *accept(visitor_c &visitor);										\
@@ -396,9 +425,9 @@ class class_name_c: public symbol_c {											\
     symbol_c *ref4;													\
     __VA_ARGS__														\
   public:														\
-    class_name_c(symbol_c *ref1,											\
-		 symbol_c *ref2,											\
-		 symbol_c *ref3,											\
+    class_name_c(symbol_c *ref1 = NULL,											\
+		 symbol_c *ref2 = NULL,											\
+		 symbol_c *ref3 = NULL,											\
 		 symbol_c *ref4 = NULL,											\
                  int fl = 0, int fc = 0, const char *ffile = NULL /* filename */, long int forder=0,			\
                  int ll = 0, int lc = 0, const char *lfile = NULL /* filename */, long int lorder=0);			\
@@ -418,11 +447,11 @@ class class_name_c: public symbol_c {											\
     symbol_c *ref5;													\
     __VA_ARGS__														\
   public:														\
-    class_name_c(symbol_c *ref1,											\
-		 symbol_c *ref2,											\
-		 symbol_c *ref3,											\
-		 symbol_c *ref4,											\
-		 symbol_c *ref5,											\
+    class_name_c(symbol_c *ref1 = NULL,											\
+		 symbol_c *ref2 = NULL,											\
+		 symbol_c *ref3 = NULL,											\
+		 symbol_c *ref4 = NULL,											\
+		 symbol_c *ref5 = NULL,											\
                  int fl = 0, int fc = 0, const char *ffile = NULL /* filename */, long int forder=0,			\
                  int ll = 0, int lc = 0, const char *lfile = NULL /* filename */, long int lorder=0);			\
     virtual void *accept(visitor_c &visitor);										\
@@ -442,11 +471,11 @@ class class_name_c: public symbol_c {											\
     symbol_c *ref6;													\
     __VA_ARGS__														\
   public:														\
-    class_name_c(symbol_c *ref1,											\
-		 symbol_c *ref2,											\
-		 symbol_c *ref3,											\
-		 symbol_c *ref4,											\
-		 symbol_c *ref5,											\
+    class_name_c(symbol_c *ref1 = NULL,											\
+		 symbol_c *ref2 = NULL,											\
+		 symbol_c *ref3 = NULL,											\
+		 symbol_c *ref4 = NULL,											\
+		 symbol_c *ref5 = NULL,											\
 		 symbol_c *ref6 = NULL,											\
                  int fl = 0, int fc = 0, const char *ffile = NULL /* filename */, long int forder=0,			\
                  int ll = 0, int lc = 0, const char *lfile = NULL /* filename */, long int lorder=0);			\

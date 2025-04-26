@@ -958,7 +958,15 @@ void *fill_candidate_datatypes_c::fill_spec_init(symbol_c *symbol, symbol_c *typ
 	type_spec->accept(*this);
 	
 	// use bottom->up algorithm!!
-	if (NULL != init_value) init_value->accept(*this);  
+	/* NOTE: In special cases we will run a modified bottom->up algorithm, i.e. with a top->down indication of 
+	 *       tentative candidate_datatypes... 
+	 *       (e.g. structure_element_initialization_list_c). The tentative candidate_datatypes (a list of
+	 *       candidate_datatypes to consider while running the bottom->up algorithm) will actually be the
+	 *       datatypes in symbol->parent->candidate_datatpes
+	 *       This implies that we can only run this bottom->up algorithm on the initial values _after_
+	 *       having set the symbol->candidate_datatpes of the type specification (i.e. the symbol parameter)
+	 */
+	if (NULL != init_value)  init_value->accept(*this);
 	/* NOTE: Even if the constant and the type are of incompatible data types, we let the
 	 *       ***_spec_init_c object inherit the data type of the type declaration (simple_specification)
 	 *       This will let us produce more informative error messages when checking data type compatibility
@@ -1036,7 +1044,7 @@ void *fill_candidate_datatypes_c::visit(enumerated_value_list_c *symbol) {
   
   /* We already know the datatype of the enumerated_value(s) in the list, so we set them directly instead of recursively calling the enumerated_value_c visit method! */
   for(int i = 0; i < symbol->n; i++)
-    add_datatype_to_candidate_list(symbol->elements[i], current_enumerated_spec_type); // top->down algorithm!!
+    add_datatype_to_candidate_list(symbol->get_element(i), current_enumerated_spec_type); // top->down algorithm!!
 
   return NULL;  
 }
@@ -1163,9 +1171,56 @@ void *fill_candidate_datatypes_c::visit(initialized_structure_c *symbol) {return
 /* structure_initialization: '(' structure_element_initialization_list ')' */
 /* structure_element_initialization_list ',' structure_element_initialization */
 // SYM_LIST(structure_element_initialization_list_c)
+void *fill_candidate_datatypes_c::visit(structure_element_initialization_list_c *symbol) {
+	// use bottom->up algorithm -> first let all elements determine their candidate_datatypes
+	iterator_visitor_c::visit(symbol); // call visit(structure_element_initialization_c *) on all elements
+
+	for (unsigned int i = 0; i < symbol->parent->candidate_datatypes.size(); i++) { // size() should always be 1 here -> a single structure or FB type!
+		// assume symbol->parent->candidate_datatypes[i] is a FB type
+		search_varfb_instance_type_c search_varfb_instance_type(symbol->parent->candidate_datatypes[i]);
+		// assume symbol->parent->candidate_datatypes[i] is a STRUCT data type
+		structure_element_declaration_list_c *struct_decl = dynamic_cast<structure_element_declaration_list_c *>(symbol->parent->candidate_datatypes[i]);
+		// flag indicating all struct_elem->structure_element_name are structure elements found in the symbol->parent->candidate_datatypes[i] datatype
+		int flag_all_elem_ok = 1; // assume all found
+		for (int k = 0; k < symbol->n; k++) {
+			structure_element_initialization_c *struct_elem = dynamic_cast<structure_element_initialization_c *>(symbol->get_element(k));
+			if (struct_elem == NULL) ERROR;
+			
+			// assume symbol->parent is a FB type...
+			symbol_c *type = NULL;
+			if (struct_decl != NULL) {
+				// search in the struct!!
+				type = search_base_type_c::get_basetype_decl(struct_decl->find_element(struct_elem->structure_element_name));
+			} else {
+				// parent is a FB type. Lets search there!!
+				type = search_varfb_instance_type.get_basetype_decl(struct_elem->structure_element_name);
+			}
+			if (!get_datatype_info_c::is_ANY_ELEMENTARY(type) && get_datatype_info_c::is_type_valid(type)) {
+				// for non-elementary datatypes, we must use a top->down algorithm!!
+				add_datatype_to_candidate_list(struct_elem, type); 
+				struct_elem->accept(*this);
+			}
+			if (search_in_candidate_datatype_list(type, struct_elem->candidate_datatypes) < 0) {
+				flag_all_elem_ok = 0; // the necessary datatype for structure init element is not a candidate_datatype of that element
+			}
+		}
+		if (flag_all_elem_ok) {
+			add_datatype_to_candidate_list(symbol, symbol->parent->candidate_datatypes[i]);
+		}
+	}
+	return NULL;
+}
+
 
 /*  structure_element_name ASSIGN value */
 // SYM_REF2(structure_element_initialization_c, structure_element_name, value)
+void *fill_candidate_datatypes_c::visit(structure_element_initialization_c *symbol) {
+	symbol->value->accept(*this);
+	symbol->candidate_datatypes = symbol->value->candidate_datatypes;
+	// Note that candidate_datatypes of symbol->structure_element_name are left empty!
+	return NULL;
+}
+
 
 /*  string_type_name ':' elementary_string_type_name string_type_declaration_size string_type_declaration_init */
 // SYM_REF4(string_type_declaration_c, string_type_name, elementary_string_type_name, string_type_declaration_size, string_type_declaration_init/* may be == NULL! */) 
@@ -1235,7 +1290,7 @@ void *fill_candidate_datatypes_c::visit(direct_variable_c *symbol) {
 		case 'd': case 'D': /* dword - 32 bits */ add_datatype_to_candidate_list(symbol, &get_datatype_info_c::dword_type_name); break;
 		case 'l': case 'L': /* lword - 64 bits */ add_datatype_to_candidate_list(symbol, &get_datatype_info_c::lword_type_name); break;
         	          /* if none of the above, then the empty string was used <=> boolean */
-		default:                        add_datatype_to_candidate_list(symbol, &get_datatype_info_c::bool_type_name);  break;
+		default:                        add_datatype_to_candidate_list(symbol, &get_datatype_info_c::any_type_name);  break;
 	}
 	return NULL;
 }
@@ -1369,7 +1424,7 @@ void *fill_candidate_datatypes_c::visit(incompl_located_var_decl_c   *symbol) {r
 
 // NOTE: this method is not required since fill_candidate_datatypes_c inherits from iterator_visitor_c. TODO: delete this method!
 void *fill_candidate_datatypes_c::visit(var1_list_c *symbol) {
-  for(int i = 0; i < symbol->n; i++) {symbol->elements[i]->accept(*this);}
+  for(int i = 0; i < symbol->n; i++) {symbol->get_element(i)->accept(*this);}
   return NULL;
 }  
 
@@ -1408,7 +1463,11 @@ void *fill_candidate_datatypes_c::visit(location_c *symbol) {
 
 	symbol->direct_variable->accept(*this);
 	for (unsigned int i = 0; i < symbol->direct_variable->candidate_datatypes.size(); i++) {
-        	switch (get_sizeof_datatype_c::getsize(symbol->direct_variable->candidate_datatypes[i])) {
+        symbol_c *candidate_datatype = symbol->direct_variable->candidate_datatypes[i];
+        if(get_datatype_info_c::is_ANY_generic_type(candidate_datatype)){
+            add_datatype_to_candidate_list(symbol, &get_datatype_info_c::any_type_name);
+        } else {
+        	switch (get_sizeof_datatype_c::getsize(candidate_datatype)) {
 			case  1: /* bit   -  1 bit  */
 					add_datatype_to_candidate_list(symbol, &get_datatype_info_c::bool_type_name);
 					add_datatype_to_candidate_list(symbol, &get_datatype_info_c::safebool_type_name);
@@ -1451,7 +1510,8 @@ void *fill_candidate_datatypes_c::visit(location_c *symbol) {
 					break;
 			default: /* if none of the above, then no valid datatype allowed... */
 					break;
-		} /* switch() */
+			} /* switch() */
+		} /* if() */
 	} /* for */
 
 	return NULL;
@@ -1648,7 +1708,7 @@ void *fill_candidate_datatypes_c::visit(instruction_list_c *symbol) {
 	 */
 	for(int j = 0; j < 2; j++) {
 		for(int i = 0; i < symbol->n; i++) {
-			symbol->elements[i]->accept(*this);
+			symbol->get_element(i)->accept(*this);
 		}
 	}
 	return NULL;
@@ -1763,7 +1823,7 @@ void *fill_candidate_datatypes_c::visit(il_expression_c *symbol) {
    */
   if ((NULL != symbol->il_operand) && ((NULL == symbol->simple_instr_list) || (0 == ((list_c *)symbol->simple_instr_list)->n))) ERROR; // stage2 is not behaving as we expect it to!
   if  (NULL != symbol->il_operand)
-    symbol->il_operand->candidate_datatypes = ((list_c *)symbol->simple_instr_list)->elements[0]->candidate_datatypes;
+    symbol->il_operand->candidate_datatypes = ((list_c *)symbol->simple_instr_list)->get_element(0)->candidate_datatypes;
   
   /* Now check the if the data type semantics of operation are correct,  */
   il_operand = symbol->simple_instr_list;
@@ -1831,7 +1891,8 @@ void *fill_candidate_datatypes_c::visit(il_fb_call_c *symbol) {
 /* NOTE: The parameter 'called_function_declaration' is used to pass data between the stage 3 and stage 4. */
 // SYM_REF2(il_formal_funct_call_c, function_name, il_param_list, symbol_c *called_function_declaration; int extensible_param_count;)
 void *fill_candidate_datatypes_c::visit(il_formal_funct_call_c *symbol) {
-	symbol->il_param_list->accept(*this);
+	/* non-standard extension allowing functions with no input parameters => il_param_list may be NULL !!! */
+	if (NULL != symbol->il_param_list) symbol->il_param_list->accept(*this); 
 
 	generic_function_call_t fcall_param = {
 		/* fcall_param.function_name               = */ symbol->function_name,
@@ -1859,10 +1920,10 @@ void *fill_candidate_datatypes_c::visit(simple_instr_list_c *symbol) {
     return NULL;  /* List is empty! Nothing to do. */
     
   for(int i = 0; i < symbol->n; i++)
-    symbol->elements[i]->accept(*this);
+    symbol->get_element(i)->accept(*this);
 
   /* This object has (inherits) the same candidate datatypes as the last il_instruction */
-  symbol->candidate_datatypes = symbol->elements[symbol->n-1]->candidate_datatypes;
+  symbol->candidate_datatypes = symbol->get_element(symbol->n-1)->candidate_datatypes;
   
   if (debug) std::cout << "simple_instr_list_c [" << symbol->candidate_datatypes.size() << "] result.\n";
   return NULL;
@@ -1955,7 +2016,7 @@ void *fill_candidate_datatypes_c::visit(NOT_operator_c *symbol) {
 	 *       We do not need to generate an error message. This error will be caught somewhere else!
 	 */
 	if (NULL == prev_il_instruction) return NULL;
-	if (NULL == il_operand)          return NULL;
+	if (NULL != il_operand)          return NULL;
 	for (unsigned int i = 0; i < prev_il_instruction->candidate_datatypes.size(); i++) {
 		if (get_datatype_info_c::is_ANY_BIT_compatible(prev_il_instruction->candidate_datatypes[i]))
 			add_datatype_to_candidate_list(symbol, prev_il_instruction->candidate_datatypes[i]);

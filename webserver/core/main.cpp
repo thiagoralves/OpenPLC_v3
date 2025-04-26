@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 // Copyright 2018 Thiago Alves
-// This file is part of the OpenPLC Software Stack.
+// This file is part of the OpenPLC Runtime.
 //
 // OpenPLC is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/mman.h>
 
 #include "iec_types.h"
@@ -36,190 +37,28 @@
 #include "ethercat_src.h"
 #endif
 
+#include "oplc_snap7.h"
+
 #define OPLC_CYCLE          50000000
 
 extern int opterr;
-//extern int common_ticktime__;
 IEC_BOOL __DEBUG;
-
-IEC_LINT cycle_counter = 0;
 
 unsigned long __tick = 0;
 pthread_mutex_t bufferLock; //mutex for the internal buffers
-pthread_mutex_t logLock; //mutex for the internal log
 uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
-unsigned char log_buffer[1000000]; //A very large buffer to store all logs
-int log_index = 0;
-int log_counter = 0;
-
-//-----------------------------------------------------------------------------
-// Helper function - Makes the running thread sleep for the ammount of time
-// in milliseconds
-//-----------------------------------------------------------------------------
-void sleep_until(struct timespec *ts, long long delay)
-{
-    ts->tv_sec  += delay / (1000*1000*1000);
-    ts->tv_nsec += delay % (1000*1000*1000);
-    if(ts->tv_nsec >= 1000*1000*1000)
-    {
-        ts->tv_nsec -= 1000*1000*1000;
-        ts->tv_sec++;
-    }
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ts,  NULL);
-}
-
-//-----------------------------------------------------------------------------
-// Helper function - Makes the running thread sleep for the ammount of time
-// in milliseconds
-//-----------------------------------------------------------------------------
-void sleepms(int milliseconds)
-{
-	struct timespec ts;
-	ts.tv_sec = milliseconds / 1000;
-	ts.tv_nsec = (milliseconds % 1000) * 1000000;
-	nanosleep(&ts, NULL);
-}
-
-/**
- * @fn timespec_diff(struct timespec *, struct timespec *, struct timespec *)
- * @brief Compute the diff of two timespecs, that is a - b = result.
- * @param a the minuend
- * @param b the subtrahend
- * @param result a - b
- */
-static inline void timespec_diff(struct timespec *a, struct timespec *b, struct timespec *result) {
-    result->tv_sec  = a->tv_sec  - b->tv_sec;
-    result->tv_nsec = a->tv_nsec - b->tv_nsec;
-    if (result->tv_nsec < 0) {
-        --result->tv_sec;
-        result->tv_nsec += 1000000000L;
-    }
-}
-
-//-----------------------------------------------------------------------------
-// Helper function - Logs messages and print them on the console
-//-----------------------------------------------------------------------------
-void log(char *logmsg)
-{
-    pthread_mutex_lock(&logLock); //lock mutex
-    printf("%s", logmsg);
-    for (int i = 0; logmsg[i] != '\0'; i++)
-    {
-        log_buffer[log_index] = (unsigned char)logmsg[i];
-        log_index++;
-        log_buffer[log_index] = '\0';
-    }
-    
-    log_counter++;
-    if (log_counter >= 1000)
-    {
-        /*Store current log on a file*/
-        log_counter = 0;
-        log_index = 0;
-    }
-    pthread_mutex_unlock(&logLock); //unlock mutex
-}
-
-//-----------------------------------------------------------------------------
-// Interactive Server Thread. Creates the server to listen to commands on
-// localhost
-//-----------------------------------------------------------------------------
-void *interactiveServerThread(void *arg)
-{
-    startInteractiveServer(43628);
-}
-
-//-----------------------------------------------------------------------------
-// Verify if pin is present in one of the ignored vectors
-//-----------------------------------------------------------------------------
-bool pinNotPresent(int *ignored_vector, int vector_size, int pinNumber)
-{
-    for (int i = 0; i < vector_size; i++)
-    {
-        if (ignored_vector[i] == pinNumber)
-            return false;
-    }
-    
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-// Disable all outputs
-//-----------------------------------------------------------------------------
-void disableOutputs()
-{
-    //Disable digital outputs
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
-            if (bool_output[i][j] != NULL) *bool_output[i][j] = 0;
-        }
-    }
-    
-    //Disable byte outputs
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
-        if (byte_output[i] != NULL) *byte_output[i] = 0;
-    }
-    
-    //Disable analog outputs
-    for (int i = 0; i < BUFFER_SIZE; i++)
-    {
-        if (int_output[i] != NULL) *int_output[i] = 0;
-    }
-}
-
-//-----------------------------------------------------------------------------
-// Special Functions
-//-----------------------------------------------------------------------------
-void handleSpecialFunctions()
-{
-    //current time [%ML1024]
-    struct tm *current_time;
-    time_t rawtime;
-    
-    time(&rawtime);
-    // store the UTC clock in [%ML1027]
-    if (special_functions[3] != NULL) *special_functions[3] = rawtime;
-
-    current_time = localtime(&rawtime);
-    
-    rawtime = rawtime - timezone;
-    if (current_time->tm_isdst > 0) rawtime = rawtime + 3600;
-        
-    if (special_functions[0] != NULL) *special_functions[0] = rawtime;
-    
-    //number of cycles [%ML1025]
-    cycle_counter++;
-    if (special_functions[1] != NULL) *special_functions[1] = cycle_counter;
-    
-    //comm error counter [%ML1026]
-    /* Implemented in modbus_master.cpp */
-
-    //insert other special functions below
-}
-
-//-----------------------------------------------------------------------------
-// Using special_functions to store REAL-TIME variables
-//-----------------------------------------------------------------------------
-void RecordCycletimeLatency(long cycle_time, long sleep_latency)
-{
-    if (special_functions[4] != NULL) *special_functions[4] = cycle_time;
-    if (special_functions[5] != NULL) *special_functions[5] = sleep_latency;
-}
 
 // pointers to IO *array[const][const] from cpp to c and back again don't work as expected, so instead callbacks
-u_int8_t *bool_input_call_back(int a, int b){ return bool_input[a][b]; }
-u_int8_t *bool_output_call_back(int a, int b){ return bool_output[a][b]; }
-u_int8_t *byte_input_call_back(int a){ return byte_input[a]; }
-u_int8_t *byte_output_call_back(int a){ return byte_output[a]; }
-u_int16_t *int_input_call_back(int a){ return int_input[a]; }
-u_int16_t *int_output_call_back(int a){ return int_output[a]; }
-u_int32_t *dint_input_call_back(int a){ return dint_input[a]; }
-u_int32_t *dint_output_call_back(int a){ return dint_output[a]; }
-u_int64_t *lint_input_call_back(int a){ return lint_input[a]; }
-u_int64_t *lint_output_call_back(int a){ return lint_output[a]; }
+uint8_t *bool_input_call_back(int a, int b){ return bool_input[a][b]; }
+uint8_t *bool_output_call_back(int a, int b){ return bool_output[a][b]; }
+uint8_t *byte_input_call_back(int a){ return byte_input[a]; }
+uint8_t *byte_output_call_back(int a){ return byte_output[a]; }
+uint16_t *int_input_call_back(int a){ return int_input[a]; }
+uint16_t *int_output_call_back(int a){ return int_output[a]; }
+uint32_t *dint_input_call_back(int a){ return dint_input[a]; }
+uint32_t *dint_output_call_back(int a){ return dint_output[a]; }
+uint64_t *lint_input_call_back(int a){ return lint_input[a]; }
+uint64_t *lint_output_call_back(int a){ return lint_output[a]; }
 void logger_callback(char *msg){ log(msg);}
 
 int main(int argc,char **argv)
@@ -266,11 +105,9 @@ int main(int argc,char **argv)
 #endif
     initializeHardware();
     initializeMB();
-    initCustomLayer();
+
     updateBuffersIn();
-    updateCustomIn();
     updateBuffersOut();
-    updateCustomOut();
 
     //======================================================
     //          PERSISTENT STORAGE INITIALIZATION
@@ -280,7 +117,12 @@ int main(int argc,char **argv)
     readPersistentStorage();
     //pthread_t persistentThread;
     //pthread_create(&persistentThread, NULL, persistentStorage, NULL);
-    
+
+    //======================================================
+    //            S7 PROTOCOL INITIALIZATION
+    //======================================================
+    initializeSnap7();
+
 
 
 #ifdef __linux__
@@ -304,25 +146,25 @@ int main(int argc,char **argv)
     }
 #endif
 
-	// Define the start, end, cycle time and latency time variables
-	struct timespec cycle_start, cycle_end, cycle_time;
-	struct timespec timer_start, timer_end, sleep_latency;
+    // Define the start, end, cycle time and latency time variables
+    struct timespec cycle_start, cycle_end, cycle_time;
+    struct timespec timer_start, timer_end, sleep_latency;
 
-	//gets the starting point for the clock
-	printf("Getting current time\n");
-	clock_gettime(CLOCK_MONOTONIC, &timer_start);
+    //gets the starting point for the clock
+    printf("Getting current time\n");
+    clock_gettime(CLOCK_MONOTONIC, &timer_start);
 
-	//======================================================
-	//                    MAIN LOOP
-	//======================================================
-	while(run_openplc)
-	{
-		// Get the start time for the running cycle
-		clock_gettime(CLOCK_MONOTONIC, &cycle_start);
+    //======================================================
+    //                    MAIN LOOP
+    //======================================================
+    while(run_openplc)
+    {
+        // Get the start time for the running cycle
+        clock_gettime(CLOCK_MONOTONIC, &cycle_start);
 
-		//make sure the buffer pointers are correct and
-		//attached to the user variables
-		glueVars();
+        //make sure the buffer pointers are correct and
+        //attached to the user variables
+        glueVars();
         
 #ifdef _ethercat_src
         boolvar_call_back bool_input_callback = bool_input_call_back;
@@ -337,9 +179,9 @@ int main(int argc,char **argv)
         int64var_call_back lint_output_callback = lint_output_call_back;
 #endif
         
-		updateBuffersIn(); //read input image
+        updateBuffersIn(); //read input image
 
-		pthread_mutex_lock(&bufferLock); //lock mutex
+        pthread_mutex_lock(&bufferLock); //lock mutex
 
 
 #ifdef _ethercat_src
@@ -358,64 +200,63 @@ int main(int argc,char **argv)
             break;
         }
 #endif
-		updateCustomIn();
         updateBuffersIn_MB(); //update input image table with data from slave devices
         handleSpecialFunctions();
-		config_run__(__tick++); // execute plc program logic
-		updateCustomOut();
+        config_run__(__tick++); // execute plc program logic
         updateBuffersOut_MB(); //update slave devices with data from the output image table
-		pthread_mutex_unlock(&bufferLock); //unlock mutex
+        pthread_mutex_unlock(&bufferLock); //unlock mutex
 
-		updateBuffersOut(); //write output image
+        updateBuffersOut(); //write output image
         
-		updateTime();
+        updateTime();
 
-		// Get the end time for the running cycle
-		clock_gettime(CLOCK_MONOTONIC, &cycle_end);
-		// Compute the time usage in one cycle and do max/min/total comparison/recording
-		timespec_diff(&cycle_end, &cycle_start, &cycle_time);
-		if (cycle_time.tv_nsec > cycle_max)
-			cycle_max = cycle_time.tv_nsec;
-		if (cycle_time.tv_nsec < cycle_min)
-			cycle_min = cycle_time.tv_nsec;
-		cycle_total = cycle_total + cycle_time.tv_nsec;
+        // Get the end time for the running cycle
+        clock_gettime(CLOCK_MONOTONIC, &cycle_end);
+        // Compute the time usage in one cycle and do max/min/total comparison/recording
+        timespec_diff(&cycle_end, &cycle_start, &cycle_time);
+        if (cycle_time.tv_nsec > cycle_max)
+            cycle_max = cycle_time.tv_nsec;
+        if (cycle_time.tv_nsec < cycle_min)
+            cycle_min = cycle_time.tv_nsec;
+        cycle_total = cycle_total + cycle_time.tv_nsec;
 
-		sleep_until(&timer_start, common_ticktime__);
+        sleep_until(&timer_start, common_ticktime__);
 
-		// Get the sleep end point which is also the start time/point of the next cycle
-		clock_gettime(CLOCK_MONOTONIC, &timer_end);
-		// Compute the time latency of the next cycle(caused by sleep) and do max/min/total comparison/recording
-		timespec_diff(&timer_end, &timer_start, &sleep_latency);
-		if (sleep_latency.tv_nsec > latency_max)
-			latency_max = sleep_latency.tv_nsec;
-		if (sleep_latency.tv_nsec < latency_min)
-			latency_min = sleep_latency.tv_nsec;
-		latency_total = latency_total + sleep_latency.tv_nsec;
+        // Get the sleep end point which is also the start time/point of the next cycle
+        clock_gettime(CLOCK_MONOTONIC, &timer_end);
+        // Compute the time latency of the next cycle(caused by sleep) and do max/min/total comparison/recording
+        timespec_diff(&timer_end, &timer_start, &sleep_latency);
+        if (sleep_latency.tv_nsec > latency_max)
+            latency_max = sleep_latency.tv_nsec;
+        if (sleep_latency.tv_nsec < latency_min)
+            latency_min = sleep_latency.tv_nsec;
+        latency_total = latency_total + sleep_latency.tv_nsec;
 
-		// Store the cycle_time/sleep_latency in microsecond, so it can be displayed in the webpage
-		RecordCycletimeLatency((long)cycle_time.tv_nsec / 1000, (long)sleep_latency.tv_nsec / 1000);
-	}
+        // Store the cycle_time/sleep_latency in microsecond, so it can be displayed in the webpage
+        RecordCycletimeLatency((long)cycle_time.tv_nsec / 1000, (long)sleep_latency.tv_nsec / 1000);
+    }
 
-	// Compute/print the max/min/avg cycle time and latency
-	cycle_avg = (long)cycle_total / __tick;
-	latency_avg = (long)latency_total / __tick;
-	printf("###Summary: The maximum/minimum/average cycle time in microsecond is %ld/%ld/%ld\n",
-	cycle_max / 1000, cycle_min / 1000, cycle_avg / 1000);
-	printf("###Summary: The maximum/minimum/average latency in microsecond is %ld/%ld/%ld\n",
-	latency_max / 1000,   latency_min / 1000, latency_avg / 1000);
+    // Compute/print the max/min/avg cycle time and latency
+    cycle_avg = (long)cycle_total / __tick;
+    latency_avg = (long)latency_total / __tick;
+    printf("###Summary: The maximum/minimum/average cycle time in microsecond is %ld/%ld/%ld\n",
+    cycle_max / 1000, cycle_min / 1000, cycle_avg / 1000);
+    printf("###Summary: The maximum/minimum/average latency in microsecond is %ld/%ld/%ld\n",
+    latency_max / 1000,   latency_min / 1000, latency_avg / 1000);
     
     //======================================================
-	//             SHUTTING DOWN OPENPLC RUNTIME
-	//======================================================
+    //             SHUTTING DOWN OPENPLC RUNTIME
+    //======================================================
     pthread_join(interactive_thread, NULL);
 #ifdef _ethercat_src
     ethercat_terminate_src();
 #endif
+
+    finalizeSnap7();
     printf("Disabling outputs\n");
     disableOutputs();
-    updateCustomOut();
     updateBuffersOut();
-	finalizeHardware();
+    finalizeHardware();
     printf("Shutting down OpenPLC Runtime...\n");
     exit(0);
 }

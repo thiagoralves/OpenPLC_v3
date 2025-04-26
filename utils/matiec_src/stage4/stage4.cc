@@ -186,9 +186,24 @@ void *stage4out_c::printlocation_comasep(const char *str) {
   if (!allow_output) return NULL;
   *out << (unsigned char)toupper(str[0]);
   *out << ',';
-  *out << (unsigned char)toupper(str[1]);
-  *out << ',';
-  for (int i = 2; str[i] != '\0'; i++)
+  int i = 1;
+  unsigned char size_char = (unsigned char)toupper(str[1]);
+      switch (size_char) {
+        case 'X': // bit
+        case 'B': // Byte, 8 bits
+        case 'W': // Word, 16 bits
+        case 'D': // Double, 32 bits
+        case 'L': // Long, 64 bits
+          *out << size_char;
+          i = 2;
+          break;
+        default:
+          // S for struct, etc. (todo: support arrays and others)
+          *out << "S";
+          break;
+      }
+      *out << ',';
+  for (; str[i] != '\0'; i++)
     if(str[i] == '.')
       *out << ',';
     else

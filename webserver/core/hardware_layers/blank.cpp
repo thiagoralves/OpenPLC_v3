@@ -31,7 +31,6 @@
 #include <pthread.h>
 
 #include "ladder.h"
-#include "custom_layer.h"
 
 //-----------------------------------------------------------------------------
 // This function is called by the main OpenPLC routine when it is initializing.
@@ -56,19 +55,19 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
 
-	/*********READING AND WRITING TO I/O**************
+    /*********READING AND WRITING TO I/O**************
 
-	*bool_input[0][0] = read_digital_input(0);
-	write_digital_output(0, *bool_output[0][0]);
+    *bool_input[0][0] = read_digital_input(0);
+    write_digital_output(0, *bool_output[0][0]);
 
-	*int_input[0] = read_analog_input(0);
-	write_analog_output(0, *int_output[0]);
+    *int_input[0] = read_analog_input(0);
+    write_analog_output(0, *int_output[0]);
 
-	**************************************************/
+    **************************************************/
 
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 
 //-----------------------------------------------------------------------------
@@ -78,18 +77,18 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	pthread_mutex_lock(&bufferLock); //lock mutex
+    pthread_mutex_lock(&bufferLock); //lock mutex
 
-	/*********READING AND WRITING TO I/O**************
+    /*********READING AND WRITING TO I/O**************
 
-	*bool_input[0][0] = read_digital_input(0);
-	write_digital_output(0, *bool_output[0][0]);
+    *bool_input[0][0] = read_digital_input(0);
+    write_digital_output(0, *bool_output[0][0]);
 
-	*int_input[0] = read_analog_input(0);
-	write_analog_output(0, *int_output[0]);
+    *int_input[0] = read_analog_input(0);
+    write_analog_output(0, *int_output[0]);
 
-	**************************************************/
+    **************************************************/
 
-	pthread_mutex_unlock(&bufferLock); //unlock mutex
+    pthread_mutex_unlock(&bufferLock); //unlock mutex
 }
 

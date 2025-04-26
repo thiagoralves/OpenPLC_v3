@@ -67,7 +67,7 @@ void *function_call_param_iterator_c::search_list(list_c *list) {
   switch (current_operation) {
     case iterate_nf_op:
       for(int i = 0; i < list->n; i++) {
-        void *res = list->elements[i]->accept(*this);
+        void *res = list->get_element(i)->accept(*this);
         if (NULL != res) {
           /* It went through the handle_parameter_assignment() function,
            * and is therefore a parameter assignment (<param> = <value>),
@@ -77,7 +77,7 @@ void *function_call_param_iterator_c::search_list(list_c *list) {
         } else {
           param_count++;
           if (param_count == iterate_nf_next_param) {
-            return list->elements[i];
+            return list->get_element(i);
           }
         }
       }
@@ -86,7 +86,7 @@ void *function_call_param_iterator_c::search_list(list_c *list) {
 
     case iterate_f_op:
       for(int i = 0; i < list->n; i++) {
-        void *res = list->elements[i]->accept(*this);
+        void *res = list->get_element(i)->accept(*this);
         if (NULL != res) {
           /* It went through the handle_parameter_assignment() function,
            * and is therefore a parameter assignment (<param> = <value>),
@@ -105,7 +105,7 @@ void *function_call_param_iterator_c::search_list(list_c *list) {
 
     case search_f_op:
       for(int i = 0; i < list->n; i++) {
-        void *res = list->elements[i]->accept(*this);
+        void *res = list->get_element(i)->accept(*this);
         if (res != NULL)
           return res;
       }

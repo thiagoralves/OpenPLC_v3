@@ -1,7 +1,7 @@
 #!/bin/bash
 OPENPLC_DIR="$PWD"
 SWAP_FILE="$OPENPLC_DIR/swapfile"
-WIRINGPI_VERSION="3.4"
+WIRINGPI_VERSION="3.14"  # Support RPi 1..5, CM5, CM5(L), Pi500, GCLK (Generic Clock) for RPi5 is not supported.
 VENV_DIR="$OPENPLC_DIR/.venv"
 
 function print_help_and_exit {
@@ -13,6 +13,7 @@ function print_help_and_exit {
     echo "  linux         Install OpenPLC on a Debian-based Linux distribution"
     echo "  docker        Install OpenPLC in a Docker container"
     echo "  rpi           Install OpenPLC on a Raspberry Pi"
+    echo "  opi           Install OpenPLC on a Orange Pi"
     echo "  neuron        Install OpenPLC on a UniPi Neuron PLC"
     echo "  unipi         Install OpenPLC on a Raspberry Pi with UniPi v1.1 PLC"
     echo "  custom        Skip all specific package installation and tries to install"
@@ -72,21 +73,18 @@ function install_wiringpi {
     ) || fail "Failed to install wiringpi."
 }
 
-function install_pigpio {
-    echo "[PIGPIO]"
-    echo "Trying distribution package..."
-    sudo apt-get install -y pigpio && return 0
-
-    echo "Falling back to direct download..."
-    local URL="https://github.com/joan2937/pigpio/archive/master.zip"
+function install_wiringop {
+    echo "[WIRINGOP]"
+    local URL="https://github.com/orangepi-xunlong/wiringOP/archive/master.zip"
     (
         set -e
-        wget -c "$URL"
-        unzip master.zip
-        cd pigpio-master
-        make
-        sudo make install
         rm -f master.zip
+        wget -c "$URL"
+        unzip -o master.zip
+        cd wiringOP-master
+        sudo ./build clean
+        sudo ./build
+        rm -f ../master.zip
     )
 }
 
@@ -196,6 +194,14 @@ function install_libmodbus {
     fi
 }
 
+function install_libsnap7 {
+    echo "[LIBSNAP7]"
+    cd "$OPENPLC_DIR/utils/snap7_src/build/linux"
+    $1 make clean
+    $1 make install || fail "Error installing Libsnap7"
+    cd "$OPENPLC_DIR"
+}
+
 function install_systemd_service() {
     if [ "$1" == "sudo" ]; then
         echo "[OPENPLC SERVICE]"
@@ -229,6 +235,7 @@ function install_all_libs {
     install_opendnp3 "$1"
     disable_ethercat "$1"
     install_libmodbus "$1"
+    install_libsnap7 "$1"
 }
 
 function finalize_install {
@@ -246,6 +253,7 @@ if [ -d "/docker_persistent" ]; then
     mkdir -p /docker_persistent/st_files
     cp -n /workdir/webserver/dnp3_default.cfg /docker_persistent/dnp3.cfg
     cp -n /workdir/webserver/openplc_default.db /docker_persistent/openplc.db
+    cp -n /workdir/webserver/active_program_default /docker_persistent/active_program
     cp -n /workdir/webserver/st_files_default/* /docker_persistent/st_files/
     cp -n /dev/null /docker_persistent/persistent.file
     cp -n /dev/null /docker_persistent/mbconfig.cfg
@@ -309,6 +317,8 @@ elif [ "$1" == "win_msys2" ]; then
         exit 1
     fi
 
+    cp -f ./utils/snap7_src/build/bin/win64/snap7.* ./webserver/core/
+
     install_st_optimizer
     install_glue_generator
     disable_opendnp3
@@ -341,7 +351,16 @@ elif [ "$1" == "docker" ]; then
 elif [ "$1" == "rpi" ]; then
     echo "Installing OpenPLC on Raspberry Pi"
     linux_install_deps sudo
-    install_pigpio
+    install_wiringpi
+    install_py_deps
+    install_all_libs sudo
+    install_systemd_service sudo
+    finalize_install linux
+
+elif [ "$1" == "opi" ]; then
+    echo "Installing OpenPLC on Orange Pi"
+    linux_install_deps sudo
+    install_wiringop
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo

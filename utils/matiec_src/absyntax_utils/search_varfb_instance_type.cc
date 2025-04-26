@@ -244,7 +244,7 @@ void *search_varfb_instance_type_c::visit(structure_element_declaration_list_c *
 
   /* now search the structure declaration */
   for(int i = 0; i < symbol->n; i++) {
-    symbol->elements[i]->accept(*this);
+    symbol->get_element(i)->accept(*this);
   }
 
   return NULL;

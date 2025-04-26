@@ -218,8 +218,8 @@ void *flow_control_analysis_c::visit(instruction_list_c *symbol) {
 	prev_il_instruction_is_JMP_or_RET = false;
 	for(int i = 0; i < symbol->n; i++) {
 		prev_il_instruction = NULL;
-		if (i > 0) prev_il_instruction = symbol->elements[i-1];
-		curr_il_instruction = symbol->elements[i];
+		if (i > 0) prev_il_instruction = symbol->get_element(i-1);
+		curr_il_instruction = symbol->get_element(i);
 		curr_il_instruction->accept(*this);
 		curr_il_instruction = NULL;
 	}
@@ -310,8 +310,8 @@ void *flow_control_analysis_c::visit(il_jump_operation_c *symbol) {
 void *flow_control_analysis_c::visit(simple_instr_list_c *symbol) {
 	for(int i = 0; i < symbol->n; i++) {
 		/* The prev_il_instruction for element[0] was set in visit(il_expression_c *) */
-		if (i>0) prev_il_instruction = symbol->elements[i-1];
-		symbol->elements[i]->accept(*this);
+		if (i>0) prev_il_instruction = symbol->get_element(i-1);
+		symbol->get_element(i)->accept(*this);
 	}
 	return NULL;
 }

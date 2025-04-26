@@ -20,7 +20,7 @@ Where `[platform]` can be:
 
 `win` - Install OpenPLC on Windows over Cygwin
 
-`linux` - Install OpenPLC on a Debian-based Linux distribution
+`linux` - Install OpenPLC on a supported Linux distribution, currently Debian-based, Fedora-based, Opensuse and Alpine Linux is supported.
 
 `docker` - Used by the `Dockerfile` (i.e. doesn't invoke `sudo`)
 

@@ -13,6 +13,7 @@ import monitoring as monitor
 import sys
 import ctypes
 import socket
+import mimetypes
 
 import flask 
 import flask_login
@@ -27,6 +28,35 @@ openplc_runtime = openplc.runtime()
 class User(flask_login.UserMixin):
     pass
 
+# Allowed MIME types and magic numbers (file signatures)
+IMAGE_MAGIC_NUMBERS = {
+    b'\xFF\xD8\xFF': 'image/jpeg',  # JPEG
+    b'\x89PNG\r\n\x1A\n': 'image/png',  # PNG
+    b'GIF87a': 'image/gif',  # GIF87a
+    b'GIF89a': 'image/gif',  # GIF89a
+}
+
+# Function to check MIME type and file signature
+def is_allowed_file(file):
+    # First, check the MIME type based on the file extension
+    mime_type, _ = mimetypes.guess_type(file.filename)
+    if mime_type not in IMAGE_MAGIC_NUMBERS.values():
+        return False
+
+    try:
+        # Read the first 8 bytes of the file to determine its magic number
+        file.seek(0)  # Ensure we're at the start of the file
+        file_header = file.read(8)
+        file.seek(0)  # Reset file pointer after reading
+
+        # Check if the file header matches a known image format
+        for magic, expected_mime in IMAGE_MAGIC_NUMBERS.items():
+            if file_header.startswith(magic):
+                return True
+
+        return False
+    except Exception:
+        return False
 
 def configure_runtime():
     global openplc_runtime
@@ -63,6 +93,13 @@ def configure_runtime():
                     else:
                         print("Disabling EtherNet/IP")
                         openplc_runtime.stop_enip()
+                elif (row[0] == "snap7"):
+                    if (row[1] != "false"):
+                        print("Enabling S7 Protocol")
+                        openplc_runtime.start_snap7()
+                    else:
+                        print("Disabling S7 Protocol")
+                        openplc_runtime.stop_snap7()
                 elif (row[0] == "Pstorage_polling"):
                     if (row[1] != "disabled"):
                         print("Enabling Persistent Storage with polling rate of " + str(int(row[1])) + " seconds")
@@ -1126,7 +1163,7 @@ def add_modbus_device():
                             
             ports = [comport.device for comport in serial.tools.list_ports.comports()]
             for port in ports:
-                if (platform.system().startswith("CYGWIN")):
+                if (platform.system().startswith("CYGWIN")) or (platform.system().startswith("MSYS_NT")):
                     port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
                 else:
                     port_name = port
@@ -1264,7 +1301,7 @@ def modbus_edit_device():
                     return_str += "<div id=\"rtu-stuff\"><label for='dev_cport'><b>COM Port</b></label><select id='dev_cport' name='device_cport'>"
                     ports = [comport.device for comport in serial.tools.list_ports.comports()]
                     for port in ports:
-                        if (platform.system().startswith("CYGWIN")):
+                        if (platform.system().startswith("CYGWIN")) or (platform.system().startswith("MSYS_NT")):
                             port_name = "COM" + str(int(port.split("/dev/ttyS")[1]) + 1)
                         else:
                             port_name = port
@@ -1414,7 +1451,7 @@ def monitoring():
                     <h2>Monitoring</h2>
                     <form class="form-inline">
                         <label for="refresh_rate">Refresh Rate (ms):</label>
-                        <input type="text" id="refresh_rate" value="100" name="refresh_rate">
+                        <input type="text" id="refresh_rate" value="500" name="refresh_rate">
                         <button type="button" onclick="updateRefreshRate()">Update</button>
                     </form>
                     <br>
@@ -1422,7 +1459,7 @@ def monitoring():
                         <table>
                             <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
                             <tr style='background-color: white'>
-                                <th>Point Name</th><th>Type</th><th>Location</th><th>Forced</th><th>Value</th>
+                                <th>Point Name</th><th>Type</th><th>Location</th><th>Write</th><th>Value</th>
                             </tr>"""
         
         if (openplc_runtime.status() == "Running"):
@@ -1457,8 +1494,12 @@ def monitoring():
                 monitor.start_monitor(modbus_port_cfg)
                 data_index = 0
                 for debug_data in monitor.debug_vars:
-                    return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
-                    return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
+                    return_str += '<tr style="height:60px">' # onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
+                    return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>'
+                    if (debug_data.location.find('QX') != -1):
+                        return_str += '<button class="write-button true" onclick="fetch(\'/point-write?value=1&address=' + str(debug_data.location) + '\')">true</button>'
+                        return_str += '<button class="write-button false" onclick="fetch(\'/point-write?value=0&address=' + str(debug_data.location) + '\')">false</button>'
+                    return_str += '</td><td valign="middle">'
                     if (debug_data.type == 'BOOL'):
                         if (debug_data.value == 0):
                             return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
@@ -1520,7 +1561,7 @@ def monitor_update():
                         <table>
                             <col width="50"><col width="10"><col width="10"><col width="10"><col width="100">
                             <tr style='background-color: white'>
-                                <th>Point Name</th><th>Type</th><th>Location</th><th>Forced</th><th>Value</th>
+                                <th>Point Name</th><th>Type</th><th>Location</th><th>Write</th><th>Value</th>
                             </tr>"""
         
         #if (openplc_runtime.status() == "Running"):
@@ -1529,8 +1570,12 @@ def monitor_update():
             monitor.start_monitor(int(mb_port_cfg))
             data_index = 0
             for debug_data in monitor.debug_vars:
-                return_str += '<tr style="height:60px" onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
-                return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>' + debug_data.forced + '</td><td valign="middle">'
+                return_str += '<tr style="height:60px">' # onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
+                return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>'
+                if (debug_data.location.find('QX') != -1):
+                    return_str += '<button class="write-button true" onclick="fetch(\'/point-write?value=1&address=' + str(debug_data.location) + '\')">true</button>'
+                    return_str += '<button class="write-button false" onclick="fetch(\'/point-write?value=0&address=' + str(debug_data.location) + '\')">false</button>'
+                return_str += '</td><td valign="middle">'
                 if (debug_data.type == 'BOOL'):
                     if (debug_data.value == 0):
                         return_str += '<img src="/static/bool_false.png" alt="bool_false" style="width:40px;height:40px;vertical-align:middle; margin-right:10px">FALSE</td>'
@@ -1555,6 +1600,15 @@ def monitor_update():
         
         return return_str
 
+@app.route('/point-write', methods=['GET', 'POST'])
+def point_write():
+    if (flask_login.current_user.is_authenticated == False):
+        return flask.redirect(flask.url_for('login'))
+    else:
+        point_value = flask.request.args.get('value')
+        point_address = flask.request.args.get('address')
+        monitor.write_value(point_address, int(point_value))
+        return ''
 
 @app.route('/point-info', methods=['GET', 'POST'])
 def point_info():
@@ -1713,6 +1767,8 @@ def hardware():
             else: return_str += "<option value='rpi'>Raspberry Pi</option>"
             if (current_driver == "rpi_old"): return_str += "<option selected='selected' value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
             else: return_str += "<option value='rpi_old'>Raspberry Pi - Old Model (2011 model B)</option>"
+            if (current_driver == "opi_zero2"): return_str += "<option selected='selected' value='opi_zero2'>Orange Pi Zero2/Zero2 LTS/Zero2 B</option>"
+            else: return_str += "<option value='opi_zero2'>Orange Pi Zero2/Zero2 LTS/Zero2 B</option>"
             if (current_driver == "simulink"): return_str += "<option selected='selected' value='simulink'>Simulink</option>"
             else: return_str += "<option value='simulink'>Simulink</option>"
             if (current_driver == "simulink_linux"): return_str += "<option selected='selected' value='simulink_linux'>Simulink with DNP3 (Linux only)</option>"
@@ -1881,6 +1937,10 @@ def add_user():
                     if (form_has_picture):
                         pict_file = flask.request.files['file']
                         if (pict_file.filename != ''):
+                            # Ensure the file is allowed
+                            if not is_allowed_file(pict_file):
+                                return 'Invalid file format. Only JPEG, PNG, and GIF images are allowed.', 400
+
                             file_extension = pict_file.filename.split('.')
                             filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
                             pict_file.save(os.path.join('static', filename))
@@ -2015,6 +2075,10 @@ def edit_user():
                     if (form_has_picture):
                         pict_file = flask.request.files['file']
                         if (pict_file.filename != ''):
+                            # Ensure the file is allowed
+                            if not is_allowed_file(pict_file):
+                                return 'Invalid file format. Only JPEG, PNG, and GIF images are allowed.', 400
+                            
                             file_extension = pict_file.filename.split('.')
                             filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
                             pict_file.save(os.path.join('static', filename))
@@ -2133,6 +2197,9 @@ def settings():
                             slave_polling = str(row[1])
                         elif (row[0] == "Slave_timeout"):
                             slave_timeout = str(row[1])
+                        elif (row[0] == "snap7"):
+                            start_snap7 = str(row[1])
+                            
                     
                     if (modbus_port == 'disabled'):
                         return_str += """
@@ -2151,6 +2218,25 @@ def settings():
                         
                     return_str += """
                         <br>
+                        <br>
+                        <br>
+                        <label class="container">
+                            <b>Enable S7 Protocol</b>"""
+                            
+                    if (start_snap7 == 'false'):
+                        return_str += """
+                            <input id="snap7_run" type="checkbox">
+                            <span class="checkmark"></span>
+                        </label>
+                        <input type='hidden' value='false' id='snap7_run_text' name='snap7_run_text'/>"""
+                    else:
+                        return_str += """
+                            <input id="snap7_run" type="checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <input type='hidden' value='true' id='snap7_run_text' name='snap7_run_text'/>"""
+
+                    return_str += """
                         <br>
                         <br>
                         <label class="container">
@@ -2233,8 +2319,8 @@ def settings():
                             <input id="auto_run" type="checkbox" checked>
                             <span class="checkmark"></span>
                         </label>
-                        <input type='hidden' value='true' id='auto_run_text' name='auto_run_text'/>"""
-                    
+                        <input type='hidden' value='true' id='auto_run_text' name='auto_run_text'/>"""                   
+
                     return_str += """
                         <br>
                         <h2>Slave Devices</h2>
@@ -2263,11 +2349,12 @@ def settings():
             enip_port = flask.request.form.get('enip_server_port')
             pstorage_poll = flask.request.form.get('pstorage_thread_poll')
             start_run = flask.request.form.get('auto_run_text')
+            start_snap7 = flask.request.form.get('snap7_run_text')
             slave_polling = flask.request.form.get('slave_polling_period')
             slave_timeout = flask.request.form.get('slave_timeout')
             device_hostname = flask.request.form.get('device_hostname')
 
-            (modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, slave_polling, slave_timeout, device_hostname) = sanitize_input(modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, slave_polling, slave_timeout, device_hostname)
+            (modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, start_snap7, slave_polling, slave_timeout, device_hostname) = sanitize_input(modbus_port, dnp3_port, enip_port, pstorage_poll, start_run, start_snap7, slave_polling, slave_timeout, device_hostname)
 
             # Change hostname if needed
             current_hostname = socket.gethostname()
@@ -2314,6 +2401,13 @@ def settings():
                         cur.execute("UPDATE Settings SET Value = 'false' WHERE Key = 'Start_run_mode'")
                         conn.commit()
                         
+                    if (start_snap7 == 'true'):
+                        cur.execute("UPDATE Settings SET Value = 'true' WHERE Key = 'snap7'")
+                        conn.commit()
+                    else:
+                        cur.execute("UPDATE Settings SET Value = 'false' WHERE Key = 'snap7'")
+                        conn.commit()
+
                     cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Slave_polling'", (str(slave_polling),))
                     conn.commit()
                     

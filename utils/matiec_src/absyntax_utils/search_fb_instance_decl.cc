@@ -95,7 +95,7 @@ void *search_fb_instance_decl_c::visit(fb_name_decl_c *symbol) {
 void *search_fb_instance_decl_c::visit(fb_name_list_c *symbol) {
   list_c *list = symbol;
   for(int i = 0; i < list->n; i++) {
-    if (compare_identifiers(list->elements[i], search_name) == 0)
+    if (compare_identifiers(list->get_element(i), search_name) == 0)
   /* by now, current_fb_declaration should be != NULL */
       return current_fb_type_name;
   }

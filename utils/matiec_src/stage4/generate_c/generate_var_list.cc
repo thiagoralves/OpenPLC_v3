@@ -238,7 +238,8 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
     bool configuration_defined;
     std::list<SYMBOL> current_symbol_list;
     search_type_symbol_c *search_type_symbol;
-    
+    unsigned int is_retain;
+
   public:
     generate_var_list_c(stage4out_c *s4o_ptr, symbol_c *scope)
     : generate_c_base_and_typeid_c(s4o_ptr) {
@@ -248,6 +249,7 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
       current_var_type_name = NULL;
       current_declarationtype = none_dt;
       current_var_class_category = none_vcc;
+      is_retain = 0;
     }
     
     ~generate_var_list_c(void) {
@@ -289,7 +291,7 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
       if (list == NULL) ERROR;
 
       for(int i = 0; i < list->n; i++) {
-        declare_variable(list->elements[i]);
+        declare_variable(list->get_element(i));
       }
     }
     
@@ -345,6 +347,8 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
         case search_type_symbol_c::structure_vtc:
         case search_type_symbol_c::function_block_vtc:
           this->current_var_type_name->accept(*this);
+          s4o.print(";;");
+          print_retain();
           s4o.print(";\n");
           if (this->current_var_class_category != external_vcc) {
               SYMBOL *current_name;
@@ -360,13 +364,27 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
           break;
         case search_type_symbol_c::array_vtc:
           this->current_var_type_name->accept(*this);
+          s4o.print(";;");
+          print_retain();
           s4o.print(";\n");
           break;
         default:
+          // base type name
           this->current_var_type_symbol->accept(*this);
+          s4o.print(";");
+          // type name (eventualy derived)
+          this->current_var_type_name->accept(*this);
+          s4o.print(";");
+          print_retain();
           s4o.print(";\n");
           break;
       }
+    }
+    void print_retain() {
+      if(is_retain)
+          s4o.print("1");
+      else
+          s4o.print("0");
     }
 
     void print_var_number(void) {
@@ -440,6 +458,55 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
 /* B.1.4.3 - Declaration and initialization */
 /********************************************/
     
+    void *visit(retain_option_c *symbol) {
+      is_retain = 1;
+      return NULL;
+    }
+
+    void *visit(non_retain_option_c *symbol) {
+      is_retain = 0;
+      return NULL;
+    }
+
+    /* VAR_OUTPUT [RETAIN | NON_RETAIN] var_init_decl_list END_VAR */
+    void *visit(output_declarations_c *symbol) {
+      unsigned int was_retain = is_retain;
+      if (symbol->option != NULL)
+        symbol->option->accept(*this);
+      symbol->var_init_decl_list->accept(*this);
+      is_retain = was_retain;
+      return NULL;
+    }
+
+    /*  VAR RETAIN var_init_decl_list END_VAR */
+    void *visit(retentive_var_declarations_c *symbol) {
+      unsigned int was_retain = is_retain;
+      is_retain = 1;
+      symbol->var_init_decl_list->accept(*this);
+      is_retain = was_retain;
+      return NULL;
+    }
+
+    /*  VAR [CONSTANT|RETAIN|NON_RETAIN] located_var_decl_list END_VAR */
+    void *visit(located_var_declarations_c *symbol) {
+      unsigned int was_retain = is_retain;
+      if (symbol->option != NULL)
+        symbol->option->accept(*this);
+      symbol->located_var_decl_list->accept(*this);
+      is_retain = was_retain;
+      return NULL;
+    }
+
+    /* VAR_GLOBAL [CONSTANT|RETAIN] global_var_decl_list END_VAR */
+    void *visit(global_var_declarations_c *symbol) {
+      unsigned int was_retain = is_retain;
+      if (symbol->option != NULL)
+        symbol->option->accept(*this);
+      symbol->global_var_decl_list->accept(*this);
+      is_retain = was_retain;
+      return NULL;
+    }
+
     /*  [variable_name] location ':' located_var_spec_init */
     /* variable_name -> may be NULL ! */
     //SYM_REF4(located_var_decl_c, variable_name, location, located_var_spec_init, unused)
@@ -793,7 +860,7 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
 
     void *visit(structure_element_declaration_list_c *symbol) {
       for(int i = 0; i < symbol->n; i++) {
-        symbol->elements[i]->accept(*this);
+        symbol->get_element(i)->accept(*this);
       }
       return NULL;
     }
@@ -860,7 +927,7 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
       transition_number = 0;
       action_number = 0;
       for(int i = 0; i < symbol->n; i++) {
-        symbol->elements[i]->accept(*this);
+        symbol->get_element(i)->accept(*this);
       }
       return NULL;
     }
@@ -876,7 +943,7 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
       print_symbol_list();
       s4o.print("__step_list[");
       print_step_number();
-      s4o.print("].X;BOOL;\n");
+      s4o.print("].X;BOOL;BOOL;\n");
       step_number++;
       return NULL;
     }
@@ -892,7 +959,7 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
       print_symbol_list();
       s4o.print("__step_list[");
       print_step_number();
-      s4o.print("].X;BOOL;\n");
+      s4o.print("].X;BOOL;BOOL;\n");
       step_number++;
       return NULL;
     }
@@ -916,7 +983,7 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
       print_symbol_list();
       s4o.print("__debug_transition_list[");
       print_transition_number();
-      s4o.print("];BOOL;\n");
+      s4o.print("];BOOL;BOOL;\n");
       transition_number++;
       return NULL;
     }
@@ -937,7 +1004,7 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
     //SYM_LIST(step_name_list_c)
     void *visit(step_name_list_c *symbol) {
       for(int i = 0; i < symbol->n; i++) {
-        symbol->elements[i]->accept(*this);
+        symbol->get_element(i)->accept(*this);
         if (i < symbol->n - 1)
           s4o.print(",");
       }
@@ -955,7 +1022,7 @@ class generate_var_list_c: protected generate_c_base_and_typeid_c {
       print_symbol_list();
       s4o.print("__action_list[");
       print_action_number();
-      s4o.print("].state;BOOL;\n");
+      s4o.print("].state;BOOL;BOOL;\n");
       action_number++;
       return NULL;
     }

@@ -209,10 +209,10 @@ void remove_forward_dependencies_c::print_circ_error(library_c *symbol) {
   /* Note too that circular references in derived datatypes is also not possible due to sytax!                                        */
   int initial_error_count = error_count;
   for (int i = 0; i < symbol->n; i++) 
-    if (   (inserted_symbols.find(symbol->elements[i]) == inserted_symbols.end())            // if not copied to new AST
-        &&(  (NULL != dynamic_cast <function_block_declaration_c *>(symbol->elements[i]))    // and (is a FB  
-           ||(NULL != dynamic_cast <      function_declaration_c *>(symbol->elements[i]))))  //      or a Function)
-      STAGE3_ERROR(0, symbol->elements[i], symbol->elements[i], "POU (%s) contains a self-reference and/or belongs in a circular referencing loop", get_datatype_info_c::get_id_str(symbol->elements[i]));
+    if (   (inserted_symbols.find(symbol->get_element(i)) == inserted_symbols.end())            // if not copied to new AST
+        &&(  (NULL != dynamic_cast <function_block_declaration_c *>(symbol->get_element(i)))    // and (is a FB  
+           ||(NULL != dynamic_cast <      function_declaration_c *>(symbol->get_element(i)))))  //      or a Function)
+      STAGE3_ERROR(0, symbol->get_element(i), symbol->get_element(i), "POU (%s) contains a self-reference and/or belongs in a circular referencing loop", get_datatype_info_c::get_id_str(symbol->get_element(i)));
   if (error_count == initial_error_count) ERROR; // We were unable to determine which POUs contain the circular references!!
 }
 
@@ -228,8 +228,8 @@ void *remove_forward_dependencies_c::visit(library_c *symbol) {
   /* first insert all the derived datatype declarations, in the same order by which they are delcared in the original AST */
   /* Since IEC 61131-3 does not allow FBs in arrays or structures, it is actually safe to place all the datatypes before all the POUs! */
   for (int i = 0; i < symbol->n; i++) 
-    if (NULL != dynamic_cast <data_type_declaration_c *>(symbol->elements[i]))
-      new_tree->add_element(symbol->elements[i]);  
+    if (NULL != dynamic_cast <data_type_declaration_c *>(symbol->get_element(i)))
+      new_tree->add_element(symbol->get_element(i));  
 
   /* now do the POUs, in whatever order is necessary to guarantee no forward references. */    
   long long int old_tree_pou_count = pou_count_c::get_count(symbol);
@@ -241,7 +241,7 @@ void *remove_forward_dependencies_c::visit(library_c *symbol) {
     cycle_count++;
     prev_n = new_tree->n;
     current_code_generation_pragma = default_code_generation_pragma;
-    for (int i = 0; i < symbol->n; i++)  symbol->elements[i]->accept(*this);
+    for (int i = 0; i < symbol->n; i++)  symbol->get_element(i)->accept(*this);
   } while (prev_n != new_tree->n); // repeat while new elementns are still being added to the new AST
   
   if (old_tree_pou_count != pou_count_c::get_count(new_tree)) 

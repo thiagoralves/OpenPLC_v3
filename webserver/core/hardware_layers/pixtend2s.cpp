@@ -42,7 +42,6 @@
 #include <string.h>
 
 #include "ladder.h"
-#include "custom_layer.h"
 
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
@@ -187,33 +186,33 @@ int Spi_AutoModeDAC(struct pixtOutDAC *OutputDataDAC) {
 
 int Spi_Set_Aout(int channel, uint16_t value)
 {
-	unsigned char spi_output[2];
-	int spi_device = 1;
-	int len = 2;
-	uint16_t tmp;
+    unsigned char spi_output[2];
+    int spi_device = 1;
+    int len = 2;
+    uint16_t tmp;
 
-	spi_output[0] = 0b00010000;
+    spi_output[0] = 0b00010000;
 
-	if(channel)
-	{
-		spi_output[0] = spi_output[0] | 0b10000000;
-	}
-	if(value > 1023)
-	{
-		value=1023;
-	}
+    if(channel)
+    {
+        spi_output[0] = spi_output[0] | 0b10000000;
+    }
+    if(value > 1023)
+    {
+        value=1023;
+    }
 
-	tmp = value & 0b1111000000;
-	tmp = tmp >> 6;
-	spi_output[0]=spi_output[0] | tmp;
+    tmp = value & 0b1111000000;
+    tmp = tmp >> 6;
+    spi_output[0]=spi_output[0] | tmp;
 
-	tmp = value & 0b0000111111;
-	tmp = tmp << 2;
-	spi_output[1]=tmp;
+    tmp = value & 0b0000111111;
+    tmp = tmp << 2;
+    spi_output[1]=tmp;
 
-	wiringPiSPIDataRW(spi_device, spi_output, len);
+    wiringPiSPIDataRW(spi_device, spi_output, len);
 
-	return 0;
+    return 0;
 }
 
 int Spi_AutoModeV2S(struct pixtOutV2S *OutputData, struct pixtInV2S *InputData)
@@ -557,22 +556,20 @@ void finalizeHardware()
 //-----------------------------------------------------------------------------
 void updateBuffersIn()
 {
-	//lock mutexes
-	pthread_mutex_lock(&bufferLock);
-	pthread_mutex_lock(&localBufferLock);
+    //lock mutexes
+    pthread_mutex_lock(&bufferLock);
+    pthread_mutex_lock(&localBufferLock);
     
     //DIGITAL INPUT
     for (int i = 0; i < MAX_DIG_IN; i++)
     {
-        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byDigitalIn, i);
+        if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byDigitalIn, i);
     }
     
     //GPIO INPUT
     for (int i = MAX_DIG_IN; i < MAX_DIG_IN+MAX_GPIO_IN; i++)
     {
-        if (pinNotPresent(ignored_bool_inputs, ARRAY_SIZE(ignored_bool_inputs), i))
-            if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byGPIOIn, i-MAX_DIG_IN);
+        if (bool_input[i/8][i%8] != NULL) *bool_input[i/8][i%8] = bitRead(InputData.byGPIOIn, i-MAX_DIG_IN);
     }
     
     // uint8_t byFirmware;
@@ -593,57 +590,52 @@ void updateBuffersIn()
     {
         if (i < MAX_ANALOG_IN)
         {
-            if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                if (int_input[i] != NULL) *int_input[i] = analogInputs[i];
+            if (int_input[i] != NULL) *int_input[i] = analogInputs[i];
         }
         if ((i >= MAX_ANALOG_IN) && ( i < MAX_ANALOG_IN+MAX_TEMP_IN)) 
         {
-            if (i == MAX_ANALOG_IN){
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wTemp0;
+            if (i == MAX_ANALOG_IN)
+            {
+                if (int_input[i] != NULL) *int_input[i] = InputData.wTemp0;
             }
-            if (i == (MAX_ANALOG_IN+1)){
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wTemp1;
+            if (i == (MAX_ANALOG_IN+1))
+            {
+                if (int_input[i] != NULL) *int_input[i] = InputData.wTemp1;
             }
-            if (i == (MAX_ANALOG_IN+2)){
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wTemp2;
+            if (i == (MAX_ANALOG_IN+2))
+            {
+                if (int_input[i] != NULL) *int_input[i] = InputData.wTemp2;
             }
-            if (i == (MAX_ANALOG_IN+3)){
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wTemp3;
+            if (i == (MAX_ANALOG_IN+3))
+            {
+                if (int_input[i] != NULL) *int_input[i] = InputData.wTemp3;
             }
         }
         if ((i >= (MAX_ANALOG_IN+MAX_TEMP_IN)) && ( i < (MAX_ANALOG_IN+MAX_TEMP_IN+MAX_HUMID_IN))) 
         {
             if (i == (MAX_ANALOG_IN+MAX_TEMP_IN))
             {
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wHumid0;
+                if (int_input[i] != NULL) *int_input[i] = InputData.wHumid0;
             }
             if (i == ((MAX_ANALOG_IN+MAX_TEMP_IN)+1))
             {
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wHumid1;
+                if (int_input[i] != NULL) *int_input[i] = InputData.wHumid1;
             }
             if (i == ((MAX_ANALOG_IN+MAX_TEMP_IN)+2))
             {
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wHumid2;
+                if (int_input[i] != NULL) *int_input[i] = InputData.wHumid2;
             }
             if (i == ((MAX_ANALOG_IN+MAX_TEMP_IN)+3))
             {
-                if (pinNotPresent(ignored_int_inputs, ARRAY_SIZE(ignored_int_inputs), i))
-                    if (int_input[i] != NULL) *int_input[i] = InputData.wHumid3;
+                if (int_input[i] != NULL) *int_input[i] = InputData.wHumid3;
             }
         }
             
     }
    
-	//unlock mutexes
-	pthread_mutex_unlock(&localBufferLock);
-	pthread_mutex_unlock(&bufferLock);
+    //unlock mutexes
+    pthread_mutex_unlock(&localBufferLock);
+    pthread_mutex_unlock(&bufferLock);
 }
 
 //-----------------------------------------------------------------------------
@@ -653,17 +645,16 @@ void updateBuffersIn()
 //-----------------------------------------------------------------------------
 void updateBuffersOut()
 {
-	//lock mutexes
-	pthread_mutex_lock(&bufferLock);
-	pthread_mutex_lock(&localBufferLock);   
+    //lock mutexes
+    pthread_mutex_lock(&bufferLock);
+    pthread_mutex_lock(&localBufferLock);   
     
     //DIGITAL OUTPUT
     for (int i = 0; i < MAX_DIG_OUT; i++)
     {
         if (i < MAX_DIG_OUT)
         {
-            if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-                if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byDigitalOut, i, *bool_output[i/8][i%8]);
+            if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byDigitalOut, i, *bool_output[i/8][i%8]);
         }  
     }
     
@@ -672,8 +663,7 @@ void updateBuffersOut()
     {
         if ((i >= MAX_DIG_OUT) && (i < (MAX_DIG_OUT+MAX_REL_OUT)))
         {
-            if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-                if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byRelayOut, i-MAX_DIG_OUT, *bool_output[i/8][i%8]);
+            if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byRelayOut, i-MAX_DIG_OUT, *bool_output[i/8][i%8]);
         }
     }
     
@@ -682,8 +672,7 @@ void updateBuffersOut()
     {
         if ((i >= MAX_DIG_OUT+MAX_REL_OUT) && (i < (MAX_DIG_OUT+MAX_REL_OUT+MAX_GPIO_OUT)))
         {
-            if (pinNotPresent(ignored_bool_outputs, ARRAY_SIZE(ignored_bool_outputs), i))
-                if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byGPIOOut, i-(MAX_DIG_OUT+MAX_REL_OUT), *bool_output[i/8][i%8]);
+            if (bool_output[i/8][i%8] != NULL) bitWrite(OutputData.byGPIOOut, i-(MAX_DIG_OUT+MAX_REL_OUT), *bool_output[i/8][i%8]);
         }
     }
 
@@ -696,18 +685,15 @@ void updateBuffersOut()
     {
         if (i < 2)
         {
-            if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-                if (int_output[i] != NULL) analogOutputs[i] = (*int_output[i] / 64);
+            if (int_output[i] != NULL) analogOutputs[i] = (*int_output[i] / 64);
         }
         else
         {
-            if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), i))
-                if (int_output[i] != NULL) pwmOutputs[i-2] = *int_output[i];
+            if (int_output[i] != NULL) pwmOutputs[i-2] = *int_output[i];
         }
     }
     // PWM0Ctrl1L - PWM0Ctrl1H
-    if (pinNotPresent(ignored_int_outputs, ARRAY_SIZE(ignored_int_outputs), 4))
-        if (int_output[4] != NULL) OutputData.wPWM0Ctrl1 = *int_output[4];
+    if (int_output[4] != NULL) OutputData.wPWM0Ctrl1 = *int_output[4];
     
     // UCCtrl0
     if (byte_output[0] != NULL) OutputData.byUCCtrl0 = *byte_output[0];
@@ -726,7 +712,7 @@ void updateBuffersOut()
     // PWM1BL - PWM1BH     
     if (byte_output[7] != NULL) OutputData.byPWM1B = *byte_output[7];
     
-	//unlock mutexes
-	pthread_mutex_unlock(&localBufferLock);
-	pthread_mutex_unlock(&bufferLock);
+    //unlock mutexes
+    pthread_mutex_unlock(&localBufferLock);
+    pthread_mutex_unlock(&bufferLock);
 }

@@ -104,7 +104,7 @@ class generate_c_inlinefcall_c: public generate_c_base_and_typeid_c {
       }
 
       s4o.print(s4o.indent_spaces);
-      s4o.print("inline ");
+      s4o.print("static inline ");      
       function_type_prefix->accept(*this);
       s4o.print(" __");
       fbname->accept(*this);
@@ -279,6 +279,15 @@ class generate_c_inlinefcall_c: public generate_c_base_and_typeid_c {
       wanted_variablegeneration = expression_vg;
       return NULL;
     }
+
+    /********************/
+    /* 2.1.6 - Pragmas  */
+    /********************/
+    //SYM_REF0(disable_code_generation_pragma_c)
+    //SYM_REF0(enable_code_generation_pragma_c)
+    //SYM_TOKEN(pragma_c)
+    void *visit(pragma_c *symbol) {return NULL;}
+
 
     /*************************/
     /* B.1 - Common elements */

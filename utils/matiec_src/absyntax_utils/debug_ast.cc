@@ -56,12 +56,12 @@ static void dump_cvalue(const_value_c const_value) {
   else if (const_value._real64.is_nonconst()) fprintf(stderr, "nc");
   else                                        fprintf(stderr, "?");
   fprintf(stderr, ", i=");
-  if      (const_value. _int64.is_valid   ()) fprintf(stderr, "%"PRId64"", const_value. _int64.get());
+  if      (const_value. _int64.is_valid   ()) fprintf(stderr, "%" PRId64 "", const_value. _int64.get());
   else if (const_value. _int64.is_overflow()) fprintf(stderr, "ov");
   else if (const_value. _int64.is_nonconst()) fprintf(stderr, "nc");
   else                                        fprintf(stderr, "?");
   fprintf(stderr, ", u=");
-  if      (const_value._uint64.is_valid   ()) fprintf(stderr, "%"PRIu64"", const_value._uint64.get());
+  if      (const_value._uint64.is_valid   ()) fprintf(stderr, "%" PRIu64 "", const_value._uint64.get());
   else if (const_value._uint64.is_overflow()) fprintf(stderr, "ov");
   else if (const_value._uint64.is_nonconst()) fprintf(stderr, "nc");
   else                                        fprintf(stderr, "?");
@@ -120,13 +120,16 @@ void print_symbol_c::fcall(symbol_c* symbol) {
 
 
 void print_symbol_c::dump_symbol(symbol_c* symbol) {
-  fprintf(stderr, "(%s->%03d:%03d..%03d:%03d) \t%s\t", symbol->first_file, symbol->first_line, symbol->first_column, symbol->last_line, symbol->last_column, symbol->absyntax_cname());
+  fprintf(stderr, "(%s->%03d:%03d..%03d:%03d) \t%s", symbol->first_file, symbol->first_line, symbol->first_column, symbol->last_line, symbol->last_column, symbol->absyntax_cname());
 
-  fprintf(stderr, "  datatype=");
+  if ((NULL != symbol->token) && (NULL != symbol->token->value))
+    fprintf(stderr, "(%s)", symbol->token->value);
+
+  fprintf(stderr, "\t  datatype=");
   if (NULL == symbol->datatype)
     fprintf(stderr, "NULL\t\t");
   else {
-	  fprintf(stderr, "%s", symbol->datatype->absyntax_cname());
+    fprintf(stderr, "%s", symbol->datatype->absyntax_cname());
   }
   fprintf(stderr, "\t<-{");
   if (symbol->candidate_datatypes.size() == 0) {
@@ -153,26 +156,25 @@ void *print_symbol_c::visit(il_instruction_c *symbol) {
    dump_symbol(symbol);
 
    /* NOTE: std::map.size() returns a size_type, whose type is dependent on compiler/platform. To be portable, we need to do an explicit type cast. */
-  fprintf(stderr, "  next_il_=%lu ", (unsigned long int)symbol->next_il_instruction.size());
   fprintf(stderr, "  prev_il_=%lu ", (unsigned long int)symbol->prev_il_instruction.size());
-  
   if (symbol->prev_il_instruction.size() == 0)
-    fprintf(stderr, "(----,");
+    fprintf(stderr, "(----)");
   else if (symbol->prev_il_instruction[0]->datatype == NULL)
-    fprintf(stderr, "(NULL,");
+    fprintf(stderr, "(NULL)");
   else if (!get_datatype_info_c::is_type_valid(symbol->prev_il_instruction[0]->datatype))
-    fprintf(stderr, "(****,");
+    fprintf(stderr, "(****)");
   else
-    fprintf(stderr, "(    ,");
-  
+    fprintf(stderr, "(    )");
+
+  fprintf(stderr, "  next_il_=%lu ", (unsigned long int)symbol->next_il_instruction.size());
   if (symbol->next_il_instruction.size() == 0)
-    fprintf(stderr, "----)");
+    fprintf(stderr, "(----)");
   else if (symbol->next_il_instruction[0]->datatype == NULL)
-    fprintf(stderr, "NULL)");
+    fprintf(stderr, "(NULL)");
   else if (!get_datatype_info_c::is_type_valid(symbol->next_il_instruction[0]->datatype))
-    fprintf(stderr, "****)");
+    fprintf(stderr, "(****)");
   else 
-    fprintf(stderr, "    )");
+    fprintf(stderr, "(    )");
   
   fprintf(stderr, "\n");
   
