@@ -1080,11 +1080,15 @@ int readModbusMessage(int fd, unsigned char *buffer, size_t bufferSize)
     // Read the length (byte 5 & 6).
     uint16_t length = le16toh(((u_int16_t *)buffer)[2]);
     size_t totalMessageSize = MODBUS_HEADER_SIZE + length;
+    if (totalMessageSize > bufferSize)
+    {
+        return -1;
+    }
 
     // Read the rest of the message.
-    while (messageSize < MODBUS_HEADER_SIZE + length)
+    while (messageSize < totalMessageSize)
     {
-        int bytesRead = read(fd, buffer + messageSize, (totalMessageSize > bufferSize ? bufferSize : totalMessageSize) - messageSize);
+        int bytesRead = read(fd, buffer + messageSize, totalMessageSize - messageSize);
         if (bytesRead <= 0)
         {
             return bytesRead;
