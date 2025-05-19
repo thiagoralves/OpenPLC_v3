@@ -1053,6 +1053,53 @@ void debugGetMd5(unsigned char *mb_frame, void *endianness)
 }
 
 //-----------------------------------------------------------------------------
+// Read one complete modbus message from the blocking file descriptor `fd`
+// into the `buffer`, which has a size of `bufferSize`.
+// If the message is too large only `bufferSize` bytes will be read.
+// Returns the number of bytes of the message that was read.
+//-----------------------------------------------------------------------------
+int readModbusMessage(int fd, unsigned char *buffer, size_t bufferSize)
+{
+    int messageSize = 0;
+    // Read the modbus TCP/IP ADU frame header up to the length field.
+#define MODBUS_HEADER_SIZE 6
+    if (bufferSize < MODBUS_HEADER_SIZE)
+    {
+        return -1;
+    }
+    do
+    {
+        int bytesRead = read(fd, buffer + messageSize, MODBUS_HEADER_SIZE - messageSize);
+        if (bytesRead <= 0)
+        {
+            return bytesRead;
+        }
+        messageSize += bytesRead;
+    } while (messageSize < MODBUS_HEADER_SIZE);
+
+    // Read the length (byte 5 & 6).
+    uint16_t length = ((uint16_t)buffer[4] << 8) | buffer[5];
+    size_t totalMessageSize = MODBUS_HEADER_SIZE + length;
+    if (totalMessageSize > bufferSize)
+    {
+        return -1;
+    }
+
+    // Read the rest of the message.
+    while (messageSize < totalMessageSize)
+    {
+        int bytesRead = read(fd, buffer + messageSize, totalMessageSize - messageSize);
+        if (bytesRead <= 0)
+        {
+            return bytesRead;
+        }
+        messageSize += bytesRead;
+    }
+
+    return messageSize;
+}
+
+//-----------------------------------------------------------------------------
 // This function must parse and process the client request and write back the
 // response for it. The return value is the size of the response message in
 // bytes.
