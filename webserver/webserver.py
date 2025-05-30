@@ -12,7 +12,11 @@ import openplc
 import monitoring as monitor
 import sys
 import ctypes
+from Crypto.Cipher import AES
+from Crypto.Cipher import DES3
+from Crypto.Util.Padding import pad, unpad
 import key_create
+import base64
 import socket
 import mimetypes
 
@@ -25,6 +29,9 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
+
+KEYSIZE = 16
+BLOCKSIZE = 16
 
 class User(flask_login.UserMixin):
     pass
@@ -387,7 +394,47 @@ loading logs...
 </html>"""
     return return_str
 
-    
+def getKey():
+    with open('key.bin', 'rb') as keyfile:
+        key = keyfile.read()
+        keyfile.close()
+        return key
+
+def getIV():
+    with open('iv.bin', 'rb') as ivfile:
+        iv = ivfile.read()
+        ivfile.close()
+        return iv
+def usr_encryption(input):
+    key_create.main()
+    key = getKey()
+    iv = getIV()
+    cipher1 = AES.new(iv, AES.MODE_CBC, key)
+    enc_pwd = cipher1.encrypt(pad(input.encode(), 16))
+    enc_encoded = base64.b64encode(enc_pwd).decode() 
+    return enc_encoded
+
+def pwd_encryption(input):
+    key_create.main()
+    key = getKey()
+    iv = getIV()
+    cipher1 = AES.new(key, AES.MODE_CBC, iv)
+    enc_pwd = cipher1.encrypt(pad(input.encode(), BLOCKSIZE))
+    enc_encoded = base64.b64encode(enc_pwd).decode() 
+    return enc_encoded
+
+def usr_decryption(cipher):
+    key = getKey()
+    iv = getIV()
+    decoder = base64.b64decode(cipher)
+    cipher2 = AES.new(iv, AES.MODE_CBC, key)
+    plain = unpad(cipher2.decrypt(decoder), BLOCKSIZE)
+    return plain
+
+def user_extract():
+    userid = flask_login.current_user.id
+    username = usr_decryption(userid)
+    return username
 @login_manager.user_loader
 def user_loader(username):
     database = "openplc.db"
@@ -465,10 +512,9 @@ def index():
 def login():
     if flask.request.method == 'GET':
         return pages.login_head + pages.login_body
-
+    print(flask.request.environ.get('HTTP_X_FORWARDED_FOR', flask.request.remote_addr))
     username = flask.request.form['username']
     password = flask.request.form['password']
-    
     database = "openplc.db"
     conn = create_connection(database)
     if (conn != None):
@@ -478,10 +524,12 @@ def login():
             rows = cur.fetchall()
             cur.close()
             conn.close()
-
             for row in rows:
-                if (row[0] == username):
-                    if (row[1] == password):
+                enc_username = usr_encryption(username)
+                print(f"Username inserted: {username}, encoded: {enc_username}")
+                if (row[0]) == enc_username:
+                    enc_encoded = pwd_encryption(password)
+                    if (row[1] == enc_encoded):
                         user = User()
                         user.id = row[0]
                         user.name = row[2]
@@ -498,7 +546,6 @@ def login():
             return 'Error opening DB'
     else:
         return 'Error opening DB'
-
     return pages.login_head + pages.bad_login_body
 
 
@@ -581,7 +628,7 @@ def dashboard():
         return_str += "<p style='font-family:'Roboto', sans-serif; font-size:16px'><b>Runtime:</b> " + openplc_runtime.exec_time() + "</p>"
         
         return_str += pages.dashboard_tail
-        
+
         return return_str
 
 
@@ -793,7 +840,6 @@ def update_program_action():
             return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
         prog_id = flask.request.form['prog_id']
         epoch_time = flask.request.form['epoch_time']
-        
         database = "openplc.db"
         conn = create_connection(database)
         if (conn != None):
@@ -805,7 +851,6 @@ def update_program_action():
                 
                 filename = str(row[3])
                 prog_file.save(os.path.join('st_files', filename))
-                
                 #Redirect back to the compiling page
                 return '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/compile-program?file=' + filename + '"></head></html>'
                 
@@ -961,7 +1006,6 @@ def compile_program():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         st_file = flask.request.args.get('file')
-        
         #load information about the program being compiled into the openplc_runtime object
         database = "openplc.db"
         conn = create_connection(database)
@@ -1375,7 +1419,6 @@ def modbus_edit_device():
             
             (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devpause, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devid_db) \
                 = sanitize_input(devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devpause, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devid_db)
-
             database = "openplc.db"
             conn = create_connection(database)
             if (conn != None):
@@ -1923,11 +1966,24 @@ def add_user():
             password = flask.request.form['user_password']
 
             (name, username, email) = sanitize_input(name, username, email)
+            if len(password) < 8:
+                return_str = users()
+                return_str += """<script>alert('Too short password! Minimum 8 characters')</script>"""
+                # return flask.redirect(flask.url_for('users'))
+                return return_str
+            elif len(password) > 16:
+                return_str = users()
+                return_str += """<script>alert('Too long password! Maximum 16 characters')</script>"""
+                # return flask.redirect(flask.url_for('users'))
+                return return_str
+            else:
+                enc_user = usr_encryption(username)       
+                enc_pwd = pwd_encryption(password)
 
             form_has_picture = True
             if ('file' not in flask.request.files):
                 form_has_picture = False
-            
+
             database = "openplc.db"
             conn = create_connection(database)
             if (conn != None):
@@ -1943,11 +1999,11 @@ def add_user():
                             file_extension = pict_file.filename.split('.')
                             filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
                             pict_file.save(os.path.join('static', filename))
-                            cur.execute("INSERT INTO Users (name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?)", (name, username, email, password, "/static/"+filename))
+                            cur.execute("INSERT INTO Users (name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?)", (name, enc_user, email, enc_pwd, "/static/"+filename))
                         else:
-                            cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password))
+                            cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, enc_user, email, enc_pwd))
                     else:
-                        cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password))
+                        cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, enc_user, email, enc_pwd))
                     conn.commit()
                     cur.close()
                     conn.close()
@@ -2009,7 +2065,7 @@ def edit_user():
                     conn.close()
                     return_str += "<input type='hidden' value='" + user_id + "' id='user_id' name='user_id'/>" 
                     return_str += "<label for='full_name'><b>Name</b></label><input type='text' id='full_name' name='full_name' value='" + str(row[1]) + "'>"
-                    return_str += "<label for='user_name'><b>Username</b></label><input type='text' id='user_name' name='user_name' value='" + str(row[2]) + "'>"
+                    return_str += "<label for='user_name'><b>Username</b></label><input type='text' id='user_name' name='user_name' value='" + str(usr_decryption(row[2])) + "'>"
                     return_str += "<label for='user_email'><b>Email</b></label><input type='text' id='user_email' name='user_email' value='" + str(row[3]) + "'>"
                     return_str += """
                             <label for='user_password'><b>Password</b></label>
@@ -2057,6 +2113,18 @@ def edit_user():
             email = flask.request.form['user_email']
             password = flask.request.form['user_password']
             (user_id, name, username, email) = sanitize_input(user_id, name, username, email)
+            if len(password) < 8:
+                return_str = users()
+                return_str += """<script>alert('Too short password! Minimum 8 characters')</script>"""
+                return return_str
+            elif len(password) > 16:
+                return_str = users()
+                return_str += """<script>alert('Too long password! Maximum 16 characters')</script>"""
+                # return flask.redirect(flask.url_for('users'))
+                return return_str
+            else:
+                enc_user = usr_encryption(username)
+                enc_pwd = pwd_encryption(password)
             form_has_picture = True
             if ('file' not in flask.request.files):
                 form_has_picture = False
@@ -2067,9 +2135,9 @@ def edit_user():
                 try:
                     cur = conn.cursor()
                     if (password != "mypasswordishere"):
-                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ?, password = ? WHERE user_id = ?", (name, username, email, password, int(user_id)))
+                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ?, password = ? WHERE user_id = ?", (name, enc_user, email, enc_pwd, int(user_id)))
                     else:
-                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ? WHERE user_id = ?", (name, username, email, int(user_id)))
+                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ? WHERE user_id = ?", (name, enc_user, email, int(user_id)))
                     conn.commit()
                     if (form_has_picture):
                         pict_file = flask.request.files['file']
@@ -2101,6 +2169,7 @@ def delete_user():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         user_id = flask.request.args.get('user_id')
+        cnt_user = user_extract()
         database = "openplc.db"
         conn = create_connection(database)
         if (conn != None):
@@ -2108,14 +2177,14 @@ def delete_user():
                 cur = conn.cursor()
                 cur.execute("SELECT username FROM Users WHERE user_id = ?", (int(user_id),))
                 row = cur.fetchone()
-                if (flask_login.current_user.id == row[0]):
+                raw = usr_decryption(row[0])
+                if (cnt_user == raw):
                     cur.close()
                     conn.close()
                     return draw_blank_page() + "<h2>Error</h2><p>You cannot delete yourself!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
                 else:
                     cur = conn.cursor()
                     cur.execute("DELETE FROM Users WHERE user_id = ?", (int(user_id),))
-                    conn.commit()
                     cur.close()
                     conn.close()
                     return flask.redirect(flask.url_for('users'))
@@ -2318,8 +2387,7 @@ def settings():
                             <input id="auto_run" type="checkbox" checked>
                             <span class="checkmark"></span>
                         </label>
-                        <input type='hidden' value='true' id='auto_run_text' name='auto_run_text'/>"""                   
-
+                        <input type='hidden' value='true' id='auto_run_text' name='auto_run_text'/>"""
                     return_str += """
                         <br>
                         <h2>Slave Devices</h2>
@@ -2399,7 +2467,7 @@ def settings():
                     else:
                         cur.execute("UPDATE Settings SET Value = 'false' WHERE Key = 'Start_run_mode'")
                         conn.commit()
-                        
+
                     if (start_snap7 == 'true'):
                         cur.execute("UPDATE Settings SET Value = 'true' WHERE Key = 'snap7'")
                         conn.commit()
@@ -2499,14 +2567,13 @@ if __name__ == '__main__':
     file = open("active_program", "r")
     st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
-    
+
     database = "openplc.db"
     conn = create_connection(database)
     if (conn != None):
         try:
             cur = conn.cursor()
             cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
-            #cur.execute("SELECT * FROM Programs")
             row = cur.fetchone()
             openplc_runtime.project_name = str(row[1])
             openplc_runtime.project_description = str(row[2])
@@ -2527,9 +2594,7 @@ if __name__ == '__main__':
                 time.sleep(1)
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
-            
-            app.run(sl_context=("cert.pem", "key.pem"), debug=False, host='0.0.0.0', threaded=True, port=8080)
-        
+            app.run(sl_context=("cert.pem", "key.pem"), host='0.0.0.0', threaded=True, port=8080, debug=False)
         except Error as e:
             print("error connecting to the database" + str(e))
     else:
