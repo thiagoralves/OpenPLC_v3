@@ -12,6 +12,7 @@ import openplc
 import monitoring as monitor
 import sys
 import ctypes
+import key_create
 import socket
 import mimetypes
 
@@ -2527,7 +2528,7 @@ if __name__ == '__main__':
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
             
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+            app.run(sl_context=("cert.pem", "key.pem"), debug=False, host='0.0.0.0', threaded=True, port=8080)
         
         except Error as e:
             print("error connecting to the database" + str(e))
