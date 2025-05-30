@@ -33,7 +33,6 @@ createTableSettings = r"""CREATE TABLE `Settings` (
     PRIMARY KEY(`Key`)
 )"""
 
-
 createTableSlave_dev = r"""CREATE TABLE "Slave_dev" (
     "dev_id"	INTEGER NOT NULL UNIQUE,
     "dev_name"	TEXT NOT NULL UNIQUE,
@@ -69,6 +68,26 @@ createTableUsers = r"""CREATE TABLE "Users" (
     `pict_file`	TEXT
 )"""
 
+createTableUpdates = r"""CREATE TABLE `Updates` (
+    `event_id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,     
+    `Prog_ID`	INTEGER NOT NULL,   
+    `file`	TEXT NOT NULL,          
+    `username`	TEXT NOT NULL,
+    `event`     TEXT NOT NULL,       
+    `Timestamp`	INTEGER NOT NULL      
+)"""
+
+insertInitialUpdate = r"INSERT INTO Updates VALUES (0, 0, 'blank_program.st', 'openplc', 'UPDATED', 1527184953)"
+
+createTableUserActy = r"""CREATE TABLE "UserActy" (
+    `event_id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,    
+    `username`	TEXT NOT NULL,    
+    `cntuser`   TEXT NOT NULL,
+    `event`     TEXT NOT NULL,          
+    `Timestamp`	INTEGER NOT NULL  
+)"""
+
+insertInitialUserActy = r"INSERT INTO UserActy VALUES (0, 'openplc', 'openplc', 'ACCESSED', 1527184953)"
 
 gettablesQuery = r"""SELECT name FROM sqlite_master  
   WHERE type='table';"""
@@ -149,6 +168,20 @@ def checkSettingExists(conn, setting, defaultvalue):
     cur.close()
     return
 
+def checkTableUpdates(conn):
+    if checkTableExists(conn, "Updates", createTableUpdates):
+        cur = conn.cursor()
+        cur.execute(insertInitialUpdate)
+        cur.close()
+    return
+
+def checkTableUserActy(conn):
+    if checkTableExists(conn, "UserActy", createTableUserActy):
+        cur = conn.cursor()
+        cur.execute(insertInitialUserActy)
+        cur.close()
+    return
+
 def checkTableSettings(conn):
     checkTableExists(conn, "Settings", createTableSettings)
     checkSettingExists(conn, 'Modbus_port', '502')
@@ -177,6 +210,8 @@ def create_connection():
         checkTableUsers(conn)
         checkTableSettings(conn)
         checkTableSlave_dev(conn)
+        checkTableUpdates(conn)
+        checkTableUserActy(conn)
     except Error as e:
         print(sqlite3.version)
         print(e)

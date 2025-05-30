@@ -107,9 +107,24 @@ function install_py_deps {
         exit 1
     fi
     cd ../
+
+    echo "[CHECKING DATABASE]"
+    cd webserver
+    "$VENV_DIR/bin/python3" ./check_openplc_db.py
+    if [ $? -ne 0 ]; then
+        echo "Error creating database"
+        echo "OpenPLC was NOT installed!"
+        exit 1
+    else
+	if [ -f "./build/openplc.db" ];
+	    then echo "[GENERATED DATABASE]"
+	else
+	    echo "[FAILED TO GENERATE DATABASE]"
+	    exit 1
+	fi
+    fi
+    
 }
-
-
 
 function swap_on {
     echo "creating swapfile..."
@@ -293,7 +308,7 @@ if [ "$1" == "win" ]; then
     #Setting up venv
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" get-pip3.py
-    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3
+    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==3.0.1 flask-login==0.6.3 flask-wtf==1.2.1 pyserial pymodbus==2.5.3 pycryptodome pyopenssl 
     
     echo ""
     echo "[MATIEC COMPILER]"
