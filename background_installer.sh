@@ -98,16 +98,6 @@ function install_py_deps {
     fi
     python3 -m pip install pymodbus==2.5.3
 
-    echo "[CREATING ENCRYPTION KEY]"
-    cd webserver
-    "$VENV_DIR/bin/python3" ./key_create.py
-    if [ $? -ne 0 ]; then
-        echo "Error creating encryption key"
-        echo "OpenPLC was NOT installed!"
-        exit 1
-    fi
-    cd ../
-
     echo "[CHECKING DATABASE]"
     cd webserver
     "$VENV_DIR/bin/python3" ./check_openplc_db.py
@@ -116,12 +106,12 @@ function install_py_deps {
         echo "OpenPLC was NOT installed!"
         exit 1
     else
-	if [ -f "./build/openplc.db" ];
-	    then echo "[GENERATED DATABASE]"
-	else
-	    echo "[FAILED TO GENERATE DATABASE]"
-	    exit 1
-	fi
+        if [ -f "./build/openplc.db" ];
+            then echo "[GENERATED DATABASE]"
+        else
+            echo "[FAILED TO GENERATE DATABASE]"
+            exit 1
+        fi
     fi
     
 }
