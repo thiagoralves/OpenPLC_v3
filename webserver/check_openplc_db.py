@@ -10,9 +10,8 @@ from sqlite3 import Error
 import os
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
-import key_create
-import base64
 import json
+import bcrypt
 
 builddir = r"build/"
 dbfile = r"build/openplc.db"
@@ -93,36 +92,9 @@ gettablesQuery = r"""SELECT name FROM sqlite_master
   WHERE type='table';"""
 getsettingsQuery = r"""SELECT Key FROM Settings"""
 
-# Security Measures
-def getKey():
-    with open('key.bin', 'rb') as keyfile:
-        key = keyfile.read()
-        keyfile.close()
-        return key
-
-def getIV():
-    with open('iv.bin', 'rb') as ivfile:
-        iv = ivfile.read()
-        ivfile.close()
-        return iv
-    
-def usr_encryption(input):
-    key_create.main()
-    key = getKey()
-    iv = getIV()
-    cipher1 = AES.new(iv, AES.MODE_CBC, key)
-    enc_pwd = cipher1.encrypt(pad(input.encode(), 16))
-    enc_encoded = base64.b64encode(enc_pwd).decode() 
-    return enc_encoded
-
-def pwd_encryption(input):
-    key_create.main()
-    key = getKey()
-    iv = getIV()
-    cipher1 = AES.new(key, AES.MODE_CBC, iv)
-    enc_pwd = cipher1.encrypt(pad(input.encode(), 16))
-    enc_encoded = base64.b64encode(enc_pwd).decode() 
-    return enc_encoded
+# Hashing functions
+def hash_password(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 # return true if created fresh table
 def checkTableExists(conn, tablename, tablecreatecommand):
@@ -147,8 +119,8 @@ def checkTablePrograms(conn):
 
 def checkTableUsers(conn):
     if checkTableExists(conn, "Users", createTableUsers):
-        username = usr_encryption('openplc')
-        password = pwd_encryption('openplc')
+        username = 'openplc'  # Username in chiaro
+        password = hash_password('openplc')  # Password hashata
         cur = conn.cursor()
         cur.execute("INSERT INTO Users (user_id, name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?, ?)", (10, 'OpenPLC User', username, 'openplc@openplc.com', password, 'NULL'))
         cur.close()

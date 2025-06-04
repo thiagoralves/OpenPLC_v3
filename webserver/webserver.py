@@ -15,13 +15,11 @@ import ctypes
 from Crypto.Cipher import AES
 from Crypto.Cipher import DES3
 from Crypto.Util.Padding import pad, unpad
-import key_create
-import base64
+import bcrypt
 import json
 import fileComparison
 import socket
 import mimetypes
-
 import flask 
 import flask_login
 
@@ -413,37 +411,15 @@ def getIV():
         iv = ivfile.read()
         ivfile.close()
         return iv
-    
-def usr_encryption(input):
-    key_create.main()
-    key = getKey()
-    iv = getIV()
-    cipher1 = AES.new(iv, AES.MODE_CBC, key)
-    enc_pwd = cipher1.encrypt(pad(input.encode(), 16))
-    enc_encoded = base64.b64encode(enc_pwd).decode() 
-    return enc_encoded
 
-def pwd_encryption(input):
-    key_create.main()
-    key = getKey()
-    iv = getIV()
-    cipher1 = AES.new(key, AES.MODE_CBC, iv)
-    enc_pwd = cipher1.encrypt(pad(input.encode(), BLOCKSIZE))
-    enc_encoded = base64.b64encode(enc_pwd).decode() 
-    return enc_encoded
+def hash_password(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-def usr_decryption(cipher):
-    key = getKey()
-    iv = getIV()
-    decoder = base64.b64decode(cipher)
-    cipher2 = AES.new(iv, AES.MODE_CBC, key)
-    plain = unpad(cipher2.decrypt(decoder), BLOCKSIZE)
-    return plain
+def check_password(password, hashed):
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
 def user_extract():
-    userid = flask_login.current_user.id
-    username = usr_decryption(userid)
-    return username
+    return flask_login.current_user.id
 
 def IPCheck(cntusr, cntip):     # cut malicious activity
     IPList = 'registeredIP.json'
@@ -506,7 +482,7 @@ def user_loader(username):
 @login_manager.request_loader
 def request_loader(request):
     username = request.form.get('username')
-    
+    password = request.form.get('password')
     database = "openplc.db"
     conn = create_connection(database)
     if (conn != None):
@@ -523,7 +499,7 @@ def request_loader(request):
                     user.id = row[0]
                     user.name = row[2]
                     user.pict_file = str(row[3])
-                    user.is_authenticated = (request.form['password'] == row[1])
+                    user.is_authenticated = check_password(password, row[1])
                     return user
             return
                     
@@ -569,11 +545,8 @@ def login():
             #cur.close()
             #conn.close()
             for row in rows:
-                enc_username = usr_encryption(username)
-                print(f"Username inserted: {username}, encoded: {enc_username}")
-                if (row[0]) == enc_username:
-                    enc_encoded = pwd_encryption(password)
-                    if (row[1] == enc_encoded):
+                if (row[0] == username):
+                    if check_password(password, row[1]):
                         user = User()
                         user.id = row[0]
                         user.name = row[2]
@@ -2166,8 +2139,8 @@ def add_user():
                 # return flask.redirect(flask.url_for('users'))
                 return return_str
             else:
-                enc_user = usr_encryption(username)       
-                enc_pwd = pwd_encryption(password)
+                flat_user = username  # Username in chiaro
+                hashed_pwd = hash_password(password)
 
             form_has_picture = True
             if ('file' not in flask.request.files):
@@ -2189,15 +2162,15 @@ def add_user():
                             file_extension = pict_file.filename.split('.')
                             filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
                             pict_file.save(os.path.join('static', filename))
-                            cur.execute("INSERT INTO Users (name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?)", (name, enc_user, email, enc_pwd, "/static/"+filename))
+                            cur.execute("INSERT INTO Users (name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?)", (name, flat_user, email, hashed_pwd, "/static/"+filename))
                             cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'REGISTERED', epoch_time))
                             update = {"user": username, "ip": cntIP}
                         else:
-                            cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, enc_user, email, enc_pwd))
+                            cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, flat_user, email, hashed_pwd))
                             cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'REGISTERED', epoch_time))
                             update = {"user": username, "ip": cntIP}
                     else:
-                        cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, enc_user, email, enc_pwd))
+                        cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, flat_user, email, hashed_pwd))
                         cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'REGISTERED', epoch_time))
                         update = {"user": username, "ip": cntIP}
                     conn.commit()
@@ -2268,7 +2241,7 @@ def edit_user():
                     conn.close()
                     return_str += "<input type='hidden' value='" + user_id + "' id='user_id' name='user_id'/>" 
                     return_str += "<label for='full_name'><b>Name</b></label><input type='text' id='full_name' name='full_name' value='" + str(row[1]) + "'>"
-                    return_str += "<label for='user_name'><b>Username</b></label><input type='text' id='user_name' name='user_name' value='" + str(usr_decryption(row[2])) + "'>"
+                    return_str += "<label for='user_name'><b>Username</b></label><input type='text' id='user_name' name='user_name' value='" + str(row[2]) + "'>"
                     return_str += "<label for='user_email'><b>Email</b></label><input type='text' id='user_email' name='user_email' value='" + str(row[3]) + "'>"
                     return_str += """
                             <label for='user_password'><b>Password</b></label>
@@ -2330,8 +2303,8 @@ def edit_user():
                 # return flask.redirect(flask.url_for('users'))
                 return return_str
             else:
-                enc_user = usr_encryption(username)
-                enc_pwd = pwd_encryption(password)
+                flat_user = username  # Username in chiaro
+                hashed_pwd = hash_password(password)
                 
             iplist = 'registeredIP.json'
             with open(iplist, 'r') as f:
@@ -2365,10 +2338,10 @@ def edit_user():
                 try:
                     cur = conn.cursor()
                     if (password != "mypasswordishere"):
-                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ?, password = ? WHERE user_id = ?", (name, enc_user, email, enc_pwd, int(user_id)))
+                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ?, password = ? WHERE user_id = ?", (name, flat_user, email, hashed_pwd, int(user_id)))
                         cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'UPDATED', epoch_time))
                     else:
-                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ? WHERE user_id = ?", (name, enc_user, email, int(user_id)))
+                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ? WHERE user_id = ?", (name, flat_user, email, int(user_id)))
                         cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'UPDATED', epoch_time))
                     conn.commit()
                     if (form_has_picture):
@@ -2413,8 +2386,7 @@ def delete_user():
                 cur = conn.cursor()
                 cur.execute("SELECT username FROM Users WHERE user_id = ?", (int(user_id),))
                 row = cur.fetchone()
-                raw = usr_decryption(row[0])
-                if (cnt_user == raw):
+                if (cnt_user == row[0]):
                     cur.close()
                     conn.close()
                     return draw_blank_page() + "<h2>Error</h2><p>You cannot delete yourself!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
@@ -2445,8 +2417,7 @@ def delete_user():
 
                     cur = conn.cursor()
                     cur.execute("DELETE FROM Users WHERE user_id = ?", (int(user_id),))
-                    raw_row = usr_decryption(row[0])
-                    cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (raw_row, username, 'DEREGISTERED', epoch_time))
+                    cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (row[0], username, 'DEREGISTERED', epoch_time))
                     conn.commit()
                     cur.close()
                     conn.close()
