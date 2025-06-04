@@ -1,6 +1,6 @@
 import time, threading
 from struct import *
-from pymodbus.client.sync import ModbusTcpClient
+from pymodbus.client import ModbusTcpClient    # Corrected the import to function properly in line with the pymodbus library (reference: Line 20 of pymodbus/examples/contrib/solar.py)
 
 class debug_var():
     name = ''
