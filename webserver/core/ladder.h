@@ -143,6 +143,7 @@ extern time_t start_time;
 extern time_t end_time;
 
 //modbus.cpp
+int readModbusMessage(int fd, unsigned char *buffer, size_t bufferSize);
 int processModbusMessage(unsigned char *buffer, int bufferSize);
 void mapUnusedIO();
 

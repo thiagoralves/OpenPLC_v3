@@ -230,7 +230,14 @@ void *handleConnections(void *arguments)
         //unsigned char buffer[NET_BUFFER_SIZE];
         //int messageSize;
 
-        messageSize = listenToClient(client_fd, buffer);
+        if (protocol_type == MODBUS_PROTOCOL)
+        {
+            messageSize = readModbusMessage(client_fd, buffer, sizeof(buffer) / sizeof(buffer[0]));
+        }
+        else
+        {
+            messageSize = listenToClient(client_fd, buffer);
+        }
         if (messageSize <= 0 || messageSize > NET_BUFFER_SIZE)
         {
             // something has  gone wrong or the client has closed connection
