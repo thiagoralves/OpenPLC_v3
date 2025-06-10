@@ -8,6 +8,10 @@
 import sqlite3
 from sqlite3 import Error
 import os
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+import json
+import bcrypt
 
 builddir = r"build/"
 dbfile = r"build/openplc.db"
@@ -27,7 +31,6 @@ createTableSettings = r"""CREATE TABLE `Settings` (
     `Value`	TEXT NOT NULL,
     PRIMARY KEY(`Key`)
 )"""
-
 
 createTableSlave_dev = r"""CREATE TABLE "Slave_dev" (
     "dev_id"	INTEGER NOT NULL UNIQUE,
@@ -64,13 +67,34 @@ createTableUsers = r"""CREATE TABLE "Users" (
     `pict_file`	TEXT
 )"""
 
-insertDefaultUser = r"INSERT INTO Users VALUES (10, 'OpenPLC User', 'openplc', 'openplc@openplc.com','openplc', NULL)"
+createTableUpdates = r"""CREATE TABLE `Updates` (
+    `event_id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,     
+    `Prog_ID`	INTEGER NOT NULL,   
+    `file`	TEXT NOT NULL,          
+    `username`	TEXT NOT NULL,
+    `event`     TEXT NOT NULL,       
+    `Timestamp`	INTEGER NOT NULL      
+)"""
 
+insertInitialUpdate = r"INSERT INTO Updates VALUES (0, 0, 'blank_program.st', 'openplc', 'UPDATED', 1527184953)"
 
+createTableUserActy = r"""CREATE TABLE "UserActy" (
+    `event_id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,    
+    `username`	TEXT NOT NULL,    
+    `cntuser`   TEXT NOT NULL,
+    `event`     TEXT NOT NULL,          
+    `Timestamp`	INTEGER NOT NULL  
+)"""
+
+insertInitialUserActy = r"INSERT INTO UserActy VALUES (0, 'openplc', 'openplc', 'ACCESSED', 1527184953)"
 
 gettablesQuery = r"""SELECT name FROM sqlite_master  
   WHERE type='table';"""
 getsettingsQuery = r"""SELECT Key FROM Settings"""
+
+# Hashing functions
+def hash_password(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 # return true if created fresh table
 def checkTableExists(conn, tablename, tablecreatecommand):
@@ -95,8 +119,10 @@ def checkTablePrograms(conn):
 
 def checkTableUsers(conn):
     if checkTableExists(conn, "Users", createTableUsers):
+        username = 'openplc'  # Username in chiaro
+        password = hash_password('openplc')  # Password hashata
         cur = conn.cursor()
-        cur.execute(insertDefaultUser)
+        cur.execute("INSERT INTO Users (user_id, name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?, ?)", (10, 'OpenPLC User', username, 'openplc@openplc.com', password, 'NULL'))
         cur.close()
     return
 
@@ -112,6 +138,20 @@ def checkSettingExists(conn, setting, defaultvalue):
     print(setting, " didn't exist, creating")
     cur.execute("INSERT INTO Settings VALUES (?, ?)", (setting, defaultvalue))
     cur.close()
+    return
+
+def checkTableUpdates(conn):
+    if checkTableExists(conn, "Updates", createTableUpdates):
+        cur = conn.cursor()
+        cur.execute(insertInitialUpdate)
+        cur.close()
+    return
+
+def checkTableUserActy(conn):
+    if checkTableExists(conn, "UserActy", createTableUserActy):
+        cur = conn.cursor()
+        cur.execute(insertInitialUserActy)
+        cur.close()
     return
 
 def checkTableSettings(conn):
@@ -142,6 +182,8 @@ def create_connection():
         checkTableUsers(conn)
         checkTableSettings(conn)
         checkTableSlave_dev(conn)
+        checkTableUpdates(conn)
+        checkTableUserActy(conn)
     except Error as e:
         print(sqlite3.version)
         print(e)

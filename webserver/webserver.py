@@ -12,9 +12,14 @@ import openplc
 import monitoring as monitor
 import sys
 import ctypes
+from Crypto.Cipher import AES
+from Crypto.Cipher import DES3
+from Crypto.Util.Padding import pad, unpad
+import bcrypt
+import json
+import fileComparison
 import socket
 import mimetypes
-
 import flask 
 import flask_login
 
@@ -24,6 +29,9 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
+
+KEYSIZE = 16
+BLOCKSIZE = 16
 
 class User(flask_login.UserMixin):
     pass
@@ -119,6 +127,12 @@ def delete_persistent_file():
         os.remove("persistent.file")
     print("persistent.file removed!")
 
+def ip_sanitizer(cntip):
+    if len(cntip) == 0:
+        cntip = flask.request.remote_addr
+        return cntip
+    else:
+        return cntip
 
 def generate_mbconfig():
     database = "openplc.db"
@@ -386,6 +400,56 @@ loading logs...
 </html>"""
     return return_str
 
+def getKey():
+    with open('key.bin', 'rb') as keyfile:
+        key = keyfile.read()
+        keyfile.close()
+        return key
+
+def getIV():
+    with open('iv.bin', 'rb') as ivfile:
+        iv = ivfile.read()
+        ivfile.close()
+        return iv
+
+def hash_password(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def check_password(password, hashed):
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+def user_extract():
+    return flask_login.current_user.id
+
+def IPCheck(cntusr, cntip):     # cut malicious activity
+    IPList = 'registeredIP.json'
+    with open(IPList, 'r') as fp:
+        registeredIP = json.load(fp)
+        data = registeredIP['registeredIP']
+        i=0
+        for i in range(len(data)):
+            enroledIP = data[i]['ip']
+            enroledUser = data[i]['user']
+            i+=1
+            if cntusr == enroledUser:
+                if cntip == enroledIP:
+                    print("Successful upload from ", cntip)
+                    return 200
+                elif cntip != enroledIP:      
+                    if cntip != '127.0.0.1':
+                        print("Not allowed to upload from ", cntip)
+                        return 500
+                    else:
+                        print("Successful upload from ", cntip)
+                elif i >= len(data):
+                    break
+                else:
+                    print(cntip)
+                    print(enroledIP)
+                    print("Something went wrong. \n")
+                    return 404
+            else:
+                pass
     
 @login_manager.user_loader
 def user_loader(username):
@@ -418,7 +482,7 @@ def user_loader(username):
 @login_manager.request_loader
 def request_loader(request):
     username = request.form.get('username')
-    
+    password = request.form.get('password')
     database = "openplc.db"
     conn = create_connection(database)
     if (conn != None):
@@ -435,7 +499,7 @@ def request_loader(request):
                     user.id = row[0]
                     user.name = row[2]
                     user.pict_file = str(row[3])
-                    user.is_authenticated = (request.form['password'] == row[1])
+                    user.is_authenticated = check_password(password, row[1])
                     return user
             return
                     
@@ -464,10 +528,12 @@ def index():
 def login():
     if flask.request.method == 'GET':
         return pages.login_head + pages.login_body
-
+    print(flask.request.environ.get('HTTP_X_FORWARDED_FOR', flask.request.remote_addr))
     username = flask.request.form['username']
     password = flask.request.form['password']
-    
+    epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+    print({'Accesed ip:',  flask.request.access_route[-1]})
+
     database = "openplc.db"
     conn = create_connection(database)
     if (conn != None):
@@ -475,20 +541,27 @@ def login():
             cur = conn.cursor()
             cur.execute("SELECT username, password, name, pict_file FROM Users")
             rows = cur.fetchall()
-            cur.close()
-            conn.close()
-
+            cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, username, 'ACCESSED', epoch_time))
+            #cur.close()
+            #conn.close()
             for row in rows:
                 if (row[0] == username):
-                    if (row[1] == password):
+                    if check_password(password, row[1]):
                         user = User()
                         user.id = row[0]
                         user.name = row[2]
                         user.pict_file = str(row[3])
+                        cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, username, 'SUCCEEDED', epoch_time))
+                        conn.commit()
                         flask_login.login_user(user)
                         return flask.redirect(flask.url_for('dashboard'))
                     else:
+                        cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, username, 'FAILED', epoch_time))
+                        conn.commit()
                         return pages.login_head + pages.bad_login_body
+                else:
+                    cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, username, 'FAILED', epoch_time))
+                    conn.commit()
                         
             return pages.login_head + pages.bad_login_body
                     
@@ -497,7 +570,7 @@ def login():
             return 'Error opening DB'
     else:
         return 'Error opening DB'
-
+    
     return pages.login_head + pages.bad_login_body
 
 
@@ -507,13 +580,21 @@ def start_plc():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
-        monitor.stop_monitor()
-        openplc_runtime.start_runtime()
-        time.sleep(1)
-        configure_runtime()
-        monitor.cleanup()
-        monitor.parse_st(openplc_runtime.project_file)
-        return flask.redirect(flask.url_for('dashboard'))
+        if openplc_runtime.project_file == 'temporal_program.st':
+            monitor.stop_monitor()
+            flask_login.logout_user()
+            return flask.redirect(flask.url_for('login'))
+            # os.system('zenity --warning --width=230 --height=80 --text "Can\'t start Fake program!"')
+            return flask.redirect(flask.url_for('dashboard'))
+        else:
+            print({'Accessed ip:', flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')})
+            monitor.stop_monitor()
+            openplc_runtime.start_runtime()
+            time.sleep(1)
+            configure_runtime()
+            monitor.cleanup()
+            monitor.parse_st(openplc_runtime.project_file)
+            return flask.redirect(flask.url_for('dashboard'))
 
 
 @app.route('/stop_plc')
@@ -580,7 +661,12 @@ def dashboard():
         return_str += "<p style='font-family:'Roboto', sans-serif; font-size:16px'><b>Runtime:</b> " + openplc_runtime.exec_time() + "</p>"
         
         return_str += pages.dashboard_tail
-        
+
+        if openplc_runtime.project_name == 'Launch a new program':
+            print('[PROGRAM IS REMOVED. STARTING FAKE PROGRAM...]')
+            return_str += """<script>alert('Currently running a fake program. Please launch a new program!')</script>"""
+        else:
+            pass
         return return_str
 
 
@@ -791,8 +877,8 @@ def update_program_action():
         if (prog_file.filename == ''):
             return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
         prog_id = flask.request.form['prog_id']
-        epoch_time = flask.request.form['epoch_time']
-        
+        epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+        username = user_extract()
         database = "openplc.db"
         conn = create_connection(database)
         if (conn != None):
@@ -800,11 +886,12 @@ def update_program_action():
                 cur = conn.cursor()
                 cur.execute("SELECT * FROM Programs WHERE Prog_ID = ?", (int(prog_id),))
                 row = cur.fetchone()
-                cur.close()
-                
+                #cur.close()
                 filename = str(row[3])
                 prog_file.save(os.path.join('st_files', filename))
-                
+                cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(prog_id), filename, username, 'PROG_UPD', epoch_time))
+                conn.commit()
+                cur.close()
                 #Redirect back to the compiling page
                 return '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/compile-program?file=' + filename + '"></head></html>'
                 
@@ -822,15 +909,30 @@ def remove_program():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         prog_id = flask.request.args.get('id')
+        epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+        username = user_extract()
         database = "openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
                 cur = conn.cursor()
+                cur.execute("SELECT File FROM Programs WHERE Prog_ID = ? ", (int(prog_id),))
+                row = cur.fetchone()
                 cur.execute("DELETE FROM Programs WHERE Prog_ID = ?", (int(prog_id),))
+                cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(prog_id), row[0], username, 'PROG_DEL', epoch_time))
                 conn.commit()
                 cur.close()
                 conn.close()
+                time.sleep(1)
+                monitor.stop_monitor()
+                file = './st_files/' + row[0]
+                subprocess.call(['./scripts/remove_program.sh', file])
+                if openplc_runtime.project_file == row[0]:
+                    openplc_runtime.stop_runtime()
+                    openplc_runtime.project_file = 'temporal_program.st'
+                    openplc_runtime.project_name = 'Launch a new program'
+                else:
+                    pass
                 return flask.redirect(flask.url_for('programs'))
                 
             except Error as e:
@@ -930,6 +1032,56 @@ def upload_program_action():
         prog_descr = flask.request.form['prog_descr']
         prog_file = flask.request.form['prog_file']
         epoch_time = flask.request.form['epoch_time']
+        cntIP = flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')
+        cntIP = ip_sanitizer(cntIP)
+        cnt_user = user_extract()
+        r1, r2 = fileComparison.main(prog_file)
+        print(r1, r2)
+        if r1 == True and r2 == True:
+            print("Successful Upload from", cntIP)
+            pass
+        elif r1 == 404 and r2 == 404:
+            print("IP address Check... ")
+            ip_result = IPCheck(cnt_user, cntIP)
+            if ip_result == 200:
+                print(ip_result)
+                pass
+            elif ip_result == 500:
+                print(ip_result)
+                return_str = pages.login_head
+                return_str += """
+                <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+                <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+                <script>
+                    alert('You are not allowed to upload!!')
+                </script>
+                """
+                return_str += pages.login_body
+                monitor.stop_monitor()
+                flask_login.logout_user()                           # clear the session
+                return return_str     
+        else:       
+            ip_result = IPCheck(cnt_user, cntIP)
+            if ip_result == 200:
+                print(ip_result)
+                pass
+            elif ip_result == 500:
+                print(ip_result)
+                return_str = pages.login_head
+                return_str += """
+                <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+                <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+                <script>
+                    alert('You are not allowed to upload!!')
+                </script>
+                """
+                return_str += pages.login_body
+                monitor.stop_monitor()
+                flask_login.logout_user()                           # clear the session
+                return return_str     
+            else:               
+                print(ip_result, "Something has gone wrong\n")
+                return flask.redirect(flask.url_for('dashboard'))
 
         (prog_name, prog_descr, prog_file, epoch_time) = sanitize_input(prog_name, prog_descr, prog_file, epoch_time)
         
@@ -960,7 +1112,8 @@ def compile_program():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         st_file = flask.request.args.get('file')
-        
+        epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+        username = user_extract()
         #load information about the program being compiled into the openplc_runtime object
         database = "openplc.db"
         conn = create_connection(database)
@@ -972,6 +1125,8 @@ def compile_program():
                 openplc_runtime.project_name = str(row[1])
                 openplc_runtime.project_description = str(row[2])
                 openplc_runtime.project_file = str(row[3])
+                cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(row[0]), st_file, username, 'COMPILED', epoch_time))
+                conn.commit()
                 cur.close()
                 conn.close()
             except Error as e:
@@ -1200,12 +1355,15 @@ def add_modbus_device():
             (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devpause, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size) \
                 = sanitize_input(devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devpause, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size)
 
+            epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+            username = user_extract()
             database = "openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
                     cur = conn.cursor()
                     cur.execute("INSERT INTO Slave_dev (dev_name, dev_type, slave_id, com_port, baud_rate, parity, data_bits, stop_bits, ip_address, ip_port, di_start, di_size, coil_start, coil_size, ir_start, ir_size, hr_read_start, hr_read_size, hr_write_start, hr_write_size, pause) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devpause))
+                    cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (devid, devname, username, 'DEV_ADD', epoch_time))
                     conn.commit()
                     cur.close()
                     conn.close()
@@ -1374,13 +1532,17 @@ def modbus_edit_device():
             
             (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devpause, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devid_db) \
                 = sanitize_input(devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devpause, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devid_db)
-
+            
+            epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+            username = user_extract()
             database = "openplc.db"
             conn = create_connection(database)
+
             if (conn != None):
                 try:
                     cur = conn.cursor()
                     cur.execute("UPDATE Slave_dev SET dev_name = ?, dev_type = ?, slave_id = ?, com_port = ?, baud_rate = ?, parity = ?, data_bits = ?, stop_bits = ?, ip_address = ?, ip_port = ?, di_start = ?, di_size = ?, coil_start = ?, coil_size = ?, ir_start = ?, ir_size = ?, hr_read_start = ?, hr_read_size = ?, hr_write_start = ?, hr_write_size = ?, pause = ? WHERE dev_id = ?", (devname, devtype, devid, devcport, devbaud, devparity, devdata, devstop, devip, devport, di_start, di_size, do_start, do_size, ai_start, ai_size, aor_start, aor_size, aow_start, aow_size, devpause, int(devid_db)))
+                    cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(devid_db), devname, username, 'DEV_UPD', epoch_time))
                     conn.commit()
                     cur.close()
                     conn.close()
@@ -1404,10 +1566,15 @@ def delete_device():
         devid_db = flask.request.args.get('dev_id')
         database = "openplc.db"
         conn = create_connection(database)
+        epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+        username = user_extract()
         if (conn != None):
             try:
                 cur = conn.cursor()
+                cur.execute("SELECT dev_name FROM Slave_dev WHERE dev_id = ?", (int(devid_db),))
+                devname = cur.fetchone()
                 cur.execute("DELETE FROM Slave_dev WHERE dev_id = ?", (int(devid_db),))
+                cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (devid_db, devname[0], username, 'DEV_DEL', epoch_time))
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -1801,8 +1968,45 @@ def hardware():
             custom_layer_code = flask.request.form['custom_layer_code']
             with open('./active_program') as f: current_program = f.read()
             with open('./core/psm/main.py', 'w+') as f: f.write(custom_layer_code)
+            database = "openplc.db"
+            conn = create_connection(database)
+            current_program = current_program.replace('\n', '')
+            epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+            username = user_extract()
+            cntIP = flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')
+            cntIP = ip_sanitizer(cntIP)
+
+            if (conn != None):
+                try:
+                    cur = conn.cursor()
+                    cur.execute("SELECT Prog_ID FROM Programs WHERE File = ?", (str(current_program),))
+                    pid = cur.fetchone()
+                    cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (pid[0], current_program, username, 'CUSTOM_'+hardware_layer, epoch_time))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                except Error as e:
+                    print("error connecting to the database" + str(e))
+                    return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+            else:
+                return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+############
             
-            subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
+            ipchecking = IPCheck(username, cntIP)
+            if ipchecking != 200:
+                return_str = pages.login_head
+                return_str += """
+                <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+                <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+                <script>
+                    alert('You are not allowed to upload!!')
+                </script>
+                """
+                return_str += pages.login_body
+                monitor.stop_monitor()
+                flask_login.logout_user() 
+            else:
+                subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
             return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
         
         return return_str
@@ -1870,7 +2074,6 @@ def users():
                 for row in rows:
                     return_str += "<tr onclick=\"document.location='edit-user?table_id=" + str(row[0]) + "'\">"
                     return_str += "<td>" + str(row[1]) + "</td><td>" + str(row[2]) + "</td><td>" + str(row[3]) + "</td></tr>"
-                
                 return_str += """
                 </table>
                     <br>
@@ -1920,13 +2123,30 @@ def add_user():
             username = flask.request.form['user_name']
             email = flask.request.form['user_email']
             password = flask.request.form['user_password']
-
+            epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+            cnt_user = user_extract()
+            cntIP = flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')
+            cntIP = ip_sanitizer(cntIP)
             (name, username, email) = sanitize_input(name, username, email)
+            if len(password) < 8:
+                return_str = users()
+                return_str += """<script>alert('Too short password! Minimum 8 characters')</script>"""
+                # return flask.redirect(flask.url_for('users'))
+                return return_str
+            elif len(password) > 16:
+                return_str = users()
+                return_str += """<script>alert('Too long password! Maximum 16 characters')</script>"""
+                # return flask.redirect(flask.url_for('users'))
+                return return_str
+            else:
+                flat_user = username  # Username in chiaro
+                hashed_pwd = hash_password(password)
 
             form_has_picture = True
             if ('file' not in flask.request.files):
                 form_has_picture = False
-            
+
+            IPlist = 'registeredIP.json'
             database = "openplc.db"
             conn = create_connection(database)
             if (conn != None):
@@ -1942,14 +2162,27 @@ def add_user():
                             file_extension = pict_file.filename.split('.')
                             filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
                             pict_file.save(os.path.join('static', filename))
-                            cur.execute("INSERT INTO Users (name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?)", (name, username, email, password, "/static/"+filename))
+                            cur.execute("INSERT INTO Users (name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?)", (name, flat_user, email, hashed_pwd, "/static/"+filename))
+                            cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'REGISTERED', epoch_time))
+                            update = {"user": username, "ip": cntIP}
                         else:
-                            cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password))
+                            cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, flat_user, email, hashed_pwd))
+                            cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'REGISTERED', epoch_time))
+                            update = {"user": username, "ip": cntIP}
                     else:
-                        cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password))
+                        cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, flat_user, email, hashed_pwd))
+                        cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'REGISTERED', epoch_time))
+                        update = {"user": username, "ip": cntIP}
                     conn.commit()
                     cur.close()
                     conn.close()
+                    
+                    with open(IPlist, 'r+') as fp:
+                        jdata = json.load(fp)
+                        jdata['registeredIP'].append(update)
+                        fp.seek(0)
+                        json.dump(jdata, fp, indent=4)
+
                     return flask.redirect(flask.url_for('users'))
                     
                 except Error as e:
@@ -2055,7 +2288,46 @@ def edit_user():
             username = flask.request.form['user_name']
             email = flask.request.form['user_email']
             password = flask.request.form['user_password']
+            epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+            cnt_user = user_extract()
+            cntIP = flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')
+            cntIP = ip_sanitizer(cntIP)
             (user_id, name, username, email) = sanitize_input(user_id, name, username, email)
+            if len(password) < 8:
+                return_str = users()
+                return_str += """<script>alert('Too short password! Minimum 8 characters')</script>"""
+                return return_str
+            elif len(password) > 16:
+                return_str = users()
+                return_str += """<script>alert('Too long password! Maximum 16 characters')</script>"""
+                # return flask.redirect(flask.url_for('users'))
+                return return_str
+            else:
+                flat_user = username  # Username in chiaro
+                hashed_pwd = hash_password(password)
+                
+            iplist = 'registeredIP.json'
+            with open(iplist, 'r') as f:
+                data = json.load(f)
+                for element in data['registeredIP']:
+                    if element['user'] == username and element['ip'] == cntIP:
+                        pass
+                    elif element['user'] == username:
+                        if element['ip'] != cntIP:
+                            if cntIP != '127.0.0.1':
+                                return_str = pages.login_head
+                                return_str += """<script>alert('Wrong Access! Try later')</script>"""  
+                                return_str += pages.login_body                              
+                                monitor.stop_monitor()
+                                flask_login.logout_user()
+                                return return_str
+                            else:
+                                pass
+                        else:
+                            pass
+                    else:
+                        pass
+
             form_has_picture = True
             if ('file' not in flask.request.files):
                 form_has_picture = False
@@ -2066,9 +2338,11 @@ def edit_user():
                 try:
                     cur = conn.cursor()
                     if (password != "mypasswordishere"):
-                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ?, password = ? WHERE user_id = ?", (name, username, email, password, int(user_id)))
+                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ?, password = ? WHERE user_id = ?", (name, flat_user, email, hashed_pwd, int(user_id)))
+                        cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'UPDATED', epoch_time))
                     else:
-                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ? WHERE user_id = ?", (name, username, email, int(user_id)))
+                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ? WHERE user_id = ?", (name, flat_user, email, int(user_id)))
+                        cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (username, cnt_user, 'UPDATED', epoch_time))
                     conn.commit()
                     if (form_has_picture):
                         pict_file = flask.request.files['file']
@@ -2100,6 +2374,11 @@ def delete_user():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         user_id = flask.request.args.get('user_id')
+        epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+        cnt_user = user_extract()
+        cntIP = flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')
+        cntIP = ip_sanitizer(cntIP)
+        iplist = 'registeredIP.json'
         database = "openplc.db"
         conn = create_connection(database)
         if (conn != None):
@@ -2107,16 +2386,44 @@ def delete_user():
                 cur = conn.cursor()
                 cur.execute("SELECT username FROM Users WHERE user_id = ?", (int(user_id),))
                 row = cur.fetchone()
-                if (flask_login.current_user.id == row[0]):
+                if (cnt_user == row[0]):
                     cur.close()
                     conn.close()
                     return draw_blank_page() + "<h2>Error</h2><p>You cannot delete yourself!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
                 else:
+                    with open(iplist, 'r') as f:
+                        data = json.load(f)
+                        updates = []
+                        for element in data['registeredIP']:
+                            if element['user'] == row[0] and element['ip'] == cntIP:
+                                pass
+                            elif element['user'] == row[0]:
+                                if element['ip'] != cntIP:
+                                    if cntIP != '127.0.0.1':                                
+                                        updates.append(element)
+                                        return_str = pages.login_head
+                                        return_str += """<script>alert('Wrong Access! Try again.')</script>"""
+                                        return_str += pages.login_body
+                                        monitor.stop_monitor()
+                                        flask_login.logout_user()
+                                        return return_str
+                                    else:
+                                        pass
+                                else:
+                                    pass
+                            else:
+                                updates.append(element)
+                        data['registeredIP'] = updates
+
                     cur = conn.cursor()
                     cur.execute("DELETE FROM Users WHERE user_id = ?", (int(user_id),))
+                    cur.execute("INSERT INTO UserActy (username, cntuser, event, Timestamp) VALUES (?, ?, ?, ?)", (row[0], username, 'DEREGISTERED', epoch_time))
                     conn.commit()
                     cur.close()
                     conn.close()
+                    
+                    with open("registeredIP.json", 'w') as outfile:
+                        updates = json.dump(data, outfile)
                     return flask.redirect(flask.url_for('users'))
             except Error as e:
                 print("error connecting to the database" + str(e))
@@ -2317,8 +2624,7 @@ def settings():
                             <input id="auto_run" type="checkbox" checked>
                             <span class="checkmark"></span>
                         </label>
-                        <input type='hidden' value='true' id='auto_run_text' name='auto_run_text'/>"""                   
-
+                        <input type='hidden' value='true' id='auto_run_text' name='auto_run_text'/>"""
                     return_str += """
                         <br>
                         <h2>Slave Devices</h2>
@@ -2361,44 +2667,56 @@ def settings():
 
             database = "openplc.db"
             conn = create_connection(database)
+            epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
+            username = user_extract()
             if (conn != None):
                 try:
                     cur = conn.cursor()
                     if (modbus_port == None):
                         cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Modbus_port'")
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (999999, 'Modbus_port', username, 'SET_UPD', epoch_time))
                         conn.commit()
                     else:
                         cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Modbus_port'", (str(modbus_port),))
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(modbus_port), 'Modbus_port', username, 'SET_UPD', epoch_time))
                         conn.commit()
                         
                     if (dnp3_port == None):
                         cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Dnp3_port'")
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (999999, 'Dnp3_port', username, 'SET_UPD', epoch_time))
                         conn.commit()
                     else:
                         cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Dnp3_port'", (str(dnp3_port),))
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(dnp3_port), 'Dnp3_port', username, 'SET_UPD', epoch_time))
                         conn.commit()
                         
                     if (enip_port == None):
                         cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Enip_port'")
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (999999, 'Enip_port', username, 'SET_UPD', epoch_time))
                         conn.commit()
                     else:
                         cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Enip_port'", (str(enip_port),))
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(enip_port), 'Enip_port', username, 'SET_UPD', epoch_time))
                         conn.commit()
                         
                     if (pstorage_poll == None):
                         cur.execute("UPDATE Settings SET Value = 'disabled' WHERE Key = 'Pstorage_polling'")
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (999999, 'Pstorage_polling', username, 'SET_UPD', epoch_time))
                         conn.commit()
                     else:
                         cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Pstorage_polling'", (str(pstorage_poll),))
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(pstorage_poll), 'Pstorage_polling', username, 'SET_UPD', epoch_time))
                         conn.commit()
                         
                     if (start_run == 'true'):
                         cur.execute("UPDATE Settings SET Value = 'true' WHERE Key = 'Start_run_mode'")
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (999999, 'Start_run_mode', username, 'SET_UPD_TRUE', epoch_time))
                         conn.commit()
                     else:
                         cur.execute("UPDATE Settings SET Value = 'false' WHERE Key = 'Start_run_mode'")
+                        cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (999999, 'Start_run_mode', username, 'SET_UPD_FALSE', epoch_time))
                         conn.commit()
-                        
+
                     if (start_snap7 == 'true'):
                         cur.execute("UPDATE Settings SET Value = 'true' WHERE Key = 'snap7'")
                         conn.commit()
@@ -2407,9 +2725,11 @@ def settings():
                         conn.commit()
 
                     cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Slave_polling'", (str(slave_polling),))
+                    cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(slave_polling), 'Slave_polling', username, 'SET_UPD', epoch_time))
                     conn.commit()
                     
                     cur.execute("UPDATE Settings SET Value = ? WHERE Key = 'Slave_timeout'", (str(slave_timeout),))
+                    cur.execute("INSERT INTO Updates (Prog_ID, file, username, event, Timestamp) VALUES (?, ?, ?, ?, ?)", (int(slave_timeout), 'Slave_polling', username, 'SET_UPD', epoch_time))
                     conn.commit()
                     
                     cur.close()
@@ -2498,14 +2818,13 @@ if __name__ == '__main__':
     file = open("active_program", "r")
     st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
-    
-    database = "openplc.db"
+
+    database = "build/openplc.db"
     conn = create_connection(database)
     if (conn != None):
         try:
             cur = conn.cursor()
             cur.execute("SELECT * FROM Programs WHERE File=?", (st_file,))
-            #cur.execute("SELECT * FROM Programs")
             row = cur.fetchone()
             openplc_runtime.project_name = str(row[1])
             openplc_runtime.project_description = str(row[2])
@@ -2526,9 +2845,7 @@ if __name__ == '__main__':
                 time.sleep(1)
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
-            
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
-        
+            app.run(sl_context=("cert.pem", "key.pem"), host='0.0.0.0', threaded=True, port=8080, debug=False)
         except Error as e:
             print("error connecting to the database" + str(e))
     else:
