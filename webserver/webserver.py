@@ -585,7 +585,7 @@ def start_plc():
             flask_login.logout_user()
             return flask.redirect(flask.url_for('login'))
             # os.system('zenity --warning --width=230 --height=80 --text "Can\'t start Fake program!"')
-            return flask.redirect(flask.url_for('dashboard'))
+            #return flask.redirect(flask.url_for('dashboard'))
         else:
             print({'Accessed ip:', flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')})
             monitor.stop_monitor()
@@ -1024,85 +1024,69 @@ def upload_program():
 
 @app.route('/upload-program-action', methods=['GET', 'POST'])
 def upload_program_action():
-    if (flask_login.current_user.is_authenticated == False):
+    if not flask_login.current_user.is_authenticated:
         return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        prog_name = flask.request.form['prog_name']
-        prog_descr = flask.request.form['prog_descr']
-        prog_file = flask.request.form['prog_file']
-        epoch_time = flask.request.form['epoch_time']
-        cntIP = flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')
-        cntIP = ip_sanitizer(cntIP)
-        cnt_user = user_extract()
-        r1, r2 = fileComparison.main(prog_file)
-        print(r1, r2)
-        if r1 == True and r2 == True:
-            print("Successful Upload from", cntIP)
-            pass
-        elif r1 == 404 and r2 == 404:
-            print("IP address Check... ")
-            ip_result = IPCheck(cnt_user, cntIP)
-            if ip_result == 200:
-                print(ip_result)
-                pass
-            elif ip_result == 500:
-                print(ip_result)
-                return_str = pages.login_head
-                return_str += """
-                <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-                <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
-                <script>
-                    alert('You are not allowed to upload!!')
-                </script>
-                """
-                return_str += pages.login_body
-                monitor.stop_monitor()
-                flask_login.logout_user()                           # clear the session
-                return return_str     
-        else:       
-            ip_result = IPCheck(cnt_user, cntIP)
-            if ip_result == 200:
-                print(ip_result)
-                pass
-            elif ip_result == 500:
-                print(ip_result)
-                return_str = pages.login_head
-                return_str += """
-                <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-                <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
-                <script>
-                    alert('You are not allowed to upload!!')
-                </script>
-                """
-                return_str += pages.login_body
-                monitor.stop_monitor()
-                flask_login.logout_user()                           # clear the session
-                return return_str     
-            else:               
-                print(ip_result, "Something has gone wrong\n")
-                return flask.redirect(flask.url_for('dashboard'))
+    if openplc_runtime.status() == "Compiling":
+        return draw_compiling_page()
 
-        (prog_name, prog_descr, prog_file, epoch_time) = sanitize_input(prog_name, prog_descr, prog_file, epoch_time)
-        
-        database = "./build/openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("INSERT INTO Programs (Name, Description, File, Date_upload) VALUES (?, ?, ?, ?)", (prog_name, prog_descr, prog_file, epoch_time))
-                conn.commit()
-                cur.close()
-                conn.close()
-                #Redirect back to the compiling page
-                return '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/compile-program?file=' + prog_file + '"></head></html>'
-            
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        else:
-            return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-        
+    prog_name = flask.request.form['prog_name']
+    prog_descr = flask.request.form['prog_descr']
+    prog_file = flask.request.form['prog_file']
+    epoch_time = flask.request.form['epoch_time']
+    cntIP = ip_sanitizer(flask.request.environ.get('HTTP_X_FORWARDED_FOR', ''))
+    cnt_user = user_extract()
+    r1, r2 = fileComparison.main(prog_file)
+    print(r1, r2)
+
+    def deny_upload():
+        return_str = pages.login_head
+        return_str += """
+        <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+        <script>
+            alert('You are not allowed to upload!!')
+        </script>
+        """
+        return_str += pages.login_body
+        monitor.stop_monitor()
+        flask_login.logout_user()
+        return return_str
+
+    ip_result = None
+    if r1 is True and r2 is True:
+        print("Successful Upload from", cntIP)
+    elif r1 == 404 and r2 == 404:
+        print("IP address Check... ")
+        ip_result = IPCheck(cnt_user, cntIP)
+        print(ip_result)
+        if ip_result == 500:
+            return deny_upload()
+    else:
+        ip_result = IPCheck(cnt_user, cntIP)
+        print(ip_result)
+        if ip_result == 500:
+            return deny_upload()
+        elif ip_result != 200:
+            print(ip_result, "Something has gone wrong\n")
+            return flask.redirect(flask.url_for('dashboard'))
+
+    (prog_name, prog_descr, prog_file, epoch_time) = sanitize_input(prog_name, prog_descr, prog_file, epoch_time)
+    database = "./build/openplc.db"
+    conn = create_connection(database)
+    if conn is not None:
+        try:
+            cur = conn.cursor()
+            cur.execute("INSERT INTO Programs (Name, Description, File, Date_upload) VALUES (?, ?, ?, ?)", (prog_name, prog_descr, prog_file, epoch_time))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/compile-program?file=' + prog_file + '"></head></html>'
+        except Error as e:
+            print("error connecting to the database" + str(e))
+            return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
+    else:
+        return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
+    
 
 @app.route('/compile-program', methods=['GET', 'POST'])
 def compile_program():
@@ -1110,7 +1094,8 @@ def compile_program():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+        if (openplc_runtime.status() == "Compiling"): 
+            return draw_compiling_page()
         st_file = flask.request.args.get('file')
         epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
         username = user_extract()
@@ -1637,7 +1622,7 @@ def monitoring():
             conn = create_connection(database)
             if (conn != None):
                 try:
-                    print("Openning database")
+                    print("Opening database")
                     cur = conn.cursor()
                     cur.execute("SELECT * FROM Settings")
                     rows = cur.fetchall()
@@ -2016,14 +2001,16 @@ def hardware():
 def restore_custom_hardware():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
+    if (openplc_runtime.status() == "Compiling"): 
+        return draw_compiling_page()
         
-        #Restore the original custom layer code
-        with open('./core/psm/main.original') as f: original_code = f.read()
-        with open('./core/psm/main.py', 'w+') as f: f.write(original_code)
-        return flask.redirect(flask.url_for('hardware'))
-        
+    #Restore the original custom layer code
+    with open('./core/psm/main.original') as f: 
+        original_code = f.read()
+    with open('./core/psm/main.py', 'w+') as f: 
+        f.write(original_code)
+    return flask.redirect(flask.url_for('hardware'))
+    
 
 @app.route('/users')
 def users():
@@ -2128,15 +2115,12 @@ def add_user():
             cntIP = flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')
             cntIP = ip_sanitizer(cntIP)
             (name, username, email) = sanitize_input(name, username, email)
-            if len(password) < 8:
+            if not (8 <= len(password) <= 16):
                 return_str = users()
-                return_str += """<script>alert('Too short password! Minimum 8 characters')</script>"""
-                # return flask.redirect(flask.url_for('users'))
-                return return_str
-            elif len(password) > 16:
-                return_str = users()
-                return_str += """<script>alert('Too long password! Maximum 16 characters')</script>"""
-                # return flask.redirect(flask.url_for('users'))
+                if len(password) < 8:
+                    return_str += """<script>alert('Too short password! Minimum 8 characters')</script>"""
+                else:
+                    return_str += """<script>alert('Too long password! Maximum 16 characters')</script>"""
                 return return_str
             else:
                 flat_user = username  # Username in chiaro

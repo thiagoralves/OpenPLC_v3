@@ -20,30 +20,23 @@ def cmpBytebyByte(text1, text2):
     return text1 == text2
 
 def main(prog_file):
-    file = open("active_program", "r")
-    cntfile = file.read().replace('\r','').replace('\n','')
-    path = "./st_files/"
     try:
-        contentA = open(path+cntfile, 'r')
-        contentB = open(path+prog_file, 'r')
-    except:
-        print("There is no file for comparision. ")
+        with open("active_program", "r") as file:
+            cntfile = file.read().replace('\r','').replace('\n','')
+        path = "./st_files/"
+        with open(path+cntfile, 'r') as contentA, open(path+prog_file, 'r') as contentB:
+            dataA = contentA.read()
+            dataB = contentB.read()
+    except Exception:
+        print("There is no file for comparision.")
         return 404, 404
-    
-    dataA = contentA.read()
-    dataB = contentB.read()
 
     dataA = sanitizer(dataA)
     dataB = sanitizer(dataB)
     
-    if len(dataA) != len(dataB):
-        hash_result = cmpHash(dataA, dataB)
-        byte_compare = cmpBytebyByte(dataA, dataB)
-        return hash_result, byte_compare
-    else:
-        hash_result = cmpHash(dataA, dataB)
-        byte_compare = cmpBytebyByte(dataA, dataB)
-        return hash_result, byte_compare
+    hash_result = cmpHash(dataA, dataB)
+    byte_compare = cmpBytebyByte(dataA, dataB)
+    return hash_result, byte_compare
 
 if __name__ == '__main__':
-    print()
+    pass
