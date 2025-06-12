@@ -68,7 +68,7 @@ def is_allowed_file(file):
 
 def configure_runtime():
     global openplc_runtime
-    database = "openplc.db"
+    database = "./build/openplc.db"
     conn = create_connection(database)
     if (conn != None):
         try:
@@ -135,7 +135,7 @@ def ip_sanitizer(cntip):
         return cntip
 
 def generate_mbconfig():
-    database = "openplc.db"
+    database = "./build/openplc.db"
     conn = create_connection(database)
     if (conn != None):
         try:
@@ -453,7 +453,7 @@ def IPCheck(cntusr, cntip):     # cut malicious activity
     
 @login_manager.user_loader
 def user_loader(username):
-    database = "openplc.db"
+    database = "./build/openplc.db"
     conn = create_connection(database)
     if (conn != None):
         try:
@@ -483,7 +483,7 @@ def user_loader(username):
 def request_loader(request):
     username = request.form.get('username')
     password = request.form.get('password')
-    database = "openplc.db"
+    database = "./build/openplc.db"
     conn = create_connection(database)
     if (conn != None):
         try:
@@ -534,7 +534,7 @@ def login():
     epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
     print({'Accesed ip:',  flask.request.access_route[-1]})
 
-    database = "openplc.db"
+    database = "./build/openplc.db"
     conn = create_connection(database)
     if (conn != None):
         try:
@@ -708,7 +708,7 @@ def programs():
                         <tr style='background-color: white'>
                             <th>Program Name</th><th>File</th><th>Date Uploaded</th>
                         </tr>"""
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
@@ -784,7 +784,7 @@ def reload_program():
                     <br>
                     <h2>Program Info</h2>
                     <br>"""
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
@@ -879,7 +879,7 @@ def update_program_action():
         prog_id = flask.request.form['prog_id']
         epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
         username = user_extract()
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
@@ -911,7 +911,7 @@ def remove_program():
         prog_id = flask.request.args.get('id')
         epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
         username = user_extract()
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
@@ -1085,7 +1085,7 @@ def upload_program_action():
 
         (prog_name, prog_descr, prog_file, epoch_time) = sanitize_input(prog_name, prog_descr, prog_file, epoch_time)
         
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
@@ -1115,7 +1115,7 @@ def compile_program():
         epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
         username = user_extract()
         #load information about the program being compiled into the openplc_runtime object
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
@@ -1184,7 +1184,7 @@ def modbus():
                         <tr style='background-color: white'>
                             <th>Device Name</th><th>Device Type</th><th>DI</th><th>DO</th><th>AI</th><th>AO</th>
                         </tr>"""
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
@@ -1357,7 +1357,7 @@ def add_modbus_device():
 
             epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
             username = user_extract()
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
@@ -1417,7 +1417,7 @@ def modbus_edit_device():
                             method    =  "post"
                             onsubmit  =  "return validateForm()">"""
                             
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
@@ -1535,7 +1535,7 @@ def modbus_edit_device():
             
             epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
             username = user_extract()
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
 
             if (conn != None):
@@ -1564,7 +1564,7 @@ def delete_device():
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
         devid_db = flask.request.args.get('dev_id')
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
         username = user_extract()
@@ -1633,7 +1633,7 @@ def monitoring():
             #Check Modbus Server status
             modbus_enabled = False
             modbus_port_cfg = 502
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
@@ -1968,7 +1968,7 @@ def hardware():
             custom_layer_code = flask.request.form['custom_layer_code']
             with open('./active_program') as f: current_program = f.read()
             with open('./core/psm/main.py', 'w+') as f: f.write(custom_layer_code)
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
             current_program = current_program.replace('\n', '')
             epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
@@ -2061,7 +2061,7 @@ def users():
                             <th>Full Name</th><th>Username</th><th>Email</th>
                         </tr>"""
         
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
@@ -2147,7 +2147,7 @@ def add_user():
                 form_has_picture = False
 
             IPlist = 'registeredIP.json'
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
@@ -2230,7 +2230,7 @@ def edit_user():
                             method    =  "post"
                             onsubmit  =  "return validateForm()">"""
                         
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
@@ -2332,7 +2332,7 @@ def edit_user():
             if ('file' not in flask.request.files):
                 form_has_picture = False
             
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
@@ -2379,7 +2379,7 @@ def delete_user():
         cntIP = flask.request.environ.get('HTTP_X_FORWARDED_FOR', '')
         cntIP = ip_sanitizer(cntIP)
         iplist = 'registeredIP.json'
-        database = "openplc.db"
+        database = "./build/openplc.db"
         conn = create_connection(database)
         if (conn != None):
             try:
@@ -2477,7 +2477,7 @@ def settings():
                         <label class="container">
                             <b>Enable Modbus Server</b>"""
             
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
             if (conn != None):
                 try:
@@ -2665,7 +2665,7 @@ def settings():
             if current_hostname != None and current_hostname != device_hostname:
                 subprocess.run(['hostnamectl', 'set-hostname', device_hostname])
 
-            database = "openplc.db"
+            database = "./build/openplc.db"
             conn = create_connection(database)
             epoch_time = datetime.datetime.strftime(datetime.datetime.now(), '%s')
             username = user_extract()
@@ -2845,7 +2845,7 @@ if __name__ == '__main__':
                 time.sleep(1)
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
-            app.run(sl_context=("cert.pem", "key.pem"), host='0.0.0.0', threaded=True, port=8080, debug=False)
+            app.run(ssl_context=("cert.pem", "key.pem"), host='0.0.0.0', threaded=True, port=8080, debug=False)
         except Error as e:
             print("error connecting to the database" + str(e))
     else:
