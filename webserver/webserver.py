@@ -17,6 +17,7 @@ import mimetypes
 
 import flask 
 import flask_login
+from restapi import restapi_bp, register_callback
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
@@ -24,6 +25,35 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
+
+def my_callback(argument: str, data: dict) -> dict:
+    """
+    This is the central callback function that handles the logic
+    based on the 'argument' from the URL and 'data' from the request.
+    """
+    print(f"[{__name__}] Received argument: {argument}, data: {data}")
+
+    if argument == "start_plc":
+        openplc_runtime.start_runtime()
+        return {"status": "runtime started"}
+
+    elif argument == "stop_plc":
+        openplc_runtime.stop_runtime()
+        return {"status": "runtime stop"}
+
+    elif argument == "runtime_logs":
+        logs = openplc_runtime.logs()
+        return {"runtime_logs": logs}
+
+    elif argument == "status":
+        # Example for GET request with query params
+        return {"current_status": "operational", "details": data} # 'data' will be query params here
+
+    elif argument == "ping":
+        return {"status": "pong"}
+    else:
+        return {"error": "Unknown argument"}
+
 
 class User(flask_login.UserMixin):
     pass
@@ -2494,6 +2524,10 @@ def main():
    print("Starting the web interface...")
    
 if __name__ == '__main__':
+    # rest api register
+    app.register_blueprint(restapi_bp, url_prefix='/api')
+    register_callback(my_callback)
+
     #Load information about current program on the openplc_runtime object
     file = open("active_program", "r")
     st_file = file.read()
