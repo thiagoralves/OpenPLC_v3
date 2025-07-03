@@ -14,6 +14,7 @@ import sys
 import ctypes
 import socket
 import mimetypes
+import ssl
 
 import flask 
 import flask_login
@@ -2527,7 +2528,15 @@ if __name__ == '__main__':
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
             
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+            try:
+                context = ('/home/lucas/Documents/secrets/csr.pem', '/home/lucas/Documents/secrets/key.pem')
+                app.run(debug=False, host='0.0.0.0', threaded=True, port=8080, ssl_context=context)
+            # TODO handle file error
+            except FileNotFoundError:
+                print("Could not find SSL credintails!")
+            except ssl.SSLError:
+                print("SSL credentials FAIL!")
+
         
         except Error as e:
             print("error connecting to the database" + str(e))
