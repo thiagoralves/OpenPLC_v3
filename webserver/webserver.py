@@ -17,7 +17,7 @@ import mimetypes
 
 import flask 
 import flask_login
-from restapi import restapi_bp, register_callback
+from restapi import restapi_bp, register_callback_get, register_callback_post
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
@@ -26,7 +26,7 @@ login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
 
-def my_callback(argument: str, data: dict) -> dict:
+def restapi_callback_get(argument: str, data: dict) -> dict:
     """
     This is the central callback function that handles the logic
     based on the 'argument' from the URL and 'data' from the request.
@@ -45,12 +45,32 @@ def my_callback(argument: str, data: dict) -> dict:
         logs = openplc_runtime.logs()
         return {"runtime_logs": logs}
 
+    # TODO
+    elif argument == "compilation_status":
+        return {"compilation_logs": 
+                openplc_runtime.compilation_status()}
+
+    # TODO
+    elif argument == "compile":
+        if openplc_runtime.status == "Running" or openplc_runtime.status == "Compiling":
+            pass
+
     elif argument == "status":
-        # Example for GET request with query params
-        return {"current_status": "operational", "details": data} # 'data' will be query params here
+        return {"current_status": "operational", 
+                "details": data} 
 
     elif argument == "ping":
         return {"status": "pong"}
+    else:
+        return {"error": "Unknown argument"}
+
+# file upload POST handler 
+def restapi_callback_post(argument: str, data: dict) -> dict:
+    # TODO
+    if argument == "upload_file":
+        logs = openplc_runtime.logs()
+        return {"runtime_logs": logs}
+    
     else:
         return {"error": "Unknown argument"}
 
@@ -2526,7 +2546,8 @@ def main():
 if __name__ == '__main__':
     # rest api register
     app.register_blueprint(restapi_bp, url_prefix='/api')
-    register_callback(my_callback)
+    register_callback_get(restapi_callback_get)
+    register_callback_post(restapi_callback_post)
 
     #Load information about current program on the openplc_runtime object
     file = open("active_program", "r")
