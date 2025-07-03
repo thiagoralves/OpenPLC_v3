@@ -42,8 +42,7 @@ import os
 # # Write our CSR out to disk.
 # with open("/home/lucas/Documents/secrets/csr.pem", "wb") as f:
 #     f.write(csr.public_bytes(serialization.Encoding.PEM))
-
-def generate_self_signed_cert(hostname, ip_addresses=None, cert_file="cert.pem", key_file="key.pem"):
+class CertGen():
     """
     Generates a self-signed TLS certificate and private key.
 
@@ -53,58 +52,67 @@ def generate_self_signed_cert(hostname, ip_addresses=None, cert_file="cert.pem",
         cert_file (str): The filename for the certificate (PEM format).
         key_file (str): The filename for the private key (PEM format).
     """
-    print(f"Generating self-signed certificate for {hostname}...")
+    def __init__(self, hostname, ip_addresses=None):
+        self.hostname = hostname
+        self.ip_addresses = ip_addresses
 
-    # Generate our key
-    key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-        backend=default_backend()
-    )
+        # Certificate validity
+        self.now = datetime.datetime.utcnow()
+        # Subject and Issuer
+        self.subject = self.issuer = x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, u"BR"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"openplc"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, u"openplc"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Autonomy"),
+            x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+        ])
 
-    # Subject and Issuer
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
-        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"California"),
-        x509.NameAttribute(NameOID.LOCALITY_NAME, u"San Francisco"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"My Development Company"),
-        x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-    ])
+        # Subject Alternative Names (SAN)
+        self.alt_names = [x509.DNSName(hostname)]
+        if ip_addresses:
+            for addr in ip_addresses:
+                self.alt_names.append(x509.IPAddress(ipaddress.ip_address(addr)))
 
-    # Subject Alternative Names (SAN)
-    alt_names = [x509.DNSName(hostname)]
-    if ip_addresses:
-        for addr in ip_addresses:
-            alt_names.append(x509.IPAddress(ipaddress.ip_address(addr)))
+        self.san_extension = x509.SubjectAlternativeName(alt_names)
+    
+    def generate_key(self):
+        # Generate our key
+        self.key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+            backend=default_backend()
+        )
 
-    san_extension = x509.SubjectAlternativeName(alt_names)
+    def generate_self_signed_cert(self, cert_file="cert.pem", key_file="key.pem"):
+        print(f"Generating self-signed certificate for {self.hostname}...")
 
-    # Certificate validity
-    now = datetime.datetime.utcnow()
-    cert = (
-        x509.CertificateBuilder()
-        .subject_name(subject)
-        .issuer_name(issuer)
-        .public_key(key.public_key())
-        .serial_number(x509.random_serial_number())
-        .not_valid_before(now)
-        .not_valid_after(now + datetime.timedelta(days=365))  # Valid for 1 year
-        .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
-        .add_extension(san_extension, critical=False)
-        .sign(key, hashes.SHA256(), default_backend())
-    )
+        self.generate_key()
 
-    # Write our certificate and key to disk
-    with open(cert_file, "wb") as f:
-        f.write(cert.public_bytes(serialization.Encoding.PEM))
-    with open(key_file, "wb") as f:
-        f.write(key.private_bytes(
-            serialization.Encoding.PEM,
-            serialization.PrivateFormat.PKCS8,
-            serialization.NoEncryption()
-        ))
-    print(f"Certificate saved to {cert_file}")
-    print(f"Private key saved to {key_file}")
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(self.subject)
+            .issuer_name(self.issuer)
+            .public_key(self.key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(self.now)
+            .not_valid_after(self.now + datetime.timedelta(days=365))  # Valid for 1 year
+            .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+            .add_extension(self.san_extension, critical=False)
+            .sign(self.key, hashes.SHA256(), default_backend())
+        )
+
+        # Write our certificate and key to disk
+        with open(cert_file, "wb") as f:
+            f.write(cert.public_bytes(serialization.Encoding.PEM))
+        with open(key_file, "wb") as f:
+            f.write(self.key.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.PKCS8,
+                serialization.NoEncryption()
+            ))
+        print(f"Certificate saved to {cert_file}")
+        print(f"Private key saved to {key_file}")
+
 
 if __name__ == '__main__':
     CERT_FILE = "secrets/cert.pem"
