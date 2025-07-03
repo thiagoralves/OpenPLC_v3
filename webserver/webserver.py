@@ -2529,13 +2529,13 @@ if __name__ == '__main__':
                 monitor.parse_st(openplc_runtime.project_file)
             
             try:
-                context = ('/home/lucas/Documents/secrets/csr.pem', '/home/lucas/Documents/secrets/key.pem')
+                context = ('/home/lucas/Documents/secrets/cert2.pem', '/home/lucas/Documents/secrets/key2.pem')
                 app.run(debug=False, host='0.0.0.0', threaded=True, port=8080, ssl_context=context)
             # TODO handle file error
-            except FileNotFoundError:
-                print("Could not find SSL credintails!")
-            except ssl.SSLError:
-                print("SSL credentials FAIL!")
+            except FileNotFoundError as e:
+                print(f"Could not find SSL credentials! {e}")
+            except ssl.SSLError as e:
+                print(f"SSL credentials FAIL! {e}")
 
         
         except Error as e:
