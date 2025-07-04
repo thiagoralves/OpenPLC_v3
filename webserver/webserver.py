@@ -14,6 +14,7 @@ import sys
 import ctypes
 import socket
 import mimetypes
+import json
 
 import flask 
 import flask_login
@@ -31,33 +32,31 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
     This is the central callback function that handles the logic
     based on the 'argument' from the URL and 'data' from the request.
     """
-    print(f"[{__name__}] Received argument: {argument}, data: {data}")
+    # TODO logging debug level
+    print(f"GET | [{__name__}] Received argument: {argument}, data: {data}")
 
-    if argument == "start_plc":
+    if argument == "start-plc":
         openplc_runtime.start_runtime()
         return {"status": "runtime started"}
 
-    elif argument == "stop_plc":
+    elif argument == "stop-plc":
         openplc_runtime.stop_runtime()
         return {"status": "runtime stop"}
 
-    elif argument == "runtime_logs":
+    elif argument == "runtime-logs":
         logs = openplc_runtime.logs()
-        return {"runtime_logs": logs}
+        return {"runtime-logs": logs}
 
-    # TODO
-    elif argument == "compilation_status":
-        return {"compilation_logs": 
-                openplc_runtime.compilation_status()}
-
-    # TODO
-    elif argument == "compile":
-        if openplc_runtime.status == "Running" or openplc_runtime.status == "Compiling":
-            pass
+    elif argument == "compilation-status":
+        status = openplc_runtime.is_compiling
+        return {"CompilationStatus": status}
+    
+    elif argument == "compilation-logs":
+        logs = openplc_runtime.compilation_status()
+        return {"compilation-logs": logs}
 
     elif argument == "status":
-        return {"current_status": "operational", 
-                "details": data} 
+        return {"current_status": "operational", "details": data}
 
     elif argument == "ping":
         return {"status": "pong"}
@@ -66,11 +65,29 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
 
 # file upload POST handler 
 def restapi_callback_post(argument: str, data: dict) -> dict:
-    # TODO
+    # TODO logging debug level
+    print(f"POST | [{__name__}] Received argument: {argument}, data: {data}")
+
     if argument == "upload_file":
-        logs = openplc_runtime.logs()
-        return {"runtime_logs": logs}
+        try:
+            st_file = flask.request.files['file']
+            # TODO save file
+            print(st_file.filename)
+
+            return {"UploadFile": "Success"}
+        except:
+            return {"UploadFile": "Fail"}
     
+    elif argument == "compile-program":
+        if (openplc_runtime.status() == "Compiling"): 
+            return {"RuntimeStatus": "Compiling"}
+
+        # st_file = flask.request.args.get('file')
+        st_file = flask.request.files['file']
+        openplc_runtime.compile_program(st_file)
+
+        return {"RuntimeStatus": "Program Compiled"}
+
     else:
         return {"error": "Unknown argument"}
 
