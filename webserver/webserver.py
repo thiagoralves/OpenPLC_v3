@@ -14,7 +14,6 @@ import sys
 import ctypes
 import socket
 import mimetypes
-import json
 
 import flask 
 import flask_login
@@ -49,7 +48,7 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
 
     elif argument == "compilation-status":
         status = openplc_runtime.is_compiling
-        return {"CompilationStatus": status}
+        return {"compilation-status": status}
     
     elif argument == "compilation-logs":
         logs = openplc_runtime.compilation_status()
@@ -73,6 +72,7 @@ def restapi_callback_post(argument: str, data: dict) -> dict:
             st_file = flask.request.files['file']
             # TODO save file
             print(st_file.filename)
+            st_file.save("st_files/")
 
             return {"UploadFile": "Success"}
         except:
@@ -919,6 +919,7 @@ def upload_program():
         if (prog_file.filename == ''):
             return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
         
+        # TODO colocar em outra funçao
         filename = str(random.randint(1,1000000)) + ".st"
         prog_file.save(os.path.join('st_files', filename))
         
