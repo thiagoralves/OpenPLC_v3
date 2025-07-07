@@ -48,7 +48,7 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
 
     elif argument == "compilation-status":
         status = openplc_runtime.is_compiling
-        return {"compilation-status": status}
+        return {"is-compiling": status}
     
     elif argument == "compilation-logs":
         logs = openplc_runtime.compilation_status()
@@ -67,14 +67,14 @@ def restapi_callback_post(argument: str, data: dict) -> dict:
     # TODO logging debug level
     print(f"POST | [{__name__}] Received argument: {argument}, data: {data}")
 
-    if argument == "upload_file":
+    if argument == "upload-file":
         try:
+            # TODO validate filename, content and size
             st_file = flask.request.files['file']
-            # TODO save file
             print(st_file.filename)
-            st_file.save("st_files/")
-
+            st_file.save(f"st_files/{st_file.filename}")
             return {"UploadFile": "Success"}
+
         except:
             return {"UploadFile": "Fail"}
     
@@ -82,14 +82,19 @@ def restapi_callback_post(argument: str, data: dict) -> dict:
         if (openplc_runtime.status() == "Compiling"): 
             return {"RuntimeStatus": "Compiling"}
 
-        # st_file = flask.request.args.get('file')
-        st_file = flask.request.files['file']
-        openplc_runtime.compile_program(st_file)
+        try:
+            # TODO return compilation result and validate filename
+            # st_file = flask.request.args.get('file')
+            st_file = flask.request.files['file']
+            # print(f"st_files/{st_file.filename}")
+            openplc_runtime.compile_program(f"{st_file.filename}")
+            return {"CompilationStatus": "Program Compiled"}
 
-        return {"RuntimeStatus": "Program Compiled"}
+        except Exception as e:
+            return {"CompilationStatus": e}
 
     else:
-        return {"error": "Unknown argument"}
+        return {"PostError": "Unknown argument"}
 
 
 class User(flask_login.UserMixin):
