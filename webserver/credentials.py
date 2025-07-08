@@ -73,7 +73,7 @@ class CertGen():
             for addr in ip_addresses:
                 self.alt_names.append(x509.IPAddress(ipaddress.ip_address(addr)))
 
-        self.san_extension = x509.SubjectAlternativeName(alt_names)
+        self.san_extension = x509.SubjectAlternativeName(self.alt_names)
     
     def generate_key(self):
         # Generate our key
@@ -102,9 +102,9 @@ class CertGen():
         )
 
         # Write our certificate and key to disk
-        with open(cert_file, "wb") as f:
+        with open(cert_file, "wb+") as f:
             f.write(cert.public_bytes(serialization.Encoding.PEM))
-        with open(key_file, "wb") as f:
+        with open(key_file, "wb+") as f:
             f.write(self.key.private_bytes(
                 serialization.Encoding.PEM,
                 serialization.PrivateFormat.PKCS8,
@@ -113,12 +113,54 @@ class CertGen():
         print(f"Certificate saved to {cert_file}")
         print(f"Private key saved to {key_file}")
 
+    def is_certificate_valid(self, cert_file):
+        """
+        Checks if a certificate is valid (not expired and not yet valid).
+
+        Args:
+            cert_file (str): The path to the certificate file (PEM format).
+
+        Returns:
+            bool: True if the certificate is currently valid, False otherwise.
+        """
+        if not os.path.exists(cert_file):
+            print(f"Certificate file not found: {cert_file}")
+            return False
+
+        try:
+            with open(cert_file, "rb") as f:
+                cert_data = f.read()
+            cert = x509.load_pem_x509_certificate(cert_data, default_backend())
+
+            now = datetime.datetime.utcnow()
+
+            if now < cert.not_valid_before:
+                print(f"Certificate is not yet valid. Valid from: {cert.not_valid_before}")
+                return False
+            if now > cert.not_valid_after:
+                print(f"Certificate has expired. Expired on: {cert.not_valid_after}")
+                return False
+
+            print(f"Certificate is valid. Expires on: {cert.not_valid_after}")
+            return True
+
+        except Exception as e:
+            print(f"Error loading or parsing certificate: {e}")
+            return False
 
 if __name__ == '__main__':
-    CERT_FILE = "secrets/cert.pem"
-    KEY_FILE = "secrets/key.pem"
-    HOSTNAME = "localhost" # Or your local IP address, e.g., "127.0.0.1"
+    # TODO define best path to store credentials
+    CERT_FILE = "/etc/ssl/certs/certOPENPLC.pem"
+    KEY_FILE = "/etc/ssl/private/keyOPENPLC.pem"
+    HOSTNAME = "localhost"
 
+    cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
     # Generate certificate if it doesn't exist
     if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
-        generate_self_signed_cert(HOSTNAME, ip_addresses=["127.0.0.1"], cert_file=CERT_FILE, key_file=KEY_FILE)
+        cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
+    # Verify expiration date
+    elif cert_gen.is_certificate_valid(CERT_FILE):
+        print(cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE))
+    # Credentials already created
+    else:
+        print("Credentials already generated!")

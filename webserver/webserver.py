@@ -16,8 +16,9 @@ import socket
 import mimetypes
 import ssl
 
-import flask 
+import flask
 import flask_login
+from credentials import CertGen
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
@@ -25,6 +26,11 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
+
+# TODO define best path to store credentials
+CERT_FILE = "/etc/ssl/certs/certOPENPLC.pem"
+KEY_FILE = "/etc/ssl/private/keyOPENPLC.pem"
+HOSTNAME = "localhost"
 
 class User(flask_login.UserMixin):
     pass
@@ -2496,8 +2502,8 @@ def main():
    
 if __name__ == '__main__':
     #Load information about current program on the openplc_runtime object
-    file = open("active_program", "r")
-    st_file = file.read()
+    with open("active_program", "r") as file:
+        st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
     
     database = "openplc.db"
@@ -2527,9 +2533,21 @@ if __name__ == '__main__':
                 time.sleep(1)
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
-            
+
             try:
-                context = ('/home/lucas/Documents/secrets/cert2.pem', '/home/lucas/Documents/secrets/key2.pem')
+                # CertGen class is used to generate SSL certificates and verify their validity
+                cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
+                # Generate certificate if it doesn't exist
+                if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
+                    cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
+                # Verify expiration date
+                elif cert_gen.is_certificate_valid(CERT_FILE):
+                    print(cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE))
+                # Credentials already created
+                else:
+                    print("Credentials already generated!")
+
+                context = ('/etc/ssl/certs/certOPENPLC.pem', '/etc/ssl/private/keyOPENPLC.pem')
                 app.run(debug=False, host='0.0.0.0', threaded=True, port=8080, ssl_context=context)
             # TODO handle file error
             except FileNotFoundError as e:
