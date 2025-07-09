@@ -18,6 +18,7 @@ import ssl
 
 import flask
 import flask_login
+from restapi import restapi_bp, register_callback_get, register_callback_post
 from credentials import CertGen
 
 app = flask.Flask(__name__)
@@ -26,11 +27,6 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
-
-# TODO define best path to store credentials
-CERT_FILE = "/etc/ssl/certs/certOPENPLC.pem"
-KEY_FILE = "/etc/ssl/private/keyOPENPLC.pem"
-HOSTNAME = "localhost"
 
 class User(flask_login.UserMixin):
     pass
@@ -859,6 +855,7 @@ def upload_program():
         if (prog_file.filename == ''):
             return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
         
+        # TODO colocar em outra funçao
         filename = str(random.randint(1,1000000)) + ".st"
         prog_file.save(os.path.join('st_files', filename))
         
@@ -2501,6 +2498,11 @@ def main():
    print("Starting the web interface...")
    
 if __name__ == '__main__':
+    # rest api register
+    app.register_blueprint(restapi_bp, url_prefix='/api')
+    register_callback_get(restapi_callback_get)
+    register_callback_post(restapi_callback_post)
+
     #Load information about current program on the openplc_runtime object
     with open("active_program", "r") as file:
         st_file = file.read()
