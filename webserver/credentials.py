@@ -80,10 +80,7 @@ class CertGen():
         print(f"Certificate saved to {cert_file}")
         print(f"Private key saved to {key_file}")
 
-    # TODO update certificate on cliente before expiration
     # TODO add a function to update the certificate on the client before expiration
-    # TODO add a function to check if the certificate is valid (not expired and not yet valid)
-    # TODO add a function to check if the certificate is already generated 
     def is_certificate_valid(self, cert_file):
         """
         Checks if a certificate is valid (not expired and not yet valid).

@@ -2595,9 +2595,19 @@ def run_https():
         # Credentials already created
         else:
             print("Credentials already generated!")
-
-        context = ('/etc/ssl/certs/certOPENPLC.pem', '/etc/ssl/private/keyOPENPLC.pem')
-        app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
+        
+        try:
+            context = ('/etc/ssl/certs/certOPENPLC.pem', '/etc/ssl/private/keyOPENPLC.pem')
+            app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
+        except KeyboardInterrupt as e:
+            print(f"Exiting OpenPLC Webserver...{e}")
+            openplc_runtime.stop_runtime()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            openplc_runtime.stop_runtime()
+        except:
+            print("An unexpected error occurred.")
+            
     # TODO handle file error
     except FileNotFoundError as e:
         print(f"Could not find SSL credentials! {e}")
@@ -2638,7 +2648,16 @@ def run_http():
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
 
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+            try:
+                app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+            except KeyboardInterrupt as e:
+                print(f"Exiting OpenPLC Webserver...{e}")
+                openplc_runtime.stop_runtime()
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                openplc_runtime.stop_runtime()
+            except:
+                print("An unexpected error occurred.")
         
         except Error as e:
             print("error connecting to the database" + str(e))
