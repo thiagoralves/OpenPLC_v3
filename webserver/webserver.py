@@ -18,8 +18,8 @@ import ssl
 
 import flask
 import flask_login
-from restapi import restapi_bp, register_callback_get, register_callback_post
 from credentials import CertGen
+from restapi import restapi_bp, register_callback_get, register_callback_post
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
@@ -27,6 +27,82 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
+
+# TODO define best path to store credentials
+CERT_FILE = "/etc/ssl/certs/certOPENPLC.pem"
+KEY_FILE = "/etc/ssl/private/keyOPENPLC.pem"
+HOSTNAME = "localhost"
+
+def restapi_callback_get(argument: str, data: dict) -> dict:
+    """
+    This is the central callback function that handles the logic
+    based on the 'argument' from the URL and 'data' from the request.
+    """
+    # TODO logging debug level
+    print(f"GET | [{__name__}] Received argument: {argument}, data: {data}")
+
+    if argument == "start-plc":
+        openplc_runtime.start_runtime()
+        return {"status": "runtime started"}
+
+    elif argument == "stop-plc":
+        openplc_runtime.stop_runtime()
+        return {"status": "runtime stop"}
+
+    elif argument == "runtime-logs":
+        logs = openplc_runtime.logs()
+        return {"runtime-logs": logs}
+
+    elif argument == "compilation-status":
+        status = openplc_runtime.is_compiling
+        return {"is-compiling": status}
+    
+    elif argument == "compilation-logs":
+        logs = openplc_runtime.compilation_status()
+        return {"compilation-logs": logs}
+
+    elif argument == "status":
+        return {"current_status": "operational", "details": data}
+
+    elif argument == "ping":
+        return {"status": "pong"}
+    else:
+        return {"error": "Unknown argument"}
+
+# file upload POST handler 
+def restapi_callback_post(argument: str, data: dict) -> dict:
+    # TODO logging debug level
+    print(f"POST | [{__name__}] Received argument: {argument}, data: {data}")
+
+    if argument == "upload-file":
+        try:
+            # TODO validate filename, content and size
+            st_file = flask.request.files['file']
+            print(st_file.filename)
+            st_file.save(f"st_files/{st_file.filename}")
+            return {"UploadFile": "Success"}
+
+        except:
+            return {"UploadFile": "Fail"}
+    
+    elif argument == "compile-program":
+        if (openplc_runtime.status() == "Compiling"): 
+            return {"RuntimeStatus": "Compiling"}
+
+        try:
+            # TODO return compilation result and validate filename
+            # st_file = flask.request.args.get('file')
+            st_file = flask.request.files['file']
+            # print(f"st_files/{st_file.filename}")
+            openplc_runtime.compile_program(f"{st_file.filename}")
+            return {"CompilationStatus": "Program Compiled"}
+
+        except Exception as e:
+            return {"CompilationStatus": e}
+
+    else:
+        return {"PostError": "Unknown argument"}
+
 
 class User(flask_login.UserMixin):
     pass

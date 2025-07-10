@@ -8,40 +8,7 @@ import datetime
 import ipaddress
 import os
 
-# key = rsa.generate_private_key(
-#     public_exponent=65537,
-#     key_size=4096,
-#     backend=default_backend()
-# )
 
-# with open("/home/lucas/Documents/secrets/key.pem", "wb") as f:
-#      f.write(key.private_bytes(
-#         encoding=serialization.Encoding.PEM,
-#         format=serialization.PrivateFormat.TraditionalOpenSSL,
-#         encryption_algorithm=serialization.BestAvailableEncryption(b"passphrase"),
-#      ))
-
-# csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
-#      # Provide various details about who we are.
-#      x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-#      x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
-#      x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-#      x509.NameAttribute(NameOID.ORGANIZATION_NAME, "My Company"),
-#      x509.NameAttribute(NameOID.COMMON_NAME, "mysite.com"),
-#      ])).add_extension(
-#      x509.SubjectAlternativeName([
-#          # Describe what sites we want this certificate for.
-#          x509.DNSName("mysite.com"),
-#          x509.DNSName("www.mysite.com"),
-#          x509.DNSName("subdomain.mysite.com"),
-#      ]),
-#      critical=False,
-#      # Sign the CSR with our private key.
-# ).sign(key, hashes.SHA256())
-
-# # Write our CSR out to disk.
-# with open("/home/lucas/Documents/secrets/csr.pem", "wb") as f:
-#     f.write(csr.public_bytes(serialization.Encoding.PEM))
 class CertGen():
     """
     Generates a self-signed TLS certificate and private key.
@@ -60,10 +27,10 @@ class CertGen():
         self.now = datetime.datetime.utcnow()
         # Subject and Issuer
         self.subject = self.issuer = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, u"BR"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"openplc"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, u"openplc"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Autonomy"),
+            # x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"), # TODO get device country
+            # x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"openplc"),
+            # x509.NameAttribute(NameOID.LOCALITY_NAME, u"openplc"),
+            # x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Autonomy"),
             x509.NameAttribute(NameOID.COMMON_NAME, hostname),
         ])
 
@@ -113,6 +80,10 @@ class CertGen():
         print(f"Certificate saved to {cert_file}")
         print(f"Private key saved to {key_file}")
 
+    # TODO update certificate on cliente before expiration
+    # TODO add a function to update the certificate on the client before expiration
+    # TODO add a function to check if the certificate is valid (not expired and not yet valid)
+    # TODO add a function to check if the certificate is already generated 
     def is_certificate_valid(self, cert_file):
         """
         Checks if a certificate is valid (not expired and not yet valid).
