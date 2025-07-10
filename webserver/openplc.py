@@ -114,9 +114,9 @@ class runtime:
         compilation_status_str = ""
         
         # Extract debug information from program
-        f = open('./st_files/' + st_file, "r")
-        combined_lines = f.read()
-        f.close()
+        with open('./st_files/' + st_file, "r") as f:
+            combined_lines = f.read()
+
         combined_lines = combined_lines.split('\n')
         program_lines = []
         c_debug_lines = []
@@ -132,9 +132,9 @@ class runtime:
             # Could not find debug info on program uploaded
             if os.path.isfile('./st_files/' + st_file + '.dbg'):
                 # Debugger info exists on file - open it
-                f = open('./st_files/' + st_file + '.dbg', "r")
-                c_debug = f.read()
-                f.close()
+                with open('./st_files/' + st_file + '.dbg', "r") as f:
+                    c_debug = f.read()
+
             else:
                 # No debug info... probably a program generated from the old editor. Use the blank debug info just to compile the program
                 f = open('./core/debug.blank', "r")
@@ -142,9 +142,8 @@ class runtime:
                 f.close()
 
             # Write c_debug file
-            f = open('./core/debug.cpp', "w")
-            f.write(c_debug)
-            f.close()
+            with open('./core/debug.cpp', "w") as f:
+                f.write(c_debug)
 
             # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -155,17 +154,15 @@ class runtime:
             c_debug = '\n'.join(c_debug_lines)
 
             # Write c_debug file
-            f = open('./core/debug.cpp', "w")
-            f.write(c_debug)
-            f.close()
+            with open('./core/debug.cpp', "w") as f:
+                f.write(c_debug)
 
             #Write program and debug files
-            f = open('./st_files/' + st_file, "w")
-            f.write(program)
-            f.close()
-            f = open('./st_files/' + st_file + '.dbg', "w")
-            f.write(c_debug)
-            f.close()
+            with open('./st_files/' + st_file, "w") as f:
+                f.write(program)
+
+            with open('./st_files/' + st_file + '.dbg', "w") as f:
+                f.write(c_debug)
 
             # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
