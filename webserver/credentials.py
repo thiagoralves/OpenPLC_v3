@@ -115,20 +115,3 @@ class CertGen():
         except Exception as e:
             print(f"Error loading or parsing certificate: {e}")
             return False
-
-# if __name__ == '__main__':
-#     # TODO define best path to store credentials
-#     CERT_FILE = "/etc/ssl/certs/certOPENPLC.pem"
-#     KEY_FILE = "/etc/ssl/private/keyOPENPLC.pem"
-#     HOSTNAME = "localhost"
-
-#     cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
-#     # Generate certificate if it doesn't exist
-#     if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
-#         cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
-#     # Verify expiration date
-#     elif cert_gen.is_certificate_valid(CERT_FILE):
-#         print(cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE))
-#     # Credentials already created
-#     else:
-#         print("Credentials already generated!")
