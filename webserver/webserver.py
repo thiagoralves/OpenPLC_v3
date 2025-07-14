@@ -14,9 +14,13 @@ import sys
 import ctypes
 import socket
 import mimetypes
+import ssl
+import threading
 
-import flask 
+import flask
 import flask_login
+
+from credentials import CertGen
 from restapi import restapi_bp, register_callback_get, register_callback_post
 
 app = flask.Flask(__name__)
@@ -25,6 +29,13 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
+
+app_restapi = flask.Flask(__name__)
+
+# TODO define best path to store credentials
+CERT_FILE = "/etc/ssl/certs/certOPENPLC.pem"
+KEY_FILE = "/etc/ssl/private/keyOPENPLC.pem"
+HOSTNAME = "localhost"
 
 def restapi_callback_get(argument: str, data: dict) -> dict:
     """
@@ -2565,16 +2576,48 @@ def escape(s, quote=True):
 #----------------------------------------------------------------------------
 def main():
    print("Starting the web interface...")
-   
-if __name__ == '__main__':
-    # rest api register
-    app.register_blueprint(restapi_bp, url_prefix='/api')
+
+def run_https():
+   # rest api register
+    app_restapi.register_blueprint(restapi_bp, url_prefix='/api')
     register_callback_get(restapi_callback_get)
     register_callback_post(restapi_callback_post)
 
+    try:
+        # CertGen class is used to generate SSL certificates and verify their validity
+        cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
+        # Generate certificate if it doesn't exist
+        if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
+            cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
+        # Verify expiration date
+        elif cert_gen.is_certificate_valid(CERT_FILE):
+            print(cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE))
+        # Credentials already created
+        else:
+            print("Credentials already generated!")
+        
+        try:
+            context = (CERT_FILE, KEY_FILE)
+            app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
+        except KeyboardInterrupt as e:
+            print(f"Exiting OpenPLC Webserver...{e}")
+            openplc_runtime.stop_runtime()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            openplc_runtime.stop_runtime()
+        except:
+            print("An unexpected error occurred.")
+            
+    # TODO handle file error
+    except FileNotFoundError as e:
+        print(f"Could not find SSL credentials! {e}")
+    except ssl.SSLError as e:
+        print(f"SSL credentials FAIL! {e}")
+
+def run_http():
     #Load information about current program on the openplc_runtime object
-    file = open("active_program", "r")
-    st_file = file.read()
+    with open("active_program", "r") as file:
+        st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
     
     database = "openplc.db"
@@ -2604,10 +2647,25 @@ if __name__ == '__main__':
                 time.sleep(1)
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
-            
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+
+            try:
+                app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+            except KeyboardInterrupt as e:
+                print(f"Exiting OpenPLC Webserver...{e}")
+                openplc_runtime.stop_runtime()
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                openplc_runtime.stop_runtime()
+            except:
+                print("An unexpected error occurred.")
         
         except Error as e:
             print("error connecting to the database" + str(e))
     else:
         print("error connecting to the database")
+
+
+if __name__ == '__main__':
+    # Running webserver and RestAPI in separate threads
+    threading.Thread(target=run_http).start()
+    threading.Thread(target=run_https).start()
