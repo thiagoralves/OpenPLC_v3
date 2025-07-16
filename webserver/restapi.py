@@ -3,10 +3,8 @@ from hmac import compare_digest
 from flask import Flask, Blueprint, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 
-from flask_jwt_extended import create_access_token
-from flask_jwt_extended import current_user
-from flask_jwt_extended import jwt_required
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import create_access_token, current_user, jwt_required, JWTManager, verify_jwt_in_request
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from typing import Callable, Optional
 
@@ -22,23 +20,21 @@ db = SQLAlchemy(app_restapi)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.Text, nullable=False, unique=True)
-    full_name = db.Column(db.Text, nullable=False)
+    password_hash = db.Column(db.Text, nullable=False, unique=True)
+    
+    # TODO salt and pepper hashes
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
-    # NOTE: In a real application make sure to properly hash and salt passwords
     def check_password(self, password):
-        return compare_digest(password, "password")
+        return check_password_hash(self.password_hash, password)
 
 
-# Register a callback function that takes whatever object is passed in as the
-# identity when creating JWTs and converts it to a JSON serializable format.
 @jwt.user_identity_loader
 def user_identity_lookup(user):
     return str(user.id)
 
-# Register a callback function that loads a user from your database whenever
-# a protected route is accessed. This should return any python object on a
-# successful lookup, or None if the lookup failed for any reason (for example
-# if the user has been deleted from the database).
+
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
@@ -64,6 +60,53 @@ def register_callback_post(callback: Callable[[str, dict], dict]):
     _handler_callback_post = callback
     print("POST Callback registered successfully for rest_blueprint!")
 
+
+@restapi_bp.route("/users", methods=["POST"])
+def create_user():
+    # check if there are any users in the database
+    users_exist = User.query.first() is not None
+
+    # if there are no users, we don't need to verify JWT
+    if users_exist:
+        verify_jwt_in_request()
+        if not current_user:
+            return jsonify({"msg": "Authentication required"}), 401
+
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"msg": "Missing fields"}), 400
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({"msg": "Username already exists"}), 409
+
+    user = User(
+        username=username, 
+        password_hash=generate_password_hash(password)
+    )
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({"msg": "User created", "id": user.id}), 201
+
+
+# TODO change to username string
+@restapi_bp.route("/users/<int:user_id>", methods=["PUT"])
+@jwt_required()
+def update_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    data = request.get_json()
+    user.username = data.get("username", user.username)
+    db.session.commit()
+
+    return jsonify({"msg": "User updated", "id": user.id})
+
+
 @restapi_bp.route("/login", methods=["POST"])
 def login():
     username = request.json.get("username", None)
@@ -76,6 +119,7 @@ def login():
     # Notice that we are passing in the actual sqlalchemy user object here
     access_token = create_access_token(identity=user)
     return jsonify(access_token=access_token)
+
 
 @restapi_bp.route("/<command>", methods=["GET"])
 @jwt_required()
@@ -91,6 +135,7 @@ def restapi_plc_get(command):
     except Exception as e:
         print(f"Error in restapi_plc_get: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @restapi_bp.route("/<command>", methods=["POST"])
 @jwt_required()
