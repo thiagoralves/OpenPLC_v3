@@ -17,7 +17,9 @@ import mimetypes
 
 import flask 
 import flask_login
-from restapi import restapi_bp, register_callback_get, register_callback_post
+
+from credentials import CertGen
+from restapi import app_restapi, restapi_bp, register_callback_get, register_callback_post
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
@@ -25,6 +27,11 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
+
+# TODO define best path to store credentials
+CERT_FILE = "/etc/ssl/certs/certOPENPLC.pem"
+KEY_FILE = "/etc/ssl/private/keyOPENPLC.pem"
+HOSTNAME = "localhost"
 
 def restapi_callback_get(argument: str, data: dict) -> dict:
     """
@@ -2565,10 +2572,10 @@ def escape(s, quote=True):
 #----------------------------------------------------------------------------
 def main():
    print("Starting the web interface...")
-   
-if __name__ == '__main__':
+
+def run_https():
     # rest api register
-    app.register_blueprint(restapi_bp, url_prefix='/api')
+    app_restapi.register_blueprint(restapi_bp, url_prefix='/api')
     register_callback_get(restapi_callback_get)
     register_callback_post(restapi_callback_post)
 
