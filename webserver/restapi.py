@@ -116,7 +116,6 @@ def login():
     if not user or not user.check_password(password):
         return jsonify("Wrong username or password"), 401
 
-    # Notice that we are passing in the actual sqlalchemy user object here
     access_token = create_access_token(identity=user)
     return jsonify(access_token=access_token)
 
