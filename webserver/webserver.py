@@ -14,8 +14,10 @@ import sys
 import ctypes
 import socket
 import mimetypes
+import ssl
+import threading
 
-import flask 
+import flask
 import flask_login
 
 from credentials import CertGen
@@ -931,7 +933,7 @@ def upload_program():
         if (prog_file.filename == ''):
             return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
         
-        # TODO colocar em outra funçao
+        # TODO realocate to another function
         filename = str(random.randint(1,1000000)) + ".st"
         prog_file.save(os.path.join('st_files', filename))
         
@@ -2579,9 +2581,41 @@ def run_https():
     register_callback_get(restapi_callback_get)
     register_callback_post(restapi_callback_post)
 
+    try:
+        # CertGen class is used to generate SSL certificates and verify their validity
+        cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
+        # Generate certificate if it doesn't exist
+        if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
+            cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
+        # Verify expiration date
+        elif cert_gen.is_certificate_valid(CERT_FILE):
+            print(cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE))
+        # Credentials already created
+        else:
+            print("Credentials already generated!")
+        
+        try:
+            context = (CERT_FILE, KEY_FILE)
+            app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
+        except KeyboardInterrupt as e:
+            print(f"Exiting OpenPLC Webserver...{e}")
+            openplc_runtime.stop_runtime()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            openplc_runtime.stop_runtime()
+        except:
+            print("An unexpected error occurred.")
+            
+    # TODO handle file error
+    except FileNotFoundError as e:
+        print(f"Could not find SSL credentials! {e}")
+    except ssl.SSLError as e:
+        print(f"SSL credentials FAIL! {e}")
+
+def run_http():
     #Load information about current program on the openplc_runtime object
-    file = open("active_program", "r")
-    st_file = file.read()
+    with open("active_program", "r") as file:
+        st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
     
     database = "openplc.db"
@@ -2611,10 +2645,25 @@ def run_https():
                 time.sleep(1)
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
-            
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+
+            try:
+                app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+            except KeyboardInterrupt as e:
+                print(f"Exiting OpenPLC Webserver...{e}")
+                openplc_runtime.stop_runtime()
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                openplc_runtime.stop_runtime()
+            except:
+                print("An unexpected error occurred.")
         
         except Error as e:
             print("error connecting to the database" + str(e))
     else:
         print("error connecting to the database")
+
+
+if __name__ == '__main__':
+    # Running webserver and RestAPI in separate threads
+    threading.Thread(target=run_http).start()
+    threading.Thread(target=run_https).start()

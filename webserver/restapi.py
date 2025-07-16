@@ -89,7 +89,7 @@ def restapi_plc_get(command):
         result = _handler_callback_get(command, data)
         return jsonify(result), 200
     except Exception as e:
-        print(f"Error in restapi_start_plc: {e}")
+        print(f"Error in restapi_plc_get: {e}")
         return jsonify({"error": str(e)}), 500
 
 @restapi_bp.route("/<command>", methods=["POST"])
@@ -105,5 +105,5 @@ def restapi_plc_post(command):
         result = _handler_callback_post(command, data)
         return jsonify(result), 200
     except Exception as e:
-        print(f"Error in restapi_start_plc_post: {e}")
+        print(f"Error in restapi_plc_post: {e}")
         return jsonify({"error": str(e)}), 500
