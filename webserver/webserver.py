@@ -21,7 +21,7 @@ import flask
 import flask_login
 
 from credentials import CertGen
-from restapi import app_restapi, restapi_bp, create_user, login, db, register_callback_get, register_callback_post
+from restapi import app_restapi, restapi_bp, db, register_callback_get, register_callback_post
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
@@ -30,9 +30,8 @@ login_manager.init_app(app)
 
 openplc_runtime = openplc.runtime()
 
-# TODO define best path to store credentials
-CERT_FILE = "/etc/ssl/certs/certOPENPLC.pem"
-KEY_FILE = "/etc/ssl/private/keyOPENPLC.pem"
+CERT_FILE = "certOPENPLC.pem"
+KEY_FILE = "keyOPENPLC.pem"
 HOSTNAME = "localhost"
 
 def restapi_callback_get(argument: str, data: dict) -> dict:
@@ -41,7 +40,7 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
     based on the 'argument' from the URL and 'data' from the request.
     """
     # TODO logging debug level
-    print(f"GET | [{__name__}] Received argument: {argument}, data: {data}")
+    print(f"GET | Received argument: {argument}, data: {data}")
 
     if argument == "start-plc":
         openplc_runtime.start_runtime()
@@ -56,8 +55,8 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
         return {"runtime-logs": logs}
 
     elif argument == "compilation-status":
-        status = openplc_runtime.is_compiling
-        return {"is-compiling": status}
+        status = openplc_runtime.compilation_status_str
+        return {"compilation-status": status}
     
     elif argument == "compilation-logs":
         logs = openplc_runtime.compilation_status()
@@ -74,7 +73,7 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
 # file upload POST handler 
 def restapi_callback_post(argument: str, data: dict) -> dict:
     # TODO logging debug level
-    print(f"POST | [{__name__}] Received argument: {argument}, data: {data}")
+    print(f"POST | Received argument: {argument}, data: {data}")
 
     if argument == "upload-file":
         try:
@@ -101,12 +100,6 @@ def restapi_callback_post(argument: str, data: dict) -> dict:
 
         except Exception as e:
             return {"CompilationStatus": e}
-    
-    # elif argument == "login":
-    #     login()
-
-    # elif argument == "users":
-    #     create_user()
 
     else:
         return {"PostError": "Unknown argument"}

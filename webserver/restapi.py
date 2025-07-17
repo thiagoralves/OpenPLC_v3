@@ -7,15 +7,21 @@ from flask_jwt_extended import create_access_token, current_user, jwt_required, 
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from typing import Callable, Optional
+import config
+
+import os
+env = os.getenv("FLASK_ENV", "development")
 
 app_restapi = Flask(__name__)
 
-app_restapi.config["JWT_SECRET_KEY"] = "openplc"  # TODO change password
-app_restapi.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
-app_restapi.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+if env == "production":
+    app_restapi.config.from_object(config.ProdConfig)
+else:
+    app_restapi.config.from_object(config.DevConfig)
 
 jwt = JWTManager(app_restapi)
 db = SQLAlchemy(app_restapi)
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -40,22 +46,18 @@ def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
     return User.query.filter_by(id=identity).one_or_none()
 
-# Define the Blueprint
 restapi_bp = Blueprint('restapi_blueprint', __name__)
 
-# Global variable to store the single callback for this blueprint
 _handler_callback_get: Optional[Callable[[str, dict], dict]] = None
 _handler_callback_post: Optional[Callable[[str, dict], dict]] = None
 
 
 def register_callback_get(callback: Callable[[str, dict], dict]):
-    """Registers the business logic callback function."""
     global _handler_callback_get
     _handler_callback_get = callback
     print("GET Callback registered successfully for rest_blueprint!")
 
 def register_callback_post(callback: Callable[[str, dict], dict]):
-    """Registers the business logic callback function."""
     global _handler_callback_post
     _handler_callback_post = callback
     print("POST Callback registered successfully for rest_blueprint!")
@@ -68,9 +70,10 @@ def create_user():
 
     # if there are no users, we don't need to verify JWT
     if users_exist:
-        verify_jwt_in_request()
-        if not current_user:
-            return jsonify({"msg": "Authentication required"}), 401
+        try:
+            verify_jwt_in_request()
+        except Exception as e:
+            return jsonify({"msg": str(e)}), 401
 
     data = request.get_json()
     username = data.get("username")
@@ -92,7 +95,7 @@ def create_user():
     return jsonify({"msg": "User created", "id": user.id}), 201
 
 
-# TODO change to username string
+# verify existing users
 @restapi_bp.route("/users/<int:user_id>", methods=["PUT"])
 @jwt_required()
 def update_user(user_id):

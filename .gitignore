@@ -39,5 +39,9 @@ utils/libmodbus_src/tests/.libs/*
 webserver/scripts/openplc_driver
 webserver/scripts/openplc_platform
 
+# Runtime files
+webserver/*.pem
+webserver/*.db
+
 # Runtime directories
 .venv

@@ -10,31 +10,16 @@ import os
 
 
 class CertGen():
-    """
-    Generates a self-signed TLS certificate and private key.
-
-    Args:
-        hostname (str): The common name (CN) for the certificate.
-        ip_addresses (list, optional): A list of IP addresses to include in the SAN extension.
-        cert_file (str): The filename for the certificate (PEM format).
-        key_file (str): The filename for the private key (PEM format).
-    """
+    """Generates a self-signed TLS certificate and private key."""
     def __init__(self, hostname, ip_addresses=None):
         self.hostname = hostname
         self.ip_addresses = ip_addresses
 
-        # Certificate validity
         self.now = datetime.datetime.utcnow()
-        # Subject and Issuer
         self.subject = self.issuer = x509.Name([
-            # x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"), # TODO get device country
-            # x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"openplc"),
-            # x509.NameAttribute(NameOID.LOCALITY_NAME, u"openplc"),
-            # x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Autonomy"),
             x509.NameAttribute(NameOID.COMMON_NAME, hostname),
         ])
 
-        # Subject Alternative Names (SAN)
         self.alt_names = [x509.DNSName(hostname)]
         if ip_addresses:
             for addr in ip_addresses:
@@ -82,15 +67,7 @@ class CertGen():
 
     # TODO add a function to update the certificate on the client before expiration
     def is_certificate_valid(self, cert_file):
-        """
-        Checks if a certificate is valid (not expired and not yet valid).
-
-        Args:
-            cert_file (str): The path to the certificate file (PEM format).
-
-        Returns:
-            bool: True if the certificate is currently valid, False otherwise.
-        """
+        """Check if the certificate is valid."""
         if not os.path.exists(cert_file):
             print(f"Certificate file not found: {cert_file}")
             return False

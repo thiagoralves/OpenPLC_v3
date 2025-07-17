@@ -73,6 +73,7 @@ class runtime:
     project_file = ""
     project_name = ""
     project_description = ""
+    compilation_status_str = ""
     runtime_status = "Stopped"
     
     def start_runtime(self):
@@ -109,7 +110,6 @@ class runtime:
             self.stop_runtime()
         
         self.is_compiling = True
-        global compilation_status_str
         global compilation_object
         compilation_status_str = ""
         
