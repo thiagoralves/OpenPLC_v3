@@ -45,3 +45,4 @@ webserver/*.db
 
 # Runtime directories
 .venv
+.env

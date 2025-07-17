@@ -29,10 +29,12 @@ class User(db.Model):
     password_hash = db.Column(db.Text, nullable=False, unique=True)
     
     # TODO salt and pepper hashes
-    def set_password(self, password):
+    def set_password(self, password, pepper):
+        password = password + pepper
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password, pepper):
+        password = password + pepper
         return check_password_hash(self.password_hash, password)
 
 
@@ -70,10 +72,8 @@ def create_user():
 
     # if there are no users, we don't need to verify JWT
     if users_exist:
-        try:
-            verify_jwt_in_request()
-        except Exception as e:
-            return jsonify({"msg": str(e)}), 401
+        if verify_jwt_in_request(optional=True) is None:
+            return jsonify({"msg": "User already created!"}), 401
 
     data = request.get_json()
     username = data.get("username")
@@ -96,16 +96,16 @@ def create_user():
 
 
 # verify existing users
-@restapi_bp.route("/users/<int:user_id>", methods=["PUT"])
+@restapi_bp.route("/users/<int:user_id>", methods=["GET"])
 @jwt_required()
 def update_user(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    data = request.get_json()
-    user.username = data.get("username", user.username)
-    db.session.commit()
+    # data = request.get_json()
+    # user.username = data.get("username", user.username)
+    # db.session.commit()
 
     return jsonify({"msg": "User updated", "id": user.id})
 
@@ -116,7 +116,7 @@ def login():
     password = request.json.get("password", None)
 
     user = User.query.filter_by(username=username).one_or_none()
-    if not user or not user.check_password(password):
+    if not user or not user.check_password(password, config.Config.PEPPER):
         return jsonify("Wrong username or password"), 401
 
     access_token = create_access_token(identity=user)

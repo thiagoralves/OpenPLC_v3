@@ -92,9 +92,9 @@ function install_py_deps {
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" -m pip install --upgrade pip
     if [ "$1" == "neuron" ]; then
-        "$VENV_DIR/bin/python3" -m pip install flask==2.2.5 werkzeug==2.2.2 flask-login==0.6.2 pyserial pymodbus==2.5.3 cryptography flask_jwt_extended flask_sqlalchemy
+        "$VENV_DIR/bin/python3" -m pip install flask==2.2.5 werkzeug==2.2.2 flask-login==0.6.2 pyserial pymodbus==2.5.3 cryptography flask_jwt_extended flask_sqlalchemy python-dotenv
     else
-        "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3 cryptography flask_jwt_extended flask_sqlalchemy
+        "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3 cryptography flask_jwt_extended flask_sqlalchemy python-dotenv
     fi
     python3 -m pip install pymodbus==2.5.3
 }
@@ -202,6 +202,17 @@ function install_libsnap7 {
     cd "$OPENPLC_DIR"
 }
 
+function generate_env() {
+  cat <<EOF > .env
+FLASK_ENV=development
+SQLALCHEMY_DATABASE_URI=sqlite:///restapi.db
+JWT_SECRET_KEY=$(openssl rand -hex 32)
+PEPPER=$(openssl rand -hex 32)
+EOF
+  echo ".env file created with random JWT_SECRET_KEY and PEPPER."
+}
+
+
 function install_systemd_service() {
     if [ "$1" == "sudo" ]; then
         echo "[OPENPLC SERVICE]"
@@ -278,7 +289,7 @@ if [ "$1" == "win" ]; then
     #Setting up venv
     python3 -m venv "$VENV_DIR"
     "$VENV_DIR/bin/python3" get-pip3.py
-    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3 cryptography flask_jwt_extended flask_sqlalchemy
+    "$VENV_DIR/bin/python3" -m pip install flask==2.3.3 werkzeug==2.3.7 flask-login==0.6.2 pyserial pymodbus==2.5.3 cryptography flask_jwt_extended flask_sqlalchemy python-dotenv
     
     echo ""
     echo "[MATIEC COMPILER]"
@@ -334,6 +345,7 @@ elif [ "$1" == "linux" ]; then
     install_all_libs sudo
     [ "$2" == "ethercat" ] && install_ethercat
     install_systemd_service sudo
+    generate_env
     finalize_install linux
 
 elif [ "$1" == "docker" ]; then
@@ -355,6 +367,7 @@ elif [ "$1" == "rpi" ]; then
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
+    generate_env
     finalize_install linux
 
 elif [ "$1" == "opi" ]; then
