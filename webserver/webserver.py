@@ -21,7 +21,7 @@ import flask
 import flask_login
 
 from credentials import CertGen
-from restapi import app_restapi, restapi_bp, register_callback_get, register_callback_post
+from restapi import app_restapi, restapi_bp, create_user, login, db, register_callback_get, register_callback_post
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
@@ -101,6 +101,12 @@ def restapi_callback_post(argument: str, data: dict) -> dict:
 
         except Exception as e:
             return {"CompilationStatus": e}
+    
+    # elif argument == "login":
+    #     login()
+
+    # elif argument == "users":
+    #     create_user()
 
     else:
         return {"PostError": "Unknown argument"}
@@ -2580,6 +2586,10 @@ def run_https():
     app_restapi.register_blueprint(restapi_bp, url_prefix='/api')
     register_callback_get(restapi_callback_get)
     register_callback_post(restapi_callback_post)
+
+    with app_restapi.app_context():
+        db.create_all()
+        db.session.commit()
 
     try:
         # CertGen class is used to generate SSL certificates and verify their validity
