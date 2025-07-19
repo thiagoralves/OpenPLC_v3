@@ -22,16 +22,17 @@ else:
 jwt = JWTManager(app_restapi)
 db = SQLAlchemy(app_restapi)
 
-
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Text, nullable=False, unique=True)
-    password_hash = db.Column(db.Text, nullable=False, unique=True)
+    id: int = db.Column(db.Integer, primary_key=True)
+    username: str = db.Column(db.Text, nullable=False, unique=True)
+    password_hash: str = db.Column(db.Text, nullable=False, unique=True)
+    derivation_method: str = "pbkdf2:sha256:600000"
     
-    # TODO salt and pepper hashes
     def set_password(self, password, pepper):
         password = password + pepper
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password,
+                                            method=self.derivation_method)
+        return self.password_hash
 
     def check_password(self, password, pepper):
         password = password + pepper
@@ -85,10 +86,9 @@ def create_user():
     if User.query.filter_by(username=username).first():
         return jsonify({"msg": "Username already exists"}), 409
 
-    user = User(
-        username=username, 
-        password_hash=generate_password_hash(password)
-    )
+    user = User(username=username)
+    user.set_password(password, config.Config.PEPPER)
+
     db.session.add(user)
     db.session.commit()
 
@@ -96,7 +96,7 @@ def create_user():
 
 
 # verify existing users
-@restapi_bp.route("/users/<int:user_id>", methods=["GET"])
+@restapi_bp.route("/check_user/<int:user_id>", methods=["GET"])
 @jwt_required()
 def update_user(user_id):
     user = User.query.get(user_id)
@@ -109,6 +109,25 @@ def update_user(user_id):
 
     return jsonify({"msg": "User updated", "id": user.id})
 
+# TODO test password change
+@restapi_bp.route("/change_password", methods=["POST"])
+@jwt_required()
+def change_password():
+    data = request.get_json()
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+
+    if not old_password or not new_password:
+        return jsonify({"msg": "Both old and new passwords are required"}), 400
+
+    if not current_user.check_password(old_password, config.Config.PEPPER):
+        return jsonify({"msg": "Old password is incorrect"}), 403
+
+    current_user.password_hash = generate_password_hash(new_password + config.Config.PEPPER)
+    db.session.commit()
+
+    return jsonify({"msg": "Password updated successfully"}), 200
+
 
 @restapi_bp.route("/login", methods=["POST"])
 def login():
@@ -119,6 +138,7 @@ def login():
     if not user or not user.check_password(password, config.Config.PEPPER):
         return jsonify("Wrong username or password"), 401
 
+    # TODO check to use as cookie
     access_token = create_access_token(identity=user)
     return jsonify(access_token=access_token)
 

@@ -42,6 +42,8 @@ webserver/scripts/openplc_platform
 # Runtime files
 webserver/*.pem
 webserver/*.db
+webserver/instance/
+
 
 # Runtime directories
 .venv
