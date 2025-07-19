@@ -304,6 +304,7 @@ if [ "$1" == "win" ]; then
     install_glue_generator
     disable_opendnp3
     install_libmodbus
+    generate_env
     finalize_install win
 
 elif [ "$1" == "win_msys2" ]; then
@@ -335,6 +336,7 @@ elif [ "$1" == "win_msys2" ]; then
     disable_opendnp3
     install_libmodbus
     cp /usr/include/modbus/*.h /usr/include/
+    generate_env
     finalize_install win
 
 elif [ "$1" == "linux" ]; then
@@ -358,6 +360,7 @@ elif [ "$1" == "docker" ]; then
     then
         mkdir /docker_persistent
     fi
+    generate_env
     finalize_install linux
 
 elif [ "$1" == "rpi" ]; then
@@ -377,6 +380,7 @@ elif [ "$1" == "opi" ]; then
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
+    generate_env
     finalize_install linux
 
 elif [ "$1" == "neuron" ]; then
@@ -398,6 +402,7 @@ elif [ "$1" == "neuron" ]; then
     install_py_deps neuron
     install_all_libs sudo
     install_systemd_service sudo
+    generate_env
     finalize_install linux
 
 elif [ "$1" == "unipi" ]; then
@@ -407,6 +412,7 @@ elif [ "$1" == "unipi" ]; then
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
+    generate_env
     finalize_install linux
 
 elif [ "$1" == "custom" ]; then

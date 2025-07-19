@@ -25,6 +25,7 @@ _handler_callback_post: Optional[Callable[[str, dict], dict]] = None
 jwt = JWTManager(app_restapi)
 db = SQLAlchemy(app_restapi)
 
+
 class User(db.Model):
     id: int = db.Column(db.Integer, primary_key=True)
     username: str = db.Column(db.Text, nullable=False, unique=True)
