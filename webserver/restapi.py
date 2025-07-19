@@ -19,6 +19,9 @@ if env == "production":
 else:
     app_restapi.config.from_object(config.DevConfig)
 
+restapi_bp = Blueprint('restapi_blueprint', __name__)
+_handler_callback_get: Optional[Callable[[str, dict], dict]] = None
+_handler_callback_post: Optional[Callable[[str, dict], dict]] = None
 jwt = JWTManager(app_restapi)
 db = SQLAlchemy(app_restapi)
 
@@ -26,16 +29,19 @@ class User(db.Model):
     id: int = db.Column(db.Integer, primary_key=True)
     username: str = db.Column(db.Text, nullable=False, unique=True)
     password_hash: str = db.Column(db.Text, nullable=False, unique=True)
+    # Use PBKDF2 with SHA256 and 600,000 iterations for password hashing
     derivation_method: str = "pbkdf2:sha256:600000"
-    
+
     def set_password(self, password, pepper):
         password = password + pepper
         self.password_hash = generate_password_hash(password,
                                             method=self.derivation_method)
+        print(f"Password set for user {self.username} | {self.password_hash}")
         return self.password_hash
 
-    def check_password(self, password, pepper):
-        password = password + pepper
+    def check_password(self, password):
+        password = password + app_restapi.config["PEPPER"]
+        print(f"Checking password {self.password_hash} | {password}")
         return check_password_hash(self.password_hash, password)
 
 
@@ -43,17 +49,10 @@ class User(db.Model):
 def user_identity_lookup(user):
     return str(user.id)
 
-
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
     return User.query.filter_by(id=identity).one_or_none()
-
-restapi_bp = Blueprint('restapi_blueprint', __name__)
-
-_handler_callback_get: Optional[Callable[[str, dict], dict]] = None
-_handler_callback_post: Optional[Callable[[str, dict], dict]] = None
-
 
 def register_callback_get(callback: Callable[[str, dict], dict]):
     global _handler_callback_get
@@ -87,7 +86,7 @@ def create_user():
         return jsonify({"msg": "Username already exists"}), 409
 
     user = User(username=username)
-    user.set_password(password, config.Config.PEPPER)
+    user.set_password(password, app_restapi.config["PEPPER"])
 
     db.session.add(user)
     db.session.commit()
@@ -120,10 +119,10 @@ def change_password():
     if not old_password or not new_password:
         return jsonify({"msg": "Both old and new passwords are required"}), 400
 
-    if not current_user.check_password(old_password, config.Config.PEPPER):
+    if not current_user.check_password(old_password):
         return jsonify({"msg": "Old password is incorrect"}), 403
 
-    current_user.password_hash = generate_password_hash(new_password + config.Config.PEPPER)
+    current_user.password_hash = generate_password_hash(new_password)
     db.session.commit()
 
     return jsonify({"msg": "Password updated successfully"}), 200
@@ -135,7 +134,8 @@ def login():
     password = request.json.get("password", None)
 
     user = User.query.filter_by(username=username).one_or_none()
-    if not user or not user.check_password(password, config.Config.PEPPER):
+    print(f"User found: {user}")
+    if not user or not user.check_password(password):
         return jsonify("Wrong username or password"), 401
 
     # TODO check to use as cookie
