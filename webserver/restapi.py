@@ -27,7 +27,7 @@ db = SQLAlchemy(app_restapi)
 class User(db.Model):
     id: int = db.Column(db.Integer, primary_key=True)
     username: str = db.Column(db.Text, nullable=False, unique=True)
-    password_hash: str = db.Column(db.Text, nullable=False, unique=True)
+    password_hash: str = db.Column(db.Text, nullable=False)
     # Use PBKDF2 with SHA256 and 600,000 iterations for password hashing
     derivation_method: str = "pbkdf2:sha256:600000"
 
