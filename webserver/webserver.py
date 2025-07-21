@@ -16,6 +16,7 @@ import socket
 import mimetypes
 import ssl
 import threading
+import logging
 
 import flask
 import flask_login
@@ -27,6 +28,7 @@ app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
+logger = logging.getLogger(__name__)
 
 openplc_runtime = openplc.runtime()
 
@@ -39,8 +41,7 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
     This is the central callback function that handles the logic
     based on the 'argument' from the URL and 'data' from the request.
     """
-    # TODO logging debug level
-    print(f"GET | Received argument: {argument}, data: {data}")
+    logger.debug(f"GET | Received argument: {argument}, data: {data}")
 
     if argument == "start-plc":
         openplc_runtime.start_runtime()
@@ -72,8 +73,7 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
 
 # file upload POST handler 
 def restapi_callback_post(argument: str, data: dict) -> dict:
-    # TODO logging debug level
-    print(f"POST | Received argument: {argument}, data: {data}")
+    logger.debug(f"POST | Received argument: {argument}, data: {data}")
 
     if argument == "upload-file":
         try:
@@ -2581,8 +2581,12 @@ def run_https():
     register_callback_post(restapi_callback_post)
 
     with app_restapi.app_context():
-        db.create_all()
-        db.session.commit()
+        try:
+            db.create_all()
+            db.session.commit()
+            print("Database tables created successfully.")
+        except Exception as e:
+            print(f"Error creating database tables: {e}")
 
     try:
         # CertGen class is used to generate SSL certificates and verify their validity

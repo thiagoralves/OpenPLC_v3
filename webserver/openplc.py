@@ -111,7 +111,7 @@ class runtime:
         
         self.is_compiling = True
         global compilation_object
-        compilation_status_str = ""
+        self.compilation_status_str = ""
         
         # Extract debug information from program
         with open('./st_files/' + st_file, "r") as f:
@@ -169,13 +169,12 @@ class runtime:
             compilation_object = NonBlockingStreamReader(a.stdout)
     
     def compilation_status(self):
-        global compilation_status_str
         global compilation_object
         while compilation_object != None:
             line = compilation_object.readline()
             if not line: break
-            compilation_status_str += line
-        return compilation_status_str
+            self.compilation_status_str += line
+        return self.compilation_status_str
 
     def status(self):
         if ('compilation_object' in globals()):

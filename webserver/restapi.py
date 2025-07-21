@@ -1,5 +1,3 @@
-from hmac import compare_digest
-
 from flask import Flask, Blueprint, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 
@@ -7,7 +5,7 @@ from flask_jwt_extended import create_access_token, current_user, jwt_required, 
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from typing import Callable, Optional
-import config
+from . import config
 
 import os
 env = os.getenv("FLASK_ENV", "development")
@@ -72,9 +70,8 @@ def create_user():
     users_exist = User.query.first() is not None
 
     # if there are no users, we don't need to verify JWT
-    if users_exist:
-        if verify_jwt_in_request(optional=True) is None:
-            return jsonify({"msg": "User already created!"}), 401
+    if users_exist and verify_jwt_in_request(optional=True) is None:
+        return jsonify({"msg": "User already created!"}), 401
 
     data = request.get_json()
     username = data.get("username")

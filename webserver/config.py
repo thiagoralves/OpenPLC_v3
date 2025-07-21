@@ -11,9 +11,10 @@ class Config:
     PEPPER = os.getenv("PEPPER")
 
 class DevConfig(Config):
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = False  # keep performance parity with prod
     DEBUG = True
 
 class ProdConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DEBUG = False
+    ENV = "production"
