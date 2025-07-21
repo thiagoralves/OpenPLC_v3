@@ -31,14 +31,14 @@ class User(db.Model):
     # Use PBKDF2 with SHA256 and 600,000 iterations for password hashing
     derivation_method: str = "pbkdf2:sha256:600000"
 
-    def set_password(self, password, pepper):
-        password = password + pepper
+    def set_password(self, password: str) -> str:
+        password = password + app_restapi.config["PEPPER"]
         self.password_hash = generate_password_hash(password,
                                             method=self.derivation_method)
         print(f"Password set for user {self.username} | {self.password_hash}")
         return self.password_hash
 
-    def check_password(self, password):
+    def check_password(self, password: str) -> bool:
         password = password + app_restapi.config["PEPPER"]
         print(f"Checking password {self.password_hash} | {password}")
         return check_password_hash(self.password_hash, password)
@@ -84,7 +84,7 @@ def create_user():
         return jsonify({"msg": "Username already exists"}), 409
 
     user = User(username=username)
-    user.set_password(password, app_restapi.config["PEPPER"])
+    user.set_password(password)
 
     db.session.add(user)
     db.session.commit()
