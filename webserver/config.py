@@ -10,10 +10,14 @@ load_dotenv(dotenv_path=ENV_PATH, override=False)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
-    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI")
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-    PEPPER = os.getenv("PEPPER")
+    # Mandatory settings – raise immediately if not provided
+    for _var in ("SQLALCHEMY_DATABASE_URI", "JWT_SECRET_KEY", "PEPPER"):
+        if not os.getenv(_var):
+            raise RuntimeError(f"Environment variable '{_var}' is required but not set")
 
+    SQLALCHEMY_DATABASE_URI = os.environ["SQLALCHEMY_DATABASE_URI"]
+    JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
+    PEPPER = os.environ["PEPPER"]
 class DevConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False  # keep performance parity with prod
     DEBUG = True
