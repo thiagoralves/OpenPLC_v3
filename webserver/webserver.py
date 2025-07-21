@@ -32,8 +32,10 @@ logger = logging.getLogger(__name__)
 
 openplc_runtime = openplc.runtime()
 
-CERT_FILE = "certOPENPLC.pem"
-KEY_FILE = "keyOPENPLC.pem"
+from pathlib import Path
+BASE_DIR   = Path(__file__).parent
+CERT_FILE  = (BASE_DIR / "certOPENPLC.pem").resolve()
+KEY_FILE   = (BASE_DIR / "keyOPENPLC.pem").resolve()
 HOSTNAME = "localhost"
 
 def restapi_callback_get(argument: str, data: dict) -> dict:
