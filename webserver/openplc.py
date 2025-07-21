@@ -137,9 +137,9 @@ class runtime:
 
             else:
                 # No debug info... probably a program generated from the old editor. Use the blank debug info just to compile the program
-                f = open('./core/debug.blank', "r")
-                c_debug = f.read()
-                f.close()
+                with open('./core/debug.blank', "r") as f:
+                    c_debug = f.read()
+                    f.close()
 
             # Write c_debug file
             with open('./core/debug.cpp', "w") as f:
