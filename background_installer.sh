@@ -203,12 +203,26 @@ function install_libsnap7 {
 }
 
 function generate_env() {
+  # Check if .env already exists and prompt user
+  if [ -f .env ]; then
+    echo "Warning: .env file already exists. Backup and recreate? (y/N)"
+    read -r response
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+      echo "Skipping .env generation."
+      return
+    fi
+    cp .env .env.backup
+  fi
+
   cat <<EOF > .env
 FLASK_ENV=development
 SQLALCHEMY_DATABASE_URI=sqlite:///restapi.db
 JWT_SECRET_KEY=$(openssl rand -hex 32)
 PEPPER=$(openssl rand -hex 32)
 EOF
+
+  # Set restrictive permissions (readable only by owner)
+  chmod 600 .env
   echo ".env file created with random JWT_SECRET_KEY and PEPPER."
 }
 
