@@ -1,8 +1,12 @@
 from dotenv import load_dotenv
 import os
 
-load_dotenv()  # Loads variables from .env into os.environ
+from pathlib import Path
+from dotenv import load_dotenv
 
+# Always resolve .env relative to the repo root to guarantee it is found
+ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=ENV_PATH, override=False)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
