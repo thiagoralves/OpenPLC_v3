@@ -5,7 +5,7 @@ from flask_jwt_extended import create_access_token, current_user, jwt_required, 
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from typing import Callable, Optional
-from . import config
+import config
 
 import os
 env = os.getenv("FLASK_ENV", "development")
