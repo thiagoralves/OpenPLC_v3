@@ -28,6 +28,11 @@ class User(db.Model):
     id: int = db.Column(db.Integer, primary_key=True)
     username: str = db.Column(db.Text, nullable=False, unique=True)
     password_hash: str = db.Column(db.Text, nullable=False)
+    # TODO implement roles
+    # For now, we will just use "user" and "admin"
+    # In the future, we can implement more roles like "guest", "editor", etc
+    # and use them to control access to different parts of the API
+    role = db.Column(db.String(20), default="user")
     # Use PBKDF2 with SHA256 and 600,000 iterations for password hashing
     derivation_method: str = "pbkdf2:sha256:600000"
 
@@ -42,6 +47,9 @@ class User(db.Model):
         password = password + app_restapi.config["PEPPER"]
         print(f"Checking password {self.password_hash} | {password}")
         return check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        return {"id": self.id, "username": self.username, "role": self.role}
 
 
 @jwt.user_identity_loader
@@ -63,6 +71,10 @@ def register_callback_post(callback: Callable[[str, dict], dict]):
     _handler_callback_post = callback
     print("POST Callback registered successfully for rest_blueprint!")
 
+# TODO implement role-based access control
+# For now, we will just check if the user is an admin
+def is_admin():
+    return current_user.role == "admin"
 
 @restapi_bp.route("/users", methods=["POST"])
 def create_user():
