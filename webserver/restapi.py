@@ -33,6 +33,7 @@ class User(db.Model):
     # In the future, we can implement more roles like "guest", "editor", etc
     # and use them to control access to different parts of the API
     role = db.Column(db.String(20), default="user")
+
     # Use PBKDF2 with SHA256 and 600,000 iterations for password hashing
     derivation_method: str = "pbkdf2:sha256:600000"
 
@@ -77,10 +78,12 @@ def is_admin():
     return current_user.role == "admin"
 
 @restapi_bp.route("/", methods=["POST"])
-@jwt_required(optional=True)
 def create_user():
+    # TODO implement role-based access control
     # check if there are any users in the database
     users_exist = User.query.first() is not None
+    # if users_exist and (not current_user or not is_admin()):
+    #     return jsonify({"msg": "Admin privileges required"}), 403
 
     # if there are no users, we don't need to verify JWT
     if users_exist and verify_jwt_in_request(optional=True) is None:
@@ -89,37 +92,39 @@ def create_user():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
-
+    role = data.get("role", "user")
+    
     if not username or not password:
-        return jsonify({"msg": "Missing fields"}), 400
-
+        return jsonify({"msg": "Missing username or password"}), 400
+    
     if User.query.filter_by(username=username).first():
         return jsonify({"msg": "Username already exists"}), 409
 
-    user = User(username=username)
+    # Create a new user
+    user = User(username=username, role=role)
     user.set_password(password)
-
     db.session.add(user)
     db.session.commit()
 
     return jsonify({"msg": "User created", "id": user.id}), 201
 
 
-# verify existing users
+# verify existing users individually
 @restapi_bp.route("/<int:user_id>", methods=["GET"])
 @jwt_required()
 def update_user(user_id):
+    # TODO implement role-based access control
+    # For now, we will just check if the user is an admin
+    # if not is_admin():
+    #     return jsonify({"msg": "Admin privileges required"}), 403
+
     user = User.query.get(user_id)
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    # data = request.get_json()
-    # user.username = data.get("username", user.username)
-    # db.session.commit()
+    return jsonify({"msg": "User", "id": user.id})
 
-    return jsonify({"msg": "User updated", "id": user.id})
-
-# List all users (Admin only)
+# TODO List all users (Admin only)
 @restapi_bp.route("/", methods=["GET"])
 @jwt_required()
 def list_users():
@@ -127,11 +132,12 @@ def list_users():
     # For now, we will just check if the user is an admin
     # if not is_admin():
     #     return jsonify({"msg": "Admin privileges required"}), 403
+    
     users = User.query.all()
     return jsonify([user.to_dict() for user in users]), 200
 
 # password change for specific user by any authenticated user
-@restapi_bp.route("/<int:user_id>/password", methods=["PUT"])
+@restapi_bp.route("/<int:user_id>/password_change", methods=["PUT"])
 @jwt_required()
 def change_password(user_id):
     data = request.get_json()
