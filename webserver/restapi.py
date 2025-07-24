@@ -107,9 +107,28 @@ def update_user(user_id):
     return jsonify({"msg": "User updated", "id": user.id})
 
 # TODO test password change
-@restapi_bp.route("/change_password", methods=["POST"])
+# @restapi_bp.route("/change_password", methods=["POST"])
+# @jwt_required()
+# def change_password():
+#     data = request.get_json()
+#     old_password = data.get("old_password")
+#     new_password = data.get("new_password")
+
+#     if not old_password or not new_password:
+#         return jsonify({"msg": "Both old and new passwords are required"}), 400
+
+#     if not current_user.check_password(old_password):
+#         return jsonify({"msg": "Old password is incorrect"}), 403
+
+#     current_user.password_hash = generate_password_hash(new_password)
+#     db.session.commit()
+
+#     return jsonify({"msg": "Password updated successfully"}), 200
+
+# password change for specific user by any authenticated user
+@restapi_bp.route("/users/<int:user_id>/password", methods=["PUT"])
 @jwt_required()
-def change_password():
+def change_password(user_id):
     data = request.get_json()
     old_password = data.get("old_password")
     new_password = data.get("new_password")
@@ -117,15 +136,40 @@ def change_password():
     if not old_password or not new_password:
         return jsonify({"msg": "Both old and new passwords are required"}), 400
 
-    if not current_user.check_password(old_password):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    if not user.check_password(old_password):
         return jsonify({"msg": "Old password is incorrect"}), 403
 
-    current_user.password_hash = generate_password_hash(new_password)
+    user.set_password(new_password)
     db.session.commit()
 
-    return jsonify({"msg": "Password updated successfully"}), 200
+    return jsonify({"msg": f"Password for user {user.username} updated successfully"}), 200
+
+# delete a user by ID
+# only authenticated users can delete a user
+# if user does not exist, return 404 Not Found
+# if user exists, delete the user and return 200 OK with a success message
+@restapi_bp.route("/users/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+def delete_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({"msg": f"User {user.username} deleted successfully"}), 200
 
 
+# create a new user and return JWT token
+# if user already exists, return JWT token for that user
+# if no user exists, create a new user with the provided username and password
+# and return JWT token for that user
+# if no username or password is provided, return 400 Bad Request
 @restapi_bp.route("/login", methods=["POST"])
 def login():
     username = request.json.get("username", None)
