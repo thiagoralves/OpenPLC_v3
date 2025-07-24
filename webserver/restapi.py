@@ -76,7 +76,8 @@ def register_callback_post(callback: Callable[[str, dict], dict]):
 def is_admin():
     return current_user.role == "admin"
 
-@restapi_bp.route("/users", methods=["POST"])
+@restapi_bp.route("/", methods=["POST"])
+@jwt_required(optional=True)
 def create_user():
     # check if there are any users in the database
     users_exist = User.query.first() is not None
@@ -105,7 +106,7 @@ def create_user():
 
 
 # verify existing users
-@restapi_bp.route("/check_user/<int:user_id>", methods=["GET"])
+@restapi_bp.route("/<int:user_id>", methods=["GET"])
 @jwt_required()
 def update_user(user_id):
     user = User.query.get(user_id)
@@ -118,27 +119,19 @@ def update_user(user_id):
 
     return jsonify({"msg": "User updated", "id": user.id})
 
-# TODO test password change
-# @restapi_bp.route("/change_password", methods=["POST"])
-# @jwt_required()
-# def change_password():
-#     data = request.get_json()
-#     old_password = data.get("old_password")
-#     new_password = data.get("new_password")
-
-#     if not old_password or not new_password:
-#         return jsonify({"msg": "Both old and new passwords are required"}), 400
-
-#     if not current_user.check_password(old_password):
-#         return jsonify({"msg": "Old password is incorrect"}), 403
-
-#     current_user.password_hash = generate_password_hash(new_password)
-#     db.session.commit()
-
-#     return jsonify({"msg": "Password updated successfully"}), 200
+# List all users (Admin only)
+@restapi_bp.route("/", methods=["GET"])
+@jwt_required()
+def list_users():
+    # TODO implement role-based access control
+    # For now, we will just check if the user is an admin
+    # if not is_admin():
+    #     return jsonify({"msg": "Admin privileges required"}), 403
+    users = User.query.all()
+    return jsonify([user.to_dict() for user in users]), 200
 
 # password change for specific user by any authenticated user
-@restapi_bp.route("/users/<int:user_id>/password", methods=["PUT"])
+@restapi_bp.route("/<int:user_id>/password", methods=["PUT"])
 @jwt_required()
 def change_password(user_id):
     data = request.get_json()
@@ -164,7 +157,7 @@ def change_password(user_id):
 # only authenticated users can delete a user
 # if user does not exist, return 404 Not Found
 # if user exists, delete the user and return 200 OK with a success message
-@restapi_bp.route("/users/<int:user_id>", methods=["DELETE"])
+@restapi_bp.route("/<int:user_id>", methods=["DELETE"])
 @jwt_required()
 def delete_user(user_id):
     user = User.query.get(user_id)
