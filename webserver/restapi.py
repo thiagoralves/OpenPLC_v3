@@ -74,8 +74,8 @@ def register_callback_post(callback: Callable[[str, dict], dict]):
 
 # TODO implement role-based access control
 # For now, we will just check if the user is an admin
-def is_admin():
-    return current_user.role == "admin"
+# def is_admin():
+#     return current_user.role == "admin"
 
 @restapi_bp.route("/", methods=["POST"])
 def create_user():
@@ -121,12 +121,18 @@ def update_user(user_id):
     # For now, we will just check if the user is an admin
     # if not is_admin():
     #     return jsonify({"msg": "Admin privileges required"}), 403
-
-    user = User.query.get(user_id)
+    try:
+        user = User.query.get(user_id)
+    except Exception as e:
+        print(f"Error retrieving user: {e}")
+        return jsonify({"msg": "User retrieval error"}), 500
+    
+    # if users_exist and (not current_user or not is_admin()):
+    #     return jsonify({"msg": "Admin privileges required"}), 403
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    return jsonify({"msg": "User", "id": user.id})
+    return jsonify(user.to_dict())
 
 # TODO List all users (Admin only)
 @restapi_bp.route("/", methods=["GET"])
@@ -136,8 +142,12 @@ def list_users():
     # For now, we will just check if the user is an admin
     # if not is_admin():
     #     return jsonify({"msg": "Admin privileges required"}), 403
+    try:
+        users = User.query.all()
+    except Exception as e:
+        print(f"Error retrieving users: {e}")
+        return jsonify({"msg": "User retrieval error"}), 500
 
-    users = User.query.all()
     return jsonify([user.to_dict() for user in users]), 200
 
 # password change for specific user by any authenticated user
@@ -151,7 +161,12 @@ def change_password(user_id):
     if not old_password or not new_password:
         return jsonify({"msg": "Both old and new passwords are required"}), 400
 
-    user = User.query.get(user_id)
+    try:
+        user = User.query.get(user_id)
+    except Exception as e:
+        print(f"Error retrieving user: {e}")
+        return jsonify({"msg": "User retrieval error"}), 500
+    
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -170,7 +185,16 @@ def change_password(user_id):
 @restapi_bp.route("/<int:user_id>", methods=["DELETE"])
 @jwt_required()
 def delete_user(user_id):
-    user = User.query.get(user_id)
+    try:
+        # TODO implement role-based access control
+        # For now, we will just check if the user is an admin
+        # if not is_admin():
+        #     return jsonify({"msg": "Admin privileges required"}), 403
+        user = User.query.get(user_id)
+    except Exception as e:
+        print(f"Error retrieving user: {e}")
+        return jsonify({"msg": "User retrieval error"}), 500
+
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -190,8 +214,13 @@ def login():
     username = request.json.get("username", None)
     password = request.json.get("password", None)
 
-    user = User.query.filter_by(username=username).one_or_none()
-    print(f"User found: {user}")
+    try:
+        user = User.query.filter_by(username=username).one_or_none()
+        print(f"User found: {user}")
+    except Exception as e:
+        print(f"Error retrieving user: {e}")
+        return jsonify({"msg": "User retrieval error"}), 500
+
     if not user or not user.check_password(password):
         return jsonify("Wrong username or password"), 401
 
