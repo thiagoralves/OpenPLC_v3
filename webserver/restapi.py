@@ -32,7 +32,7 @@ class User(db.Model):
     # For now, we will just use "user" and "admin"
     # In the future, we can implement more roles like "guest", "editor", etc
     # and use them to control access to different parts of the API
-    role = db.Column(db.String(20), default="user")
+    role: str = db.Column(db.String(20), default="user")
 
     # Use PBKDF2 with SHA256 and 600,000 iterations for password hashing
     derivation_method: str = "pbkdf2:sha256:600000"
@@ -81,7 +81,11 @@ def is_admin():
 def create_user():
     # TODO implement role-based access control
     # check if there are any users in the database
-    users_exist = User.query.first() is not None
+    try:
+        users_exist = User.query.first() is not None
+    except Exception as e:
+        print(f"Error checking for users: {e}")
+        return jsonify({"msg": "User creation error"}), 401
     # if users_exist and (not current_user or not is_admin()):
     #     return jsonify({"msg": "Admin privileges required"}), 403
 
@@ -132,7 +136,7 @@ def list_users():
     # For now, we will just check if the user is an admin
     # if not is_admin():
     #     return jsonify({"msg": "Admin privileges required"}), 403
-    
+
     users = User.query.all()
     return jsonify([user.to_dict() for user in users]), 200
 
