@@ -58,18 +58,24 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
         return {"runtime-logs": logs}
 
     elif argument == "compilation-status":
-        status = openplc_runtime.compilation_status_str
-        if status is not str:
-            _status = "No compilation in progress"
-        _status = status
-    
         try:
             logs = openplc_runtime.compilation_status()
             _logs = logs
         except Exception as e:
             logger.error(f"Error retrieving compilation logs: {e}")
             _logs = str(e)
-        
+
+        status = openplc_runtime.compilation_status_str
+        if status is not str:
+            _status = "No compilation in progress"
+        if all(word in status for word in ["finished", "successfully"]):
+            _status = "success"
+        elif any(word in status for word in ["error", "failed", "compilation failed"]):
+            _status = "error"
+        else:
+            _status = "compiling"
+        logger.debug(f"Compilation status: {_status}, logs: {_logs}")
+    
         return {"status": _status, "logs": _logs}
 
     elif argument == "status":
