@@ -136,16 +136,28 @@ def update_user(user_id):
 
 # TODO List all users (Admin only)
 @restapi_bp.route("/", methods=["GET"])
-@jwt_required()
 def list_users():
     # TODO implement role-based access control
     # For now, we will just check if the user is an admin
     # if not is_admin():
     #     return jsonify({"msg": "Admin privileges required"}), 403
+    print("Listing users...")
+    
+    # If there are no users, we don't need to verify JWT
+    try:
+        verify_jwt_in_request()
+    except Exception as e:
+        print("No JWT token provided, checking for users without authentication")
+        try:
+            users_exist = User.query.first() is not None
+        except Exception as e:
+            print(f"Error checking for users: {e}")
+            return jsonify({"msg": "User retrieval error"}), 500
 
-    # TODO just returns if there is already users in the database if 
-    # not logged in as admin
-    # if verify_jwt_in_request(optional=True):
+        if not users_exist:
+            return jsonify({"msg": "No users found"}), 404
+        return jsonify({"msg": "Users found"}), 200
+
     try:
         users = User.query.all()
     except Exception as e:
@@ -153,6 +165,7 @@ def list_users():
         return jsonify({"msg": "User retrieval error"}), 500
 
     return jsonify([user.to_dict() for user in users]), 200
+
 
 # password change for specific user by any authenticated user
 @restapi_bp.route("/<int:user_id>/password_change", methods=["PUT"])
