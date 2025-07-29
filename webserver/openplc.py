@@ -74,7 +74,9 @@ class runtime:
     project_name = ""
     project_description = ""
     compilation_status_str = ""
+    compilation_error_str = ""
     compilation_object = None
+    compilation_error = None
     runtime_status = "Stopped"
     
     def start_runtime(self):
@@ -148,6 +150,7 @@ class runtime:
             # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.compilation_object = NonBlockingStreamReader(a.stdout)
+            self.compilation_error = NonBlockingStreamReader(a.stderr)
         else:
             # Debug info was extracted from program
             program = '\n'.join(program_lines)
@@ -167,6 +170,7 @@ class runtime:
             # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.compilation_object = NonBlockingStreamReader(a.stdout)
+            self.compilation_error = NonBlockingStreamReader(a.stderr)
     
     def compilation_status(self):
         while self.compilation_object != None:
@@ -174,6 +178,13 @@ class runtime:
             if not line: break
             self.compilation_status_str += line
         return self.compilation_status_str
+
+    def get_compilation_error(self):
+        while self.compilation_error != None:
+            line = self.compilation_error.readline()
+            if not line: break
+            self.compilation_error_str += line
+        return self.compilation_error_str
 
     def status(self):
         try:

@@ -65,18 +65,21 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
             logger.error(f"Error retrieving compilation logs: {e}")
             _logs = str(e)
 
-        status = openplc_runtime.compilation_status_str
+        status = _logs
         if status is not str:
             _status = "No compilation in progress"
         if all(word in status for word in ["finished", "successfully"]):
-            _status = "success"
-        elif any(word in status for word in ["error", "failed", "compilation failed"]):
-            _status = "error"
+            _status = "Success"
+            _error = "No error"
+        elif any(word in status for word in ["error", "Exception", "failed"]):
+            _status = "Error"
+            _error = openplc_runtime.get_compilation_error()
         else:
-            _status = "compiling"
-        logger.debug(f"Compilation status: {_status}, logs: {_logs}")
-    
-        return {"status": _status, "logs": _logs}
+            _status = "Compiling"
+            _error = openplc_runtime.get_compilation_error()
+        logger.debug(f"Compilation status: {_status}, logs: {_logs}", extra={"error": _error})
+
+        return {"status": _status, "logs": _logs, "error": _error}
 
     elif argument == "status":
         return {"current_status": "operational", "details": data}
@@ -110,7 +113,7 @@ def restapi_callback_post(argument: str, data: dict) -> dict:
 
         try:
             openplc_runtime.compile_program(f"{st_file.filename}")
-            return {"CompilationStatus": "Program Compiled"}
+            return {"CompilationStatus": "Starting program compilation"}
         except Exception as e:
             return {"CompilationStatus": e}
 
