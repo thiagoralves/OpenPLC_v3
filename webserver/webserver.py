@@ -69,10 +69,10 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
         status = _logs
         if status is not str:
             _status = "No compilation in progress"
-        if all(word in status for word in ["finished", "successfully"]):
+        if "Compilation finished successfully!" in status:
             _status = "Success"
             _error = "No error"
-        elif any(word in status for word in ["error", "Exception", "failed"]):
+        elif "Compilation finished with errors!" in status:
             _status = "Error"
             _error = openplc_runtime.get_compilation_error()
         else:
@@ -104,13 +104,11 @@ def restapi_callback_post(argument: str, data: dict) -> dict:
             if st_file.content_length > 32 * 1024 * 1024:  # 32 MB limit
                 return {"UploadFileFail": "File is too large"}
 
-            print(f"{st_file.filename}")
-
             # replace program file on database
             try:
                 database = "openplc.db"
                 conn = create_connection(database)
-                print(f"{database} connected")
+                logger.info(f"{database} connected")
                 if (conn != None):
                     try:
                         cur = conn.cursor()
@@ -123,18 +121,13 @@ def restapi_callback_post(argument: str, data: dict) -> dict:
                 return {"UploadFileFail": f"Error connecting to the database: {e}"}
 
             filename = str(row[3])
-            print(f"{filename} filename")
-
             st_file.save(f"st_files/{filename}")
-            print(f"{filename} saved")
-
 
         except Exception as e:
             return {"UploadFileFail": e}
 
-        # TODO Check if the runtime is compiling
-        # if (openplc_runtime.status() == "Compiling"): 
-        #     return {"RuntimeStatus": "Compiling"}
+        if (openplc_runtime.status() == "Compiling"): 
+            return {"RuntimeStatus": "Compiling"}
         
         try:
             openplc_runtime.compile_program(f"{filename}")
@@ -180,7 +173,7 @@ def is_allowed_file(file):
         return False
 
 def configure_runtime():
-    # global openplc_runtime
+    global openplc_runtime
     database = "openplc.db"
     conn = create_connection(database)
     if (conn != None):
