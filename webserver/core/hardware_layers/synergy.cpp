@@ -939,6 +939,7 @@ uint8_t initHardware() {
 //-----------------------------------------------------------------------------
 void initializeHardware()
 {
+	initHardware();
 	// char log_msg[1000];
  	// sprintf(log_msg, "Synergy: INITIALIZE HARDWARE\n");
  	// log(log_msg);
