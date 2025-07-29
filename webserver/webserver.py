@@ -84,30 +84,27 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
 def restapi_callback_post(argument: str, data: dict) -> dict:
     logger.debug(f"POST | Received argument: {argument}, data: {data}")
 
-    # upload == compile
     if argument == "upload-file":
-        try:
-            # TODO validate filename, content and size
-            st_file = flask.request.files['file']
-            print(st_file.filename)
-            st_file.save(f"st_files/{st_file.filename}")
-            # return {"UploadFile": "Success"}
-
-        except:
-            return {"UploadFile": "Fail"}
-    
-    # elif argument == "compile-program":
+        # Check if the runtime is compiling
         if (openplc_runtime.status() == "Compiling"): 
             return {"RuntimeStatus": "Compiling"}
+        
+        try:
+            # validate filename
+            if 'file' not in flask.request.files:
+                return {"UploadFile": "No file part in the request"}
+            st_file = flask.request.files['file']
+            # validate file size
+            if st_file.content_length > 32 * 1024 * 1024:  # 32 MB limit
+                return {"UploadFile": "File is too large"}
+            # save file
+            st_file.save(f"st_files/{st_file.filename}")
+        except:
+            return {"UploadFile": "Fail"}
 
         try:
-            # TODO return compilation result and validate filename
-            # st_file = flask.request.args.get('file')
-            # st_file = flask.request.files['file']
-            # print(f"st_files/{st_file.filename}")
             openplc_runtime.compile_program(f"{st_file.filename}")
             return {"CompilationStatus": "Program Compiled"}
-
         except Exception as e:
             return {"CompilationStatus": e}
 
