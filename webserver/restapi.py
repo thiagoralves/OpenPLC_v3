@@ -81,7 +81,7 @@ def register_callback_post(callback: Callable[[str, dict], dict]):
     _handler_callback_post = callback
     print("POST Callback registered successfully for rest_blueprint!")
 
-@restapi_bp.route("/", methods=["POST"])
+@restapi_bp.route("/create-user", methods=["POST"])
 def create_user():
     # check if there are any users in the database
     try:
@@ -115,9 +115,9 @@ def create_user():
 
 
 # verify existing users individually
-@restapi_bp.route("/<int:user_id>", methods=["GET"])
+@restapi_bp.route("/get-user-info/<int:user_id>", methods=["GET"])
 @jwt_required()
-def update_user(user_id):
+def get_user_info(user_id):
     try:
         user = User.query.get(user_id)
     except Exception as e:
@@ -129,9 +129,8 @@ def update_user(user_id):
 
     return jsonify(user.to_dict())
 
-# TODO List all users (Admin only)
-@restapi_bp.route("/", methods=["GET"])
-def list_users():
+@restapi_bp.route("/get-users-info", methods=["GET"])
+def get_users_info():
     # If there are no users, we don't need to verify JWT
     try:
         verify_jwt_in_request()
@@ -157,7 +156,7 @@ def list_users():
 
 
 # password change for specific user by any authenticated user
-@restapi_bp.route("/<int:user_id>/password_change", methods=["PUT"])
+@restapi_bp.route("/password-change/<int:user_id>", methods=["PUT"])
 @jwt_required()
 def change_password(user_id):
     data = request.get_json()
@@ -185,7 +184,7 @@ def change_password(user_id):
     return jsonify({"msg": f"Password for user {user.username} updated successfully"}), 200
 
 # delete a user by ID
-@restapi_bp.route("/<int:user_id>", methods=["DELETE"])
+@restapi_bp.route("/delete-user/<int:user_id>", methods=["DELETE"])
 @jwt_required()
 def delete_user(user_id):
     try:
