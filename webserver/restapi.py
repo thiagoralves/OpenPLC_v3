@@ -1,12 +1,11 @@
 from flask import Flask, Blueprint, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 
-from flask_jwt_extended import create_access_token, current_user, jwt_required, JWTManager, verify_jwt_in_request
+from flask_jwt_extended import create_access_token, current_user, jwt_required, JWTManager, verify_jwt_in_request, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from typing import Callable, Optional
 import config
-
 import os
 env = os.getenv("FLASK_ENV", "development")
 
@@ -22,6 +21,13 @@ _handler_callback_get: Optional[Callable[[str, dict], dict]] = None
 _handler_callback_post: Optional[Callable[[str, dict], dict]] = None
 jwt = JWTManager(app_restapi)
 db = SQLAlchemy(app_restapi)
+
+jwt_blacklist = set()
+
+@jwt.token_in_blocklist_loader
+def check_if_token_revoked(jwt_header, jwt_payload):
+    jti = jwt_payload["jti"]
+    return jti in jwt_blacklist
 
 
 class User(db.Model):
@@ -41,12 +47,12 @@ class User(db.Model):
         password = password + app_restapi.config["PEPPER"]
         self.password_hash = generate_password_hash(password,
                                             method=self.derivation_method)
-        print(f"Password set for user {self.username} | {self.password_hash}")
+        # print(f"Password set for user {self.username} | {self.password_hash}")
         return self.password_hash
 
     def check_password(self, password: str) -> bool:
         password = password + app_restapi.config["PEPPER"]
-        print(f"Checking password {self.password_hash} | {password}")
+        # print(f"Checking password {self.password_hash} | {password}")
         return check_password_hash(self.password_hash, password)
 
     def to_dict(self):
@@ -141,8 +147,7 @@ def list_users():
     # For now, we will just check if the user is an admin
     # if not is_admin():
     #     return jsonify({"msg": "Admin privileges required"}), 403
-    print("Listing users...")
-    
+    #     
     # If there are no users, we don't need to verify JWT
     try:
         verify_jwt_in_request()
@@ -218,6 +223,8 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
 
+    revoke_jwt()
+
     return jsonify({"msg": f"User {user.username} deleted successfully"}), 200
 
 
@@ -245,6 +252,13 @@ def login():
     access_token = create_access_token(identity=user)
     return jsonify(access_token=access_token)
 
+# logout endpoint
+@restapi_bp.route("/logout", methods=["POST"])
+@jwt_required()
+def logout():
+    revoke_jwt()
+
+    return jsonify({"msg": "User logged out successfully"}), 200
 
 @restapi_bp.route("/<command>", methods=["GET"])
 @jwt_required()
@@ -277,3 +291,11 @@ def restapi_plc_post(command):
     except Exception as e:
         print(f"Error in restapi_plc_post: {e}")
         return jsonify({"error": str(e)}), 500
+
+def revoke_jwt():
+    jti = get_jwt()["jti"]
+    try:
+        # Add the JWT ID to the blacklist
+        jwt_blacklist.add(jti)
+    except Exception as e:
+        print(f"Error revoking JWT: {e}")
