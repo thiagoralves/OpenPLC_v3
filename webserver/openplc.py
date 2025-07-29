@@ -74,6 +74,7 @@ class runtime:
     project_name = ""
     project_description = ""
     compilation_status_str = ""
+    compilation_object = None
     runtime_status = "Stopped"
     
     def start_runtime(self):
@@ -110,7 +111,6 @@ class runtime:
             self.stop_runtime()
         
         self.is_compiling = True
-        global compilation_object
         self.compilation_status_str = ""
         
         # Extract debug information from program
@@ -147,7 +147,7 @@ class runtime:
 
             # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            compilation_object = NonBlockingStreamReader(a.stdout)
+            self.compilation_object = NonBlockingStreamReader(a.stdout)
         else:
             # Debug info was extracted from program
             program = '\n'.join(program_lines)
@@ -166,20 +166,21 @@ class runtime:
 
             # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            compilation_object = NonBlockingStreamReader(a.stdout)
+            self.compilation_object = NonBlockingStreamReader(a.stdout)
     
     def compilation_status(self):
-        global compilation_object
-        while compilation_object != None:
-            line = compilation_object.readline()
+        while self.compilation_object != None:
+            line = self.compilation_object.readline()
             if not line: break
             self.compilation_status_str += line
         return self.compilation_status_str
 
     def status(self):
-        if ('compilation_object' in globals()):
-            if (compilation_object.end_of_stream == False):
+        try:
+            if (self.compilation_object.end_of_stream == False):
                 return "Compiling"
+        except Exception as e:
+            print(f"Error checking compilation status: {e}")
 
         if not self._rpc('exec_time()', 10000):
             self.runtime_status = "Stopped"
