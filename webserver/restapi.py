@@ -142,6 +142,10 @@ def list_users():
     # For now, we will just check if the user is an admin
     # if not is_admin():
     #     return jsonify({"msg": "Admin privileges required"}), 403
+
+    # TODO just returns if there is already users in the database if 
+    # not logged in as admin
+    # if verify_jwt_in_request(optional=True):
     try:
         users = User.query.all()
     except Exception as e:

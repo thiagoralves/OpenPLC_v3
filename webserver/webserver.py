@@ -59,17 +59,18 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
 
     elif argument == "compilation-status":
         status = openplc_runtime.compilation_status_str
-        if status == "":
-            return {"compilation-status": "No compilation in progress"}
-        return {"compilation-status": status}
+        if status is not str:
+            _status = "No compilation in progress"
+        _status = status
     
-    elif argument == "compilation-logs":
         try:
             logs = openplc_runtime.compilation_status()
-            return {"compilation-logs": logs}
+            _logs = logs
         except Exception as e:
             logger.error(f"Error retrieving compilation logs: {e}")
-            return {"error": str(e)}
+            _logs = str(e)
+        
+        return {"status": _status, "logs": _logs}
 
     elif argument == "status":
         return {"current_status": "operational", "details": data}
@@ -83,6 +84,7 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
 def restapi_callback_post(argument: str, data: dict) -> dict:
     logger.debug(f"POST | Received argument: {argument}, data: {data}")
 
+    # upload == compile
     if argument == "upload-file":
         try:
             # TODO validate filename, content and size
