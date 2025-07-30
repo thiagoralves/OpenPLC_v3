@@ -6,8 +6,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import logging
 from typing import Callable, Optional
-import config
 
+import config
 import os
 env = os.getenv("FLASK_ENV", "development")
 

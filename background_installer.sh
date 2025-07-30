@@ -215,15 +215,11 @@ function generate_env() {
   fi
 
   cat <<EOF > .env
-FLASK_ENV=development
-SQLALCHEMY_DATABASE_URI=sqlite:///restapi.db
-JWT_SECRET_KEY=$(openssl rand -hex 32)
-PEPPER=$(openssl rand -hex 32)
 EOF
 
   # Set restrictive permissions (readable only by owner)
   chmod 600 .env
-  echo ".env file created with random JWT_SECRET_KEY and PEPPER."
+  echo ".env file created."
 }
 
 
