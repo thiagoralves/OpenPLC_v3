@@ -44,12 +44,9 @@ load_dotenv(dotenv_path=ENV_PATH, override=False)
 
 # Mandatory settings – raise immediately if not provided
 try:
-    for _var in ("SQLALCHEMY_DATABASE_URI", "JWT_SECRET_KEY", "PEPPER"):
-        if not os.getenv(_var):
-            raise RuntimeError(f"Environment variable '{_var}' is required but not set")
     for var in ("SQLALCHEMY_DATABASE_URI", "JWT_SECRET_KEY", "PEPPER"):
         val = os.getenv(var)
-        if not val or not is_valid_env(var, val):  # <<<<<<<< CALL HAPPENS HERE
+        if not val or not is_valid_env(var, val):
             raise RuntimeError(f"Environment variable '{var}' is invalid or missing")
 except RuntimeError as e:
     logger.error(f"❌ {e}")

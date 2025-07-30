@@ -47,4 +47,4 @@ webserver/instance/
 
 # Runtime directories
 .venv
-.env
+.env*
