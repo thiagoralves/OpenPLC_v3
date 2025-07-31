@@ -73,6 +73,10 @@ class runtime:
     project_file = ""
     project_name = ""
     project_description = ""
+    compilation_status_str = ""
+    compilation_error_str = ""
+    compilation_object = None
+    compilation_error = None
     runtime_status = "Stopped"
     
     def start_runtime(self):
@@ -109,9 +113,7 @@ class runtime:
             self.stop_runtime()
         
         self.is_compiling = True
-        global compilation_status_str
-        global compilation_object
-        compilation_status_str = ""
+        self.compilation_status_str = ""
         
         # Extract debug information from program
         with open('./st_files/' + st_file, "r") as f:
@@ -137,9 +139,9 @@ class runtime:
 
             else:
                 # No debug info... probably a program generated from the old editor. Use the blank debug info just to compile the program
-                f = open('./core/debug.blank', "r")
-                c_debug = f.read()
-                f.close()
+                with open('./core/debug.blank', "r") as f:
+                    c_debug = f.read()
+                    f.close()
 
             # Write c_debug file
             with open('./core/debug.cpp', "w") as f:
@@ -147,7 +149,8 @@ class runtime:
 
             # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            compilation_object = NonBlockingStreamReader(a.stdout)
+            self.compilation_object = NonBlockingStreamReader(a.stdout)
+            self.compilation_error = NonBlockingStreamReader(a.stderr)
         else:
             # Debug info was extracted from program
             program = '\n'.join(program_lines)
@@ -166,21 +169,29 @@ class runtime:
 
             # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            compilation_object = NonBlockingStreamReader(a.stdout)
+            self.compilation_object = NonBlockingStreamReader(a.stdout)
+            self.compilation_error = NonBlockingStreamReader(a.stderr)
     
     def compilation_status(self):
-        global compilation_status_str
-        global compilation_object
-        while compilation_object != None:
-            line = compilation_object.readline()
+        while self.compilation_object != None:
+            line = self.compilation_object.readline()
             if not line: break
-            compilation_status_str += line
-        return compilation_status_str
+            self.compilation_status_str += line
+        return self.compilation_status_str
+
+    def get_compilation_error(self):
+        while self.compilation_error != None:
+            line = self.compilation_error.readline()
+            if not line: break
+            self.compilation_error_str += line
+        return self.compilation_error_str
 
     def status(self):
-        if ('compilation_object' in globals()):
-            if (compilation_object.end_of_stream == False):
+        try:
+            if (self.compilation_object.end_of_stream == False):
                 return "Compiling"
+        except Exception as e:
+            print(f"Error checking compilation status: {e}")
 
         if not self._rpc('exec_time()', 10000):
             self.runtime_status = "Stopped"

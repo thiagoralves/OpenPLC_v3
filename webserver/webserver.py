@@ -16,25 +16,32 @@ import socket
 import mimetypes
 import ssl
 import threading
+import logging
 
 import flask
 import flask_login
 
 from credentials import CertGen
-from restapi import restapi_bp, register_callback_get, register_callback_post
+from restapi import app_restapi, restapi_bp, db, register_callback_get, register_callback_post
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG,  # Minimum level to capture
+    format='[%(levelname)s] %(asctime)s - %(message)s',
+    datefmt='%H:%M:%S'
+)
+
 openplc_runtime = openplc.runtime()
 
-app_restapi = flask.Flask(__name__)
-
-# TODO define best path to store credentials
-CERT_FILE = "/etc/ssl/certs/certOPENPLC.pem"
-KEY_FILE = "/etc/ssl/private/keyOPENPLC.pem"
+from pathlib import Path
+BASE_DIR   = Path(__file__).parent
+CERT_FILE  = (BASE_DIR / "certOPENPLC.pem").resolve()
+KEY_FILE   = (BASE_DIR / "keyOPENPLC.pem").resolve()
 HOSTNAME = "localhost"
 
 def restapi_callback_get(argument: str, data: dict) -> dict:
@@ -42,11 +49,11 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
     This is the central callback function that handles the logic
     based on the 'argument' from the URL and 'data' from the request.
     """
-    # TODO logging debug level
-    print(f"GET | [{__name__}] Received argument: {argument}, data: {data}")
+    logger.debug(f"GET | Received argument: {argument}, data: {data}")
 
     if argument == "start-plc":
         openplc_runtime.start_runtime()
+        configure_runtime()
         return {"status": "runtime started"}
 
     elif argument == "stop-plc":
@@ -58,12 +65,28 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
         return {"runtime-logs": logs}
 
     elif argument == "compilation-status":
-        status = openplc_runtime.is_compiling
-        return {"is-compiling": status}
-    
-    elif argument == "compilation-logs":
-        logs = openplc_runtime.compilation_status()
-        return {"compilation-logs": logs}
+        try:
+            logs = openplc_runtime.compilation_status()
+            _logs = logs
+        except Exception as e:
+            logger.error(f"Error retrieving compilation logs: {e}")
+            _logs = str(e)
+
+        status = _logs
+        if status is not str:
+            _status = "No compilation in progress"
+        if "Compilation finished successfully!" in status:
+            _status = "Success"
+            _error = "No error"
+        elif "Compilation finished with errors!" in status:
+            _status = "Error"
+            _error = openplc_runtime.get_compilation_error()
+        else:
+            _status = "Compiling"
+            _error = openplc_runtime.get_compilation_error()
+        logger.debug(f"Compilation status: {_status}, logs: {_logs}", extra={"error": _error})
+
+        return {"status": _status, "logs": _logs, "error": _error}
 
     elif argument == "status":
         return {"current_status": "operational", "details": data}
@@ -75,37 +98,51 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
 
 # file upload POST handler 
 def restapi_callback_post(argument: str, data: dict) -> dict:
-    # TODO logging debug level
-    print(f"POST | [{__name__}] Received argument: {argument}, data: {data}")
+    logger.debug(f"POST | Received argument: {argument}, data: {data}")
 
     if argument == "upload-file":
         try:
-            # TODO validate filename, content and size
+            # validate filename
+            if 'file' not in flask.request.files:
+                return {"UploadFileFail": "No file part in the request"}
             st_file = flask.request.files['file']
-            print(st_file.filename)
-            st_file.save(f"st_files/{st_file.filename}")
-            return {"UploadFile": "Success"}
+            # validate file size
+            if st_file.content_length > 32 * 1024 * 1024:  # 32 MB limit
+                return {"UploadFileFail": "File is too large"}
 
-        except:
-            return {"UploadFile": "Fail"}
-    
-    elif argument == "compile-program":
-        if (openplc_runtime.status() == "Compiling"): 
-            return {"RuntimeStatus": "Compiling"}
+            # replace program file on database
+            try:
+                database = "openplc.db"
+                conn = create_connection(database)
+                logger.info(f"{database} connected")
+                if (conn != None):
+                    try:
+                        cur = conn.cursor()
+                        cur.execute("SELECT * FROM Programs WHERE Name = 'webserver_program'")
+                        row = cur.fetchone()
+                        cur.close()
+                    except Exception as e:
+                        return {"UploadFileFail": e}
+            except Exception as e:
+                return {"UploadFileFail": f"Error connecting to the database: {e}"}
 
-        try:
-            # TODO return compilation result and validate filename
-            # st_file = flask.request.args.get('file')
-            st_file = flask.request.files['file']
-            # print(f"st_files/{st_file.filename}")
-            openplc_runtime.compile_program(f"{st_file.filename}")
-            return {"CompilationStatus": "Program Compiled"}
+            filename = str(row[3])
+            st_file.save(f"st_files/{filename}")
 
         except Exception as e:
-            return {"CompilationStatus": e}
+            return {"UploadFileFail": e}
+
+        if (openplc_runtime.status() == "Compiling"): 
+            return {"RuntimeStatus": "Compiling"}
+        
+        try:
+            openplc_runtime.compile_program(f"{filename}")
+            return {"CompilationStatus": "Starting program compilation"}
+        except Exception as e:
+            return {"CompilationStatusFail": e}
 
     else:
-        return {"PostError": "Unknown argument"}
+        return {"PostRequestError": "Unknown argument"}
 
 
 class User(flask_login.UserMixin):
@@ -2578,10 +2615,18 @@ def main():
    print("Starting the web interface...")
 
 def run_https():
-   # rest api register
+    # rest api register
     app_restapi.register_blueprint(restapi_bp, url_prefix='/api')
     register_callback_get(restapi_callback_get)
     register_callback_post(restapi_callback_post)
+
+    with app_restapi.app_context():
+        try:
+            db.create_all()
+            db.session.commit()
+            print("Database tables created successfully.")
+        except Exception as e:
+            print(f"Error creating database tables: {e}")
 
     try:
         # CertGen class is used to generate SSL certificates and verify their validity
