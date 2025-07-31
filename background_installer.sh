@@ -202,26 +202,6 @@ function install_libsnap7 {
     cd "$OPENPLC_DIR"
 }
 
-function generate_env() {
-  # Check if .env already exists and prompt user
-  if [ -f .env ]; then
-    echo "Warning: .env file already exists. Backup and recreate? (y/N)"
-    read -r response
-    if [[ ! "$response" =~ ^[Yy]$ ]]; then
-      echo "Skipping .env generation."
-      return
-    fi
-    cp .env .env.backup
-  fi
-
-  cat <<EOF > .env
-EOF
-
-  # Set restrictive permissions (readable only by owner)
-  chmod 600 .env
-  echo ".env file created."
-}
-
 
 function install_systemd_service() {
     if [ "$1" == "sudo" ]; then
@@ -314,7 +294,6 @@ if [ "$1" == "win" ]; then
     install_glue_generator
     disable_opendnp3
     install_libmodbus
-    generate_env
     finalize_install win
 
 elif [ "$1" == "win_msys2" ]; then
@@ -346,7 +325,6 @@ elif [ "$1" == "win_msys2" ]; then
     disable_opendnp3
     install_libmodbus
     cp /usr/include/modbus/*.h /usr/include/
-    generate_env
     finalize_install win
 
 elif [ "$1" == "linux" ]; then
@@ -357,7 +335,6 @@ elif [ "$1" == "linux" ]; then
     install_all_libs sudo
     [ "$2" == "ethercat" ] && install_ethercat
     install_systemd_service sudo
-    generate_env
     finalize_install linux
 
 elif [ "$1" == "docker" ]; then
@@ -370,7 +347,6 @@ elif [ "$1" == "docker" ]; then
     then
         mkdir /docker_persistent
     fi
-    generate_env
     finalize_install linux
 
 elif [ "$1" == "rpi" ]; then
@@ -380,7 +356,6 @@ elif [ "$1" == "rpi" ]; then
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
-    generate_env
     finalize_install linux
 
 elif [ "$1" == "opi" ]; then
@@ -390,7 +365,6 @@ elif [ "$1" == "opi" ]; then
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
-    generate_env
     finalize_install linux
 
 elif [ "$1" == "neuron" ]; then
@@ -412,7 +386,6 @@ elif [ "$1" == "neuron" ]; then
     install_py_deps neuron
     install_all_libs sudo
     install_systemd_service sudo
-    generate_env
     finalize_install linux
 
 elif [ "$1" == "unipi" ]; then
@@ -422,7 +395,6 @@ elif [ "$1" == "unipi" ]; then
     install_py_deps
     install_all_libs sudo
     install_systemd_service sudo
-    generate_env
     finalize_install linux
 
 elif [ "$1" == "custom" ]; then
