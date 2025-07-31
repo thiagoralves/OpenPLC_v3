@@ -208,11 +208,7 @@ def delete_user(user_id):
     return jsonify({"msg": f"User {user.username} deleted successfully"}), 200
 
 
-# create a new user and return JWT token
-# if user already exists, return JWT token for that user
-# if no user exists, create a new user with the provided username and password
-# and return JWT token for that user
-# if no username or password is provided, return 400 Bad Request
+# login endpoint
 @restapi_bp.route("/login", methods=["POST"])
 def login():
     username = request.json.get("username", None)
