@@ -9,13 +9,14 @@ from dotenv import load_dotenv
 
 # Always resolve .env relative to the repo root to guarantee it is found
 ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
+DB_PATH = Path(__file__).resolve().parent.parent / "restapi.db"
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
 
 # Function to validate environment variable values
 def is_valid_env(var_name, value):
     if var_name == "SQLALCHEMY_DATABASE_URI":
-        return value.startswith("sqlite:///") or value.startswith("postgresql://") or value.startswith("mysql://")
+        return value.startswith("sqlite:///")
     elif var_name in ("JWT_SECRET_KEY", "PEPPER"):
         return bool(re.fullmatch(r"[a-fA-F0-9]{64}", value))
     return False
@@ -24,7 +25,7 @@ def is_valid_env(var_name, value):
 def generate_env_file():
     jwt = secrets.token_hex(32)
     pepper = secrets.token_hex(32)
-    uri = "sqlite:///restapi.db"
+    uri = "sqlite:///{DB_PATH}"
 
     with open(ENV_PATH, "w") as f:
         f.write("FLASK_ENV=development\n")
@@ -34,6 +35,12 @@ def generate_env_file():
 
     os.chmod(ENV_PATH, 0o600)
     logger.info(f"✅ .env file created at {ENV_PATH}")
+
+    # Ensure the database file exists and is writable
+    # Deletion is required because new secrets will change the database saved hashes
+    if os.path.exists(DB_PATH):
+        os.remove(DB_PATH)
+        logger.info(f"⚠️ Deleted existing database file: {DB_PATH}")
 
 # Load .env file
 if not os.path.isfile(ENV_PATH):
@@ -50,9 +57,16 @@ try:
             raise RuntimeError(f"Environment variable '{var}' is invalid or missing")
 except RuntimeError as e:
     logger.error(f"❌ {e}")
-    logger.info("🔁 Regenerating .env with new valid values...")
-    generate_env_file()
-    load_dotenv(ENV_PATH)
+    # Need to regenerate .env file and remove the database as well
+    response = input("Do you want to regenerate the .env file? This will delete your database. [y/N]: ").strip().lower()
+    if response == 'y':
+        logger.info("🔁 Regenerating .env with new valid values...")
+        generate_env_file()
+        load_dotenv(ENV_PATH)
+    else:
+        logger.error("🚫 Exiting due to invalid environment configuration.")
+        exit(1)
+
 
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ["SQLALCHEMY_DATABASE_URI"]
