@@ -19,6 +19,12 @@ else:
     app_restapi.config.from_object(config.DevConfig)
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG,  # Minimum level to capture
+    format='[%(levelname)s] %(asctime)s - %(message)s',
+    datefmt='%H:%M:%S'
+)
+
 restapi_bp = Blueprint('restapi_blueprint', __name__)
 _handler_callback_get: Optional[Callable[[str, dict], dict]] = None
 _handler_callback_post: Optional[Callable[[str, dict], dict]] = None
@@ -74,12 +80,12 @@ def user_lookup_callback(_jwt_header, jwt_data):
 def register_callback_get(callback: Callable[[str, dict], dict]):
     global _handler_callback_get
     _handler_callback_get = callback
-    print("GET Callback registered successfully for rest_blueprint!")
+    logger.info("GET Callback registered successfully for rest_blueprint!")
 
 def register_callback_post(callback: Callable[[str, dict], dict]):
     global _handler_callback_post
     _handler_callback_post = callback
-    print("POST Callback registered successfully for rest_blueprint!")
+    logger.info("POST Callback registered successfully for rest_blueprint!")
 
 @restapi_bp.route("/create-user", methods=["POST"])
 def create_user():
@@ -87,7 +93,7 @@ def create_user():
     try:
         users_exist = User.query.first() is not None
     except Exception as e:
-        print(f"Error checking for users: {e}")
+        logger.error(f"Error checking for users: {e}")
         return jsonify({"msg": "User creation error"}), 401
 
     # if there are no users, we don't need to verify JWT
@@ -121,7 +127,7 @@ def get_user_info(user_id):
     try:
         user = User.query.get(user_id)
     except Exception as e:
-        print(f"Error retrieving user: {e}")
+        logger.error(f"Error retrieving user: {e}")
         return jsonify({"msg": "User retrieval error"}), 500
     
     if not user:
@@ -135,11 +141,11 @@ def get_users_info():
     try:
         verify_jwt_in_request()
     except Exception as e:
-        print("No JWT token provided, checking for users without authentication")
+        logger.warning("No JWT token provided, checking for users without authentication")
         try:
             users_exist = User.query.first() is not None
         except Exception as e:
-            print(f"Error checking for users: {e}")
+            logger.error(f"Error checking for users: {e}")
             return jsonify({"msg": "User retrieval error"}), 500
 
         if not users_exist:
@@ -149,7 +155,7 @@ def get_users_info():
     try:
         users = User.query.all()
     except Exception as e:
-        print(f"Error retrieving users: {e}")
+        logger.error(f"Error retrieving users: {e}")
         return jsonify({"msg": "User retrieval error"}), 500
 
     return jsonify([user.to_dict() for user in users]), 200
@@ -169,7 +175,7 @@ def change_password(user_id):
     try:
         user = User.query.get(user_id)
     except Exception as e:
-        print(f"Error retrieving user: {e}")
+        logger.error(f"Error retrieving user: {e}")
         return jsonify({"msg": "User retrieval error"}), 500
     
     if not user:

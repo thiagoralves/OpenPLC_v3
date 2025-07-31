@@ -28,7 +28,13 @@ app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
+
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG,  # Minimum level to capture
+    format='[%(levelname)s] %(asctime)s - %(message)s',
+    datefmt='%H:%M:%S'
+)
 
 openplc_runtime = openplc.runtime()
 
