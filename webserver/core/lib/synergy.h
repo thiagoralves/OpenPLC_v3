@@ -14,6 +14,24 @@ typedef struct {
 
 } SLM_INIT;
 
+// SLM_04THM_CONFIG
+// Data part
+typedef struct {
+  // FB Interface - IN, OUT, IN_OUT variables
+  __DECLARE_VAR(BOOL,EN)
+  __DECLARE_VAR(BOOL,ENO)
+  __DECLARE_VAR(SINT,SLOT)
+  __DECLARE_VAR(SINT,UNITS)
+  __DECLARE_VAR(SINT,CH1_RANGE)
+  __DECLARE_VAR(SINT,CH2_RANGE)
+  __DECLARE_VAR(SINT,CH3_RANGE)
+  __DECLARE_VAR(SINT,CH4_RANGE)
+  __DECLARE_VAR(BOOL,SUCCESS)
+
+  // FB private variables - TEMP, private and located variables
+
+} SLM_04THM_CONFIG;
+
 // SLM_DISCRETE_OUT_8
 // Data part
 typedef struct {
@@ -245,6 +263,7 @@ uint32_t readDiscrete(uint8_t slot, uint8_t channel = 0);
 int readAnalog(uint8_t slot, uint8_t channel);
 void writeAnalog(uint32_t data,uint8_t slot, uint8_t channel);
 float readTemperature(uint8_t slot, uint8_t channel);
+bool configureModule(char cfgData[], uint8_t slot);
 
 /************************************************************************
  *                  DECLARATION OF Synergy LIB BLOCKS                   *
@@ -279,6 +298,52 @@ static void SLM_INIT_body__(SLM_INIT *data__) {
 __end:
   return;
 } // SLM_INIT_body__()
+
+static void SLM_04THM_CONFIG_init__(SLM_04THM_CONFIG *data__, BOOL retain) {
+  __INIT_VAR(data__->EN,__BOOL_LITERAL(TRUE),retain)
+  __INIT_VAR(data__->ENO,__BOOL_LITERAL(TRUE),retain)
+  __INIT_VAR(data__->SLOT,0,retain)
+  __INIT_VAR(data__->UNITS,0,retain)
+  __INIT_VAR(data__->CH1_RANGE,0,retain)
+  __INIT_VAR(data__->CH2_RANGE,0,retain)
+  __INIT_VAR(data__->CH3_RANGE,0,retain)
+  __INIT_VAR(data__->CH4_RANGE,0,retain)
+  __INIT_VAR(data__->SUCCESS,0,retain)
+}
+
+// Code part
+static void SLM_04THM_CONFIG_body__(SLM_04THM_CONFIG *data__) {
+  static uint8_t init = 0;
+  // Control execution
+  if (!__GET_VAR(data__->EN)) {
+    __SET_VAR(data__->,ENO,,__BOOL_LITERAL(FALSE));
+    return;
+  }
+  else {
+    __SET_VAR(data__->,ENO,,__BOOL_LITERAL(TRUE));
+  }
+  if(init == 0) {
+    char config_data[20] = {0x40, 0x03, 0x60, 0x05, 0x21, 0x00, 0x22, 0x00, 0x23, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    char units = __GET_VAR(data__->UNITS);
+    if (units >= 1 && units <= 4) {
+        units = 2 * units - 1;
+    }
+    config_data[3] = units;
+    config_data[5] = __GET_VAR(data__->CH1_RANGE);
+    config_data[7] = __GET_VAR(data__->CH2_RANGE);
+    config_data[9] = __GET_VAR(data__->CH3_RANGE);
+    config_data[11] = __GET_VAR(data__->CH4_RANGE);
+    configureModule(config_data, __GET_VAR(data__->SLOT));
+    __SET_VAR(data__->,SUCCESS,,__BOOL_LITERAL(TRUE));
+
+    init = 1;
+  }
+
+  goto __end;
+
+__end:
+  return;
+} // SLM_CONFIG_TEMP_body__()
 
 /************************************************************************
  *                  DISCRETE LIB BLOCKS                                 *
