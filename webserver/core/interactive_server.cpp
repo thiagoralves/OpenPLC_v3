@@ -17,7 +17,7 @@
 //------
 //
 // This is the file for the interactive server. It has procedures to create
-// a socket, bind it, start network communication, and process commands. The 
+// a socket, bind it, start network communication, and process commands. The
 // interactive server only responds to localhost and it is used to communicate
 // with the Python webserver GUI only.
 //
@@ -92,6 +92,8 @@ void *dnp3Thread(void *arg)
 void *enipThread(void *arg)
 {
     startServer(enip_port, ENIP_PROTOCOL);
+    return nullptr;
+
 }
 
 //-----------------------------------------------------------------------------
@@ -110,7 +112,7 @@ int readCommandArgument(unsigned char *command)
     int i = 0;
     int j = 0;
     unsigned char argument[1024];
-    
+
     while (command[i] != '(' && command[i] != '\0') i++;
     if (command[i] == '(') i++;
     while (command[i] != ')' && command[i] != '\0')
@@ -120,7 +122,7 @@ int readCommandArgument(unsigned char *command)
         j++;
         argument[j] = '\0';
     }
-    
+
     return atoi(argument);
 }
 //-----------------------------------------------------------------------------
@@ -132,7 +134,7 @@ unsigned char *readCommandArgumentStr(unsigned char *command)
     int j = 0;
     unsigned char *argument;
     argument = (unsigned char *)malloc(1024 * sizeof(unsigned char));
-    
+
     while (command[i] != '(' && command[i] != '\0') i++;
     if (command[i] == '(') i++;
     while (command[i] != ')' && command[i] != '\0')
@@ -142,7 +144,7 @@ unsigned char *readCommandArgumentStr(unsigned char *command)
         j++;
         argument[j] = '\0';
     }
-    
+
     return argument;
 }
 
@@ -164,14 +166,14 @@ int createSocket_interactive(int port)
         log(log_msg);
         exit(1);
     }
-    
+
     //Set SO_REUSEADDR
     int enable = 1;
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
         perror("setsockopt(SO_REUSEADDR) failed");
-        
+
     SetSocketBlockingEnabled(socket_fd, false);
-    
+
     //Initialize Server Struct
     bzero((char *) &server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
@@ -239,14 +241,14 @@ void processCommand(unsigned char *buffer, int client_fd)
 {
     char log_msg[1200];
     int count_char = 0;
-    
+
     if (processing_command)
     {
         count_char = sprintf(buffer, "Processing command...\n");
         write(client_fd, buffer, count_char);
         return;
     }
-    
+
     if (strncmp(buffer, "quit()", 6) == 0)
     {
         processing_command = true;
@@ -482,7 +484,7 @@ void processCommand(unsigned char *buffer, int client_fd)
         processing_command = false;
         return;
     }
-    
+
     count_char = sprintf(buffer, "OK\n");
     write(client_fd, buffer, count_char);
 }
@@ -574,13 +576,13 @@ void startInteractiveServer(int port)
             printf("Interactive Server: Client accepted! Creating thread for the new client ID: %d...\n", client_fd);
             arguments[0] = client_fd;
             ret = pthread_create(&thread, NULL, handleConnections_interactive, arguments);
-            if (ret==0) 
+            if (ret==0)
             {
                 pthread_detach(thread);
             }
         }
     }
-    
+
     printf("Shutting down internal threads\n");
     run_modbus = 0;
     run_dnp3 = 0;
@@ -589,7 +591,7 @@ void startInteractiveServer(int port)
     pthread_join(modbus_thread, NULL);
     pthread_join(dnp3_thread, NULL);
     pthread_join(enip_thread, NULL);
-    
+
     printf("Closing socket...\n");
     closeSocket(socket_fd);
     closeSocket(client_fd);
