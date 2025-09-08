@@ -112,7 +112,7 @@ void timespec_diff(struct timespec *a, struct timespec *b, struct timespec *resu
  *
  * @param logmsg Pointer to a null-terminated string containing the message to be logged
  */
-void log(char *logmsg)
+void openplc_log(char *logmsg)
 {
     pthread_mutex_lock(&logLock); // lock mutex
 

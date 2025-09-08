@@ -412,7 +412,7 @@ void ConsoleLogger::Log(const openpal::LogEntry& entry)
 {
     char log_msg[1000];
     sprintf(log_msg, "DNP3 ID %s: %s\n", entry.loggerid, entry.message);
-    log(log_msg);
+    openplc_log(log_msg);
 }
 
 

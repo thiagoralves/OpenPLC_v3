@@ -85,7 +85,7 @@ int log_error(int line)
 
 #ifdef GEN_DEBUG
     sprintf(log_msg, "!line %d\n", line);
-    log(log_msg);
+    openplc_log(log_msg);
 #endif
     return ERROR;
 }
@@ -103,7 +103,7 @@ int i2cSetup(int addr)
         if ( (file = open(filename, O_RDWR)) < 0)
         {
             sprintf(log_msg, "Failed to open the bus.\n");
-            log(log_msg);
+            openplc_log(log_msg);
 
             return ERROR;
         }
@@ -111,7 +111,7 @@ int i2cSetup(int addr)
     if (ioctl(file, I2C_SLAVE, addr) < 0)
     {
         sprintf(log_msg, "Failed to acquire bus access and/or talk to slave.\n");
-        log(log_msg);
+        openplc_log(log_msg);
         return ERROR;
     }
     return file;
@@ -138,7 +138,7 @@ int i2cMemRead(int dev, int add, uint8_t *buff, int size)
     {
 #ifdef I2C_DEBUG
         sprintf(log_msg, "Fail to select 0x%02hhx mem add!\n", add);
-        log(log_msg);
+        openplc_log(log_msg);
 #endif
         return ERROR;
     }
@@ -146,7 +146,7 @@ int i2cMemRead(int dev, int add, uint8_t *buff, int size)
     {
 #ifdef I2C_DEBUG
         sprintf(log_msg, "Fail to read memory!\n");
-        log(log_msg);
+        openplc_log(log_msg);
 #endif
         return ERROR;
     }
@@ -174,7 +174,7 @@ int i2cMemWrite(int dev, int add, uint8_t *buff, int size)
     if (write(dev, intBuff, size + 1) != size + 1)
     {
         sprintf(log_msg, "Fail to write memory at 0x%02hhx address!\n", add);
-        log(log_msg);
+        openplc_log(log_msg);
         return ERROR;
     }
     return OK;

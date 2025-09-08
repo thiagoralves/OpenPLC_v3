@@ -95,7 +95,7 @@ int createSocket(uint16_t port)
     if (socket_fd<0)
     {
         sprintf(log_msg, "Server: error creating stream socket => %s\n", strerror(errno));
-        log(log_msg);
+        openplc_log(log_msg);
         return -1;
     }
     
@@ -116,14 +116,14 @@ int createSocket(uint16_t port)
     if (bind(socket_fd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0)
     {
         sprintf(log_msg, "Server: error binding socket => %s\n", strerror(errno));
-        log(log_msg);
+        openplc_log(log_msg);
         return -1;
     }
     
     // we accept max 5 pending connections
     listen(socket_fd,5);
     sprintf(log_msg, "Server: Listening on port %d\n", port);
-    log(log_msg);
+    openplc_log(log_msg);
 
     return socket_fd;
 }
@@ -146,7 +146,7 @@ int waitForClient(int socket_fd, int protocol_type)
         run_server = &run_enip;
     
     sprintf(log_msg, "Server: waiting for new client...\n");
-    log(log_msg);
+    openplc_log(log_msg);
 
     client_len = sizeof(client_addr);
     while (*run_server)
@@ -196,7 +196,7 @@ void processMessage(unsigned char *buffer, int bufferSize, int client_fd, int pr
         {
             char log_msg[1000];
             sprintf(log_msg, "Server: Error writing response: %zd\n", bytesWritten);
-            log(log_msg);
+            openplc_log(log_msg);
             break;
         }
         buffer += bytesWritten;
@@ -223,7 +223,7 @@ void *handleConnections(void *arguments)
         run_server = &run_enip;
 
     sprintf(log_msg, "Server: Thread created for client ID: %d\n", client_fd);
-    log(log_msg);
+    openplc_log(log_msg);
 
     while(*run_server)
     {
@@ -244,12 +244,12 @@ void *handleConnections(void *arguments)
             if (messageSize == 0)
             {
                 sprintf(log_msg, "Modbus Server: client ID: %d has closed the connection\n", client_fd);
-                log(log_msg);
+                openplc_log(log_msg);
             }
             else
             {
                 sprintf(log_msg, "Modbus Server: Something is wrong with the  client ID: %d message Size : %i\n", client_fd, messageSize);
-                log(log_msg);
+                openplc_log(log_msg);
             }
             break;
         }
@@ -259,7 +259,7 @@ void *handleConnections(void *arguments)
     //printf("Debug: Closing client socket and calling pthread_exit in server.cpp\n");
     close(client_fd);
     sprintf(log_msg, "Terminating Modbus connections thread\r\n");
-    log(log_msg);
+    openplc_log(log_msg);
     pthread_exit(NULL);
 }
 
@@ -290,7 +290,7 @@ void startServer(uint16_t port, int protocol_type)
         if (client_fd < 0)
         {
             sprintf(log_msg, "Server: Error accepting client!\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
 
         else
@@ -299,7 +299,7 @@ void startServer(uint16_t port, int protocol_type)
             pthread_t thread;
             int ret = -1;
             sprintf(log_msg, "Server: Client accepted! Creating thread for the new client ID: %d...\n", client_fd);
-            log(log_msg);
+            openplc_log(log_msg);
             arguments[0] = client_fd;
             arguments[1] = protocol_type;
             ret = pthread_create(&thread, NULL, handleConnections, (void*)arguments);
@@ -312,5 +312,5 @@ void startServer(uint16_t port, int protocol_type)
     close(socket_fd);
     close(client_fd);
     sprintf(log_msg, "Terminating Server thread\r\n");
-    log(log_msg);
+    openplc_log(log_msg);
 }
