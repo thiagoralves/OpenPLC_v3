@@ -175,7 +175,7 @@ uint16_t Command_Protocol(pccc_header header, unsigned char *buffer, int buffer_
         /*initialize logging system*/
         char log_msg[1000];
         sprintf(log_msg, "PCCC: Unsupportedd Command/Data Function Code!\n");
-        log(log_msg); 
+        openplc_log(log_msg); 
         return -1;
     }//return length as -1 to signify that the CMD Code/Function Code was not recognize
 }
@@ -217,7 +217,7 @@ uint16_t Protected_Logical_Read_Reply(pccc_header header, unsigned char *buffer,
     {
         char log_msg[1000];
         sprintf(log_msg, "PCCC: Error occured while processing Protected Logical Read\n");
-        log(log_msg); 
+        openplc_log(log_msg); 
         return -1;
     }//return length as -1 to signify that the CMD Code/Function Code was not recognize
     

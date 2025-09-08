@@ -60,7 +60,7 @@ void check_error_count()
     {
         char log_msg[1000];
         sprintf(log_msg, "PSM: Too many errors!\nPSM: PSM is disabled\n");
-        log(log_msg);
+        openplc_log(log_msg);
     }
 }
 
@@ -72,26 +72,26 @@ void *start_psm()
 {
     char log_msg[BUFFER_LIMIT];
     sprintf(log_msg, "PSM: Starting PSM...\n");
-    log(log_msg);
+    openplc_log(log_msg);
     char *cmd = "../.venv/bin/python3 -u ./core/psm/main.py 2>&1";
     
     FILE *psm_proc;
     if ((psm_proc = popen(cmd, "r")) == NULL)
     {
         sprintf(log_msg, "PSM: Error opening pipe!\n");
-        log(log_msg);
+        openplc_log(log_msg);
         return;
     }
     
     while (fgets(log_msg, BUFFER_LIMIT, psm_proc) != NULL)
     {
-        log(log_msg);
+        openplc_log(log_msg);
     }
     
     if (pclose(psm_proc))
     {
         sprintf(log_msg, "PSM: Error while starting Python interpreter\n");
-        log(log_msg);
+        openplc_log(log_msg);
         return;
     }
 }
@@ -110,7 +110,7 @@ int connect_to_psm(int debug)
         if (debug)
         {
             sprintf(log_msg, "PSM: Socket creation error \n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         return -1;
     }
@@ -123,7 +123,7 @@ int connect_to_psm(int debug)
         if (debug)
         {
             sprintf(log_msg, "PSM: Invalid address or address not supported\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         return -1;
     }
@@ -133,7 +133,7 @@ int connect_to_psm(int debug)
         if (debug)
         {
             sprintf(log_msg, "PSM: Connection to psm failed\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         return -1;
     }
@@ -175,7 +175,7 @@ void read_ana_inp(int psm)
     if (buffer[8] < 50)
     {
         sprintf(log_msg, "PSM: Error reading from analog inputs!\n");
-        log(log_msg);
+        openplc_log(log_msg);
         error_count++;
         check_error_count();
     }
@@ -221,7 +221,7 @@ void write_ana_out(int psm)
     if (buffer[11] < 25)
     {
         sprintf(log_msg, "PSM: Error writing to analog outputs!\n");
-        log(log_msg);
+        openplc_log(log_msg);
         error_count++;
         check_error_count();
     }
@@ -249,7 +249,7 @@ void write_ana_out(int psm)
     if (buffer[11] < 25)
     {
         sprintf(log_msg, "PSM: Error writing to analog outputs!\n");
-        log(log_msg);
+        openplc_log(log_msg);
         error_count++;
         check_error_count();
     }
@@ -271,7 +271,7 @@ void read_dig_inp(int psm)
     if (buffer[8] < 50)
     {
         sprintf(log_msg, "PSM: Error reading from digital inputs!\n");
-        log(log_msg);
+        openplc_log(log_msg);
         error_count++;
         check_error_count();
     }
@@ -327,7 +327,7 @@ void write_dig_out(int psm)
     if (buffer[10] != 0x01 && buffer[11] != 0x90)
     {
         sprintf(log_msg, "PSM: Error writing to digital outputs!\n");
-        log(log_msg);
+        openplc_log(log_msg);
         error_count++;
         check_error_count();
     }
@@ -344,7 +344,7 @@ void stop_psm(int psm)
     unsigned char buffer[1024];
 
     sprintf(log_msg, "PSM: Stopping PSM...\n");
-    log(log_msg);
+    openplc_log(log_msg);
     
     send(psm, request, 12, 0);
     /*
@@ -354,7 +354,7 @@ void stop_psm(int psm)
     if (buffer[11] != 127)
     {
         sprintf(log_msg, "PSM: Error while trying to stop PSM!\n");
-        log(log_msg);
+        openplc_log(log_msg);
     }
     */
 }
@@ -366,14 +366,14 @@ void kill_psm()
 {
     char log_msg[BUFFER_LIMIT];
     sprintf(log_msg, "PSM: Killing previous PSM modules...\n");
-    log(log_msg);
+    openplc_log(log_msg);
     char *cmd = "ps aux | grep ./core/psm/main.py | awk '{print $2}'";
     
     FILE *psm_proc;
     if ((psm_proc = popen(cmd, "r")) == NULL)
     {
         sprintf(log_msg, "PSM: Error while trying to kill background PSM.\n Could not open pipe!\n");
-        log(log_msg);
+        openplc_log(log_msg);
         return;
     }
     
@@ -404,7 +404,7 @@ void kill_psm()
     if (pclose(psm_proc))
     {
         sprintf(log_msg, "PSM: Error while trying to kill background PSM\n");
-        log(log_msg);
+        openplc_log(log_msg);
         return;
     }
 }
@@ -439,12 +439,12 @@ void initializeHardware()
     if (psm < 0)
     {
         sprintf(log_msg, "PSM: Error connecting to psm!\nPSM: PSM is disabled\n");
-        log(log_msg);
+        openplc_log(log_msg);
     }
     else
     {
         sprintf(log_msg, "PSM: Connected to PSM\n");
-        log(log_msg);
+        openplc_log(log_msg);
     }
 }
 

@@ -100,7 +100,7 @@ void searchForIO()
     char log_msg[1000];
     
     sprintf(log_msg, "Neuron: Searching for I/O...\n");
-    log(log_msg);
+    openplc_log(log_msg);
     
     /* look for digital inputs */
     strcpy(path_fmt, "/sys/devices/platform/unipi_plc/io_group%d/di_%d_%02d/di_value");
@@ -232,37 +232,37 @@ void searchForIO()
     
     /* print found I/Os on console log */
     sprintf(log_msg, "Neuron: Done!\n\nNeuron Digital Inputs\n");
-    log(log_msg);
+    openplc_log(log_msg);
     index = 0;
     while (digital_inputs[index][0] != '\0')
     {
         sprintf(log_msg, "%s\t=>\t%%IX%d.%d\n", digital_inputs[index], (index/8), (index%8));
-        log(log_msg);
+        openplc_log(log_msg);
         index++;
     }
     
     sprintf(log_msg, "\nNeuron Digital Outputs\n");
-    log(log_msg);
+    openplc_log(log_msg);
     index = 0;
     while (digital_outputs[index][0] != '\0')
     {
         sprintf(log_msg, "%s\t=>\t%%QX%d.%d\n", digital_outputs[index], (index/8), (index%8));
-        log(log_msg);
+        openplc_log(log_msg);
         index++;
     }
     
     sprintf(log_msg, "\nNeuron Analog Inputs\n");
-    log(log_msg);
+    openplc_log(log_msg);
     index = 0;
     while (analog_inputs[index][0] != '\0')
     {
         sprintf(log_msg, "%s\t=>\t%%IW%d\n", analog_inputs[index], index);
-        log(log_msg);
+        openplc_log(log_msg);
         index++;
     }
     
     sprintf(log_msg, "\nNeuron Analog Outputs\n");
-    log(log_msg);
+    openplc_log(log_msg);
     index = 0;
     while (analog_outputs[index][0] != '\0')
     {
@@ -273,7 +273,7 @@ void searchForIO()
         else
             sprintf(log_msg, "%s\t=>\t%%QW%d\n", analog_outputs[index], index);
         
-        log(log_msg);
+        openplc_log(log_msg);
         index++;
     }
 }

@@ -86,7 +86,7 @@ void startPstorage()
     
     char log_msg[1000];
     sprintf(log_msg, "Starting Persistent Storage thread\n");
-    log(log_msg);
+    openplc_log(log_msg);
 
     //Run the main thread
     while (run_pstorage)
@@ -105,7 +105,7 @@ void startPstorage()
         if (file == NULL) 
         {
             sprintf(log_msg, "Persistent Storage: Error creating persistent memory file!\n");
-            log(log_msg);
+            openplc_log(log_msg);
             return;
         }
         // Update the stored checksum
@@ -118,7 +118,7 @@ void startPstorage()
             if (fwrite(&value, sizeof(uint16_t), 1, file) != 1)
             {
                 sprintf(log_msg, "Persistent Storage: Error writing int_memory to file\n");
-                log(log_msg);
+                openplc_log(log_msg);
             }
         }
         // Write the contents of dint_memory
@@ -128,7 +128,7 @@ void startPstorage()
             if (fwrite(&value, sizeof(uint32_t), 1, file) != 1) 
             {
                 sprintf(log_msg, "Persistent Storage: Error writing dint_memory to file\n");
-                log(log_msg);
+                openplc_log(log_msg);
             }
         }
 
@@ -139,7 +139,7 @@ void startPstorage()
             if (fwrite(&value, sizeof(uint64_t), 1, file) != 1) 
             {
                 sprintf(log_msg, "Persistent Storage: Error writing lint_memory to file\n");
-                log(log_msg);
+                openplc_log(log_msg);
             }
         }
 
@@ -171,7 +171,7 @@ int readPersistentStorage()
     if (file == NULL) 
     {
         sprintf(log_msg, "Persistent Storage is empty\n");
-        log(log_msg);
+        openplc_log(log_msg);
         pstorage_read = true;
         return 0;
     }
@@ -186,7 +186,7 @@ int readPersistentStorage()
         {
             if (feof(file)) break; // Stop on end of file
             sprintf(log_msg, "Error reading int_memory from file");
-            log(log_msg);
+            openplc_log(log_msg);
             pthread_mutex_unlock(&bufferLock); //unlock mutex
             fclose(file);
             pstorage_read = true;
@@ -203,7 +203,7 @@ int readPersistentStorage()
                 if (int_memory[i] == NULL) 
                 {
                     sprintf(log_msg, "Error allocating memory for int_memory[%d]", i);
-                    log(log_msg);
+                    openplc_log(log_msg);
                     continue;
                 }
             }
@@ -220,7 +220,7 @@ int readPersistentStorage()
         {
             if (feof(file)) break; // Stop on end of file
             sprintf(log_msg, "Error reading dint_memory from file");
-            log(log_msg);
+            openplc_log(log_msg);
             pthread_mutex_unlock(&bufferLock); //unlock mutex
             fclose(file);
             pstorage_read = true;
@@ -237,7 +237,7 @@ int readPersistentStorage()
                 if (dint_memory[i] == NULL) 
                 {
                     sprintf(log_msg, "Error allocating memory for dint_memory[%d]", i);
-                    log(log_msg);
+                    openplc_log(log_msg);
                     continue;
                 }
             }
@@ -254,7 +254,7 @@ int readPersistentStorage()
         {
             if (feof(file)) break; // Stop on end of file
             sprintf(log_msg, "Error reading lint_memory from file");
-            log(log_msg);
+            openplc_log(log_msg);
             pthread_mutex_unlock(&bufferLock); //unlock mutex
             fclose(file);
             pstorage_read = true;
@@ -271,7 +271,7 @@ int readPersistentStorage()
                 if (lint_memory[i] == NULL) 
                 {
                     sprintf(log_msg, "Error allocating memory for lint_memory[%d]", i);
-                    log(log_msg);
+                    openplc_log(log_msg);
                     continue;
                 }
             }
@@ -283,7 +283,7 @@ int readPersistentStorage()
     fclose(file);
 
     sprintf(log_msg, "Persistent Storage: Finished reading persistent memory\n");
-    log(log_msg);
+    openplc_log(log_msg);
     pstorage_read = true;
     return 0;
 }

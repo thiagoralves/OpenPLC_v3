@@ -163,7 +163,7 @@ int createSocket_interactive(int port)
     if (socket_fd<0)
     {
         sprintf(log_msg, "Interactive Server: error creating stream socket => %s\n", strerror(errno));
-        log(log_msg);
+        openplc_log(log_msg);
         exit(1);
     }
 
@@ -184,13 +184,13 @@ int createSocket_interactive(int port)
     if (bind(socket_fd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0)
     {
         sprintf(log_msg, "Interactive Server: error binding socket => %s\n", strerror(errno));
-        log(log_msg);
+        openplc_log(log_msg);
         exit(1);
     }
     // we accept max 5 pending connections
     listen(socket_fd,5);
     sprintf(log_msg, "Interactive Server: Listening on port %d\n", port);
-    log(log_msg);
+    openplc_log(log_msg);
 
     return socket_fd;
 }
@@ -253,27 +253,27 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         sprintf(log_msg, "Issued quit() command\n");
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_modbus)
         {
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
             sprintf(log_msg, "Modbus server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         if (run_dnp3)
         {
             run_dnp3 = 0;
             pthread_join(dnp3_thread, NULL);
             sprintf(log_msg, "DNP3 server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         if (run_snap7)
         {
             run_snap7 = 0;
             stopSnap7();
             sprintf(log_msg, "Snap7 server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         run_openplc = 0;
         processing_command = false;
@@ -286,7 +286,7 @@ void processCommand(unsigned char *buffer, int client_fd)
         strcpy(ethercat_conf_file, argument);
         free(argument);
         sprintf(log_msg, "Issued start_ethercat() command to start with config: %s\n", ethercat_conf_file);
-        log(log_msg);
+        openplc_log(log_msg);
         //Configure ethercat
         ethercat_configured = configureEthercat();
         processing_command = false;
@@ -296,16 +296,16 @@ void processCommand(unsigned char *buffer, int client_fd)
         processing_command = true;
         modbus_port = readCommandArgument(buffer);
         sprintf(log_msg, "Issued start_modbus() command to start on port: %d\n", modbus_port);
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_modbus)
         {
             sprintf(log_msg, "Modbus server already active. Restarting on port: %d\n", modbus_port);
-            log(log_msg);
+            openplc_log(log_msg);
             //Stop Modbus server
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
             sprintf(log_msg, "Modbus server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         //Start Modbus server
         run_modbus = 1;
@@ -316,13 +316,13 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         sprintf(log_msg, "Issued stop_modbus() command\n");
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_modbus)
         {
             run_modbus = 0;
             pthread_join(modbus_thread, NULL);
             sprintf(log_msg, "Modbus server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         processing_command = false;
     }
@@ -330,16 +330,16 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         sprintf(log_msg, "Issued start_snap7() command\n");
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_snap7)
         {
             sprintf(log_msg, "Snap7 server already active. Restarting it\n");
-            log(log_msg);
+            openplc_log(log_msg);
             //Stop Modbus server
             run_snap7 = 0;
             stopSnap7();
             sprintf(log_msg, "Snap7 server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         //Start Modbus server
         run_snap7 = 1;
@@ -350,13 +350,13 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         sprintf(log_msg, "Issued stop_snap7() command\n");
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_snap7)
         {
             run_snap7 = 0;
             stopSnap7();
             sprintf(log_msg, "Snap7 server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         processing_command = false;
     }
@@ -365,16 +365,16 @@ void processCommand(unsigned char *buffer, int client_fd)
         processing_command = true;
         dnp3_port = readCommandArgument(buffer);
         sprintf(log_msg, "Issued start_dnp3() command to start on port: %d\n", dnp3_port);
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_dnp3)
         {
             sprintf(log_msg, "DNP3 server already active. Restarting on port: %d\n", dnp3_port);
-            log(log_msg);
+            openplc_log(log_msg);
             //Stop DNP3 server
             run_dnp3 = 0;
             pthread_join(dnp3_thread, NULL);
             sprintf(log_msg, "DNP3 server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         //Start DNP3 server
         run_dnp3 = 1;
@@ -385,13 +385,13 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         sprintf(log_msg, "Issued stop_dnp3() command\n");
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_dnp3)
         {
             run_dnp3 = 0;
             pthread_join(dnp3_thread, NULL);
             sprintf(log_msg, "DNP3 server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         processing_command = false;
     }
@@ -400,16 +400,16 @@ void processCommand(unsigned char *buffer, int client_fd)
         processing_command = true;
         enip_port = readCommandArgument(buffer);
         sprintf(log_msg, "Issued start_enip() command to start on port: %d\n", enip_port);
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_enip)
         {
             sprintf(log_msg, "EtherNet/IP server already active. Restarting on port: %d\n", enip_port);
-            log(log_msg);
+            openplc_log(log_msg);
             //Stop Enip server
             run_enip = 0;
             pthread_join(enip_thread, NULL);
             sprintf(log_msg, "EtherNet/IP server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         //Start Enip server
         run_enip = 1;
@@ -420,13 +420,13 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         sprintf(log_msg, "Issued stop_enip() command\n");
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_enip)
         {
             run_enip = 0;
             pthread_join(enip_thread, NULL);
             sprintf(log_msg, "EtherNet/IP server was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         processing_command = false;
     }
@@ -435,11 +435,11 @@ void processCommand(unsigned char *buffer, int client_fd)
         processing_command = true;
         pstorage_polling = readCommandArgument(buffer);
         sprintf(log_msg, "Issued start_pstorage() command with polling rate of %d seconds\n", pstorage_polling);
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_pstorage)
         {
             sprintf(log_msg, "Persistent Storage server already active. Changing polling rate to: %d\n", pstorage_polling);
-            log(log_msg);
+            openplc_log(log_msg);
         }
         //Start Enip server
         run_pstorage = 1;
@@ -450,12 +450,12 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         sprintf(log_msg, "Issued stop_pstorage() command\n");
-        log(log_msg);
+        openplc_log(log_msg);
         if (run_pstorage)
         {
             run_pstorage = 0;
             sprintf(log_msg, "Persistent Storage thread was stopped\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
         processing_command = false;
     }
@@ -564,7 +564,7 @@ void startInteractiveServer(int port)
         if (client_fd < 0)
         {
             sprintf(log_msg, "Interactive Server: Error accepting client!\n");
-            log(log_msg);
+            openplc_log(log_msg);
         }
 
         else
