@@ -802,7 +802,7 @@ void S7API EventCallBack(void* usrPtr, PSrvEvent PEvent, int Size)
     // log the event
     Srv_EventText(PEvent, s7text, sizeof(s7text));
     sprintf(log_msg, "Snap7: %s\n", s7text);
-    log(log_msg);
+    openplc_log(log_msg);
 };
 
 //------------------------------------------------------------------------------

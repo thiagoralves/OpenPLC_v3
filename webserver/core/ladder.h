@@ -112,7 +112,7 @@ void updateBuffersOut();
 //utils.cpp
 void sleep_until(struct timespec *ts, long long delay);
 void sleepms(int milliseconds);
-void log(char *logmsg);
+extern "C" void openplc_log(char *logmsg);
 void handleSpecialFunctions();
 void timespec_diff(struct timespec *a, struct timespec *b, struct timespec *result);
 void *interactiveServerThread(void *arg);
@@ -166,3 +166,7 @@ void dnp3StartServer(int port);
 //persistent_storage.cpp
 void startPstorage();
 int readPersistentStorage();
+
+//python_loader.cpp
+extern "C" int create_shm_name(char *buf, size_t size);
+extern "C" int python_block_loader(const char *script_name, const char *script_content, char *shm_name, size_t shm_in_size, size_t shm_out_size, void **shm_in_ptr, void **shm_out_ptr, pid_t pid);

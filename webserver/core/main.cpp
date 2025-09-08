@@ -59,7 +59,7 @@ uint32_t *dint_input_call_back(int a){ return dint_input[a]; }
 uint32_t *dint_output_call_back(int a){ return dint_output[a]; }
 uint64_t *lint_input_call_back(int a){ return lint_input[a]; }
 uint64_t *lint_output_call_back(int a){ return lint_output[a]; }
-void logger_callback(char *msg){ log(msg);}
+void logger_callback(char *msg){ openplc_log(msg);}
 
 int main(int argc,char **argv)
 {
@@ -75,7 +75,7 @@ int main(int argc,char **argv)
 
     char log_msg[1000];
     sprintf(log_msg, "OpenPLC Runtime starting...\n");
-    log(log_msg);
+    openplc_log(log_msg);
 
     //======================================================
     //                 PLC INITIALIZATION

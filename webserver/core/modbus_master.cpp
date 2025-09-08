@@ -318,7 +318,7 @@ void parseConfig()
     {
         char log_msg[1000];
         sprintf(log_msg, "Skipping configuration of Slave Devices (mbconfig.cfg file not found)\n");
-        log(log_msg);
+        openplc_log(log_msg);
     }
 
     //Parser Debug
@@ -391,12 +391,12 @@ void *querySlaveDevices(void *arg)
             if (!mb_devices[i].isConnected && !rtu_port_connected)
             {
                 sprintf(log_msg, "Device %s is disconnected. Attempting to reconnect...\n", mb_devices[i].dev_name);
-                log(log_msg);
+                openplc_log(log_msg);
                 if (modbus_connect(mb_devices[i].mb_ctx) == -1)
                 {
 
                     sprintf(log_msg, "Connection failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                    log(log_msg);
+                    openplc_log(log_msg);
                     
                     if (special_functions[2] != NULL) *special_functions[2]++;
                     
@@ -410,7 +410,7 @@ void *querySlaveDevices(void *arg)
                 else
                 {
                     sprintf(log_msg, "Connected to MB device %s\n", mb_devices[i].dev_name);
-                    log(log_msg);
+                    openplc_log(log_msg);
                     mb_devices[i].isConnected = true;
                 }
             }
@@ -446,7 +446,7 @@ void *querySlaveDevices(void *arg)
                         }
                         
                         sprintf(log_msg, "Modbus Read Discrete Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+                        openplc_log(log_msg);
                         bool_input_index += (mb_devices[i].discrete_inputs.num_regs);
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
@@ -490,7 +490,7 @@ void *querySlaveDevices(void *arg)
                         }
 
                         sprintf(log_msg, "Modbus Write Coils failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+                        openplc_log(log_msg);
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
                     
@@ -515,7 +515,7 @@ void *querySlaveDevices(void *arg)
                         }
                         
                         sprintf(log_msg, "Modbus Read Input Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+                        openplc_log(log_msg);
                         int_input_index += (mb_devices[i].input_registers.num_regs);
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
@@ -550,7 +550,7 @@ void *querySlaveDevices(void *arg)
                             mb_devices[i].isConnected = false;
                         }
                         sprintf(log_msg, "Modbus Read Holding Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+                        openplc_log(log_msg);
                         int_input_index += (mb_devices[i].holding_read_registers.num_regs);
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
@@ -595,7 +595,7 @@ void *querySlaveDevices(void *arg)
                         }
                         
                         sprintf(log_msg, "Modbus Write Holding Registers failed on MB device %s: %s\n", mb_devices[i].dev_name, modbus_strerror(errno));
-                        log(log_msg);
+                        openplc_log(log_msg);
                         if (special_functions[2] != NULL) *special_functions[2]++;
                     }
                     
@@ -640,7 +640,7 @@ void initializeMB()
                 {
                     char log_msg[1000];
                     sprintf(log_msg, "Warning MB device %s port setting missmatch\n", mb_devices[i].dev_name);
-                    log(log_msg);
+                    openplc_log(log_msg);
                 }
                 mb_devices[i].mb_ctx = mb_devices[share_index].mb_ctx;
             }
