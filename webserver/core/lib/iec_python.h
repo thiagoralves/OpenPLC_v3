@@ -1,7 +1,12 @@
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#ifdef __linux__
+    #include <fcntl.h>
+    #include <sys/mman.h>
+    #include <sys/stat.h>
+    #include <unistd.h>
+#else
+    #include <sys/mman.h>
+    #include <unistd.h>
+#endif
 
 extern "C" void openplc_log(char *logmsg);
 extern "C" int create_shm_name(char *buf, size_t size);
