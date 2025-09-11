@@ -161,10 +161,23 @@ int python_block_loader(const char *script_name, const char *script_content, cha
     close(shm_in_fd);
     close(shm_out_fd);
 
+    char *cmd = malloc(512);
+    if (cmd == NULL) 
+    {
+        snprintf(log_msg, sizeof(log_msg), "malloc failed for cmd buffer\n");
+        openplc_log(log_msg);
+        return -1;
+    }
+    snprintf(cmd, 512, "python3 -u %s 2>&1", script_name);
+
     pthread_t tid;
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd), "python3 -u %s 2>&1", script_name);
-    pthread_create(&tid, NULL, runner_thread, (void *)cmd);
+    if (pthread_create(&tid, NULL, runner_thread, cmd) != 0) 
+    {
+        snprintf(log_msg, sizeof(log_msg), "pthread_create failed: %s\n", strerror(errno));
+        openplc_log(log_msg);
+        free(cmd);
+        return -1;
+    }
     pthread_detach(tid);
 
     return 0;
