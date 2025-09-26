@@ -937,7 +937,7 @@ def upload_program_action():
             current_time = int(time.time())
             #allow timestamps between 2015-01-01 and 1 year in the future
             min_allowed_time = 1420070400  #2015-01-01 00:00:00
-            max_allowed_time = current_time + 31536000  #current time + 1 year
+            max_allowed_time = current_time + (100 * 31536000)  #current time + 1 year
             
             if epoch_time < min_allowed_time or epoch_time > max_allowed_time:
                 return 'Invalid epoch time value: must be between 2015-01-01 and 1 year from now'
