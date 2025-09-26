@@ -931,7 +931,20 @@ def upload_program_action():
         prog_file = flask.request.form['prog_file']
         epoch_time = flask.request.form['epoch_time']
 
-        (prog_name, prog_descr, prog_file, epoch_time) = sanitize_input(prog_name, prog_descr, prog_file, epoch_time)
+               #validate epoch_time format and range
+        try:
+            epoch_time = int(epoch_time)
+            current_time = int(time.time())
+            #allow timestamps between 2015-01-01 and 1 year in the future
+            min_allowed_time = 1420070400  #2015-01-01 00:00:00
+            max_allowed_time = current_time + 31536000  #current time + 1 year
+            
+            if epoch_time < min_allowed_time or epoch_time > max_allowed_time:
+                return 'Invalid epoch time value: must be between 2015-01-01 and 1 year from now'
+        except ValueError:
+            return 'Invalid epoch time format: must be a valid integer timestamp'
+
+        (prog_name, prog_descr, prog_file, epoch_time) = sanitize_input(prog_name, prog_descr, prog_file, int(epoch_time))
         
         database = "openplc.db"
         conn = create_connection(database)
