@@ -3,7 +3,7 @@ import subprocess
 import socket
 import errno
 import time
-from threading import Thread
+from threading import Thread, Lock
 from queue import Queue, Empty
 import os.path
 
@@ -70,15 +70,16 @@ class NonBlockingStreamReader:
 class UnexpectedEndOfStream(Exception): pass
 
 class runtime:
-    project_file = ""
-    project_name = ""
-    project_description = ""
-    compilation_status_str = ""
-    compilation_error_str = ""
-    compilation_object = None
-    compilation_error = None
-    runtime_status = "Stopped"
-    
+    def __init__(self):
+        self.project_file = ""
+        self.project_name = ""
+        self.project_description = ""
+        self.compilation_status_str = ""
+        self.compilation_error_str = ""
+        self.compilation_object = None
+        self.compilation_error = None
+        self.runtime_status = "Stopped"
+
     def start_runtime(self):
         if (self.status() == "Stopped"):
             self.theprocess = subprocess.Popen(['./core/openplc'])  # XXX: iPAS
@@ -148,9 +149,12 @@ class runtime:
                 f.write(c_debug)
 
             # Start compilation
-            a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            self.compilation_object = NonBlockingStreamReader(a.stdout)
-            self.compilation_error = NonBlockingStreamReader(a.stderr)
+            try:
+                a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                self.compilation_object = NonBlockingStreamReader(a.stdout)
+                # self.compilation_error = NonBlockingStreamReader(a.stderr)
+            except Exception as e:
+                print(f"Error starting compilation: {e}")
         else:
             # Debug info was extracted from program
             program = '\n'.join(program_lines)
@@ -170,7 +174,7 @@ class runtime:
             # Start compilation
             a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.compilation_object = NonBlockingStreamReader(a.stdout)
-            self.compilation_error = NonBlockingStreamReader(a.stderr)
+            # self.compilation_error = NonBlockingStreamReader(a.stderr)
     
     def compilation_status(self):
         while self.compilation_object != None:
@@ -188,8 +192,9 @@ class runtime:
 
     def status(self):
         try:
-            if (self.compilation_object.end_of_stream == False):
-                return "Compiling"
+            if (self.compilation_object != None):
+                if (self.compilation_object.end_of_stream == False):
+                    return "Compiling"
         except Exception as e:
             print(f"Error checking compilation status: {e}")
 

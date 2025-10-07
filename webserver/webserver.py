@@ -23,6 +23,9 @@ import flask_login
 
 from credentials import CertGen
 from restapi import app_restapi, restapi_bp, db, register_callback_get, register_callback_post
+from dataclasses import dataclass, field
+from enum import Enum, auto
+
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
@@ -49,97 +52,111 @@ def restapi_callback_get(argument: str, data: dict) -> dict:
     This is the central callback function that handles the logic
     based on the 'argument' from the URL and 'data' from the request.
     """
+    global openplc_runtime
     logger.debug(f"GET | Received argument: {argument}, data: {data}")
 
     if argument == "start-plc":
+        monitor.stop_monitor()
         openplc_runtime.start_runtime()
+        time.sleep(1)
         configure_runtime()
-        return {"status": "runtime started"}
+        monitor.cleanup()
+        monitor.parse_st(openplc_runtime.project_file)
+        return {"status": "START:OK"}
 
     elif argument == "stop-plc":
         openplc_runtime.stop_runtime()
-        return {"status": "runtime stop"}
+        time.sleep(1)
+        monitor.stop_monitor()
+        return {"status": "STOP:OK"}
 
     elif argument == "runtime-logs":
         logs = openplc_runtime.logs()
         return {"runtime-logs": logs}
 
     elif argument == "compilation-status":
-        try:
-            logs = openplc_runtime.compilation_status()
-            _logs = logs
-        except Exception as e:
-            logger.error(f"Error retrieving compilation logs: {e}")
-            _logs = str(e)
+        status = 'IDLE'
+        logs = openplc_runtime.compilation_status()
+        exit_code = 0
 
-        status = _logs
-        if status is not str:
-            _status = "No compilation in progress"
-        if "Compilation finished successfully!" in status:
-            _status = "Success"
-            _error = "No error"
-        elif "Compilation finished with errors!" in status:
-            _status = "Error"
-            _error = openplc_runtime.get_compilation_error()
+        logs = str(logs)
+
+        if "Compilation finished successfully!" in logs:
+            status = 'SUCCESS'
+            exit_code = 0
+        elif "Compilation finished with errors!" in logs:
+            status = 'FAILED'
+            exit_code = 1
         else:
-            _status = "Compiling"
-            _error = openplc_runtime.get_compilation_error()
-        logger.debug(f"Compilation status: {_status}, logs: {_logs}", extra={"error": _error})
+            status = 'COMPILING'
+            exit_code = 0
 
-        return {"status": _status, "logs": _logs, "error": _error}
+        return {
+            "status": status, 
+            "logs": logs.splitlines(),
+            "exit_code": exit_code
+        }
 
     elif argument == "status":
-        return {"current_status": "operational", "details": data}
+        if openplc_runtime.status() == "Running":
+            return {"status" : "STATUS:RUNNING"}
+        elif openplc_runtime.status() == "Compiling":
+            return {"status" : "STATUS:EMPTY"}
+        elif openplc_runtime.status() == "Stopped":
+            return {"status" : "STATUS:STOPPED"}
+        else:
+            return {"status" : "STATUS:UNKNOWN"}
 
     elif argument == "ping":
-        return {"status": "pong"}
+        return {"status": "PING:OK"}
     else:
         return {"error": "Unknown argument"}
 
 # file upload POST handler 
 def restapi_callback_post(argument: str, data: dict) -> dict:
+    global openplc_runtime
     logger.debug(f"POST | Received argument: {argument}, data: {data}")
 
     if argument == "upload-file":
-        try:
-            # validate filename
-            if 'file' not in flask.request.files:
-                return {"UploadFileFail": "No file part in the request"}
-            st_file = flask.request.files['file']
-            # validate file size
-            if st_file.content_length > 32 * 1024 * 1024:  # 32 MB limit
-                return {"UploadFileFail": "File is too large"}
+        if openplc_runtime.status() == "Compiling":
+            return {"UploadFileFail": "Runtime is compiling another program, please wait", "CompilationStatus": "COMPILING"}
 
-            # replace program file on database
+        # validate filename
+        if 'file' not in flask.request.files:
+            return {"UploadFileFail": "No file part in the request", "CompilationStatus": "FAILED"}
+        st_file = flask.request.files['file']
+
+        # validate file size
+        if st_file.content_length > 32 * 1024 * 1024:  # 32 MB limit
+            return {"UploadFileFail": "File is too large", "CompilationStatus": "FAILED"}
+
+        # replace program file on database
+        database = "openplc.db"
+        conn = create_connection(database)
+        if (conn != None):
             try:
-                database = "openplc.db"
-                conn = create_connection(database)
-                logger.info(f"{database} connected")
-                if (conn != None):
-                    try:
-                        cur = conn.cursor()
-                        cur.execute("SELECT * FROM Programs WHERE Name = 'webserver_program'")
-                        row = cur.fetchone()
-                        cur.close()
-                    except Exception as e:
-                        return {"UploadFileFail": e}
+                cur = conn.cursor()
+                cur.execute("SELECT * FROM Programs WHERE Name = 'webserver_program'")
+                row = cur.fetchone()
+                cur.close()
+                conn.close()
+
+                filename = str(row[3])
+                st_file.save(os.path.join('st_files', filename))
+
+                openplc_runtime.project_name = str(row[1])
+                openplc_runtime.project_description = str(row[2])
+                openplc_runtime.project_file = str(row[3])              
+
             except Exception as e:
-                return {"UploadFileFail": f"Error connecting to the database: {e}"}
+                return {"UploadFileFail": e, "CompilationStatus": "FAILED"}
+        else:
+            return {"UploadFileFail": f"Error connecting to the database", "CompilationStatus": "FAILED"}
 
-            filename = str(row[3])
-            st_file.save(f"st_files/{filename}")
-
-        except Exception as e:
-            return {"UploadFileFail": e}
-
-        if (openplc_runtime.status() == "Compiling"): 
-            return {"RuntimeStatus": "Compiling"}
-        
-        try:
-            openplc_runtime.compile_program(f"{filename}")
-            return {"CompilationStatus": "Starting program compilation"}
-        except Exception as e:
-            return {"CompilationStatusFail": e}
+        # Compile new program
+        delete_persistent_file()
+        openplc_runtime.compile_program(filename)
+        return {"UploadFileFail": "", "CompilationStatus": "COMPILING"}
 
     else:
         return {"PostRequestError": "Unknown argument"}
