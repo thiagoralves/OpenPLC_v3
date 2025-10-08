@@ -2672,9 +2672,29 @@ def run_https():
             print("Credentials already generated!")
         
         try:
+            # Create server manually to ensure socket blocking mode for Windows/MSYS2 compatibility
+            # MSYS2 defaults to non-blocking sockets, which causes SSL operations to fail with
+            # errno 11 (EAGAIN/EWOULDBLOCK). Werkzeug doesn't call setblocking(True) after
+            # wrapping the socket with SSL, so we must do it explicitly.
+            from werkzeug.serving import make_server
+            
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             context.load_cert_chain(certfile=str(CERT_FILE), keyfile=str(KEY_FILE))
-            app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
+            
+            server = make_server(
+                host='0.0.0.0',
+                port=8443,
+                app=app_restapi,
+                threaded=True,
+                ssl_context=context
+            )
+            
+            # Explicitly set socket to blocking mode for Windows/MSYS2 compatibility
+            server.socket.setblocking(True)
+            
+            # Log startup and start serving
+            server.log_startup()
+            server.serve_forever()
         except KeyboardInterrupt as e:
             print(f"Exiting OpenPLC Webserver...{e}")
             openplc_runtime.stop_runtime()
