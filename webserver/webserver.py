@@ -2670,15 +2670,12 @@ def run_https():
             # Generate certificate if it doesn't exist (important-comment)
             if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
                 cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
-            # Verify expiration date
-            elif cert_gen.is_certificate_valid(CERT_FILE):
-                print(cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE))
             # Credentials already created
             else:
                 print("Credentials already generated!")
             
             try:
-                context = (str(CERT_FILE), str(KEY_FILE))
+                context = (CERT_FILE, KEY_FILE)
                 app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
             except KeyboardInterrupt as e:
                 print(f"Exiting OpenPLC Webserver...{e}")
