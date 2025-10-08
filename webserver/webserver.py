@@ -2658,43 +2658,47 @@ def run_https():
         except Exception as e:
             print(f"Error creating database tables: {e}")
 
-    try:
-        # CertGen class is used to generate SSL certificates and verify their validity
-        cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
-        # Generate certificate if it doesn't exist
-        if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
-            cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
-        # Verify expiration date
-        elif cert_gen.is_certificate_valid(CERT_FILE):
-            print(cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE))
-        # Credentials already created
-        else:
-            print("Credentials already generated!")
-        
+    # Platform-specific behavior: Only use HTTPS with certificates on Linux
+    # Non-Linux systems (e.g. Windows/MSYS2) have SSL socket compatibility issues,
+    # so we run HTTP instead to ensure the REST API is accessible.
+    is_linux = platform.system() == 'Linux'
+    
+    if is_linux:
         try:
-            # Create server manually to ensure socket blocking mode for Windows/MSYS2 compatibility
-            # MSYS2 defaults to non-blocking sockets, which causes SSL operations to fail with
-            # errno 11 (EAGAIN/EWOULDBLOCK). Werkzeug doesn't call setblocking(True) after
-            # wrapping the socket with SSL, so we must do it explicitly.
-            from werkzeug.serving import make_server
+            # CertGen class is used to generate SSL certificates and verify their validity (important-comment)
+            cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
+            # Generate certificate if it doesn't exist (important-comment)
+            if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
+                cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
+            # Verify expiration date
+            elif cert_gen.is_certificate_valid(CERT_FILE):
+                print(cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE))
+            # Credentials already created
+            else:
+                print("Credentials already generated!")
             
-            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-            context.load_cert_chain(certfile=str(CERT_FILE), keyfile=str(KEY_FILE))
-            
-            server = make_server(
-                host='0.0.0.0',
-                port=8443,
-                app=app_restapi,
-                threaded=True,
-                ssl_context=context
-            )
-            
-            # Explicitly set socket to blocking mode for Windows/MSYS2 compatibility
-            server.socket.setblocking(True)
-            
-            # Log startup and start serving
-            server.log_startup()
-            server.serve_forever()
+            try:
+                context = (str(CERT_FILE), str(KEY_FILE))
+                app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
+            except KeyboardInterrupt as e:
+                print(f"Exiting OpenPLC Webserver...{e}")
+                openplc_runtime.stop_runtime()
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                openplc_runtime.stop_runtime()
+            except:
+                print("An unexpected error occurred.")
+                
+        # TODO handle file error
+        except FileNotFoundError as e:
+            print(f"Could not find SSL credentials! {e}")
+        except ssl.SSLError as e:
+            print(f"SSL credentials FAIL! {e}")
+    else:
+        # Non-Linux systems: Run as HTTP instead of HTTPS to avoid SSL socket issues
+        print(f"Non-Linux platform detected ({platform.system()}). Running REST API as HTTP instead of HTTPS.")
+        try:
+            app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443)
         except KeyboardInterrupt as e:
             print(f"Exiting OpenPLC Webserver...{e}")
             openplc_runtime.stop_runtime()
@@ -2703,12 +2707,6 @@ def run_https():
             openplc_runtime.stop_runtime()
         except:
             print("An unexpected error occurred.")
-            
-    # TODO handle file error
-    except FileNotFoundError as e:
-        print(f"Could not find SSL credentials! {e}")
-    except ssl.SSLError as e:
-        print(f"SSL credentials FAIL! {e}")
 
 def run_http():
     #Load information about current program on the openplc_runtime object
