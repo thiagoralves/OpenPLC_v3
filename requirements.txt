@@ -2,4 +2,3 @@ Flask==1.0.2
 Flask-Login==0.4.1
 pyserial==3.4
 pymodbus==2.2.0
-cryptography
