@@ -2672,7 +2672,7 @@ def run_https():
             print("Credentials already generated!")
         
         try:
-            context = (CERT_FILE, KEY_FILE)
+            context = (str(CERT_FILE), str(KEY_FILE))
             app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
         except KeyboardInterrupt as e:
             print(f"Exiting OpenPLC Webserver...{e}")
