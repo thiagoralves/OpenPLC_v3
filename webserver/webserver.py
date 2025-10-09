@@ -2672,7 +2672,7 @@ def run_https():
                 # Only swallow EAGAIN / EWOULDBLOCK (errno 11) - re-raise other real errors.
                 if getattr(e, "errno", None) in (errno.EAGAIN, errno.EWOULDBLOCK, 11):
                     return b''
-            raise
+                raise
 
         ssl.SSLSocket.recv = _patched_recv
         
