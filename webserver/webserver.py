@@ -14,16 +14,154 @@ import sys
 import ctypes
 import socket
 import mimetypes
+import ssl
+import threading
+import logging
+import errno
 
-import flask 
+import flask
 import flask_login
+
+from credentials import CertGen
+from restapi import app_restapi, restapi_bp, db, register_callback_get, register_callback_post
+from dataclasses import dataclass, field
+from enum import Enum, auto
+
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG,  # Minimum level to capture
+    format='[%(levelname)s] %(asctime)s - %(message)s',
+    datefmt='%H:%M:%S'
+)
+
 openplc_runtime = openplc.runtime()
+
+from pathlib import Path
+BASE_DIR   = Path(__file__).parent
+CERT_FILE  = (BASE_DIR / "certOPENPLC.pem").resolve()
+KEY_FILE   = (BASE_DIR / "keyOPENPLC.pem").resolve()
+HOSTNAME = "localhost"
+
+def restapi_callback_get(argument: str, data: dict) -> dict:
+    """
+    This is the central callback function that handles the logic
+    based on the 'argument' from the URL and 'data' from the request.
+    """
+    global openplc_runtime
+    logger.debug(f"GET | Received argument: {argument}, data: {data}")
+
+    if argument == "start-plc":
+        monitor.stop_monitor()
+        openplc_runtime.start_runtime()
+        time.sleep(1)
+        configure_runtime()
+        monitor.cleanup()
+        monitor.parse_st(openplc_runtime.project_file)
+        return {"status": "START:OK"}
+
+    elif argument == "stop-plc":
+        openplc_runtime.stop_runtime()
+        time.sleep(1)
+        monitor.stop_monitor()
+        return {"status": "STOP:OK"}
+
+    elif argument == "runtime-logs":
+        logs = openplc_runtime.logs()
+        return {"runtime-logs": logs}
+
+    elif argument == "compilation-status":
+        status = 'IDLE'
+        logs = openplc_runtime.compilation_status()
+        exit_code = 0
+
+        logs = str(logs)
+
+        if "Compilation finished successfully!" in logs:
+            status = 'SUCCESS'
+            exit_code = 0
+        elif "Compilation finished with errors!" in logs:
+            status = 'FAILED'
+            exit_code = 1
+        else:
+            status = 'COMPILING'
+            exit_code = 0
+
+        return {
+            "status": status, 
+            "logs": logs.splitlines(),
+            "exit_code": exit_code
+        }
+
+    elif argument == "status":
+        if openplc_runtime.status() == "Running":
+            return {"status" : "STATUS:RUNNING"}
+        elif openplc_runtime.status() == "Compiling":
+            return {"status" : "STATUS:EMPTY"}
+        elif openplc_runtime.status() == "Stopped":
+            return {"status" : "STATUS:STOPPED"}
+        else:
+            return {"status" : "STATUS:UNKNOWN"}
+
+    elif argument == "ping":
+        return {"status": "PING:OK"}
+    else:
+        return {"error": "Unknown argument"}
+
+# file upload POST handler 
+def restapi_callback_post(argument: str, data: dict) -> dict:
+    global openplc_runtime
+    logger.debug(f"POST | Received argument: {argument}, data: {data}")
+
+    if argument == "upload-file":
+        if openplc_runtime.status() == "Compiling":
+            return {"UploadFileFail": "Runtime is compiling another program, please wait", "CompilationStatus": "COMPILING"}
+
+        # validate filename
+        if 'file' not in flask.request.files:
+            return {"UploadFileFail": "No file part in the request", "CompilationStatus": "FAILED"}
+        st_file = flask.request.files['file']
+
+        # validate file size
+        if st_file.content_length > 32 * 1024 * 1024:  # 32 MB limit
+            return {"UploadFileFail": "File is too large", "CompilationStatus": "FAILED"}
+
+        # replace program file on database
+        database = "openplc.db"
+        conn = create_connection(database)
+        if (conn != None):
+            try:
+                cur = conn.cursor()
+                cur.execute("SELECT * FROM Programs WHERE Name = 'webserver_program'")
+                row = cur.fetchone()
+                cur.close()
+                conn.close()
+
+                filename = str(row[3])
+                st_file.save(os.path.join('st_files', filename))
+
+                openplc_runtime.project_name = str(row[1])
+                openplc_runtime.project_description = str(row[2])
+                openplc_runtime.project_file = str(row[3])              
+
+            except Exception as e:
+                return {"UploadFileFail": e, "CompilationStatus": "FAILED"}
+        else:
+            return {"UploadFileFail": f"Error connecting to the database", "CompilationStatus": "FAILED"}
+
+        # Compile new program
+        delete_persistent_file()
+        openplc_runtime.compile_program(filename)
+        return {"UploadFileFail": "", "CompilationStatus": "COMPILING"}
+
+    else:
+        return {"PostRequestError": "Unknown argument"}
+
 
 class User(flask_login.UserMixin):
     pass
@@ -852,6 +990,7 @@ def upload_program():
         if (prog_file.filename == ''):
             return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
         
+        # TODO realocate to another function
         filename = str(random.randint(1,1000000)) + ".st"
         prog_file.save(os.path.join('st_files', filename))
         
@@ -2505,11 +2644,73 @@ def escape(s, quote=True):
 #----------------------------------------------------------------------------
 def main():
    print("Starting the web interface...")
-   
-if __name__ == '__main__':
+
+def run_https():
+    # rest api register
+    app_restapi.register_blueprint(restapi_bp, url_prefix='/api')
+    register_callback_get(restapi_callback_get)
+    register_callback_post(restapi_callback_post)
+
+    with app_restapi.app_context():
+        try:
+            db.create_all()
+            db.session.commit()
+            print("Database tables created successfully.")
+        except Exception as e:
+            print(f"Error creating database tables: {e}")
+
+    is_linux = platform.system() == 'Linux'
+    if not is_linux:
+        # Patch Python SSL recv socket as it doesn't work on MSYS2/Cygwin
+        print(f"Non-Linux platform detected ({platform.system()}). Patching recv socket...")
+        _orig_recv = ssl.SSLSocket.recv
+
+        def _patched_recv(self, buflen, flags=0):
+            try:
+                return _orig_recv(self, buflen, flags)
+            except BlockingIOError as e:
+                # Only swallow EAGAIN / EWOULDBLOCK (errno 11) - re-raise other real errors.
+                if getattr(e, "errno", None) in (errno.EAGAIN, errno.EWOULDBLOCK, 11):
+                    return b''
+                raise
+
+        ssl.SSLSocket.recv = _patched_recv
+        
+    try:
+        cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
+
+        # Check if certificate exists. If not, generate one
+        if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
+            print("Generating https certificate...")
+            cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
+        
+        # Check if the certificate is valid
+        if not cert_gen.is_certificate_valid(CERT_FILE):
+            print("Invalid certificate. Cannot start https application")
+            sys.exit(1)
+        
+        context = (CERT_FILE, KEY_FILE)
+        app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
+
+    except KeyboardInterrupt as e:
+        print(f"Exiting OpenPLC Webserver...{e}")
+        openplc_runtime.stop_runtime()
+    except FileNotFoundError as e:
+        print(f"Could not find SSL credentials! {e}")
+        openplc_runtime.stop_runtime()
+    except ssl.SSLError as e:
+        print(f"Invalid SSL certificate {e}")
+        openplc_runtime.stop_runtime()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        openplc_runtime.stop_runtime()
+    except:
+        print("An unexpected error occurred.")
+
+def run_http():
     #Load information about current program on the openplc_runtime object
-    file = open("active_program", "r")
-    st_file = file.read()
+    with open("active_program", "r") as file:
+        st_file = file.read()
     st_file = st_file.replace('\r','').replace('\n','')
     
     database = "openplc.db"
@@ -2539,10 +2740,25 @@ if __name__ == '__main__':
                 time.sleep(1)
                 configure_runtime()
                 monitor.parse_st(openplc_runtime.project_file)
-            
-            app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+
+            try:
+                app.run(debug=False, host='0.0.0.0', threaded=True, port=8080)
+            except KeyboardInterrupt as e:
+                print(f"Exiting OpenPLC Webserver...{e}")
+                openplc_runtime.stop_runtime()
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                openplc_runtime.stop_runtime()
+            except:
+                print("An unexpected error occurred.")
         
         except Error as e:
             print("error connecting to the database" + str(e))
     else:
         print("error connecting to the database")
+
+
+if __name__ == '__main__':
+    # Running webserver and RestAPI in separate threads
+    threading.Thread(target=run_http).start()
+    threading.Thread(target=run_https).start()

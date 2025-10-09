@@ -19,6 +19,32 @@ webserver/build
 obj/
 utils/dnp3_src/CMakeFiles/
 webserver/scripts/ethercat
+utils/
+
+# Build artifacts
+install_log.txt
+start_openplc.sh
+webserver/core/*.c
+webserver/core/*.cpp
+webserver/core/*.h
+webserver/core/*.o
+webserver/core/VARIABLES.csv
+webserver/core/glue_generator
+webserver/core/openplc
+webserver/iec2c
+webserver/st_optimizer
+webserver/active_program
+utils/libmodbus_src/src/.libs/*
+utils/libmodbus_src/tests/.libs/*
+webserver/scripts/openplc_driver
+webserver/scripts/openplc_platform
+
+# Runtime files
+webserver/*.pem
+webserver/*.db
+webserver/instance/
+
 
 # Runtime directories
 .venv
+.env*
