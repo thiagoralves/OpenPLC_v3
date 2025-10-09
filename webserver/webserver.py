@@ -17,6 +17,7 @@ import mimetypes
 import ssl
 import threading
 import logging
+import errno
 
 import flask
 import flask_login
@@ -2658,52 +2659,53 @@ def run_https():
         except Exception as e:
             print(f"Error creating database tables: {e}")
 
-    # Platform-specific behavior: Only use HTTPS with certificates on Linux
-    # Non-Linux systems (e.g. Windows/MSYS2) have SSL socket compatibility issues,
-    # so we run HTTP instead to ensure the REST API is accessible.
     is_linux = platform.system() == 'Linux'
-    
-    if is_linux:
-        try:
-            # CertGen class is used to generate SSL certificates and verify their validity (important-comment)
-            cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
-            # Generate certificate if it doesn't exist (important-comment)
-            if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
-                cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
-            # Credentials already created
-            else:
-                print("Credentials already generated!")
-            
+    if not is_linux:
+        # Patch Python SSL recv socket as it doesn't work on MSYS2/Cygwin
+        print(f"Non-Linux platform detected ({platform.system()}). Patching recv socket...")
+        _orig_recv = ssl.SSLSocket.recv
+
+        def _patched_recv(self, buflen, flags=0):
             try:
-                context = (CERT_FILE, KEY_FILE)
-                app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
-            except KeyboardInterrupt as e:
-                print(f"Exiting OpenPLC Webserver...{e}")
-                openplc_runtime.stop_runtime()
-            except Exception as e:
-                print(f"An error occurred: {e}")
-                openplc_runtime.stop_runtime()
-            except:
-                print("An unexpected error occurred.")
-                
-        # TODO handle file error
-        except FileNotFoundError as e:
-            print(f"Could not find SSL credentials! {e}")
-        except ssl.SSLError as e:
-            print(f"SSL credentials FAIL! {e}")
-    else:
-        # Non-Linux systems: Run as HTTP instead of HTTPS to avoid SSL socket issues
-        print(f"Non-Linux platform detected ({platform.system()}). Running REST API as HTTP instead of HTTPS.")
-        try:
-            app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443)
-        except KeyboardInterrupt as e:
-            print(f"Exiting OpenPLC Webserver...{e}")
-            openplc_runtime.stop_runtime()
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            openplc_runtime.stop_runtime()
-        except:
-            print("An unexpected error occurred.")
+                return _orig_recv(self, buflen, flags)
+            except BlockingIOError as e:
+                # Only swallow EAGAIN / EWOULDBLOCK (errno 11) - re-raise other real errors.
+                if getattr(e, "errno", None) in (errno.EAGAIN, errno.EWOULDBLOCK, 11):
+                    return b''
+                raise
+
+        ssl.SSLSocket.recv = _patched_recv
+        
+    try:
+        cert_gen = CertGen(hostname=HOSTNAME, ip_addresses=["127.0.0.1"])
+
+        # Check if certificate exists. If not, generate one
+        if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
+            print("Generating https certificate...")
+            cert_gen.generate_self_signed_cert(cert_file=CERT_FILE, key_file=KEY_FILE)
+        
+        # Check if the certificate is valid
+        if not cert_gen.is_certificate_valid(CERT_FILE):
+            print("Invalid certificate. Cannot start https application")
+            sys.exit(1)
+        
+        context = (CERT_FILE, KEY_FILE)
+        app_restapi.run(debug=False, host='0.0.0.0', threaded=True, port=8443, ssl_context=context)
+
+    except KeyboardInterrupt as e:
+        print(f"Exiting OpenPLC Webserver...{e}")
+        openplc_runtime.stop_runtime()
+    except FileNotFoundError as e:
+        print(f"Could not find SSL credentials! {e}")
+        openplc_runtime.stop_runtime()
+    except ssl.SSLError as e:
+        print(f"Invalid SSL certificate {e}")
+        openplc_runtime.stop_runtime()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        openplc_runtime.stop_runtime()
+    except:
+        print("An unexpected error occurred.")
 
 def run_http():
     #Load information about current program on the openplc_runtime object
