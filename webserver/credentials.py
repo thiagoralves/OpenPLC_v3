@@ -23,9 +23,10 @@ def validate_hostname(hostname: str) -> str:
     Raises:
         ValueError: If hostname is invalid
     """
-    if not hostname or not isinstance(hostname, str):
+    if not hostname or str(hostname) == '':
         raise ValueError("Hostname must be a non-empty string")
-
+    
+    hostname = str(hostname) # Make sure this is a string
     hostname = hostname.strip()
 
     if len(hostname) > 253:
@@ -64,8 +65,10 @@ def validate_ip_address(ip: str) -> str:
     Raises:
         ValueError: If IP address is invalid
     """
-    if not ip or not isinstance(ip, str):
+    if not ip or str(ip) == '':
         raise ValueError("IP address must be a non-empty string")
+    
+    ip = str(ip) # Make sure this is a string
 
     try:
         ip_obj = ip_address(ip.strip())
@@ -88,9 +91,11 @@ def validate_file_path(file_path: str, base_dir: str | None = None) -> Path:
     Raises:
         ValueError: If path is invalid or contains traversal sequences
     """
-    if not file_path or not isinstance(file_path, str):
+    if not file_path or str(file_path) == '':
         raise ValueError("File path must be a non-empty string")
 
+    file_path = str(file_path) # Make sure this is a string
+    
     path = Path(file_path).resolve()
 
     if base_dir:
