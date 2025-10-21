@@ -1,4 +1,4 @@
-FROM debian:bullseye-20240722
+FROM debian:trixie-20251020
 
 COPY . /workdir
 
