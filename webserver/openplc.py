@@ -129,6 +129,12 @@ class runtime:
         for line in combined_lines:
             if line.startswith('(*DBG:') and line.endswith('*)'):
                 c_debug_lines.append(line[6:-2])
+            elif line.startswith('(*FILE:c_blocks_code.cpp') and 'extern "C" void' in line:
+                # This is a hack to backport runtime v4 C/C++ functionality to v3. The v3 runtime needs to
+                # exclude all extern "C" declarations from the c_blocks_code.cpp file. I know this is not
+                # pretty, but v3 architecture is not pretty, so we are doing this here so that v4 code
+                # can remain pretty.
+                pass
             elif line.startswith('(*FILE:') and line.endswith('*)'):
                 file_content = line[7:-2].strip()
                 if ' ' in file_content:
