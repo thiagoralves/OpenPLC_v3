@@ -1886,6 +1886,7 @@ __end:
 
 
 #include "communication.h"
+#include "../c_blocks.h"
 #if defined(SEQUENT)
     #include "sm_cards.h"
 #endif
