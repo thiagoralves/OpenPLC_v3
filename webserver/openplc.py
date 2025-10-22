@@ -5,6 +5,7 @@ import errno
 import time
 from threading import Thread, Lock
 from queue import Queue, Empty
+import os
 import os.path
 
 intervals = (
@@ -123,10 +124,24 @@ class runtime:
         combined_lines = combined_lines.split('\n')
         program_lines = []
         c_debug_lines = []
+        file_lines = {}
 
         for line in combined_lines:
             if line.startswith('(*DBG:') and line.endswith('*)'):
                 c_debug_lines.append(line[6:-2])
+            elif line.startswith('(*FILE:c_blocks_code.cpp') and 'extern "C" void' in line:
+                # This is a hack to backport runtime v4 C/C++ functionality to v3. The v3 runtime needs to
+                # exclude all extern "C" declarations from the c_blocks_code.cpp file. I know this is not
+                # pretty, but v3 architecture is not pretty, so we are doing this here so that v4 code
+                # can remain pretty.
+                pass
+            elif line.startswith('(*FILE:') and line.endswith('*)'):
+                file_content = line[7:-2].strip()
+                if ' ' in file_content:
+                    file_path, file_line = file_content.split(' ', 1)
+                    if file_path not in file_lines:
+                        file_lines[file_path] = []
+                    file_lines[file_path].append(file_line)
             else:
                 program_lines.append(line)
 
@@ -148,6 +163,12 @@ class runtime:
             with open('./core/debug.cpp', "w") as f:
                 f.write(c_debug)
 
+            for file_path, lines in file_lines.items():
+                full_path = os.path.join('./core', file_path)
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                with open(full_path, "w") as f:
+                    f.write('\n'.join(lines))
+
             # Start compilation
             try:
                 a = subprocess.Popen(['./scripts/compile_program.sh', str(st_file)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -163,6 +184,12 @@ class runtime:
             # Write c_debug file
             with open('./core/debug.cpp', "w") as f:
                 f.write(c_debug)
+
+            for file_path, lines in file_lines.items():
+                full_path = os.path.join('./core', file_path)
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                with open(full_path, "w") as f:
+                    f.write('\n'.join(lines))
 
             #Write program and debug files
             with open('./st_files/' + st_file, "w") as f:
