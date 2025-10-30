@@ -2,7 +2,7 @@ login_head = """
 <!DOCTYPE html>
 <html>
     <style>
-        @import url(https://fonts.googleapis.com/css?family=Roboto:300);
+        @import url(/static/fonts/roboto/roboto.css);
         .top {
             position:absolute;
             left:0; right:0; top:0;
