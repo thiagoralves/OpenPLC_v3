@@ -1893,7 +1893,7 @@ __end:
 #if defined(SL_RP4)
     #include "SL-RP4.h"
 #endif
-
+#include "synergy.h"
 
 
 

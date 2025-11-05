@@ -136,6 +136,13 @@ elif [ "$1" == "piplc" ]; then
     echo rpi > ../scripts/openplc_platform
     echo piplc > ../scripts/openplc_driver
 
+elif [ "$1" == "synergy_logic" ]; then
+    echo "Activating Synergy Logic driver"
+    cp ./hardware_layers/synergy.cpp ./hardware_layer.cpp
+    echo "Setting Platform"
+    echo linux > ../scripts/openplc_platform
+    echo synergy_logic > ../scripts/openplc_driver
+
 else
     echo "Error: Invalid hardware layer"
 fi
