@@ -324,7 +324,9 @@ elif [ "$1" == "win_msys2" ]; then
     install_glue_generator
     disable_opendnp3
     install_libmodbus
-    cp /usr/include/modbus/*.h /usr/include/
+    # [FIX] Copy libmodbus headers to the expected include path for MSYS2 builds.
+    mkdir -p /usr/include/modbus
+    cp /mingw64/include/modbus/*.h /usr/include/modbus/
     finalize_install win
 
 elif [ "$1" == "linux" ]; then
