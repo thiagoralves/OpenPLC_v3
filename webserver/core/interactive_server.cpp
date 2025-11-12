@@ -282,7 +282,7 @@ void processCommand(unsigned char *buffer, int client_fd)
     {
         processing_command = true;
         char *argument;
-        argument = (char)readCommandArgumentStr(buffer);
+        argument = readCommandArgumentStr(buffer);
         strcpy(ethercat_conf_file, argument);
         free(argument);
         sprintf(log_msg, "Issued start_ethercat() command to start with config: %s\n", ethercat_conf_file);
