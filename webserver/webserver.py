@@ -2509,7 +2509,7 @@ def settings():
             # Change hostname if needed
             current_hostname = socket.gethostname()
             if current_hostname != None and current_hostname != device_hostname:
-                subprocess.run(['hostnamectl', 'set-hostname', device_hostname])
+                open("/etc/hostname", 'w').write(device_hostname + '\n')
 
             database = "openplc.db"
             conn = create_connection(database)
