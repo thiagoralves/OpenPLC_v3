@@ -26,10 +26,14 @@ from credentials import CertGen
 from restapi import app_restapi, restapi_bp, db, register_callback_get, register_callback_post
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from flask_wtf import CSRFProtect
+from flask_wtf.csrf import generate_csrf
 
 
 app = flask.Flask(__name__)
 app.secret_key = str(os.urandom(16))
+csrf = CSRFProtect(app)
+csrf.init_app(app)
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
@@ -601,7 +605,7 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if flask.request.method == 'GET':
-        return pages.login_head + pages.login_body
+        return (pages.login_head + pages.login_body).replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
 
     username = flask.request.form['username']
     password = flask.request.form['password']
@@ -626,9 +630,9 @@ def login():
                         flask_login.login_user(user)
                         return flask.redirect(flask.url_for('dashboard'))
                     else:
-                        return pages.login_head + pages.bad_login_body
+                        return (pages.login_head + pages.bad_login_body).replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
                         
-            return pages.login_head + pages.bad_login_body
+            return (pages.login_head + pages.bad_login_body).replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
                     
         except Error as e:
             print("error connecting to the database" + str(e))
@@ -788,6 +792,7 @@ def programs():
                         action    =  "upload-program"
                         method    =  "post">
                         <br>
+                        <<<<CSRF_INPUT_HERE>>>>
                         <input type="file" name="file" id="file" class="inputfile" accept=".st">
                         <input type="submit" value="Upload Program" name="submit">
                     </form>
@@ -802,7 +807,7 @@ def programs():
         else:
             return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
         
-        return return_str
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
 
 
 @app.route('/reload-program', methods=['GET', 'POST'])
@@ -902,6 +907,7 @@ def update_program():
                         action    =  "update-program-action"
                         method    =  "post">
                         <br>
+                        <<<<CSRF_INPUT_HERE>>>>
                         <input type="file" name="file" id="file" class="inputfile" accept=".st">
                         <input type="submit" value="Upload Program" name="submit">
                         <input type='hidden' name='prog_id' id='prog_id' value='""" + prog_id + """'/>
@@ -914,7 +920,7 @@ def update_program():
 </html>"""
         
         
-        return return_str
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
 
 
 @app.route('/update-program-action', methods=['GET', 'POST'])
@@ -1024,7 +1030,9 @@ def upload_program():
                         method    = "post"
                         onsubmit  = "return validateForm()">
                         
+                        
                         <label for='prog_name'><b>Name</b></label>
+                        <<<<CSRF_INPUT_HERE>>>>
                         <input type='text' id='prog_name' name='prog_name' placeholder='My Program v1.0'>
                         <label for='prog_descr'><b>Description</b></label>
                         <textarea type='text' rows='10' style='resize:vertical' id='prog_descr' name='prog_descr' placeholder='Insert the program description here'></textarea>"""
@@ -1035,6 +1043,7 @@ def upload_program():
         return_str += """
                         <br>
                         <br>
+                        <<<<CSRF_INPUT_HERE>>>>
                         <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value="Upload program"></center>
                     </form>
                 </div>
@@ -1056,7 +1065,7 @@ def upload_program():
     </script>
 </html>"""
 
-        return return_str
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
 
 
 @app.route('/upload-program-action', methods=['GET', 'POST'])
@@ -1237,6 +1246,7 @@ def modbus():
                 return_str += """
                     </table>
                     <br>
+                    <<<<CSRF_INPUT_HERE>>>>
                     <center><a href="add-modbus-device" class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Add new device</b></a></center>
                 </div>
             </div>
@@ -1250,7 +1260,7 @@ def modbus():
         else:
             return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
         
-        return return_str
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
         
 
 @app.route('/add-modbus-device', methods=['GET', 'POST'])
@@ -1291,6 +1301,7 @@ def add_modbus_device():
                             method    =  "post"
                             onsubmit  =  "return validateForm()">
                             <label for='dev_name'><b>Device Name</b></label>
+                            <<<<CSRF_INPUT_HERE>>>>
                             <input type='text' id='dev_name' name='device_name' placeholder='My Device'>
                             <label for='dev_protocol'><b>Device Type</b></label>
                             <select id='dev_protocol' name='device_protocol'>
@@ -1323,7 +1334,7 @@ def add_modbus_device():
             
             return_str += pages.add_slave_devices_tail + pages.add_devices_script
             
-            return return_str
+            return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
             
         elif (flask.request.method == 'POST'):
             devname = flask.request.form.get('device_name')
@@ -1701,7 +1712,7 @@ def monitoring():
     </body>
 </html>"""
 
-        return return_str
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
         
 @app.route('/monitor-update', methods=['GET', 'POST'])
 def monitor_update():
@@ -1946,7 +1957,7 @@ def hardware():
                             <p>PSM is a powerful bridge that connects OpenPLC core to Python. You can use PSM to write your own OpenPLC driver in pure Python. See below for a sample driver that switches %IX0.0 every second</p>
                             <textarea wrap="off" spellcheck="false" name="custom_layer_code" id="custom_layer_code">"""
             with open('./core/psm/main.py') as f: return_str += f.read()
-            return_str += pages.hardware_tail
+            return_str += pages.hardware_tail.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
             
         else:
             hardware_layer = flask.request.form['hardware_layer']
@@ -1957,7 +1968,7 @@ def hardware():
             subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
             return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
         
-        return return_str
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
 
 
 @app.route('/restore_custom_hardware')
@@ -2065,7 +2076,7 @@ def add_user():
                         <br>
                         <br>"""
             return_str += draw_status() + pages.add_user_tail
-            return return_str
+            return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
             
         elif (flask.request.method == 'POST'):
             name = flask.request.form['full_name']
@@ -2158,6 +2169,8 @@ def edit_user():
                     row = cur.fetchone()
                     cur.close()
                     conn.close()
+                    csrf_token = generate_csrf()
+                    return_str += "<input type='hidden' value='" + csrf_token + "'  name='csrf_token'/>" 
                     return_str += "<input type='hidden' value='" + user_id + "' id='user_id' name='user_id'/>" 
                     return_str += "<label for='full_name'><b>Name</b></label><input type='text' id='full_name' name='full_name' value='" + str(row[1]) + "'>"
                     return_str += "<label for='user_name'><b>Username</b></label><input type='text' id='user_name' name='user_name' value='" + str(row[2]) + "'>"
@@ -2491,7 +2504,7 @@ def settings():
             else:
                 return_str += "Error opening DB"
 
-            return return_str
+            return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
 
         elif (flask.request.method == 'POST'):
             modbus_port = flask.request.form.get('modbus_server_port')

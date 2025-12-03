@@ -129,6 +129,7 @@ login_head = """
 login_body = """
                     <h3 style=\"font-family:'Roboto', sans-serif; font-size:14px; color:#1F1F1F; padding:0px 0px 0px 0px; margin: 0px 0px 40px 0px\"><center>Use your credentials to login</center></h3>
                     <input type='text' name='username' id='username' placeholder='username'/>
+                    <<<<CSRF_INPUT_HERE>>>>
                     <input type='password' name='password' id='password' placeholder='password'/>
                     <br><br><br>
                     <button>login</button>
@@ -1012,6 +1013,7 @@ add_user_tail = """
                         <input type='text' id='user_email' name='user_email' placeholder='your@email.com'>
                         <label for='user_password'><b>Password</b></label>
                         <input type='password' id='user_password' name='user_password' placeholder='password'>
+                        <<<<CSRF_INPUT_HERE>>>>
                         <label for='uploadForm'><b>Picture</b></label>
                         <br>
                         <br>
@@ -1177,6 +1179,7 @@ settings_tail = """
                         <br>
                         <br>
                         <br>
+                        <<<<CSRF_INPUT_HERE>>>>
                         <center><input type="submit" value="Save Changes" class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"></center>
                     </form>
                 </div>
@@ -1420,6 +1423,7 @@ hardware_tail = """</textarea>
                         </div>
                         <br>
                         <br>
+                        <<<<CSRF_INPUT_HERE>>>>
                         <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value="Save changes"><a href="restore_custom_hardware" id="code_restore" class="button" style="display:none; width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Restore Original Code</b></a></center>
                         <br>
                         <br>
