@@ -45,6 +45,7 @@
 {#include "sema.txt" }
 {#include "communication_blocks.txt" }
 {#include "sm_cards.txt" }
+{#include "synergy.txt" }
 {#include "SL-RP4.txt" }
 
 {enable code generation}
