@@ -82,6 +82,8 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     echo "Generating object files..."
     if [ "$OPENPLC_DRIVER" = "sl_rp4" ]; then
         g++ -std=gnu++11 -I ./lib -c Config0.c -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w -DSL_RP4
+    elif [ "$OPENPLC_DRIVER" = "synergy_logic" ]; then
+        g++ -std=gnu++11 -I ./lib -c Config0.c -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w -DSYNERGY
     else
         g++ -std=gnu++11 -I ./lib -c Config0.c -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
     fi
@@ -92,6 +94,8 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     fi
     if [ "$OPENPLC_DRIVER" = "sl_rp4" ]; then
         g++ -std=gnu++11 -I ./lib -c Res0.c -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC -DSL_RP4
+    elif [ "$OPENPLC_DRIVER" = "synergy_logic" ]; then
+        g++ -std=gnu++11 -I ./lib -c Res0.c -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC -DSYNERGY
     else
         g++ -std=gnu++11 -I ./lib -c Res0.c -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ETHERCAT_INC 
     fi
@@ -105,6 +109,8 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     echo "Compiling main program..."
     if [ "$OPENPLC_DRIVER" = "sl_rp4" ]; then
         g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lrt -w $ETHERCAT_INC -DSL_RP4
+    elif [ "$OPENPLC_DRIVER" = "synergy_logic" ]; then
+        g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lrt -w $ETHERCAT_INC -DSYNERGY
     else
         g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lrt -w $ETHERCAT_INC 
     fi
