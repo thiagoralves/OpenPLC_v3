@@ -28,6 +28,15 @@ logging.basicConfig(
 restapi_bp = Blueprint('restapi_blueprint', __name__)
 _handler_callback_get: Optional[Callable[[str, dict], dict]] = None
 _handler_callback_post: Optional[Callable[[str, dict], dict]] = None
+
+
+@restapi_bp.after_request
+def add_runtime_version_header(response):
+    """Add runtime version header to all API responses for version detection."""
+    response.headers['X-OpenPLC-Runtime-Version'] = 'v3'
+    return response
+
+
 jwt = JWTManager(app_restapi)
 db = SQLAlchemy(app_restapi)
 
