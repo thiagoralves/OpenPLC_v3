@@ -1,0 +1,309 @@
+(*
+ *  This file is part of OpenPLC - an open source Programmable
+ *  Logic Controller compliant with IEC 61131-3
+ *
+ *  Copyright (C) 2021  Thiago Alves
+ *
+ * See COPYING and COPYING.LESSER files for copyright details.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+ * USA
+ *
+ * This code is made available on the understanding that it will not be
+ * used in safety-critical situations without a full and competent review.
+ *)
+
+
+
+(*
+ * An IEC 61131-3 compiler.
+ *
+ * Based on the
+ * FINAL DRAFT - IEC 61131-3, 2nd Ed. (2001-12-10)
+ *
+ *)
+
+
+(*
+ * This is a dummy implementation of those block since
+ * its code is actually written in C, not ST
+ *)
+ 
+(*
+ * SLM_INIT
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_INIT
+  VAR_INPUT
+    INIT : BOOL;
+  END_VAR
+  VAR_OUTPUT
+    SUCCESS : BOOL;
+  END_VAR
+  SUCCESS := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * THM Configure
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_04THM_CONFIG
+  VAR_INPUT
+    SLOT : SINT;
+    UNITS : SINT;
+    CH1_RANGE : SINT;
+    CH2_RANGE : SINT;
+    CH3_RANGE : SINT;
+    CH4_RANGE : SINT;
+  END_VAR
+  VAR_OUTPUT
+    SUCCESS : BOOL;
+  END_VAR
+  SUCCESS := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * SLM_DISCRETE_OUT_8
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_DISCRETE_OUT_8
+  VAR_INPUT
+    SLOT : SINT;
+    O1 : BOOL;
+    O2 : BOOL;
+    O3 : BOOL;
+    O4 : BOOL;
+    O5 : BOOL;
+    O6 : BOOL;
+    O7 : BOOL;
+    O8 : BOOL;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := SLOT;
+END_FUNCTION_BLOCK
+
+(*
+ * SLM_DISCRETE_OUT_15
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_DISCRETE_OUT_15
+  VAR_INPUT
+    SLOT : SINT;
+    O1 : BOOL;
+    O2 : BOOL;
+    O3 : BOOL;
+    O4 : BOOL;
+    O5 : BOOL;
+    O6 : BOOL;
+    O7 : BOOL;
+    O8 : BOOL;
+    O9 : BOOL;
+    O10 : BOOL;
+    O11 : BOOL;
+    O12 : BOOL;
+    O13 : BOOL;
+    O14 : BOOL;
+    O15 : BOOL;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := SLOT;
+END_FUNCTION_BLOCK
+
+(*
+ * SLM_DISCRETE_OUT_16
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_DISCRETE_OUT_16
+  VAR_INPUT
+    SLOT : SINT;
+    O1 : BOOL;
+    O2 : BOOL;
+    O3 : BOOL;
+    O4 : BOOL;
+    O5 : BOOL;
+    O6 : BOOL;
+    O7 : BOOL;
+    O8 : BOOL;
+    O9 : BOOL;
+    O10 : BOOL;
+    O11 : BOOL;
+    O12 : BOOL;
+    O13 : BOOL;
+    O14 : BOOL;
+    O15 : BOOL;
+    O16 : BOOL;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := SLOT;
+END_FUNCTION_BLOCK
+
+(*
+ * SL_DISCRETE_IN_8
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_DISCRETE_IN_8
+  VAR_INPUT
+    SLOT : SINT;
+  END_VAR
+  VAR_OUTPUT
+    I1 : BOOL;
+    I2 : BOOL;
+    I3 : BOOL;
+    I4 : BOOL;
+    I5 : BOOL;
+    I6 : BOOL;
+    I7 : BOOL;
+    I8 : BOOL;
+  END_VAR
+  I1 := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * SLM_DISCRETE_IN_16
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_DISCRETE_IN_16
+  VAR_INPUT
+    SLOT : SINT;
+  END_VAR
+  VAR_OUTPUT
+    I1 : BOOL;
+    I2 : BOOL;
+    I3 : BOOL;
+    I4 : BOOL;
+    I5 : BOOL;
+    I6 : BOOL;
+    I7 : BOOL;
+    I8 : BOOL;
+    I9 : BOOL;
+    I10 : BOOL;
+    I11 : BOOL;
+    I12 : BOOL;
+    I13 : BOOL;
+    I14 : BOOL;
+    I15 : BOOL;
+    I16 : BOOL;
+  END_VAR
+  I1 := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * SLM_ANALOG_IN_4
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_ANALOG_IN_4
+  VAR_INPUT
+    SLOT : SINT;
+  END_VAR
+  VAR_OUTPUT
+    I1 : UINT;
+    I2 : UINT;
+    I3 : UINT;
+    I4 : UINT;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * SLM_ANALOG_IN_8
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_ANALOG_IN_8
+  VAR_INPUT
+    SLOT : SINT;
+  END_VAR
+  VAR_OUTPUT
+    I1 : UINT;
+    I2 : UINT;
+    I3 : UINT;
+    I4 : UINT;
+    I5 : UINT;
+    I6 : UINT;
+    I7 : UINT;
+    I8 : UINT;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * SLM_ANALOG_OUT_4
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_ANALOG_OUT_4
+  VAR_INPUT
+    SLOT : SINT;
+    O1 : UINT;
+    O2 : UINT;
+    O3 : UINT;
+    O4 : UINT;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * SLM_ANALOG_OUT_8
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_ANALOG_OUT_8
+  VAR_INPUT
+    SLOT : SINT;
+    O1 : UINT;
+    O2 : UINT;
+    O3 : UINT;
+    O4 : UINT;
+    O5 : UINT;
+    O6 : UINT;
+    O7 : UINT;
+    O8 : UINT;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := 0;
+END_FUNCTION_BLOCK
+
+(*
+ * SLM_TEMPERATURE_4
+ * -------------
+ *)
+FUNCTION_BLOCK SLM_TEMPERATURE_4
+  VAR_INPUT
+    SLOT : SINT;
+  END_VAR
+  VAR_OUTPUT
+    I1 : REAL;
+    I2 : REAL;
+    I3 : REAL;
+    I4 : REAL;
+  END_VAR
+  VAR
+    DUMMY : SINT;
+  END_VAR
+  DUMMY := 0;
+END_FUNCTION_BLOCK
