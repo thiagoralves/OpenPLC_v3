@@ -135,7 +135,7 @@ login_body = """
                     <button>login</button>
                 </form>
               </div>
-              <h3 style="font-family:'roboto', sans-serif; font-size:14px; color:#ffffff;">Release: 2025-10-22</h3>
+              <h3 style="font-family:'roboto', sans-serif; font-size:14px; color:#ffffff;">Release: 2025-12-18</h3>
             </div>
         </div>
     </body>
