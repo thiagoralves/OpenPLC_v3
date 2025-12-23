@@ -156,12 +156,17 @@ function disable_ethercat {
 function install_opendnp3 {
     echo "[OPEN DNP3]"
     cd "$OPENPLC_DIR/utils/dnp3_src"
-    swap_on "$1"
+    # Only use swap on systems with sudo (not in Docker)
+    if [ "$1" == "sudo" ]; then
+        swap_on "$1"
+    fi
     cmake .
     make
     $1 make install || fail "Error installing OpenDNP3"
     $1 ldconfig
-    swap_off "$1"
+    if [ "$1" == "sudo" ]; then
+        swap_off "$1"
+    fi
     cd "$OPENPLC_DIR"
 }
 
