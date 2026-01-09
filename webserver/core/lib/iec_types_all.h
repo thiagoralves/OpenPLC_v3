@@ -117,6 +117,12 @@ typedef struct {\
 } type;\
 __DECLARE_COMPLEX_STRUCT(type)
 
+#define __DECLARE_ARRAY_TYPE_WRAPPER(type, base, size)\
+typedef struct {\
+  __IEC_##base##_t table size;\
+} type;\
+__DECLARE_COMPLEX_STRUCT(type)
+
 #define __DECLARE_STRUCT_TYPE(type, elements)\
 typedef struct {\
   elements\
