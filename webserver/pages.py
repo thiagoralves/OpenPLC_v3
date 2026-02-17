@@ -838,6 +838,20 @@ monitoring_tail = """
     <script>
         var req;
         var refresh_rate = 500;
+        var csrfToken = '<<<<CSRF_TOKEN_VALUE>>>>';
+        
+        function pointWrite(value, address)
+        {
+            var formData = new FormData();
+            formData.append('value', value);
+            formData.append('address', address);
+            formData.append('csrf_token', csrfToken);
+            
+            fetch('/point-write', {
+                method: 'POST',
+                body: formData
+            });
+        }
         
         function loadData()
         {
@@ -1424,7 +1438,11 @@ hardware_tail = """</textarea>
                         <br>
                         <br>
                         <<<<CSRF_INPUT_HERE>>>>
-                        <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value="Save changes"><a href="restore_custom_hardware" id="code_restore" class="button" style="display:none; width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Restore Original Code</b></a></center>
+                        <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value="Save changes"></center>
+                    </form>
+                    <form method='post' action='restore_custom_hardware' id='restore_form' style='display:none;'>
+                        <<<<CSRF_INPUT_HERE>>>>
+                        <center><button type='submit' id="code_restore" class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Restore Original Code</b></button></center>
                         <br>
                         <br>
                     </form>
@@ -1498,15 +1516,15 @@ hardware_tail = """</textarea>
     {
         var drop_down = document.getElementById('hardware_layer');
         var psm_div = document.getElementById('psm_code');
-        var restore_button = document.getElementById('code_restore');
+        var restore_form = document.getElementById('restore_form');
         if (drop_down.value == "psm_linux" || drop_down.value == "psm_win")
         {
-            restore_button.style.display = "inline";
+            restore_form.style.display = "block";
             psm_div.style.visibility = "visible";
         }
         else
         {
-            restore_button.style.display = "none";
+            restore_form.style.display = "none";
             psm_div.style.visibility = "hidden";
         }
         
@@ -1914,7 +1932,11 @@ edit_slave_devices_tail = """
                         <input type='text' style='width: 20%' id='aow_size' name='aow_size' placeholder='8'>
                     </div>
                     <br>
-                    <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value='Save device'><a href='delete-device?dev_id="""
+                    <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value='Save device'></center>
+                    </form>
+                    <form method='post' action='delete-device' style='display:inline;'>
+                        <<<<CSRF_INPUT_HERE>>>>
+                        <input type='hidden' name='dev_id' value='"""
 
 edit_devices_script = """
     <script type="text/javascript">
