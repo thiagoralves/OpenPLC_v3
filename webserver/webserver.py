@@ -373,10 +373,10 @@ def draw_status():
     status_str = ""
     if (openplc_runtime.status() == "Running"):
         status_str = "<center><h3 style='font-family:\"Roboto\", sans-serif; font-size:18px; color:white; padding:0px 0px 0px 0px;'>Status: <i>Running</i></span></center></h3>"
-        status_str += "<a href='stop_plc' class='button' style='width: 210px; height: 53px; margin: 0px 20px 0px 20px;'><b>Stop PLC</b></a>"
+        status_str += "<form method='post' action='stop_plc' style='display:inline;'><<<<CSRF_INPUT_HERE>>>><button type='submit' class='button' style='width: 210px; height: 53px; margin: 0px 20px 0px 20px;'><b>Stop PLC</b></button></form>"
     else:
         status_str = "<center><h3 style='font-family:\"Roboto\", sans-serif; font-size:18px; color:white; padding:0px 0px 0px 0px;'>Status: <i>Stopped</i></span></center></h3>"
-        status_str += "<a href='start_plc' class='button' style='width: 210px; height: 53px; margin: 0px 20px 0px 20px;'><b>Start PLC</b></a>"
+        status_str += "<form method='post' action='start_plc' style='display:inline;'><<<<CSRF_INPUT_HERE>>>><button type='submit' class='button' style='width: 210px; height: 53px; margin: 0px 20px 0px 20px;'><b>Start PLC</b></button></form>"
     
     return status_str    
 
@@ -643,7 +643,7 @@ def login():
     return pages.login_head + pages.bad_login_body
 
 
-@app.route('/start_plc')
+@app.route('/start_plc', methods=['POST'])
 def start_plc():
     global openplc_runtime
     if (flask_login.current_user.is_authenticated == False):
@@ -658,7 +658,7 @@ def start_plc():
         return flask.redirect(flask.url_for('dashboard'))
 
 
-@app.route('/stop_plc')
+@app.route('/stop_plc', methods=['POST'])
 def stop_plc():
     global openplc_runtime
     if (flask_login.current_user.is_authenticated == False):
@@ -723,7 +723,7 @@ def dashboard():
         
         return_str += pages.dashboard_tail
         
-        return return_str
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
 
 
 @app.route('/programs', methods=['GET', 'POST'])
@@ -854,7 +854,11 @@ def reload_program():
                 return_str += "<label for='prog_descr'><b>Description</b></label><textarea type='text' rows='10' style='resize:vertical' id='prog_descr' name='program_descr' disabled>" + str(row[2]) + "</textarea>"
                 return_str += "<label for='prog_file'><b>File</b></label><input type='text' id='prog_file' name='program_file' value='" + str(row[3]) + "' disabled>"
                 return_str += "<label for='prog_date'><b>Date Uploaded</b></label><input type='text' id='prog_date' name='program_date' value='" + time.strftime('%b %d, %Y - %I:%M%p', time.localtime(row[4])) + "' disabled>"
-                return_str += "<br><br><center><a href='compile-program?file=" + str(row[3]) + "' class='button' style='width: 200px; height: 53px; margin: 0px 20px 0px 20px;'><b>Launch program</b></a><a href='update-program?id=" + str(prog_id) + "' class='button' style='width: 200px; height: 53px; margin: 0px 20px 0px 20px;'><b>Update program</b></a><a href='remove-program?id=" + str(prog_id) + "' class='button' style='width: 200px; height: 53px; margin: 0px 20px 0px 20px;'><b>Remove program</b></a></center>"
+                return_str += "<br><br><center>"
+                return_str += "<form method='post' action='compile-program' style='display:inline;'><<<<CSRF_INPUT_HERE>>>><input type='hidden' name='file' value='" + str(row[3]) + "'/><button type='submit' class='button' style='width: 200px; height: 53px; margin: 0px 20px 0px 20px;'><b>Launch program</b></button></form>"
+                return_str += "<a href='update-program?id=" + str(prog_id) + "' class='button' style='width: 200px; height: 53px; margin: 0px 20px 0px 20px;'><b>Update program</b></a>"
+                return_str += "<form method='post' action='remove-program' style='display:inline;'><<<<CSRF_INPUT_HERE>>>><input type='hidden' name='id' value='" + str(prog_id) + "'/><button type='submit' class='button' style='width: 200px; height: 53px; margin: 0px 20px 0px 20px;'><b>Remove program</b></button></form>"
+                return_str += "</center>"
                 return_str += """
                 </div>
             </div>
@@ -868,7 +872,7 @@ def reload_program():
         else:
             return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
         
-        return return_str
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
         
         
 @app.route('/update-program', methods=['GET', 'POST'])
@@ -949,8 +953,8 @@ def update_program_action():
                 filename = str(row[3])
                 prog_file.save(os.path.join('st_files', filename))
                 
-                #Redirect back to the compiling page
-                return '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/compile-program?file=' + filename + '"></head></html>'
+                #Redirect back to the compiling page using auto-submit form (POST required)
+                return f"<!DOCTYPE html><html><body><form id='redirect_form' method='post' action='/compile-program'><input type='hidden' name='csrf_token' value='{generate_csrf()}'/><input type='hidden' name='file' value='{filename}'/></form><script>document.getElementById('redirect_form').submit();</script></body></html>"
                 
             except Error as e:
                 print("error connecting to the database" + str(e))
@@ -959,13 +963,13 @@ def update_program_action():
             return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
 
 
-@app.route('/remove-program', methods=['GET', 'POST'])
+@app.route('/remove-program', methods=['POST'])
 def remove_program():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        prog_id = flask.request.args.get('id')
+        prog_id = flask.request.form.get('id')
         database = "openplc.db"
         conn = create_connection(database)
         if (conn != None):
@@ -1103,8 +1107,8 @@ def upload_program_action():
                 conn.commit()
                 cur.close()
                 conn.close()
-                #Redirect back to the compiling page
-                return '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/compile-program?file=' + prog_file + '"></head></html>'
+                #Redirect back to the compiling page using auto-submit form (POST required)
+                return f"<!DOCTYPE html><html><body><form id='redirect_form' method='post' action='/compile-program'><input type='hidden' name='csrf_token' value='{generate_csrf()}'/><input type='hidden' name='file' value='{prog_file}'/></form><script>document.getElementById('redirect_form').submit();</script></body></html>"
             
             except Error as e:
                 print("error connecting to the database" + str(e))
@@ -1113,14 +1117,14 @@ def upload_program_action():
             return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
         
 
-@app.route('/compile-program', methods=['GET', 'POST'])
+@app.route('/compile-program', methods=['POST'])
 def compile_program():
     global openplc_runtime
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        st_file = flask.request.args.get('file')
+        st_file = flask.request.form.get('file')
         
         #load information about the program being compiled into the openplc_runtime object
         database = "openplc.db"
@@ -1475,7 +1479,8 @@ def modbus_edit_device():
                     
                     return_str += pages.edit_slave_devices_tail
                     return_str += dev_id
-                    return_str += """' class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Delete device</b></a></center>
+                    return_str += """'/>
+                        <center><button type='submit' class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Delete device</b></button></center>
                     </form>
                 </div>
             </div>
@@ -1508,7 +1513,7 @@ def modbus_edit_device():
             else:
                 return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
             
-            return return_str
+            return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
             
         elif (flask.request.method == 'POST'):
             devid_db = flask.request.form.get('db_dev_id')
@@ -1558,13 +1563,13 @@ def modbus_edit_device():
                 return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
 
 
-@app.route('/delete-device', methods=['GET', 'POST'])
+@app.route('/delete-device', methods=['POST'])
 def delete_device():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        devid_db = flask.request.args.get('dev_id')
+        devid_db = flask.request.form.get('dev_id')
         database = "openplc.db"
         conn = create_connection(database)
         if (conn != None):
@@ -1660,8 +1665,8 @@ def monitoring():
                     return_str += '<tr style="height:60px">' # onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
                     return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>'
                     if (debug_data.location.find('QX') != -1):
-                        return_str += '<button class="write-button true" onclick="fetch(\'/point-write?value=1&address=' + str(debug_data.location) + '\')">true</button>'
-                        return_str += '<button class="write-button false" onclick="fetch(\'/point-write?value=0&address=' + str(debug_data.location) + '\')">false</button>'
+                        return_str += '<button class="write-button true" onclick="pointWrite(1, \'' + str(debug_data.location) + '\')">true</button>'
+                        return_str += '<button class="write-button false" onclick="pointWrite(0, \'' + str(debug_data.location) + '\')">false</button>'
                     return_str += '</td><td valign="middle">'
                     if (debug_data.type == 'BOOL'):
                         if (debug_data.value == 0):
@@ -1712,7 +1717,8 @@ def monitoring():
     </body>
 </html>"""
 
-        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
+        csrf_token = generate_csrf()
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{csrf_token}'  name='csrf_token'/>" ).replace('<<<<CSRF_TOKEN_VALUE>>>>', csrf_token)
         
 @app.route('/monitor-update', methods=['GET', 'POST'])
 def monitor_update():
@@ -1736,8 +1742,8 @@ def monitor_update():
                 return_str += '<tr style="height:60px">' # onclick="document.location=\'point-info?table_id=' + str(data_index) + '\'">'
                 return_str += '<td>' + debug_data.name + '</td><td>' + debug_data.type + '</td><td>' + debug_data.location + '</td><td>'
                 if (debug_data.location.find('QX') != -1):
-                    return_str += '<button class="write-button true" onclick="fetch(\'/point-write?value=1&address=' + str(debug_data.location) + '\')">true</button>'
-                    return_str += '<button class="write-button false" onclick="fetch(\'/point-write?value=0&address=' + str(debug_data.location) + '\')">false</button>'
+                    return_str += '<button class="write-button true" onclick="pointWrite(1, \'' + str(debug_data.location) + '\')">true</button>'
+                    return_str += '<button class="write-button false" onclick="pointWrite(0, \'' + str(debug_data.location) + '\')">false</button>'
                 return_str += '</td><td valign="middle">'
                 if (debug_data.type == 'BOOL'):
                     if (debug_data.value == 0):
@@ -1763,13 +1769,13 @@ def monitor_update():
         
         return return_str
 
-@app.route('/point-write', methods=['GET', 'POST'])
+@app.route('/point-write', methods=['POST'])
 def point_write():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
-        point_value = flask.request.args.get('value')
-        point_address = flask.request.args.get('address')
+        point_value = flask.request.form.get('value')
+        point_address = flask.request.form.get('address')
         monitor.write_value(point_address, int(point_value))
         return ''
 
@@ -1968,12 +1974,13 @@ def hardware():
             with open('./core/psm/main.py', 'w+') as f: f.write(custom_layer_code)
             
             subprocess.call(['./scripts/change_hardware_layer.sh', hardware_layer])
-            return "<head><meta http-equiv=\"refresh\" content=\"0; URL='compile-program?file=" + current_program + "'\" /></head>"
+            #Redirect back to the compiling page using auto-submit form (POST required)
+            return f"<!DOCTYPE html><html><body><form id='redirect_form' method='post' action='/compile-program'><input type='hidden' name='csrf_token' value='{generate_csrf()}'/><input type='hidden' name='file' value='{current_program}'/></form><script>document.getElementById('redirect_form').submit();</script></body></html>"
         
         return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
 
 
-@app.route('/restore_custom_hardware')
+@app.route('/restore_custom_hardware', methods=['POST'])
 def restore_custom_hardware():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
@@ -2051,7 +2058,7 @@ def users():
         else:
             return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
         
-        return return_str
+        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
 
 
 @app.route('/add-user', methods=['GET', 'POST'])
@@ -2186,9 +2193,14 @@ def edit_user():
                             <input type="file" name="file" id="file" class="inputfile" accept="image/*">
                             <br>
                             <br>
-                            <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value='Save changes'><a href='delete-user?user_id="""
+                            <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value='Save changes'></center>
+                        </form>
+                        <form method='post' action='delete-user' style='display:inline;'>
+                            <<<<CSRF_INPUT_HERE>>>>
+                            <input type='hidden' name='user_id' value='"""
                     return_str += user_id
-                    return_str += """' class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Delete user</b></a></center>
+                    return_str += """'/>
+                            <center><button type='submit' class="button" style="width: 310px; height: 53px; margin: 0px 20px 0px 20px;"><b>Delete user</b></button></center>
                         </form>
                     </div>
                 </div>
@@ -2214,7 +2226,7 @@ def edit_user():
             else:
                 return_str += 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
             
-            return return_str
+            return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
             
         elif (flask.request.method == 'POST'):
             user_id = flask.request.form['user_id']
@@ -2260,13 +2272,13 @@ def edit_user():
                 return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
 
 
-@app.route('/delete-user', methods=['GET', 'POST'])
+@app.route('/delete-user', methods=['POST'])
 def delete_user():
     if (flask_login.current_user.is_authenticated == False):
         return flask.redirect(flask.url_for('login'))
     else:
         if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        user_id = flask.request.args.get('user_id')
+        user_id = flask.request.form.get('user_id')
         database = "openplc.db"
         conn = create_connection(database)
         if (conn != None):
