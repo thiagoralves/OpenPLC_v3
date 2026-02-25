@@ -800,7 +800,7 @@ def programs():
                             To upload a program, please use the <a href="https://github.com/Autonomy-Logic/openplc-editor" target="_blank" style="color: #0066FC; text-decoration: underline;">OpenPLC Editor</a>
                         </p>
                         <p style="margin: 0; font-size: 14px; color: #856404;">
-                            <strong>SECURITY WARNING:</strong> OpenPLC Editor must be connected or it will leave the API uninitialized.
+                            <strong>SECURITY WARNING:</strong> OpenPLC Editor must be connected atleast once or it will leave the API uninitialized.
                         </p>
                     </div>
                 </div>
