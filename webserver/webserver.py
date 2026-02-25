@@ -786,16 +786,23 @@ def programs():
                     <a href="programs?list_all=1" style="text-align:right; float:right; color:black; font-weight:bold;">List all programs</a>
                     <br>
                     <br>
-                    <h2>Upload Program</h2>
-                    <form   id    = "uploadForm"
-                        enctype   =  "multipart/form-data"
-                        action    =  "upload-program"
-                        method    =  "post">
-                        <br>
-                        <<<<CSRF_INPUT_HERE>>>>
-                        <input type="file" name="file" id="file" class="inputfile" accept=".st">
-                        <input type="submit" value="Upload Program" name="submit">
-                    </form>
+                    <div id="upload-toast" style="
+                        background-color: #fff3cd;
+                        border: 1px solid #ffc107;
+                        border-left: 4px solid #ffc107;
+                        border-radius: 4px;
+                        padding: 16px 20px;
+                        margin: 20px 0;
+                        font-family: 'Roboto', sans-serif;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    ">
+                        <p style="margin: 0 0 10px 0; font-size: 15px;">
+                            To upload a program, please use the <a href="https://github.com/Autonomy-Logic/openplc-editor" target="_blank" style="color: #0066FC; text-decoration: underline;">OpenPLC Editor</a>
+                        </p>
+                        <p style="margin: 0; font-size: 14px; color: #856404;">
+                            <strong>SECURITY WARNING:</strong> OpenPLC Editor must be connected or it will leave the API uninitialized.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -983,135 +990,6 @@ def remove_program():
         else:
             return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
 
-
-@app.route('/upload-program', methods=['GET', 'POST'])
-def upload_program():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        if ('file' not in flask.request.files):
-            return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
-        prog_file = flask.request.files['file']
-        if (prog_file.filename == ''):
-            return draw_blank_page() + "<h2>Error</h2><p>You need to select a file to be uploaded!<br><br>Use the back-arrow on your browser to return</p></div></div></div></body></html>"
-        
-        # TODO realocate to another function
-        filename = str(random.randint(1,1000000)) + ".st"
-        prog_file.save(os.path.join('st_files', filename))
-        
-        return_str = pages.w3_style + pages.style + draw_top_div()
-        return_str += """
-            <div class='main'>
-                <div class='w3-sidebar w3-bar-block' style='width:250px; background-color:#1F1F1F'>
-                    <br>
-                    <br>
-                    <a href="dashboard" class="w3-bar-item w3-button"><img src="/static/home-icon-64x64.png" alt="Dashboard" style="width:47px;height:32px;padding:0px 15px 0px 0px;float:left"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Dashboard</p></a>
-                    <a href="programs" class="w3-bar-item w3-button" style="background-color:#0066FC; padding-right:0px;padding-top:0px;padding-bottom:0px"><img src="/static/programs-icon-64x64.png" alt="Programs" style="width:47px;height:39px;padding:7px 15px 0px 0px;float:left"><img src="/static/arrow.png" style="width:17px;height:49px;padding:0px 0px 0px 0px;margin: 0px 0px 0px 0px; float:right"><p style='font-family:"Roboto", sans-serif; font-size:20px; color:white;margin: 10px 0px 0px 0px'>Programs</p></a>
-                    <a href='modbus' class='w3-bar-item w3-button'><img src='/static/modbus-icon-512x512.png' alt='Modbus' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Slave Devices</p></a>
-                    <a href='monitoring' class='w3-bar-item w3-button'><img src='/static/monitoring-icon-64x64.png' alt='Monitoring' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Monitoring</p></a>
-                    <a href='hardware' class='w3-bar-item w3-button'><img src='/static/hardware-icon-980x974.png' alt='Hardware' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Hardware</p></a>
-                    <a href='users' class='w3-bar-item w3-button'><img src='/static/users-icon-64x64.png' alt='Users' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Users</p></a>
-                    <a href='settings' class='w3-bar-item w3-button'><img src='/static/settings-icon-64x64.png' alt='Settings' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Settings</p></a>
-                    <a href='logout' class='w3-bar-item w3-button'><img src='/static/logout-icon-64x64.png' alt='Logout' style='width:47px;height:32px;padding:0px 15px 0px 0px;float:left'><p style='font-family:\"Roboto\", sans-serif; font-size:20px; color:white;margin: 2px 0px 0px 0px'>Logout</p></a>
-                    <br>
-                    <br>"""
-        return_str += draw_status()
-        return_str += """
-        </div>
-            <div style="margin-left:320px; margin-right:70px">
-                <div style="w3-container">
-                    <br>
-                    <h2>Program Info</h2>
-                    <br>
-                    <form id      = "uploadForm"
-                        enctype   = "multipart/form-data"
-                        action    = "upload-program-action"
-                        method    = "post"
-                        onsubmit  = "return validateForm()">
-                        
-                        
-                        <label for='prog_name'><b>Name</b></label>
-                        <<<<CSRF_INPUT_HERE>>>>
-                        <input type='text' id='prog_name' name='prog_name' placeholder='My Program v1.0'>
-                        <label for='prog_descr'><b>Description</b></label>
-                        <textarea type='text' rows='10' style='resize:vertical' id='prog_descr' name='prog_descr' placeholder='Insert the program description here'></textarea>"""
-        return_str += "<label for='prog_file'><b>File</b></label><input type='text' id='program_file' name='program_file' value='" + filename + "' disabled>"
-        return_str += "<label for='prog_date'><b>Date Uploaded</b></label><input type='text' id='prog_date' name='prog_date' value='" + time.strftime('%b %d, %Y - %I:%M%p', time.localtime(int(time.time()))) + "' disabled>"
-        return_str += "<input type='hidden' value='" + filename + "' id='prog_file' name='prog_file'/>"
-        return_str += "<input type='hidden' value='" + str(int(time.time())) + "' id='epoch_time' name='epoch_time'/>"
-        return_str += """
-                        <br>
-                        <br>
-                        <<<<CSRF_INPUT_HERE>>>>
-                        <center><input type="submit" class="button" style="font-weight:bold; width: 310px; height: 53px; margin: 0px 20px 0px 20px;" value="Upload program"></center>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </body>
-    
-    <script type="text/javascript">
-        function validateForm()
-        {
-            var progname = document.forms["uploadForm"]["prog_name"].value;
-            if (progname == "")
-            {
-                alert("Program Name cannot be blank");
-                return false;
-            }
-            return true;
-        }
-    </script>
-</html>"""
-
-        return return_str.replace('<<<<CSRF_INPUT_HERE>>>>', f"<input type='hidden' value='{generate_csrf()}'  name='csrf_token'/>" )
-
-
-@app.route('/upload-program-action', methods=['GET', 'POST'])
-def upload_program_action():
-    if (flask_login.current_user.is_authenticated == False):
-        return flask.redirect(flask.url_for('login'))
-    else:
-        if (openplc_runtime.status() == "Compiling"): return draw_compiling_page()
-        prog_name = flask.request.form['prog_name']
-        prog_descr = flask.request.form['prog_descr']
-        prog_file = flask.request.form['prog_file']
-        epoch_time = flask.request.form['epoch_time']
-
-               #validate epoch_time format and range
-        try:
-            epoch_time = int(epoch_time)
-            current_time = int(time.time())
-            #allow timestamps between 2015-01-01 and 1 year in the future
-            min_allowed_time = 1420070400  #2015-01-01 00:00:00
-            max_allowed_time = current_time + (100 * 31536000)  #current time + 1 year
-            
-            if epoch_time < min_allowed_time or epoch_time > max_allowed_time:
-                return 'Invalid epoch time value: must be between 2015-01-01 and 1 year from now'
-        except ValueError:
-            return 'Invalid epoch time format: must be a valid integer timestamp'
-
-        (prog_name, prog_descr, prog_file, epoch_time) = sanitize_input(prog_name, prog_descr, prog_file, int(epoch_time))
-        
-        database = "openplc.db"
-        conn = create_connection(database)
-        if (conn != None):
-            try:
-                cur = conn.cursor()
-                cur.execute("INSERT INTO Programs (Name, Description, File, Date_upload) VALUES (?, ?, ?, ?)", (prog_name, prog_descr, prog_file, epoch_time))
-                conn.commit()
-                cur.close()
-                conn.close()
-                #Redirect back to the compiling page
-                return '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/compile-program?file=' + prog_file + '"></head></html>'
-            
-            except Error as e:
-                print("error connecting to the database" + str(e))
-                return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.<br><br>Error: ' + str(e)
-        else:
-            return 'Error connecting to the database. Make sure that your openplc.db file is not corrupt.'
-        
 
 @app.route('/compile-program', methods=['GET', 'POST'])
 def compile_program():
