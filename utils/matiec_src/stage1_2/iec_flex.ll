@@ -1556,6 +1556,8 @@ VAR_GLOBAL	return VAR_GLOBAL;	/* Keyword */
 END_VAR		return END_VAR;		/* Keyword */
 RETAIN		return RETAIN;		/* Keyword */
 NON_RETAIN	return NON_RETAIN;	/* Keyword */
+PUBLISH		return PUBLISH;		/* Keyword - IceOryx2 */
+SUBSCRIBE	return SUBSCRIBE;	/* Keyword - IceOryx2 */
 R_EDGE		return R_EDGE;		/* Keyword */
 F_EDGE		return F_EDGE;		/* Keyword */
 AT		return AT;		/* Keyword */
@@ -1592,6 +1594,8 @@ END_FUNCTION_BLOCK	BEGIN(INITIAL);	return END_FUNCTION_BLOCK;	/* Keyword */  /* 
 VAR_TEMP				return VAR_TEMP;		/* Keyword */
 VAR					return VAR;			/* Keyword */
 NON_RETAIN				return NON_RETAIN;		/* Keyword */
+PUBLISH					return PUBLISH;			/* Keyword - IceOryx2 */
+SUBSCRIBE				return SUBSCRIBE;		/* Keyword - IceOryx2 */
 END_VAR					return END_VAR;			/* Keyword */
 
 
@@ -1674,6 +1678,8 @@ WITH					return WITH;			/* Keyword */
 PROGRAM					return PROGRAM;			/* Keyword */
 RETAIN					return RETAIN;			/* Keyword */
 NON_RETAIN				return NON_RETAIN;		/* Keyword */
+PUBLISH					return PUBLISH;			/* Keyword - IceOryx2 */
+SUBSCRIBE				return SUBSCRIBE;		/* Keyword - IceOryx2 */
 READ_WRITE				return READ_WRITE;		/* Keyword */
 READ_ONLY				return READ_ONLY;		/* Keyword */
 

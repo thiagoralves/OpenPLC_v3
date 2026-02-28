@@ -48,6 +48,19 @@ else
     ETHERCAT_INC=""
 fi
 
+# IceOryx2 DEL (Data Exchange Layer) setup
+ICEORYX2_INC=""
+if [ -f scripts/iceoryx2 ] && [ "$(cat scripts/iceoryx2 2>/dev/null)" = "iceoryx2" ]; then
+    echo "Including IceOryx2 DEL"
+    ICEORYX2_INC="-D_iceoryx2_src -std=gnu++17"
+    # Try pkg-config first, fall back to local build paths
+    if pkg-config --exists iceoryx2-c 2>/dev/null; then
+        ICEORYX2_INC="$ICEORYX2_INC $(pkg-config --cflags --libs iceoryx2-c)"
+    else
+        ICEORYX2_INC="$ICEORYX2_INC -I../../utils/iceoryx2_src/iceoryx2-ffi/ffi/include -L../../utils/iceoryx2_src/target/release -liceoryx2_ffi"
+    fi
+fi
+
 #compiling for each platform
 cd core
 if [ "$OPENPLC_PLATFORM" = "win" ]; then
@@ -67,8 +80,10 @@ if [ "$OPENPLC_PLATFORM" = "win" ]; then
     fi
     echo "Generating glueVars..."
     ./glue_generator
+    echo "Generating IceOryx2 bridge..."
+    ./iceoryx2_generator
     echo "Compiling main program..."
-    g++ *.cpp *.o -o openplc -I ./lib -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib snap7.lib -lmodbus -w 
+    g++ *.cpp *.o -o openplc -I ./lib -pthread -fpermissive -I /usr/local/include/modbus -L /usr/local/lib snap7.lib -lmodbus -w $ICEORYX2_INC
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"
@@ -76,7 +91,7 @@ if [ "$OPENPLC_PLATFORM" = "win" ]; then
     fi
     echo "Compilation finished successfully!"
     exit 0
-    
+
 elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     echo "Compiling for Linux"
     echo "Generating object files..."
@@ -106,13 +121,15 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     fi
     echo "Generating glueVars..."
     ./glue_generator
+    echo "Generating IceOryx2 bridge..."
+    ./iceoryx2_generator
     echo "Compiling main program..."
     if [ "$OPENPLC_DRIVER" = "sl_rp4" ]; then
-        g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lrt -w $ETHERCAT_INC -DSL_RP4
+        g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lrt -w $ETHERCAT_INC $ICEORYX2_INC -DSL_RP4
     elif [ "$OPENPLC_DRIVER" = "synergy_logic" ]; then
-        g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lrt -w $ETHERCAT_INC -DSYNERGY
+        g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lrt -w $ETHERCAT_INC $ICEORYX2_INC -DSYNERGY
     else
-        g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lrt -w $ETHERCAT_INC 
+        g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -pthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -lrt -w $ETHERCAT_INC $ICEORYX2_INC
     fi
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
@@ -121,7 +138,7 @@ elif [ "$OPENPLC_PLATFORM" = "linux" ]; then
     fi
     echo "Compilation finished successfully!"
     exit 0
-    
+
 elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     echo "Compiling for Raspberry Pi"
     echo "Generating object files..."
@@ -147,11 +164,13 @@ elif [ "$OPENPLC_PLATFORM" = "rpi" ]; then
     fi
     echo "Generating glueVars..."
     ./glue_generator
+    echo "Generating IceOryx2 bridge..."
+    ./iceoryx2_generator
     echo "Compiling main program..."
     if [ "$OPENPLC_DRIVER" = "sequent" ]; then
-        g++ -DSEQUENT -std=gnu++11 *.cpp *.o -o openplc -I ./lib -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w 
+        g++ -DSEQUENT -std=gnu++11 *.cpp *.o -o openplc -I ./lib -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ICEORYX2_INC
     else
-        g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w
+        g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -lrt -lwiringPi -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $ICEORYX2_INC
     fi
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
@@ -179,8 +198,10 @@ elif [ "$OPENPLC_PLATFORM" = "opi" ]; then
     fi
     echo "Generating glueVars..."
     ./glue_generator
+    echo "Generating IceOryx2 bridge..."
+    ./iceoryx2_generator
     echo "Compiling main program..."
-    g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -lrt -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $WIRINGOP_INC
+    g++ -std=gnu++11 *.cpp *.o -o openplc -I ./lib -lrt -lpthread -fpermissive `pkg-config --cflags --libs libmodbus` -lsnap7 -lasiodnp3 -lasiopal -lopendnp3 -lopenpal -w $WIRINGOP_INC $ICEORYX2_INC
     if [ $? -ne 0 ]; then
         echo "Error compiling C files"
         echo "Compilation finished with errors!"

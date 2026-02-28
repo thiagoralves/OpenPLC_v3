@@ -141,6 +141,13 @@ function install_glue_generator {
     cd "$OPENPLC_DIR"
 }
 
+function install_iceoryx2_generator {
+    echo "[ICEORYX2 GENERATOR]"
+    cd "$OPENPLC_DIR/utils/iceoryx2_generator_src"
+    g++ -std=c++17 iceoryx2_generator.cpp -o "$OPENPLC_DIR/webserver/core/iceoryx2_generator" || fail "Error compiling IceOryx2 Generator"
+    cd "$OPENPLC_DIR"
+}
+
 function install_ethercat {
     echo "[EtherCAT]"
     cd "$OPENPLC_DIR/utils/ethercat_src"
@@ -151,6 +158,10 @@ function install_ethercat {
 
 function disable_ethercat {
     echo "" > "$OPENPLC_DIR/webserver/scripts/ethercat"
+}
+
+function disable_iceoryx2 {
+    echo "" > "$OPENPLC_DIR/webserver/scripts/iceoryx2"
 }
 
 function install_opendnp3 {
@@ -233,8 +244,10 @@ function install_all_libs {
     install_matiec "$1"
     install_st_optimizer "$1"
     install_glue_generator "$1"
+    install_iceoryx2_generator "$1"
     install_opendnp3 "$1"
     disable_ethercat "$1"
+    disable_iceoryx2 "$1"
     install_libmodbus "$1"
     install_libsnap7 "$1"
 }

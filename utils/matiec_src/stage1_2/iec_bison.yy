@@ -950,6 +950,8 @@ typedef struct YYLTYPE {
 %token END_VAR
 %token RETAIN
 %token NON_RETAIN
+%token PUBLISH
+%token SUBSCRIBE
 %token R_EDGE
 %token F_EDGE
 %token AT
@@ -4442,11 +4444,19 @@ global_var_name: identifier;
 
 global_var_declarations:
   VAR_GLOBAL global_var_decl_list END_VAR
-	{$$ = new global_var_declarations_c(NULL, $2, locloc(@$));}
+	{$$ = new global_var_declarations_c(NULL, $2, NULL, locloc(@$));}
 | VAR_GLOBAL CONSTANT global_var_decl_list END_VAR
-	{$$ = new global_var_declarations_c(new constant_option_c(locloc(@2)), $3, locloc(@$));}
+	{$$ = new global_var_declarations_c(new constant_option_c(locloc(@2)), $3, NULL, locloc(@$));}
 | VAR_GLOBAL RETAIN global_var_decl_list END_VAR
-	{$$ = new global_var_declarations_c(new retain_option_c(locloc(@2)), $3, locloc(@$));}
+	{$$ = new global_var_declarations_c(new retain_option_c(locloc(@2)), $3, NULL, locloc(@$));}
+| VAR_GLOBAL PUBLISH single_byte_character_string global_var_decl_list END_VAR
+	{$$ = new global_var_declarations_c(NULL, $4, new publish_option_c($3, locloc(@2)), locloc(@$));}
+| VAR_GLOBAL SUBSCRIBE single_byte_character_string global_var_decl_list END_VAR
+	{$$ = new global_var_declarations_c(NULL, $4, new subscribe_option_c($3, locloc(@2)), locloc(@$));}
+| VAR_GLOBAL RETAIN PUBLISH single_byte_character_string global_var_decl_list END_VAR
+	{$$ = new global_var_declarations_c(new retain_option_c(locloc(@2)), $5, new publish_option_c($4, locloc(@3)), locloc(@$));}
+| VAR_GLOBAL RETAIN SUBSCRIBE single_byte_character_string global_var_decl_list END_VAR
+	{$$ = new global_var_declarations_c(new retain_option_c(locloc(@2)), $5, new subscribe_option_c($4, locloc(@3)), locloc(@$));}
 /* ERROR_CHECK_BEGIN */
 | VAR_GLOBAL END_VAR
 	{$$ = NULL; print_err_msg(locl(@1), locf(@2), "no variable declared in global variable(s) declaration."); yynerrs++;}
@@ -4454,6 +4464,10 @@ global_var_declarations:
 	{$$ = NULL; print_err_msg(locl(@2), locf(@3), "no variable declared in constant global variable(s) declaration."); yynerrs++;}
 | VAR_GLOBAL RETAIN END_VAR
 	{$$ = NULL; print_err_msg(locl(@2), locf(@3), "no variable declared in retentive global variable(s) declaration."); yynerrs++;}
+| VAR_GLOBAL PUBLISH single_byte_character_string END_VAR
+	{$$ = NULL; print_err_msg(locl(@3), locf(@4), "no variable declared in publish global variable(s) declaration."); yynerrs++;}
+| VAR_GLOBAL SUBSCRIBE single_byte_character_string END_VAR
+	{$$ = NULL; print_err_msg(locl(@3), locf(@4), "no variable declared in subscribe global variable(s) declaration."); yynerrs++;}
 | VAR_GLOBAL error global_var_decl_list END_VAR
 	{$$ = NULL; print_err_msg(locf(@2), locl(@2), "unexpected token after 'VAR_GLOBAL' in global variable(s) declaration."); yyerrok;}
 | VAR_GLOBAL CONSTANT error global_var_decl_list END_VAR

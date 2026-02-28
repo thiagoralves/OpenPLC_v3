@@ -36,6 +36,9 @@
 #ifdef _ethercat_src
 #include "ethercat_src.h"
 #endif
+#ifdef _iceoryx2_src
+#include "iceoryx2_bridge.h"
+#endif
 
 #include "oplc_snap7.h"
 
@@ -123,7 +126,14 @@ int main(int argc,char **argv)
     //======================================================
     initializeSnap7();
 
-
+    //======================================================
+    //          ICEORYX2 DEL INITIALIZATION
+    //======================================================
+#ifdef _iceoryx2_src
+    if (iceoryx2_init() != 0) {
+        printf("WARNING: IceOryx2 DEL initialization failed\n");
+    }
+#endif
 
 #ifdef __linux__
     //======================================================
@@ -201,9 +211,15 @@ int main(int argc,char **argv)
         }
 #endif
         updateBuffersIn_MB(); //update input image table with data from slave devices
+#ifdef _iceoryx2_src
+        iceoryx2_subscribe_all(); //DEL: receive external data before PLC logic
+#endif
         handleSpecialFunctions();
         config_run__(__tick++); // execute plc program logic
         updateBuffersOut_MB(); //update slave devices with data from the output image table
+#ifdef _iceoryx2_src
+        iceoryx2_publish_all(); //DEL: publish PLC outputs after PLC logic
+#endif
         pthread_mutex_unlock(&bufferLock); //unlock mutex
 
         updateBuffersOut(); //write output image
@@ -253,6 +269,9 @@ int main(int argc,char **argv)
 #endif
 
     finalizeSnap7();
+#ifdef _iceoryx2_src
+    iceoryx2_shutdown();
+#endif
     printf("Disabling outputs\n");
     disableOutputs();
     updateBuffersOut();

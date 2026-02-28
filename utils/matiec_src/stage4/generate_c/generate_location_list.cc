@@ -44,6 +44,30 @@ class generate_location_list_c: public iterator_visitor_c {
 /* B.1.4.3   Declaration and initilization  */
 /********************************************/
 
+/*| VAR_GLOBAL [CONSTANT|RETAIN] [PUBLISH|SUBSCRIBE 'group_name'] global_var_decl_list END_VAR */
+// SYM_REF3(global_var_declarations_c, option, global_var_decl_list, iceoryx_option)
+    void *visit(global_var_declarations_c *symbol) {
+        /* DEL: set IceOryx2 context on generate_c_vardecl before iterating children */
+        if (symbol->iceoryx_option != NULL) {
+            publish_option_c   *pub = dynamic_cast<publish_option_c *>(symbol->iceoryx_option);
+            subscribe_option_c *sub = dynamic_cast<subscribe_option_c *>(symbol->iceoryx_option);
+            if (pub != NULL) {
+                token_c *tok = dynamic_cast<token_c *>(pub->group_name);
+                generate_c_vardecl.set_iceoryx_context("PUBLISH", tok ? tok->value : NULL);
+            } else if (sub != NULL) {
+                token_c *tok = dynamic_cast<token_c *>(sub->group_name);
+                generate_c_vardecl.set_iceoryx_context("SUBSCRIBE", tok ? tok->value : NULL);
+            }
+        } else {
+            generate_c_vardecl.set_iceoryx_context(NULL, NULL);
+        }
+        /* iterate into children (global_var_decl_list) using default iterator */
+        symbol->global_var_decl_list->accept(*this);
+        /* reset context */
+        generate_c_vardecl.set_iceoryx_context(NULL, NULL);
+        return NULL;
+    }
+
 /*  [variable_name] location ':' located_var_spec_init */
 /* variable_name -> may be NULL ! */
 //SYM_REF4(located_var_decl_c, variable_name, location, located_var_spec_init, unused)

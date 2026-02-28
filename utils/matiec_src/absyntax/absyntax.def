@@ -569,6 +569,10 @@ SYM_REF2(structured_variable_c, record_variable, field_selector)
 SYM_REF0(constant_option_c)
 SYM_REF0(retain_option_c)
 SYM_REF0(non_retain_option_c)
+/* PUBLISH 'group_name' - IceOryx2 publish option */
+SYM_REF1(publish_option_c, group_name)
+/* SUBSCRIBE 'group_name' - IceOryx2 subscribe option */
+SYM_REF1(subscribe_option_c, group_name)
 
 /* VAR_INPUT [option] input_declaration_list END_VAR */
 /* option -> the RETAIN/NON_RETAIN/<NULL> directive... */
@@ -721,9 +725,10 @@ SYM_LIST(external_declaration_list_c)
 /*  global_var_name ':' (simple_specification|subrange_specification|enumerated_specification|array_specification|prev_declared_structure_type_name|function_block_type_name */
 SYM_REF2(external_declaration_c, global_var_name, specification)
 
-/*| VAR_GLOBAL [CONSTANT|RETAIN] global_var_decl_list END_VAR */
+/*| VAR_GLOBAL [CONSTANT|RETAIN] [PUBLISH|SUBSCRIBE 'group_name'] global_var_decl_list END_VAR */
 /* option -> may be NULL ! */
-SYM_REF2(global_var_declarations_c, option, global_var_decl_list)
+/* iceoryx_option -> may be NULL ! */
+SYM_REF3(global_var_declarations_c, option, global_var_decl_list, iceoryx_option)
 
 /* helper symbol for global_var_declarations */
 /*| global_var_decl_list global_var_decl ';' */

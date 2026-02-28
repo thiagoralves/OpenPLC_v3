@@ -754,6 +754,8 @@ void *visit(structured_variable_c *symbol) {
 void *visit(constant_option_c *symbol) {s4o.print("CONSTANT"); return NULL;}
 void *visit(retain_option_c *symbol) {s4o.print("RETAIN"); return NULL;}
 void *visit(non_retain_option_c *symbol) {s4o.print("NON_RETAIN"); return NULL;}
+void *visit(publish_option_c *symbol) {s4o.print("PUBLISH "); symbol->group_name->accept(*this); return NULL;}
+void *visit(subscribe_option_c *symbol) {s4o.print("SUBSCRIBE "); symbol->group_name->accept(*this); return NULL;}
 
 /* VAR_INPUT [RETAIN | NON_RETAIN] input_declaration_list END_VAR */
 /* option -> the RETAIN/NON_RETAIN/<NULL> directive... */
@@ -1027,12 +1029,17 @@ void *visit(external_declaration_c *symbol) {
   return NULL;
 }
 
-/*| VAR_GLOBAL [CONSTANT|RETAIN] global_var_decl_list END_VAR */
+/*| VAR_GLOBAL [CONSTANT|RETAIN] [PUBLISH|SUBSCRIBE 'group_name'] global_var_decl_list END_VAR */
 /* option -> may be NULL ! */
+/* iceoryx_option -> may be NULL ! */
 void *visit(global_var_declarations_c *symbol) {
   s4o.print(s4o.indent_spaces); s4o.print("VAR_GLOBAL ");
   if (symbol->option != NULL)
     symbol->option->accept(*this);
+  if (symbol->iceoryx_option != NULL) {
+    s4o.print(" ");
+    symbol->iceoryx_option->accept(*this);
+  }
   s4o.print("\n");
   s4o.indent_right();
   symbol->global_var_decl_list->accept(*this);

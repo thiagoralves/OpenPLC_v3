@@ -880,6 +880,10 @@ class generate_c_vardecl_c: protected generate_c_base_and_typeid_c {
     /* Will contain a single value of generate_c_vardecl_c::XXXX_vq */
     unsigned int current_varqualifier;
 
+    /* DEL (Data Exchange Layer): IceOryx2 publish/subscribe context */
+    const char *current_iceoryx_direction; /* "PUBLISH", "SUBSCRIBE", or NULL */
+    const char *current_iceoryx_group;     /* group name string, or NULL */
+
     /* How variables should be declared: as local variables or
      * variables within a function interface...
      */
@@ -1193,9 +1197,17 @@ class generate_c_vardecl_c: protected generate_c_base_and_typeid_c {
       globalnamespace         = NULL;
       nv = NULL;
       resource_name = res_name;
+      current_iceoryx_direction = NULL;
+      current_iceoryx_group     = NULL;
     }
 
     ~generate_c_vardecl_c(void) {}
+
+    /* DEL: public setter for IceOryx2 context, used by generate_location_list_c */
+    void set_iceoryx_context(const char *direction, const char *group) {
+      current_iceoryx_direction = direction;
+      current_iceoryx_group     = group;
+    }
 
     void print(symbol_c *symbol, symbol_c *scope = NULL, const char *variable_prefix = NULL) {
       this->set_variable_prefix(variable_prefix);
@@ -1310,6 +1322,27 @@ void *visit(retain_option_c *symbol) {
 
 void *visit(non_retain_option_c *symbol) {
   current_varqualifier = non_retain_vq;
+  return NULL;
+}
+
+/* DEL: IceOryx2 PUBLISH 'group_name' */
+void *visit(publish_option_c *symbol) {
+  current_iceoryx_direction = "PUBLISH";
+  /* group_name is a single_byte_character_string_c (token_c subclass) with ->value */
+  if (symbol->group_name != NULL) {
+    token_c *tok = dynamic_cast<token_c *>(symbol->group_name);
+    if (tok != NULL) current_iceoryx_group = tok->value;
+  }
+  return NULL;
+}
+
+/* DEL: IceOryx2 SUBSCRIBE 'group_name' */
+void *visit(subscribe_option_c *symbol) {
+  current_iceoryx_direction = "SUBSCRIBE";
+  if (symbol->group_name != NULL) {
+    token_c *tok = dynamic_cast<token_c *>(symbol->group_name);
+    if (tok != NULL) current_iceoryx_group = tok->value;
+  }
   return NULL;
 }
 
@@ -1788,6 +1821,13 @@ void *visit(direct_variable_c *symbol) {
     this->current_var_type_symbol->accept(*this);   \
     s4o.print(",");                                 \
     symbol->location->accept(*this);                \
+    /* DEL: append IceOryx2 direction and group if set */ \
+    if (this->current_iceoryx_direction != NULL) {  \
+      s4o.print(",");                               \
+      s4o.print(this->current_iceoryx_direction);   \
+      s4o.print(",");                               \
+      s4o.print(this->current_iceoryx_group);       \
+    }                                               \
     s4o.print(")\n");
 
 
@@ -2033,9 +2073,10 @@ void *visit(external_declaration_c *symbol) {
 
 
 
-/*| VAR_GLOBAL [CONSTANT|RETAIN] global_var_decl_list END_VAR */
+/*| VAR_GLOBAL [CONSTANT|RETAIN] [PUBLISH|SUBSCRIBE 'group_name'] global_var_decl_list END_VAR */
 /* option -> may be NULL ! */
-// SYM_REF2(global_var_declarations_c, option, global_var_decl_list)
+/* iceoryx_option -> may be NULL ! */
+// SYM_REF3(global_var_declarations_c, option, global_var_decl_list, iceoryx_option)
 void *visit(global_var_declarations_c *symbol) {
   TRACE("global_var_declarations_c");
   if ((wanted_vartype & global_vt) != 0) {
@@ -2050,9 +2091,21 @@ void *visit(global_var_declarations_c *symbol) {
     current_vartype = global_vt;
     if (symbol->option != NULL)
       symbol->option->accept(*this);
+    /* DEL: set IceOryx2 publish/subscribe context before iterating variables */
+    const char *prev_iceoryx_direction = current_iceoryx_direction;
+    const char *prev_iceoryx_group     = current_iceoryx_group;
+    if (symbol->iceoryx_option != NULL) {
+      symbol->iceoryx_option->accept(*this);
+    } else {
+      current_iceoryx_direction = NULL;
+      current_iceoryx_group     = NULL;
+    }
     symbol->global_var_decl_list->accept(*this);
     current_vartype = previous_vartype;
     current_varqualifier = none_vq;
+    /* DEL: restore previous iceoryx context */
+    current_iceoryx_direction = prev_iceoryx_direction;
+    current_iceoryx_group     = prev_iceoryx_group;
     //s4o.indent_left();
   }
   return NULL;
