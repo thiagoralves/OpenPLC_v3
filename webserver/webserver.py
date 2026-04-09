@@ -21,6 +21,7 @@ import errno
 
 import flask
 import flask_login
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from credentials import CertGen
 from restapi import app_restapi, restapi_bp, db, register_callback_get, register_callback_post
@@ -41,6 +42,17 @@ logging.basicConfig(
 )
 
 openplc_runtime = openplc.runtime()
+
+# Password hashing configuration (PBKDF2 with SHA256 and 600,000 iterations)
+PASSWORD_HASH_METHOD = "pbkdf2:sha256:600000"
+
+def hash_password(password: str) -> str:
+    """Hash a password using PBKDF2 with SHA256."""
+    return generate_password_hash(password, method=PASSWORD_HASH_METHOD)
+
+def verify_password(stored_hash: str, password: str) -> bool:
+    """Verify a password against a stored hash."""
+    return check_password_hash(stored_hash, password)
 
 from pathlib import Path
 BASE_DIR   = Path(__file__).parent
@@ -573,7 +585,7 @@ def request_loader(request):
                     user.id = row[0]
                     user.name = row[2]
                     user.pict_file = str(row[3])
-                    user.is_authenticated = (request.form['password'] == row[1])
+                    user.is_authenticated = verify_password(row[1], request.form['password'])
                     return user
             return
                     
@@ -618,7 +630,7 @@ def login():
 
             for row in rows:
                 if (row[0] == username):
-                    if (row[1] == password):
+                    if verify_password(row[1], password):
                         user = User()
                         user.id = row[0]
                         user.name = row[2]
@@ -2074,6 +2086,7 @@ def add_user():
             username = flask.request.form['user_name']
             email = flask.request.form['user_email']
             password = flask.request.form['user_password']
+            password_hash = hash_password(password)
 
             (name, username, email) = sanitize_input(name, username, email)
 
@@ -2096,11 +2109,11 @@ def add_user():
                             file_extension = pict_file.filename.split('.')
                             filename = str(random.randint(1,1000000)) + "." + file_extension[-1]
                             pict_file.save(os.path.join('static', filename))
-                            cur.execute("INSERT INTO Users (name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?)", (name, username, email, password, "/static/"+filename))
+                            cur.execute("INSERT INTO Users (name, username, email, password, pict_file) VALUES (?, ?, ?, ?, ?)", (name, username, email, password_hash, "/static/"+filename))
                         else:
-                            cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password))
+                            cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password_hash))
                     else:
-                        cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password))
+                        cur.execute("INSERT INTO Users (name, username, email, password) VALUES (?, ?, ?, ?)", (name, username, email, password_hash))
                     conn.commit()
                     cur.close()
                     conn.close()
@@ -2220,7 +2233,8 @@ def edit_user():
                 try:
                     cur = conn.cursor()
                     if (password != "mypasswordishere"):
-                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ?, password = ? WHERE user_id = ?", (name, username, email, password, int(user_id)))
+                        password_hash = hash_password(password)
+                        cur.execute("UPDATE Users SET name = ?, username = ?, email = ?, password = ? WHERE user_id = ?", (name, username, email, password_hash, int(user_id)))
                     else:
                         cur.execute("UPDATE Users SET name = ?, username = ?, email = ? WHERE user_id = ?", (name, username, email, int(user_id)))
                     conn.commit()

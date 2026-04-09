@@ -8,6 +8,7 @@
 import sqlite3
 from sqlite3 import Error
 import os
+from werkzeug.security import generate_password_hash
 
 builddir = r"build/"
 dbfile = r"build/openplc.db"
@@ -64,7 +65,11 @@ createTableUsers = r"""CREATE TABLE "Users" (
     `pict_file`	TEXT
 )"""
 
-insertDefaultUser = r"INSERT INTO Users VALUES (10, 'OpenPLC User', 'openplc', 'openplc@openplc.com','openplc', NULL)"
+# Password hashing configuration (PBKDF2 with SHA256 and 600,000 iterations)
+PASSWORD_HASH_METHOD = "pbkdf2:sha256:600000"
+DEFAULT_PASSWORD_HASH = generate_password_hash("openplc", method=PASSWORD_HASH_METHOD)
+
+insertDefaultUser = f"INSERT INTO Users VALUES (10, 'OpenPLC User', 'openplc', 'openplc@openplc.com', '{DEFAULT_PASSWORD_HASH}', NULL)"
 
 
 
