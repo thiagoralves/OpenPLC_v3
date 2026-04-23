@@ -39,29 +39,29 @@
 
 #include "oplc_snap7.h"
 
-#define OPLC_CYCLE          50000000
+#define OPLC_CYCLE 50000000
 
 extern int opterr;
 IEC_BOOL __DEBUG;
 
 unsigned long __tick = 0;
-pthread_mutex_t bufferLock; //mutex for the internal buffers
-uint8_t run_openplc = 1; //Variable to control OpenPLC Runtime execution
+pthread_mutex_t bufferLock; // mutex for the internal buffers
+uint8_t run_openplc = 1;    // Variable to control OpenPLC Runtime execution
 
 // pointers to IO *array[const][const] from cpp to c and back again don't work as expected, so instead callbacks
-uint8_t *bool_input_call_back(int a, int b){ return bool_input[a][b]; }
-uint8_t *bool_output_call_back(int a, int b){ return bool_output[a][b]; }
-uint8_t *byte_input_call_back(int a){ return byte_input[a]; }
-uint8_t *byte_output_call_back(int a){ return byte_output[a]; }
-uint16_t *int_input_call_back(int a){ return int_input[a]; }
-uint16_t *int_output_call_back(int a){ return int_output[a]; }
-uint32_t *dint_input_call_back(int a){ return dint_input[a]; }
-uint32_t *dint_output_call_back(int a){ return dint_output[a]; }
-uint64_t *lint_input_call_back(int a){ return lint_input[a]; }
-uint64_t *lint_output_call_back(int a){ return lint_output[a]; }
-void logger_callback(char *msg){ openplc_log(msg);}
+uint8_t *bool_input_call_back(int a, int b) { return bool_input[a][b]; }
+uint8_t *bool_output_call_back(int a, int b) { return bool_output[a][b]; }
+uint8_t *byte_input_call_back(int a) { return byte_input[a]; }
+uint8_t *byte_output_call_back(int a) { return byte_output[a]; }
+uint16_t *int_input_call_back(int a) { return int_input[a]; }
+uint16_t *int_output_call_back(int a) { return int_output[a]; }
+uint32_t *dint_input_call_back(int a) { return dint_input[a]; }
+uint32_t *dint_output_call_back(int a) { return dint_output[a]; }
+uint64_t *lint_input_call_back(int a) { return lint_input[a]; }
+uint64_t *lint_output_call_back(int a) { return lint_output[a]; }
+void logger_callback(char *msg) { openplc_log(msg); }
 
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
     // Define the max/min/avg/total cycle and latency variables used in REAL-TIME computation(in nanoseconds)
     long cycle_avg, cycle_max, cycle_min, cycle_total;
@@ -100,7 +100,7 @@ int main(int argc,char **argv)
     //              HARDWARE INITIALIZATION
     //======================================================
 #ifdef _ethercat_src
-    type_logger_callback logger = logger_callback; 
+    type_logger_callback logger = logger_callback;
     ethercat_configure("../utils/ethercat_src/build/ethercat.cfg", logger);
 #endif
     initializeHardware();
@@ -115,15 +115,13 @@ int main(int argc,char **argv)
     glueVars();
     mapUnusedIO();
     readPersistentStorage();
-    //pthread_t persistentThread;
-    //pthread_create(&persistentThread, NULL, persistentStorage, NULL);
+    // pthread_t persistentThread;
+    // pthread_create(&persistentThread, NULL, persistentStorage, NULL);
 
     //======================================================
     //            S7 PROTOCOL INITIALIZATION
     //======================================================
     initializeSnap7();
-
-
 
 #ifdef __linux__
     //======================================================
@@ -133,14 +131,14 @@ int main(int argc,char **argv)
     struct sched_param sp;
     sp.sched_priority = 30;
     printf("Setting main thread priority to RT\n");
-    if(pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
+    if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp))
     {
         printf("WARNING: Failed to set main thread to real-time priority\n");
     }
 
     // Lock memory to ensure no swapping is done.
     printf("Locking main thread memory\n");
-    if(mlockall(MCL_FUTURE|MCL_CURRENT))
+    if (mlockall(MCL_FUTURE | MCL_CURRENT))
     {
         printf("WARNING: Failed to lock memory\n");
     }
@@ -149,23 +147,25 @@ int main(int argc,char **argv)
     // Define the start, end, cycle time and latency time variables
     struct timespec cycle_start, cycle_end, cycle_time;
     struct timespec timer_start, timer_end, sleep_latency;
+    sleep_latency.tv_sec = 0;
+    sleep_latency.tv_nsec = 0;
 
-    //gets the starting point for the clock
+    // gets the starting point for the clock
     printf("Getting current time\n");
     clock_gettime(CLOCK_MONOTONIC, &timer_start);
 
     //======================================================
     //                    MAIN LOOP
     //======================================================
-    while(run_openplc)
+    while (run_openplc)
     {
         // Get the start time for the running cycle
         clock_gettime(CLOCK_MONOTONIC, &cycle_start);
 
-        //make sure the buffer pointers are correct and
-        //attached to the user variables
+        // make sure the buffer pointers are correct and
+        // attached to the user variables
         glueVars();
-        
+
 #ifdef _ethercat_src
         boolvar_call_back bool_input_callback = bool_input_call_back;
         boolvar_call_back bool_output_callback = bool_output_call_back;
@@ -178,36 +178,36 @@ int main(int argc,char **argv)
         int64var_call_back lint_input_callback = lint_input_call_back;
         int64var_call_back lint_output_callback = lint_output_call_back;
 #endif
-        
-        updateBuffersIn(); //read input image
 
-        pthread_mutex_lock(&bufferLock); //lock mutex
+        updateBuffersIn(); // read input image
 
+        pthread_mutex_lock(&bufferLock); // lock mutex
 
 #ifdef _ethercat_src
-        if(ethercat_callcyclic(BUFFER_SIZE, 
-                bool_input_callback, 
-                bool_output_callback, 
-                byte_input_callback, 
-                byte_output_callback, 
-                int_input_callback, 
-                int_output_callback, 
-                dint_input_call_back, 
-                dint_output_call_back, 
-                lint_input_call_back, 
-                lint_output_call_back)){
+        if (ethercat_callcyclic(BUFFER_SIZE,
+                                bool_input_callback,
+                                bool_output_callback,
+                                byte_input_callback,
+                                byte_output_callback,
+                                int_input_callback,
+                                int_output_callback,
+                                dint_input_call_back,
+                                dint_output_call_back,
+                                lint_input_call_back,
+                                lint_output_call_back))
+        {
             printf("EtherCAT cyclic failed\n");
             break;
         }
 #endif
-        updateBuffersIn_MB(); //update input image table with data from slave devices
+        updateBuffersIn_MB(); // update input image table with data from slave devices
         handleSpecialFunctions();
-        config_run__(__tick++); // execute plc program logic
-        updateBuffersOut_MB(); //update slave devices with data from the output image table
-        pthread_mutex_unlock(&bufferLock); //unlock mutex
+        config_run__(__tick++);            // execute plc program logic
+        updateBuffersOut_MB();             // update slave devices with data from the output image table
+        pthread_mutex_unlock(&bufferLock); // unlock mutex
 
-        updateBuffersOut(); //write output image
-        
+        updateBuffersOut(); // write output image
+
         updateTime();
 
         // Get the end time for the running cycle
@@ -224,13 +224,14 @@ int main(int argc,char **argv)
 
         // Get the sleep end point which is also the start time/point of the next cycle
         clock_gettime(CLOCK_MONOTONIC, &timer_end);
-        // Compute the time latency of the next cycle(caused by sleep) and do max/min/total comparison/recording
+        // Compute the time latency from start to new cycle(caused by sleep) and do max/min/total comparison/recording
+        auto latency_last = sleep_latency.tv_nsec;
         timespec_diff(&timer_end, &timer_start, &sleep_latency);
-        if (sleep_latency.tv_nsec > latency_max)
-            latency_max = sleep_latency.tv_nsec;
-        if (sleep_latency.tv_nsec < latency_min)
-            latency_min = sleep_latency.tv_nsec;
-        latency_total = latency_total + sleep_latency.tv_nsec;
+        auto latency_diff = sleep_latency.tv_nsec - latency_last;
+        if (latency_diff > latency_max)
+            latency_max = latency_diff;
+        if (latency_diff < latency_min)
+            latency_min = latency_diff;
 
         // Store the cycle_time/sleep_latency in microsecond, so it can be displayed in the webpage
         RecordCycletimeLatency((long)cycle_time.tv_nsec / 1000, (long)sleep_latency.tv_nsec / 1000);
@@ -238,12 +239,12 @@ int main(int argc,char **argv)
 
     // Compute/print the max/min/avg cycle time and latency
     cycle_avg = (long)cycle_total / __tick;
-    latency_avg = (long)latency_total / __tick;
+    latency_avg = (long)sleep_latency.tv_nsec / __tick;
     printf("###Summary: The maximum/minimum/average cycle time in microsecond is %ld/%ld/%ld\n",
-    cycle_max / 1000, cycle_min / 1000, cycle_avg / 1000);
+           cycle_max / 1000, cycle_min / 1000, cycle_avg / 1000);
     printf("###Summary: The maximum/minimum/average latency in microsecond is %ld/%ld/%ld\n",
-    latency_max / 1000,   latency_min / 1000, latency_avg / 1000);
-    
+           latency_max / 1000, latency_min / 1000, latency_avg / 1000);
+
     //======================================================
     //             SHUTTING DOWN OPENPLC RUNTIME
     //======================================================
