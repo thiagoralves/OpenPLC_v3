@@ -874,7 +874,7 @@ int getBytesFromWordArray(pWordArray wordArray, int Start, int Size, pbyte pUsrD
 {
     int WordStart = Start / 2;
     int WordAmount = Size / 2;
-    uint16_t MyWord = NULL;
+    uint16_t MyWord;
     int idx = 0;
 
     if (WordStart + WordAmount >= BUFFER_SIZE)
